@@ -1,0 +1,175 @@
+8% of 15 GB used
+Terms · Privacy · Program Policies
+Last account activity: 51 minutes ago
+Details
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Güneş Sistemi - 3 Boyutlu Model</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:#02040d;color:#fff}
+body{background:
+ radial-gradient(circle at 50% 50%,rgba(20,28,70,.18),transparent 38%),
+ radial-gradient(circle at 15% 20%,rgba(70,90,160,.08),transparent 22%),
+ #02040d}
+#space{position:fixed;inset:0;overflow:hidden;perspective:1000px}
+#stars,#stars2{position:absolute;inset:-20%;background-repeat:repeat;pointer-events:none}
+#stars{background-image:
+ radial-gradient(circle,#fff 0 1px,transparent 1.5px),
+ radial-gradient(circle,#8fc8ff 0 1px,transparent 1.5px);
+ background-size:97px 113px,151px 137px;background-position:12px 19px,61px 41px;opacity:.65}
+#stars2{background-image:
+ radial-gradient(circle,#fff 0 .8px,transparent 1.2px);
+ background-size:53px 67px;background-position:22px 31px;opacity:.38}
+#scene{position:absolute;left:50%;top:52%;width:0;height:0;transform-style:preserve-3d;transition:transform .12s linear}
+#system{position:absolute;width:0;height:0;transform-style:preserve-3d}
+.orbit{position:absolute;left:50%;top:50%;border:1px solid rgba(160,190,255,.25);border-radius:50%;transform-style:preserve-3d;pointer-events:none}
+.orbit .planet{position:absolute;left:50%;top:-50%;transform-style:preserve-3d;cursor:pointer}
+.planet-body{border-radius:50%;box-shadow:inset -8px -10px 18px rgba(0,0,0,.55),inset 4px 4px 10px rgba(255,255,255,.35),0 0 12px rgba(255,255,255,.1)}
+.sun-wrap{position:absolute;left:0;top:0;transform:translate(-50%,-50%);transform-style:preserve-3d}
+.sun{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8a8,#ffd21c 38%,#ff8a00 72%,#d94a00);box-shadow:0 0 30px #ffb300,0 0 75px rgba(255,150,0,.55),0 0 130px rgba(255,100,0,.22);animation:pulse 2.8s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 42px #ffbd20,0 0 95px rgba(255,150,0,.62),0 0 150px rgba(255,100,0,.25)}}
+.label{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;text-shadow:0 1px 4px #000;color:#dfe9ff;pointer-events:none}
+.planet-body::after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(145deg,rgba(255,255,255,.2),transparent 38%,rgba(0,0,0,.28));pointer-events:none}
+.saturn-ring{position:absolute;left:50%;top:50%;width:185%;height:62%;transform:translate(-50%,-50%) rotateX(68deg);border:7px solid rgba(214,190,139,.72);border-left-color:rgba(240,220,180,.48);border-right-color:rgba(165,135,85,.58);border-radius:50%;box-shadow:0 0 3px rgba(255,240,200,.5);pointer-events:none}
+.saturn-ring2{position:absolute;left:50%;top:50%;width:225%;height:75%;transform:translate(-50%,-50%) rotateX(68deg);border:3px solid rgba(230,215,180,.38);border-radius:50%;pointer-events:none}
+.moon-orbit{position:absolute;left:50%;top:50%;width:250%;height:250%;border:1px dashed rgba(200,220,255,.25);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.moon{position:absolute;left:50%;top:-7px;width:14px;height:14px;border-radius:50%;background:#aaa;box-shadow:inset -3px -3px 4px #555;transform-origin:7px calc(100% + 118px);animation:moonspin 4s linear infinite;cursor:pointer;pointer-events:auto}
+@keyframes moonspin{to{transform:rotate(360deg)}}
+#controls{position:fixed;left:18px;top:18px;width:min(320px,calc(100vw - 36px));background:rgba(7,12,28,.82);backdrop-filter:blur(10px);border:1px solid rgba(150,180,255,.25);border-radius:18px;padding:16px;z-index:20;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+h1{font-size:20px;margin:0 0 4px}
+.sub{font-size:12px;color:#aebbd8;margin-bottom:12px}
+button{border:0;border-radius:10px;padding:9px 12px;margin:3px;background:#1b2b55;color:#fff;cursor:pointer}
+button:hover{background:#294174}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+input[type=range]{width:140px}
+#hint{font-size:11px;color:#9eacd0;margin-top:10px;line-height:1.4}
+#info{position:fixed;right:18px;top:18px;width:min(300px,calc(100vw - 36px));background:rgba(7,12,28,.88);backdrop-filter:blur(10px);border:1px solid rgba(150,180,255,.25);border-radius:18px;padding:16px;z-index:20;box-shadow:0 12px 40px rgba(0,0,0,.35);display:none}
+#info h2{margin:0 0 8px;font-size:21px}
+#info p{margin:6px 0;font-size:13px;color:#d5ddf2;line-height:1.45}
+#info .close{float:right;background:transparent;font-size:18px;padding:0 5px}
+#title{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(3,7,18,.6);padding:8px 16px;border-radius:20px;font-size:12px;color:#aebbd8;border:1px solid rgba(150,180,255,.15)}
+@media(max-width:700px){
+ #info{top:auto;bottom:18px;right:18px}
+ #controls{width:280px}
+ .sun{width:100px;height:100px}
+}
+</style>
+</head>
+<body>
+<div id="space">
+  <div id="stars"></div><div id="stars2"></div>
+  <div id="scene"><div id="system">
+    <div class="sun-wrap"><div class="sun"></div><div class="label">Güneş</div></div>
+  </div></div>
+</div>
+
+<div id="controls">
+  <h1>☀️ 3 Boyutlu Güneş Sistemi</h1>
+  <div class="sub">Fen Bilimleri — etkileşimli model</div>
+  <div class="row">
+    <button id="toggle">⏸ Durdur</button>
+    <button id="slower">− Yavaşlat</button>
+    <button id="faster">+ Hızlandır</button>
+    <button id="reset">↺ Sıfırla</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <span style="font-size:12px">Yakınlaştır</span>
+    <input id="zoom" type="range" min="550" max="1250" value="850">
+  </div>
+  <div id="hint">Gezegenlere tıkla: ad, çap, Güneş'e uzaklık, dolanma süresi ve uydu sayısı görünür. Modeli fareyle sürükleyerek döndürebilirsin.</div>
+</div>
+
+<div id="info">
+  <button class="close" onclick="closeInfo()">✕</button>
+  <h2 id="infoName"></h2>
+  <p id="infoText"></p>
+</div>
+<div id="title">Güneş merkezde • Gezegenler doğru sırada • Yörüngeler görünür</div>
+
+<script>
+const data=[
+ {name:"Merkür",size:12,orbit:105,color:"#8b8b82",distance:"57,9 milyon km",period:"88 gün",moons:"0"},
+ {name:"Venüs",size:18,orbit:145,color:"#d5a85b",distance:"108,2 milyon km",period:"224,7 gün",moons:"0"},
+ {name:"Dünya",size:20,orbit:190,color:"#3e82c4",distance:"149,6 milyon km",period:"365,25 gün",moons:"1"},
+ {name:"Mars",size:16,orbit:235,color:"#b85b43",distance:"227,9 milyon km",period:"687 gün",moons:"2"},
+ {name:"Jüpiter",size:42,orbit:310,color:"#c89d72",distance:"778,5 milyon km",period:"11,86 yıl",moons:"95+"},
+ {name:"Satürn",size:36,orbit:395,color:"#d7bc83",distance:"1,43 milyar km",period:"29,45 yıl",moons:"140+"},
+ {name:"Uranüs",size:28,orbit:475,color:"#75cbd0",distance:"2,87 milyar km",period:"84 yıl",moons:"28"},
+ {name:"Neptün",size:27,orbit:555,color:"#416cc8",distance:"4,50 milyar km",period:"164,8 yıl",moons:"16"}
+];
+
+const system=document.getElementById("system");
+const scene=document.getElementById("scene");
+const planets=[];
+let running=true, speed=1, angle=0, zoom=850, rx=63, ry=-12, dragging=false, px=0, py=0;
+
+data.forEach((d,i)=>{
+ const o=document.createElement("div"); o.className="orbit";
+ o.style.width=d.orbit*2+"px"; o.style.height=d.orbit*2+"px";
+ o.style.marginLeft=-d.orbit+"px"; o.style.marginTop=-d.orbit+"px";
+ o.style.transform=`rotateX(67deg)`;
+ const p=document.createElement("div"); p.className="planet";
+ const b=document.createElement("div"); b.className="planet-body";
+ b.style.width=d.size+"px"; b.style.height=d.size+"px"; b.style.background=`radial-gradient(circle at 32% 28%,#fff8,${d.color} 38%,#111 120%)`;
+ b.style.marginLeft=-(d.size/2)+"px"; b.style.marginTop=-(d.size/2)+"px";
+ p.appendChild(b);
+ if(d.name==="Satürn"){
+   const r=document.createElement("div"); r.className="saturn-ring"; p.appendChild(r);
+   const r2=document.createElement("div"); r2.className="saturn-ring2"; p.appendChild(r2);
+ }
+ if(d.name==="Dünya"){
+   const mo=document.createElement("div"); mo.className="moon-orbit"; p.appendChild(mo);
+   const m=document.createElement("div"); m.className="moon"; m.title="Ay"; p.appendChild(m);
+ }
+ const lab=document.createElement("div"); lab.className="label"; lab.textContent=d.name; p.appendChild(lab);
+ p.addEventListener("click",e=>{e.stopPropagation();showInfo(d)});
+ o.appendChild(p); system.appendChild(o);
+ planets.push({o,p,d,base: i*0.72});
+});
+
+function showInfo(d){
+ document.getElementById("infoName").textContent=d.name;
+ document.getElementById("infoText").innerHTML=
+  `<b>Çap (model):</b> ${d.size}px<br>
+   <b>Güneş'e ortalama uzaklık:</b> ${d.distance}<br>
+   <b>Dolanma süresi:</b> ${d.period}<br>
+   <b>Uydu sayısı:</b> ${d.moons}<br>
+   ${d.name==="Satürn"?"<b>Özellik:</b> Belirgin halka sistemi vardır.":""}
+   ${d.name==="Dünya"?"<b>Uydu:</b> Ay, Dünya'nın çevresinde dolanır.":""}`;
+ document.getElementById("info").style.display="block";
+}
+function closeInfo(){document.getElementById("info").style.display="none"}
+
+function render(){
+ scene.style.transform=`translateZ(${zoom}px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+ planets.forEach((x,i)=>{
+   const a=angle/(900-i*45)+x.base;
+   const xPos=Math.cos(a)*x.d.orbit;
+   const yPos=Math.sin(a)*x.d.orbit;
+   x.p.style.transform=`translate3d(${xPos}px,${yPos}px,0)`;
+ });
+ requestAnimationFrame(render);
+}
+function tick(){ if(running) angle+=0.8*speed; }
+setInterval(tick,16); render();
+
+document.getElementById("toggle").onclick=()=>{
+ running=!running; document.getElementById("toggle").textContent=running?"⏸ Durdur":"▶ Başlat";
+};
+document.getElementById("slower").onclick=()=>speed=Math.max(.25,speed/1.5);
+document.getElementById("faster").onclick=()=>speed=Math.min(4,speed*1.5);
+document.getElementById("reset").onclick=()=>{angle=0;rx=63;ry=-12;zoom=850;document.getElementById("zoom").value=850};
+document.getElementById("zoom").oninput=e=>zoom=+e.target.value;
+
+space.onpointerdown=e=>{dragging=true;px=e.clientX;py=e.clientY;space.setPointerCapture(e.pointerId)};
+space.onpointermove=e=>{if(!dragging)return;ry+=(e.clientX-px)*.35;rx-=(e.clientY-py)*.35;rx=Math.max(15,Math.min(85,rx));px=e.clientX;py=e.clientY};
+space.onpointerup=()=>dragging=false;
+space.onpointercancel=()=>dragging=false;
+space.addEventListener("wheel",e=>{e.preventDefault();zoom+=e.deltaY*.6;zoom=Math.max(550,Math.min(1250,zoom));document.getElementById("zoom").value=zoom},{passive:false});
+</script>
+</body>
+</html>
