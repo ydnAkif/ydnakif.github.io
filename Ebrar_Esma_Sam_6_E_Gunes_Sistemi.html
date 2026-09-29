@@ -692,7 +692,7 @@
                     p.mesh.rotation.y += 0.012 * animationSpeed;
 
                     if (p.speed > 0) {
-                        p.angle += p.speed * 0.2 * animationSpeed;
+                        p.angle -= p.speed * 0.2 * animationSpeed;
                         p.mesh.position.x = Math.cos(p.angle) * p.mesh.userData.dist;
                         p.mesh.position.z = Math.sin(p.angle) * p.mesh.userData.dist;
                     }
@@ -700,8 +700,8 @@
 
                 // Orbit Earth's Moon
                 if (moonMesh) {
-                    moonMesh.position.x = Math.cos(Date.now() * 0.0025) * 2.8;
-                    moonMesh.position.z = Math.sin(Date.now() * 0.0025) * 2.8;
+                    moonMesh.position.x = Math.cos(-Date.now() * 0.0025) * 2.8;
+                    moonMesh.position.z = Math.sin(-Date.now() * 0.0025) * 2.8;
                 }
             }
 
