@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi Simülasyonu</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;500;600&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            user-select: none;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Glassmorphism visual styling */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Pulse glow animation */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden">
+
+    <!-- Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing"></div>
+
+    <!-- Top Navigation / Header -->
+    <header class="absolute top-0 left-0 w-full p-4 md:p-6 z-10 pointer-events-none flex justify-between items-start">
+        <div class="pointer-events-auto glass-panel p-4 rounded-2xl border border-white/10 max-w-xs md:max-w-md">
+            <h1 class="text-xl md:text-2xl font-extrabold font-orbitron bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-sky-300 to-indigo-400">
+                GÜNEŞ SİSTEMİ
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">Interaktif 3D Uzay Simülasyonu</p>
+        </div>
+
+        <!-- Controls / Speed Quick Bar -->
+        <div class="pointer-events-auto glass-panel p-2 md:p-3 rounded-2xl flex items-center space-x-2 border border-white/10">
+            <button id="btn-pause" class="glass-btn p-2.5 rounded-xl text-slate-200 hover:text-amber-400 transition" title="Duraklat / Başlat">
+                <i class="fa-solid fa-pause text-base"></i>
+            </button>
+            <div class="h-6 w-[1px] bg-white/10"></div>
+            <button id="btn-speed-down" class="glass-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white">
+                0.5x
+            </button>
+            <button id="btn-speed-reset" class="glass-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-400 border-sky-500/30">
+                1x
+            </button>
+            <button id="btn-speed-up" class="glass-btn px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white">
+                2x
+            </button>
+            <div class="h-6 w-[1px] bg-white/10"></div>
+            <button id="btn-reset-cam" class="glass-btn p-2.5 rounded-xl text-slate-200 hover:text-sky-400 transition" title="Görünümü Sıfırla">
+                <i class="fa-solid fa-arrows-to-eye text-base"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Bottom Planet Selector Navigation Bar -->
+    <nav class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-[95%] max-w-5xl pointer-events-auto">
+        <div class="glass-panel p-2.5 md:p-3 rounded-2xl flex items-center justify-between gap-1 md:gap-2 overflow-x-auto">
+            <button data-planet="sun" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-amber-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-amber-400 font-bold group-hover:scale-105 transition-transform">Yıldız</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Güneş</span>
+            </button>
+            <button data-planet="mercury" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-slate-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold group-hover:scale-105 transition-transform">1. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Merkür</span>
+            </button>
+            <button data-planet="venus" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-amber-300/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-amber-300/70 font-bold group-hover:scale-105 transition-transform">2. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Venüs</span>
+            </button>
+            <button data-planet="earth" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-blue-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-blue-400 font-bold group-hover:scale-105 transition-transform">3. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Dünya</span>
+            </button>
+            <button data-planet="mars" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-red-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-red-400 font-bold group-hover:scale-105 transition-transform">4. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Mars</span>
+            </button>
+            <button data-planet="jupiter" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-orange-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-orange-400 font-bold group-hover:scale-105 transition-transform">5. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Jüpiter</span>
+            </button>
+            <button data-planet="saturn" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-yellow-300/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-yellow-300 font-bold group-hover:scale-105 transition-transform">6. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Satürn</span>
+            </button>
+            <button data-planet="uranus" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-cyan-300/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-cyan-300 font-bold group-hover:scale-105 transition-transform">7. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Uranüs</span>
+            </button>
+            <button data-planet="neptune" class="planet-nav-btn flex-1 min-w-[70px] py-2 px-2 rounded-xl text-center glass-btn hover:border-indigo-400/50 transition group">
+                <span class="block text-[10px] uppercase tracking-wider text-indigo-400 font-bold group-hover:scale-105 transition-transform">8. Gezegen</span>
+                <span class="text-xs md:text-sm font-semibold font-orbitron text-slate-100">Neptün</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Info Panel / Modal (Appears when planet is clicked) -->
+    <aside id="info-modal" class="absolute top-20 right-4 md:right-6 z-20 w-[90%] sm:w-96 glass-panel rounded-3xl p-6 transform translate-x-[120%] opacity-0 transition-all duration-500 ease-out border border-white/15 max-h-[calc(100vh-140px)] overflow-y-auto">
+        <button id="close-modal" class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full glass-btn text-slate-300 hover:text-white hover:bg-white/20 transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <!-- Header -->
+        <div class="mb-5 border-b border-white/10 pb-4">
+            <span id="modal-type" class="text-xs font-bold tracking-widest uppercase text-sky-400">GEZEGEN DETAYLARI</span>
+            <h2 id="modal-title" class="text-2xl md:text-3xl font-extrabold font-orbitron text-white mt-1">Dünya</h2>
+            <p id="modal-subtitle" class="text-xs text-slate-400 italic mt-0.5">Yaşam Barındıran Mavi Gezegen</p>
+        </div>
+
+        <!-- Planet Overview Stats Grid -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-3">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-ruler-horizontal text-sky-400"></i> Çap
+                </div>
+                <div id="modal-diameter" class="text-sm font-semibold font-orbitron text-slate-100 mt-1">12,742 km</div>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-3">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sun text-amber-400"></i> Uzaklık
+                </div>
+                <div id="modal-distance" class="text-sm font-semibold font-orbitron text-slate-100 mt-1">149.6M km</div>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-3">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right text-emerald-400"></i> 1 Gün
+                </div>
+                <div id="modal-day" class="text-sm font-semibold font-orbitron text-slate-100 mt-1">24 Saat</div>
+            </div>
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-3">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-spin text-purple-400"></i> 1 Yıl
+                </div>
+                <div id="modal-year" class="text-sm font-semibold font-orbitron text-slate-100 mt-1">365.25 Gün</div>
+            </div>
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="space-y-2 mb-5">
+            <div class="flex justify-between items-center bg-white/5 px-3 py-2 rounded-xl text-xs">
+                <span class="text-slate-400 flex items-center gap-2"><i class="fa-solid fa-moon text-indigo-400"></i> Uydu Sayısı:</span>
+                <span id="modal-moons" class="font-semibold text-slate-200">1</span>
+            </div>
+            <div class="flex justify-between items-center bg-white/5 px-3 py-2 rounded-xl text-xs">
+                <span class="text-slate-400 flex items-center gap-2"><i class="fa-solid fa-temperature-half text-rose-400"></i> Ort. Sıcaklık:</span>
+                <span id="modal-temp" class="font-semibold text-slate-200">15 °C</span>
+            </div>
+        </div>
+
+        <!-- Description Text -->
+        <div class="mb-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Açıklama</h3>
+            <p id="modal-description" class="text-xs md:text-sm text-slate-300 leading-relaxed bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                Güneş sistemindeki üçüncü gezegen olan Dünya, üzerinde yaşam olduğu bilinen tek gök cismidir. Yüzeyinin %71'i sularla kaplıdır.
+            </p>
+        </div>
+
+        <!-- Focus Camera Button -->
+        <button id="btn-focus-target" class="w-full py-3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold font-orbitron text-xs rounded-2xl shadow-lg shadow-sky-500/20 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-crosshairs"></i> GEZEGENE ODAKLAN
+        </button>
+    </aside>
+
+    <!-- Help Tooltip/Guide -->
+    <div class="absolute bottom-20 left-6 hidden lg:flex items-center gap-3 glass-panel px-4 py-2.5 rounded-2xl text-xs text-slate-300 border border-white/10 pointer-events-none">
+        <i class="fa-solid fa-hand-pointer text-sky-400 animate-bounce"></i>
+        <span>Gezegenlere tıklayarak detaylı bilgi alabilir, fare ile çevirebilir veya yakınlaşabilirsiniz.</span>
+    </div>
+
+    <script>
+        /* ----------------------------------------------------
+         * PLANET DATA (Türkçe İçerik ve Gerçekçi Oranlar)
+         * ---------------------------------------------------- */
+        const PLANET_DATA = {
+            sun: {
+                name: 'Güneş',
+                type: 'Sarı Cüce Yıldız',
+                diameter: '1,392,700 km',
+                distance: '0 km (Merkez)',
+                day: '27 Dünya Günü',
+                year: '230 Milyon Yıl',
+                moons: '0 (8 Gezegen)',
+                temp: '5,500 °C (Yüzey)',
+                description: 'Güneş Sisteminin merkezinde yer alan yıldızdır. Sistemdeki toplam kütlenin %99.86’sını oluşturur. Isı ve ışık şeklinde ürettiği enerji, Dünya’daki yaşamın devam etmesini sağlar.',
+                color: 0xffaa00,
+                radius: 12,
+                orbitRadius: 0,
+                speed: 0
+            },
+            mercury: {
+                name: 'Merkür',
+                type: 'Kasal / Kayalık Gezegen',
+                diameter: '4,879 km',
+                distance: '57.9 Milyon km',
+                day: '58.6 Gün',
+                year: '88 Gün',
+                moons: '0',
+                temp: '-180 °C ile 430 °C',
+                description: 'Güneş’e en yakın ve Güneş Sistemi’nin en küçük gezegenidir. Uydusu ve atmosferi neredeyse yoktur. Yüzeyi kraterlerle kaplıdır.',
+                color: 0xa5a5a5,
+                radius: 1.2,
+                orbitRadius: 22,
+                speed: 0.03
+            },
+            venus: {
+                name: 'Venüs',
+                type: 'Kasal / Kayalık Gezegen',
+                diameter: '12,104 km',
+                distance: '108.2 Milyon km',
+                day: '243 Gün',
+                year: '225 Gün',
+                moons: '0',
+                temp: '465 °C',
+                description: 'Sistemin en sıcak gezegenidir. Yoğun karbondioksit atmosferi ve sülfürik asit bulutları nedeniyle sera etkisi altındadır. Kendi ekseni etrafında ters yönde döner.',
+                color: 0xe3bb76,
+                radius: 2.2,
+                orbitRadius: 32,
+                speed: 0.022
+            },
+            earth: {
+                name: 'Dünya',
+                type: 'Kasal / Kayalık Gezegen',
+                diameter: '12,742 km',
+                distance: '149.6 Milyon km',
+                day: '24 Saat',
+                year: '365.25 Gün',
+                moons: '1 (Ay)',
+                temp: '15 °C',
+                description: 'Üzerinde yaşam olduğu bilinen tek gök cismidir. Sıvı halde su barındırır ve zengin bir azot-oksijen atmosferine sahiptir.',
+                color: 0x2b82c5,
+                radius: 2.4,
+                orbitRadius: 44,
+                speed: 0.015
+            },
+            mars: {
+                name: 'Mars',
+                type: 'Kasal / Kayalık Gezegen',
+                diameter: '6,779 km',
+                distance: '227.9 Milyon km',
+                day: '24.6 Saat',
+                year: '687 Gün',
+                moons: '2 (Phobos, Deimos)',
+                temp: '-60 °C',
+                description: 'Yüzeyindeki demir oksitten (pas) dolayı "Kızıl Gezegen" olarak anılır. Güneş Sistemi’nin en yüksek dağı olan Olympus Mons’a ev sahipliği yapar.',
+                color: 0xc85232,
+                radius: 1.6,
+                orbitRadius: 56,
+                speed: 0.012
+            },
+            jupiter: {
+                name: 'Jüpiter',
+                type: 'Gaz Devı',
+                diameter: '139,820 km',
+                distance: '778.5 Milyon km',
+                day: '9.9 Saat',
+                year: '11.8 Yıl',
+                moons: '95',
+                temp: '-110 °C',
+                description: 'Güneş Sisteminin en büyük gezegenidir. Diğer tüm gezegenlerin toplam kütlesinden iki kat daha ağırdır. Ünlü "Büyük Kırmızı Leke" devasa bir fırtınadır.',
+                color: 0xd39c7e,
+                radius: 5.5,
+                orbitRadius: 76,
+                speed: 0.007
+            },
+            saturn: {
+                name: 'Satürn',
+                type: 'Gaz Devı',
+                diameter: '116,460 km',
+                distance: '1.43 Milyar km',
+                day: '10.7 Saat',
+                year: '29.5 Yıl',
+                moons: '146',
+                temp: '-140 °C',
+                description: 'Muhteşem buz ve kaya halkalarıyla ünlüdür. Yoğunluğu sudan az olan tek gezegendir; devasa bir okyanusa konsaydı batmaz, yüzerdi.',
+                color: 0xe4ce93,
+                radius: 4.5,
+                orbitRadius: 98,
+                speed: 0.005,
+                hasRings: true
+            },
+            uranus: {
+                name: 'Uranüs',
+                type: 'Buz Devı',
+                diameter: '50,724 km',
+                distance: '2.87 Milyar km',
+                day: '17.2 Saat',
+                year: '84 Yıl',
+                moons: '28',
+                temp: '-195 °C',
+                description: 'Eksen eğikliği yaklaşık 98 derece olduğu için yörüngesinde "yuvarlanır" gibi döner. Metan gazı atmosferine turkuaz mavi rengini verir.',
+                color: 0x75c8c5,
+                radius: 3.2,
+                orbitRadius: 118,
+                speed: 0.003
+            },
+            neptune: {
+                name: 'Neptün',
+                type: 'Buz Devı',
+                diameter: '49,244 km',
+                distance: '4.50 Milyar km',
+                day: '16.1 Saat',
+                year: '164.8 Yıl',
+                moons: '16',
+                temp: '-200 °C',
+                description: 'Güneş’e en uzak gezegendir. Saatte 2,100 km hıza ulaşan Güneş Sistemi’nin en şiddetli rüzgarlarına sahiptir. Derin mavi renktedir.',
+                color: 0x4169e1,
+                radius: 3.1,
+                orbitRadius: 136,
+                speed: 0.002
+            }
+        };
+
+        // Global variables
+        let scene, camera, renderer, controls;
+        let planetObjects = {};
+        let simulationSpeed = 1.0;
+        let isPaused = false;
+        let selectedPlanetKey = null;
+        let targetCameraPos = null;
+        let targetLookAt = null;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Canvas element container
+        const container = document.getElementById('canvas-container');
+
+        function initScene() {
+            // 1. Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x030712, 0.002);
+
+            // 2. Camera setup
+            camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 70, 160);
+
+            // 3. Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // 4. Controls setup
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 350;
+            controls.minDistance = 5;
+
+            // 5. Lighting
+            const ambientLight = new THREE.AmbientLight(0x333333, 1.2);
+            scene.add(ambientLight);
+
+            // Sun light (PointLight)
+            const sunLight = new THREE.PointLight(0xffffff, 2.0, 400);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            // 6. Create Starfield Background
+            createStarfield();
+
+            // 7. Create Sun & Planets
+            createSolarSystem();
+
+            // 8. Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+            // Setup UI Events
+            setupUIEvents();
+
+            // Animation Loop
+            animate();
+        }
+
+        // Create Starfield using Particles
+        function createStarfield() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsCount = 4000;
+            const starPositions = new Float32Array(starsCount * 3);
+
+            for (let i = 0; i < starsCount * 3; i += 3) {
+                starPositions[i] = (Math.random() - 0.5) * 600;
+                starPositions[i + 1] = (Math.random() - 0.5) * 600;
+                starPositions[i + 2] = (Math.random() - 0.5) * 600;
+            }
+
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.8,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const starMesh = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(starMesh);
+        }
+
+        // Texture procedural creation for planets without external assets
+        function createProceduralTexture(colorHex, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const color = new THREE.Color(colorHex);
+            ctx.fillStyle = '#' + color.getHexString();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add simple procedural noise/stripes
+            if (type === 'sun') {
+                for (let i = 0; i < 400; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? '#fff5cc' : '#ff7700';
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (type === 'jupiter' || type === 'saturn') {
+                // Bands/Stripes
+                for (let y = 0; y < canvas.height; y += 8) {
+                    ctx.fillStyle = Math.random() > 0.4 ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.1)';
+                    ctx.fillRect(0, y, canvas.width, 4 + Math.random() * 8);
+                }
+            } else if (type === 'earth') {
+                // Landmasses style
+                ctx.fillStyle = '#1e6f5c';
+                for (let i = 0; i < 25; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 20 + Math.random() * 40, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        function createSolarSystem() {
+            Object.keys(PLANET_DATA).forEach((key) => {
+                const data = PLANET_DATA[key];
+
+                if (key === 'sun') {
+                    // Sun Construction
+                    const sunGeo = new THREE.SphereGeometry(data.radius, 32, 32);
+                    const sunTex = createProceduralTexture(data.color, 'sun');
+                    const sunMat = new THREE.MeshBasicMaterial({
+                        map: sunTex,
+                        color: data.color
+                    });
+                    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+
+                    // Sun Glow Outer Layer
+                    const glowGeo = new THREE.SphereGeometry(data.radius * 1.18, 32, 32);
+                    const glowMat = new THREE.MeshBasicMaterial({
+                        color: 0xffaa00,
+                        transparent: true,
+                        opacity: 0.25,
+                        side: THREE.BackSide
+                    });
+                    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+                    sunMesh.add(glowMesh);
+
+                    scene.add(sunMesh);
+
+                    planetObjects[key] = {
+                        mesh: sunMesh,
+                        pivot: scene,
+                        data: data,
+                        angle: 0
+                    };
+                } else {
+                    // Pivot Object for orbiting
+                    const pivot = new THREE.Object3D();
+                    scene.add(pivot);
+
+                    // Orbit Line Visual
+                    const orbitGeo = new THREE.RingGeometry(data.orbitRadius - 0.15, data.orbitRadius + 0.15, 128);
+                    const orbitMat = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.08
+                    });
+                    const orbitMesh = new THREE.Mesh(orbitGeo, orbitMat);
+                    orbitMesh.rotation.x = Math.PI / 2;
+                    scene.add(orbitMesh);
+
+                    // Planet Mesh
+                    const planetGeo = new THREE.SphereGeometry(data.radius, 32, 32);
+                    const planetTex = createProceduralTexture(data.color, key);
+                    const planetMat = new THREE.MeshStandardMaterial({
+                        map: planetTex,
+                        roughness: 0.8,
+                        metalness: 0.1
+                    });
+                    const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+                    planetMesh.castShadow = true;
+                    planetMesh.receiveShadow = true;
+                    planetMesh.position.x = data.orbitRadius;
+
+                    // Unique Planet Features (e.g. Saturn Rings, Earth Moon)
+                    if (data.hasRings) {
+                        const ringGeo = new THREE.RingGeometry(data.radius * 1.4, data.radius * 2.3, 64);
+                        const ringMat = new THREE.MeshStandardMaterial({
+                            color: 0xd2b48c,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.75
+                        });
+                        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                        ringMesh.rotation.x = Math.PI / 2 + 0.3;
+                        planetMesh.add(ringMesh);
+                    }
+
+                    if (key === 'earth') {
+                        // Moon
+                        const moonGeo = new THREE.SphereGeometry(0.5, 16, 16);
+                        const moonMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+                        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+                        moonMesh.position.set(4, 0, 0);
+                        
+                        const moonPivot = new THREE.Object3D();
+                        moonPivot.add(moonMesh);
+                        planetMesh.add(moonPivot);
+                        planetObjects['earth_moon'] = { pivot: moonPivot, speed: 0.05 };
+                    }
+
+                    // Attach user data for raycasting
+                    planetMesh.userData = { key: key };
+                    pivot.add(planetMesh);
+
+                    // Random initial position on orbit
+                    const initialAngle = Math.random() * Math.PI * 2;
+                    pivot.rotation.y = initialAngle;
+
+                    planetObjects[key] = {
+                        mesh: planetMesh,
+                        pivot: pivot,
+                        data: data,
+                        angle: initialAngle
+                    };
+                }
+            });
+        }
+
+        let pointerDownTime = 0;
+
+        function onPointerDown(event) {
+            pointerDownTime = Date.now();
+            // Listen for click/tap release
+            window.addEventListener('pointerup', onPointerUp);
+        }
+
+        function onPointerUp(event) {
+            window.removeEventListener('pointerup', onPointerUp);
+            // Ignore if dragging scene
+            if (Date.now() - pointerDownTime > 250) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            
+            const interactiveMeshes = Object.values(planetObjects)
+                .filter(obj => obj.mesh)
+                .map(obj => obj.mesh);
+
+            const intersects = raycaster.intersectObjects(interactiveMeshes);
+
+            if (intersects.length > 0) {
+                const clickedMesh = intersects[0].object;
+                const planetKey = clickedMesh.userData.key;
+                if (planetKey) {
+                    selectPlanet(planetKey);
+                }
+            }
+        }
+
+        function selectPlanet(key) {
+            const item = planetObjects[key];
+            if (!item) return;
+
+            selectedPlanetKey = key;
+            const data = item.data;
+
+            // Fill Modal Info
+            document.getElementById('modal-type').innerText = data.type;
+            document.getElementById('modal-title').innerText = data.name;
+            document.getElementById('modal-subtitle').innerText = `${data.name} Gezegeni Hakkında`;
+            document.getElementById('modal-diameter').innerText = data.diameter;
+            document.getElementById('modal-distance').innerText = data.distance;
+            document.getElementById('modal-day').innerText = data.day;
+            document.getElementById('modal-year').innerText = data.year;
+            document.getElementById('modal-moons').innerText = data.moons;
+            document.getElementById('modal-temp').innerText = data.temp;
+            document.getElementById('modal-description').innerText = data.description;
+
+            // Open Modal Panel
+            const modal = document.getElementById('info-modal');
+            modal.classList.remove('translate-x-[120%]', 'opacity-0');
+            modal.classList.add('translate-x-0', 'opacity-100');
+
+            // Trigger Smooth Camera Focus
+            focusCameraOnPlanet(key);
+        }
+
+        function focusCameraOnPlanet(key) {
+            const item = planetObjects[key];
+            if (!item) return;
+
+            const worldPos = new THREE.Vector3();
+            item.mesh.getWorldPosition(worldPos);
+
+            // Compute ideal target camera position offset
+            const offsetDistance = item.data.radius * 4.5 + 6;
+            
+            targetLookAt = worldPos.clone();
+            targetCameraPos = worldPos.clone().add(new THREE.Vector3(offsetDistance * 0.8, offsetDistance * 0.5, offsetDistance));
+        }
+
+        function resetCamera() {
+            selectedPlanetKey = null;
+            targetLookAt = new THREE.Vector3(0, 0, 0);
+            targetCameraPos = new THREE.Vector3(0, 70, 160);
+
+            // Close modal panel
+            const modal = document.getElementById('info-modal');
+            modal.classList.add('translate-x-[120%]', 'opacity-0');
+            modal.classList.remove('translate-x-0', 'opacity-100');
+        }
+
+        // Setup UI Listeners
+        function setupUIEvents() {
+            // Planet Navigation Buttons
+            document.querySelectorAll('.planet-nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const planetKey = btn.getAttribute('data-planet');
+                    selectPlanet(planetKey);
+                });
+            });
+
+            // Close Modal
+            document.getElementById('close-modal').addEventListener('click', () => {
+                const modal = document.getElementById('info-modal');
+                modal.classList.add('translate-x-[120%]', 'opacity-0');
+            });
+
+            // Focus Target Button in Modal
+            document.getElementById('btn-focus-target').addEventListener('click', () => {
+                if (selectedPlanetKey) {
+                    focusCameraOnPlanet(selectedPlanetKey);
+                }
+            });
+
+            // Speed Control Buttons
+            document.getElementById('btn-speed-down').addEventListener('click', () => simulationSpeed = 0.5);
+            document.getElementById('btn-speed-reset').addEventListener('click', () => simulationSpeed = 1.0);
+            document.getElementById('btn-speed-up').addEventListener('click', () => simulationSpeed = 2.5);
+
+            // Pause/Play Button
+            const pauseBtn = document.getElementById('btn-pause');
+            pauseBtn.addEventListener('click', () => {
+                isPaused = !isPaused;
+                pauseBtn.innerHTML = isPaused ? 
+                    '<i class="fa-solid fa-play text-base text-emerald-400"></i>' : 
+                    '<i class="fa-solid fa-pause text-base"></i>';
+            });
+
+            // Reset Camera View
+            document.getElementById('btn-reset-cam').addEventListener('click', resetCamera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Orbit & Self Rotation updates
+            if (!isPaused) {
+                Object.keys(planetObjects).forEach((key) => {
+                    if (key === 'earth_moon') {
+                        planetObjects[key].pivot.rotation.y += planetObjects[key].speed * simulationSpeed;
+                        return;
+                    }
+
+                    const item = planetObjects[key];
+                    if (item.data.speed > 0) {
+                        // Orbit Revolution
+                        item.pivot.rotation.y += item.data.speed * 0.3 * simulationSpeed;
+                    }
+                    // Self Axial Rotation
+                    if (item.mesh) {
+                        item.mesh.rotation.y += 0.008 * simulationSpeed;
+                    }
+                });
+            }
+
+            // Smooth Interpolation (Lerp) for Camera transitions
+            if (targetCameraPos && targetLookAt) {
+                // If following a moving planet, keep updating target positions
+                if (selectedPlanetKey && selectedPlanetKey !== 'sun') {
+                    const worldPos = new THREE.Vector3();
+                    planetObjects[selectedPlanetKey].mesh.getWorldPosition(worldPos);
+                    
+                    const offsetDistance = planetObjects[selectedPlanetKey].data.radius * 4.5 + 6;
+                    targetLookAt.copy(worldPos);
+                    targetCameraPos.copy(worldPos).add(new THREE.Vector3(offsetDistance * 0.8, offsetDistance * 0.5, offsetDistance));
+                }
+
+                camera.position.lerp(targetCameraPos, 0.05);
+                controls.target.lerp(targetLookAt, 0.05);
+
+                if (camera.position.distanceTo(targetCameraPos) < 0.2 && controls.target.distanceTo(targetLookAt) < 0.2) {
+                    targetCameraPos = null;
+                    targetLookAt = null;
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Window Load Start
+        window.onload = function() {
+            initScene();
+        };
+    </script>
+</body>
+</html>
