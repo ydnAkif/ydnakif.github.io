@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Etkileşimli Güneş Sistemi</title>
+  
+  <!-- Three.js ve OrbitControls Kütüphaneleri -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #020208;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* Özel Kaydırma Çubuğu */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-white">
+
+  <!-- 3D Canvas Konteyneri -->
+  <div id="canvas-container"></div>
+
+  <!-- Üst Başlık & Kontroller -->
+  <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+    <div class="glass-panel p-4 rounded-xl shadow-2xl max-w-xs">
+      <h1 class="text-xl font-bold bg-gradient-to-r from-amber-400 via-orange-300 to-amber-200 bg-clip-text text-transparent">
+        3D Güneş Sistemi
+      </h1>
+      <p class="text-xs text-slate-400 mt-1">
+        Gezegenleri incelemek için üzerlerine tıklayın veya gezegen menüsünü kullanın.
+      </p>
+    </div>
+  </div>
+
+  <!-- Gezegen Seçim Menüsü -->
+  <div class="absolute top-4 right-4 z-10 flex gap-1 glass-panel p-1.5 rounded-xl overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
+    <button onclick="focusBody('Sun')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-amber-500/20 hover:text-amber-300 transition-all">Güneş</button>
+    <button onclick="focusBody('Mercury')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-slate-500/20 hover:text-slate-300 transition-all">Merkür</button>
+    <button onclick="focusBody('Venus')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-amber-600/20 hover:text-amber-200 transition-all">Venüs</button>
+    <button onclick="focusBody('Earth')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-blue-500/20 hover:text-blue-300 transition-all">Dünya</button>
+    <button onclick="focusBody('Mars')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-red-500/20 hover:text-red-300 transition-all">Mars</button>
+    <button onclick="focusBody('Jupiter')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-orange-500/20 hover:text-orange-300 transition-all">Jüpiter</button>
+    <button onclick="focusBody('Saturn')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-yellow-500/20 hover:text-yellow-300 transition-all">Satürn</button>
+    <button onclick="focusBody('Uranus')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-cyan-500/20 hover:text-cyan-300 transition-all">Uranüs</button>
+    <button onclick="focusBody('Neptune')" class="px-3 py-1.5 text-xs font-medium rounded-lg hover:bg-blue-600/20 hover:text-blue-200 transition-all">Neptün</button>
+  </div>
+
+  <!-- Sol Alt Kontrol Paneli -->
+  <div class="absolute bottom-4 left-4 z-10 glass-panel p-3 rounded-xl flex items-center gap-4 text-xs">
+    <div class="flex items-center gap-2">
+      <button id="btn-play" onclick="togglePause()" class="p-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all">
+        ⏸ Duraklat
+      </button>
+      <button onclick="resetCamera()" class="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-all">
+        🎥 Genel Bakış
+      </button>
+    </div>
+    <div class="h-6 w-px bg-slate-700"></div>
+    <div class="flex items-center gap-2">
+      <span class="text-slate-400">Hız:</span>
+      <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)" class="w-20 accent-amber-500">
+      <span id="speedVal" class="text-amber-400 w-8">1x</span>
+    </div>
+    <div class="h-6 w-px bg-slate-700"></div>
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" id="orbitsToggle" checked onchange="toggleOrbits(this.checked)" class="accent-amber-500">
+      <span class="text-slate-300">Yörüngeler</span>
+    </label>
+  </div>
+
+  <!-- Bilgi Kartı (Gezegen Seçildiğinde Açılır) -->
+  <div id="info-card" class="absolute bottom-4 right-4 z-10 glass-panel p-5 rounded-2xl w-80 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
+    <div class="flex justify-between items-start mb-3">
+      <div>
+        <h2 id="card-title" class="text-2xl font-bold text-amber-400">Güneş</h2>
+        <span id="card-type" class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Yıldız</span>
+      </div>
+      <button onclick="closeInfoCard()" class="text-slate-400 hover:text-white p-1">✕</button>
+    </div>
+    
+    <p id="card-desc" class="text-xs text-slate-300 leading-relaxed mb-4">
+      Açıklama buraya gelecek.
+    </p>
+
+    <div class="grid grid-cols-2 gap-2 text-xs">
+      <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50">
+        <span class="text-slate-400 block text-[10px]">Çap</span>
+        <span id="card-diameter" class="font-semibold text-slate-200">-</span>
+      </div>
+      <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50">
+        <span class="text-slate-400 block text-[10px]">Güneş'e Uzaklık</span>
+        <span id="card-distance" class="font-semibold text-slate-200">-</span>
+      </div>
+      <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50">
+        <span class="text-slate-400 block text-[10px]">Yörünge Süresi</span>
+        <span id="card-period" class="font-semibold text-slate-200">-</span>
+      </div>
+      <div class="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50">
+        <span class="text-slate-400 block text-[10px]">Uydu Sayısı</span>
+        <span id="card-moons" class="font-semibold text-slate-200">-</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- GEZEGEN VERİLERİ ---
+    const bodiesData = {
+      Sun: {
+        name: "Güneş",
+        type: "Yıldız",
+        size: 14,
+        distance: 0,
+        speed: 0,
+        color: 0xffaa00,
+        emissive: 0xff8800,
+        desc: "Güneş Sistemimizin merkezinde yer alan sıcak gazlardan oluşan devasa bir yıldızdır. Sistemdeki kütlenin %99.8'ini oluşturur.",
+        diameter: "1,392,700 km",
+        sunDist: "0 km",
+        period: "-",
+        moons: "8 Gezegen"
+      },
+      Mercury: {
+        name: "Merkür",
+        type: "Karasal Gezegen",
+        size: 1.2,
+        distance: 28,
+        speed: 0.03,
+        color: 0xa6a6a6,
+        desc: "Güneş'e en yakın ve en küçük gezegendir. Atmosferi neredeyse hiç yoktur, bu yüzden gündüzleri çok sıcak, geceleri çok soğuktur.",
+        diameter: "4,879 km",
+        sunDist: "57.9 Milyon km",
+        period: "88 Gün",
+        moons: "0"
+      },
+      Venus: {
+        name: "Venüs",
+        type: "Karasal Gezegen",
+        size: 2.2,
+        distance: 42,
+        speed: 0.022,
+        color: 0xe3bb76,
+        desc: "Güneş Sisteminin en sıcak gezegenidir. Kalın seragazı atmosferi ısıyı hapseder. Kendi etrafında ters yönde döner.",
+        diameter: "12,104 km",
+        sunDist: "108.2 Milyon km",
+        period: "225 Gün",
+        moons: "0"
+      },
+      Earth: {
+        name: "Dünya",
+        type: "Karasal Gezegen",
+        size: 2.5,
+        distance: 60,
+        speed: 0.016,
+        color: 0x2b82c9,
+        desc: "Üzerinde yaşam olduğu bilinen tek gök cismidir. Yüzeyinin yaklaşık %71'i sularla kaplıdır.",
+        diameter: "12,742 km",
+        sunDist: "149.6 Milyon km",
+        period: "365.25 Gün",
+        moons: "1 (Ay)"
+      },
+      Mars: {
+        name: "Mars",
+        type: "Karasal Gezegen",
+        size: 1.8,
+        distance: 78,
+        speed: 0.012,
+        color: 0xc1440e,
+        desc: "Kızıl Gezegen olarak bilinir. Yüzeyindeki demir oksit (pas) nedeniyle kırmızımsı görünür. Güneş Sisteminin en yüksek dağı Olympus Mons buradadır.",
+        diameter: "6,779 km",
+        sunDist: "227.9 Milyon km",
+        period: "687 Gün",
+        moons: "2"
+      },
+      Jupiter: {
+        name: "Jüpiter",
+        type: "Gaz Devı",
+        size: 6.0,
+        distance: 105,
+        speed: 0.008,
+        color: 0xb07f35,
+        desc: "Güneş Sisteminin en büyük gezegenidir. İçine 1300'den fazla Dünya sığabilir. Meşhur 'Büyük Kırmızı Leke' devasa bir fırtınadır.",
+        diameter: "139,820 km",
+        sunDist: "778.5 Milyon km",
+        period: "12 Yıl",
+        moons: "95"
+      },
+      Saturn: {
+        name: "Satürn",
+        type: "Gaz Devı",
+        size: 4.8,
+        distance: 140,
+        speed: 0.005,
+        color: 0xe2bf7d,
+        ring: true,
+        desc: "Görkemli ve geniş halka sistemiyle tanınır. Halkaları çoğunlukla buz parçacıkları ve kayalardan oluşur.",
+        diameter: "116,460 km",
+        sunDist: "1.4 Milyar km",
+        period: "29.5 Yıl",
+        moons: "146"
+      },
+      Uranus: {
+        name: "Uranüs",
+        type: "Buz Devı",
+        size: 3.5,
+        distance: 175,
+        speed: 0.003,
+        color: 0x4b70dd,
+        desc: "Aşırı eğik ekseni nedeniyle adeta 'yan yatmış' olarak döner. Metan gazı atmosferine mavi-yeşil rengini verir.",
+        diameter: "50,724 km",
+        sunDist: "2.8 Milyar km",
+        period: "84 Yıl",
+        moons: "28"
+      },
+      Neptune: {
+        name: "Neptün",
+        type: "Buz Devı",
+        size: 3.3,
+        distance: 205,
+        speed: 0.002,
+        color: 0x274687,
+        desc: "Güneş'e en uzak ana gezegendir. Güneş sistemindeki en şiddetli rüzgarlar (saatte 2100 km) bu gezegende eser.",
+        diameter: "49,244 km",
+        sunDist: "4.5 Milyar km",
+        period: "165 Yıl",
+        moons: "16"
+      }
+    };
+
+    // --- THREE.JS KURULUMU ---
+    let scene, camera, renderer, controls;
+    const bodyObjects = {};
+    const orbitLines = [];
+    let isPaused = false;
+    let simSpeed = 1;
+    let targetFocus = null;
+    let focusedKey = null;
+
+    function init() {
+      const container = document.getElementById('canvas-container');
+
+      // Sahne
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x020208, 0.001);
+
+      // Kamera
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+      camera.position.set(0, 120, 260);
+
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      // Orbit Controls (Fare Kontrolü)
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxDistance = 600;
+      controls.minDistance = 5;
+
+      // Işıklandırma
+      const ambientLight = new THREE.AmbientLight(0x333333);
+      scene.add(ambientLight);
+
+      const sunLight = new THREE.PointLight(0xffffff, 2, 800, 0.5);
+      scene.add(sunLight);
+
+      // Yıldız Arka Planı
+      createStars();
+
+      // Göksel Cisimleri Oluştur
+      Object.keys(bodiesData).forEach(key => {
+        const data = bodiesData[key];
+        
+        // Gezegen Yörüngesi
+        if (data.distance > 0) {
+          const orbitGeo = new THREE.RingGeometry(data.distance - 0.2, data.distance + 0.2, 128);
+          const orbitMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.12 });
+          const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+          orbit.rotation.x = Math.PI / 2;
+          scene.add(orbit);
+          orbitLines.push(orbit);
+        }
+
+        // Gezegen Küresi
+        const geo = new THREE.SphereGeometry(data.size, 32, 32);
+        let mat;
+        
+        if (key === 'Sun') {
+          mat = new THREE.MeshBasicMaterial({ color: data.color });
+          // Güneş Parlaması
+          const glowGeo = new THREE.SphereGeometry(data.size * 1.2, 32, 32);
+          const glowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.25 });
+          const glow = new THREE.Mesh(glowGeo, glowMat);
+          scene.add(glow);
+        } else {
+          mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.8, metalness: 0.1 });
+        }
+
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.userData = { key: key, angle: Math.random() * Math.PI * 2 };
+        
+        // Satürn Halkası
+        if (data.ring) {
+          const ringGeo = new THREE.RingGeometry(data.size * 1.4, data.size * 2.3, 64);
+          const ringMat = new THREE.MeshStandardMaterial({ color: 0xc2a366, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+          const ring = new THREE.Mesh(ringGeo, ringMat);
+          ring.rotation.x = Math.PI / 2 + 0.2;
+          mesh.add(ring);
+        }
+
+        // Dünya'nın Ay'ı
+        if (key === 'Earth') {
+          const moonGeo = new THREE.SphereGeometry(0.6, 16, 16);
+          const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+          const moon = new THREE.Mesh(moonGeo, moonMat);
+          moon.position.set(4, 0, 0);
+          mesh.userData.moon = moon;
+          mesh.add(moon);
+        }
+
+        scene.add(mesh);
+        bodyObjects[key] = mesh;
+      });
+
+      // Tıklama Algılama (Raycaster)
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      window.addEventListener('click', (e) => {
+        // Eğer tıklama menülere denk geldiyse es geç
+        if (e.target.closest('.glass-panel') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(Object.values(bodyObjects));
+
+        if (intersects.length > 0) {
+          const clickedKey = intersects[0].object.userData.key;
+          if (clickedKey) focusBody(clickedKey);
+        }
+      });
+
+      window.addEventListener('resize', onWindowResize);
+      animate();
+    }
+
+    // Yıldız Serpiştirme
+    function createStars() {
+      const count = 3000;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+
+      for (let i = 0; i < count * 3; i += 3) {
+        positions[i] = (Math.random() - 0.5) * 1200;
+        positions[i + 1] = (Math.random() - 0.5) * 1200;
+        positions[i + 2] = (Math.random() - 0.5) * 1200;
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.8 });
+      const stars = new THREE.Points(geometry, material);
+      scene.add(stars);
+    }
+
+    // Animasyon Döngüsü
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Gezegen Dönüşleri ve Yörünge Hareketleri
+      Object.keys(bodyObjects).forEach(key => {
+        const obj = bodyObjects[key];
+        const data = bodiesData[key];
+
+        // Kendi etrafında dönme
+        obj.rotation.y += 0.005;
+
+        // Yörüngede dönme
+        if (!isPaused && data.distance > 0) {
+          obj.userData.angle += data.speed * 0.3 * simSpeed;
+          obj.position.x = Math.cos(obj.userData.angle) * data.distance;
+          obj.position.z = Math.sin(obj.userData.angle) * data.distance;
+        }
+
+        // Ay'ın Dünya etrafında dönmesi
+        if (key === 'Earth' && obj.userData.moon && !isPaused) {
+          obj.userData.moon.position.x = Math.cos(Date.now() * 0.003) * 4;
+          obj.userData.moon.position.z = Math.sin(Date.now() * 0.003) * 4;
+        }
+      });
+
+      // Kamera Odak Takibi
+      if (targetFocus) {
+        const targetPos = targetFocus.position;
+        controls.target.lerp(targetPos, 0.05);
+        
+        // İlk odaklanmada kamerayı gezegene yaklaştır
+        if (controls.target.distanceTo(targetPos) < 1) {
+          // Takip etmeye devam et
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    // --- KONTROL VE ETKİLEŞİM FONKSİYONLARI ---
+    function focusBody(key) {
+      const obj = bodyObjects[key];
+      const data = bodiesData[key];
+      if (!obj) return;
+
+      focusedKey = key;
+      targetFocus = obj;
+
+      // Kamera Yumuşak Geçiş
+      const offset = data.size * 3.5 + 5;
+      const targetCamPos = new THREE.Vector3()
+        .copy(obj.position)
+        .add(new THREE.Vector3(offset, offset * 0.6, offset));
+
+      // Pop-up Bilgi Kartını Doldur
+      document.getElementById('card-title').innerText = data.name;
+      document.getElementById('card-type').innerText = data.type;
+      document.getElementById('card-desc').innerText = data.desc;
+      document.getElementById('card-diameter').innerText = data.diameter;
+      document.getElementById('card-distance').innerText = data.sunDist;
+      document.getElementById('card-period').innerText = data.period;
+      document.getElementById('card-moons').innerText = data.moons;
+
+      // Kartı Göster
+      const card = document.getElementById('info-card');
+      card.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+    }
+
+    function resetCamera() {
+      targetFocus = null;
+      focusedKey = null;
+      controls.target.set(0, 0, 0);
+      closeInfoCard();
+    }
+
+    function closeInfoCard() {
+      const card = document.getElementById('info-card');
+      card.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+    }
+
+    function togglePause() {
+      isPaused = !isPaused;
+      const btn = document.getElementById('btn-play');
+      btn.innerHTML = isPaused ? '▶ Başlat' : '⏸ Duraklat';
+    }
+
+    function updateSpeed(val) {
+      simSpeed = parseFloat(val);
+      document.getElementById('speedVal').innerText = val + 'x';
+    }
+
+    function toggleOrbits(show) {
+      orbitLines.forEach(line => line.visible = show);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // Uygulamayı Başlat
+    window.onload = init;
+  </script>
+</body>
+</html>

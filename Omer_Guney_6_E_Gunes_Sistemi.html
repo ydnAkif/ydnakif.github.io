@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi Projesi - 6. Sınıf Fen Bilimleri</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #020208; color: #ffffff; }
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .glass-panel {
+            position: absolute; top: 20px; left: 20px; z-index: 10; width: 380px; max-height: calc(100vh - 40px); overflow-y: auto;
+            padding: 24px; border-radius: 24px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+        .glass-panel::-webkit-scrollbar { width: 6px; }
+        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+
+        .header-title { font-size: 1.4rem; font-weight: 700; background: linear-gradient(135deg, #ffea79, #ff9800); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+        .subtitle { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 18px; }
+        .control-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { flex: 1; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 14px; background: rgba(255, 255, 255, 0.08); color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; }
+        .btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+        .btn-active { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: #60a5fa; }
+        .slider-container { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .speed-slider { flex: 1; cursor: pointer; accent-color: #38bdf8; }
+        #speed-value { color: #38bdf8; min-width: 35px; }
+
+        .info-card { background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 16px; }
+        .planet-name { font-size: 1.3rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
+        .info-item { margin-bottom: 10px; font-size: 0.88rem; line-height: 1.45; color: #e2e8f0; }
+        .info-label { font-weight: 600; color: #94a3b8; display: block; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 2px; }
+        
+        .hint-box { margin-top: 16px; font-size: 0.78rem; color: #94a3b8; background: rgba(255, 255, 255, 0.03); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 0 8px 8px 0; }
+
+        #halley-label { position: absolute; z-index: 100; display: none; transform: translate(-50%, -100%); background: rgba(14, 165, 233, 0.9); color: #ffffff; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; border: 1px solid #7dd3fc; box-shadow: 0 0 20px rgba(56, 189, 248, 0.9); pointer-events: none; transition: opacity 0.2s ease; }
+        #halley-label::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border-width: 6px 6px 0; border-style: solid; border-color: rgba(14, 165, 233, 0.9) transparent; }
+
+        #btn-karsilastir { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 20px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border: 1px solid #0284c7; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #btn-karsilastir:hover { background: #0284c7; color: #ffffff; }
+        #modal-karsilastir { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); z-index: 10000; justify-content: center; align-items: center; }
+        .modal-icerik { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; border-radius: 16px; width: 90%; max-width: 650px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .modal-baslik { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+        .modal-baslik h2 { font-size: 20px; color: #38bdf8; }
+        .modal-kapat { background: none; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; }
+        .kilo-girdi-kutusu { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 12px 16px; border-radius: 10px; }
+        .kilo-girdi-kutusu input { background: #0f172a; border: 1px solid #475569; color: #38bdf8; padding: 8px 12px; border-radius: 6px; width: 100px; text-align: center; }
+        .gezegensel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+        .gezegen-kart { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .gezegen-kart .isim { font-weight: bold; font-size: 15px; color: #f8fafc; }
+        .gezegen-kart .ivme { font-size: 11px; color: #94a3b8; }
+        .gezegen-kart .kilo { font-size: 16px; font-weight: bold; color: #38bdf8; }
+        .gezegen-kart .newton { font-size: 13px; color: #f43f5e; }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="halley-label">☄️ HALLEY</div>
+
+    <div class="glass-panel">
+        <div class="header-title">☀️ Güneş Sistemi 3D</div>
+        <div class="subtitle">6. Sınıf Fen Bilimleri Proje Modeli</div>
+
+        <div class="control-bar">
+            <button id="btn-play-pause" class="btn btn-active" onclick="toggleAnimation()">
+                <span id="icon-play">⏸️</span> <span id="text-play">Durdur</span>
+            </button>
+            <button class="btn" onclick="resetCamera()">🎯 Odak Sıfırla</button>
+        </div>
+
+        <div class="slider-container">
+            <span>🚀 Hız:</span>
+            <input type="range" id="speed-slider" class="speed-slider" min="0.1" max="5" step="0.1" value="1">
+            <span id="speed-value">1.0x</span>
+        </div>
+
+        <div id="info-content" class="info-card">
+            <div class="planet-name"><span id="p-title">Güneş Sistemi</span><span id="p-tag" class="tag">Genel Görünüm</span></div>
+            <div class="info-item"><span class="info-label">Sınıflandırma:</span><span id="p-class">Samanyolu Galaksisi</span></div>
+            <div class="info-item"><span class="info-label">Önemli Özellikler:</span><span id="p-desc">Güneş ve onun çekim etkisi altındaki gezegenler, uydular ve diğer gök cisimlerinden oluşan sistem. Herhangi bir gezegene tıklayarak inceleyebilirsiniz.</span></div>
+            <div class="info-item"><span class="info-label">Uydu & Halka:</span><span id="p-satellites">-</span></div>
+        </div>
+        <div class="hint-box">💡 <b>İpucu:</b> Asteroit Kuşağı'na tıklayarak Halley'i ortaya çıkarabilirsin!</div>
+    </div>
+
+    <button id="btn-karsilastir" onclick="modalAc()">⚖️ Karşılaştır</button>
+    <div id="modal-karsilastir" onclick="modalDisiTiklama(event)">
+        <div class="modal-icerik">
+            <div class="modal-baslik">
+                <h2>Gök Cisimlerinde Ağırlık Hesaplayıcı</h2>
+                <button class="modal-kapat" onclick="modalKapat()">&times;</button>
+            </div>
+            <div class="kilo-girdi-kutusu">
+                <label>Dünya'daki Kütleniz (kg):</label>
+                <input type="number" id="dunya-kilo" value="70" min="1" oninput="hesapla()" />
+            </div>
+            <div class="gezegensel-grid" id="sonuc-listesi"></div>
+        </div>
+    </div>
+
+    <script>
+        const planetData = {
+            'Güneş': { tag: 'Yıldız', class: 'Merkez', desc: 'Isı ve ışık kaynağımızdır.', satellites: 'Yok', size: 10, orbit: 0, speed: 0, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/sunmap.jpg' },
+            'Merkür': { tag: 'İç Gezegen', class: '1. Gezegen', desc: 'Güneş\'e en yakın gezegendir.', satellites: 'Yok', size: 1.2, orbit: 18, speed: 0.02, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/mercurymap.jpg' },
+            'Venüs': { tag: 'İç Gezegen', class: '2. Gezegen', desc: 'Ters yönde döner, en sıcak gezegendir.', satellites: 'Yok', size: 1.8, orbit: 28, speed: 0.014, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/venusmap.jpg' },
+            'Dünya': { tag: 'İç Gezegen', class: '3. Gezegen', desc: 'Yaşam olan tek gezegendir.', satellites: '1 uydusu vardır (Ay).', size: 2.1, orbit: 40, speed: 0.01, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/earthmap1k.jpg' },
+            'Mars': { tag: 'İç Gezegen', class: '4. Gezegen', desc: 'Kızıl Gezegen olarak bilinir.', satellites: '2 uydusu vardır.', size: 1.5, orbit: 52, speed: 0.008, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/marsmap1k.jpg' },
+            'Jüpiter': { tag: 'Dış Gezegen', class: '5. Gezegen', desc: 'En büyük gezegendir.', satellites: '90+ uydusu vardır.', size: 4.8, orbit: 75, speed: 0.004, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/jupitermap.jpg' },
+            'Satürn': { tag: 'Dış Gezegen', class: '6. Gezegen', desc: 'Halkalarıyla ünlüdür.', satellites: '140+ uydusu vardır.', size: 4.0, orbit: 95, speed: 0.0028, hasRings: true, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/saturnmap.jpg' },
+            'Uranüs': { tag: 'Dış Gezegen', class: '7. Gezegen', desc: 'Yan yatmış varil gibi döner.', satellites: '27 uydusu vardır.', size: 3.1, orbit: 115, speed: 0.0018, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/uranusmap.jpg' },
+            'Neptün': { tag: 'Dış Gezegen', class: '8. Gezegen', desc: 'Güneş\'e en uzak gezegendir.', satellites: '14 uydusu vardır.', size: 3.0, orbit: 130, speed: 0.0012, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/neptunemap.jpg' },
+            'Ay': { size: 0.6, texture: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/moonmap1k.jpg' },
+            'Halley': { tag: 'Kuyruklu Yıldız', class: 'Gök Taşı', desc: '75-76 yılda bir geçen buz ve toz kümesidir. Asteroit Kuşağı içinde izlenmektedir.', satellites: 'Uydusu yoktur.' }
+        };
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020208, 0.0015); 
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 80, 180);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05; controls.maxDistance = 600; controls.minDistance = 5;
+
+        scene.add(new THREE.AmbientLight(0x333344, 1.0));
+        scene.add(new THREE.PointLight(0xffffff, 2.5, 800));
+        const textureLoader = new THREE.TextureLoader();
+
+        // Yıldızlar
+        const starsGeometry = new THREE.BufferGeometry();
+        const starPos = new Float32Array(5000 * 3);
+        for(let i=0; i<15000; i++) starPos[i] = (Math.random() - 0.5) * 1000;
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        scene.add(new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0.8 })));
+
+        const planetMeshes = [];
+        let earthMesh = null, moonMesh = null;
+
+        // Gezegenler
+        const sunGeo = new THREE.SphereGeometry(10, 32, 32);
+        const sunMesh = new THREE.Mesh(sunGeo, new THREE.MeshBasicMaterial({ map: textureLoader.load(planetData['Güneş'].texture) }));
+        sunMesh.userData = { name: 'Güneş' }; scene.add(sunMesh);
+
+        Object.keys(planetData).forEach((key) => {
+            if (key === 'Güneş' || key === 'Ay' || key === 'Halley') return;
+            const p = planetData[key];
+            
+            const pts = [];
+            for (let i = 0; i <= 64; i++) pts.push(new THREE.Vector3(Math.cos(i/64*Math.PI*2)*p.orbit, 0, Math.sin(i/64*Math.PI*2)*p.orbit));
+            const orbitLine = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 }));
+            scene.add(orbitLine);
+
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(p.size, 32, 32), new THREE.MeshStandardMaterial({ map: textureLoader.load(p.texture), roughness: 0.8 }));
+            mesh.userData = { name: key, orbit: p.orbit, speed: p.speed, angle: Math.random() * Math.PI * 2, radius: p.size };
+            scene.add(mesh); planetMeshes.push(mesh);
+            if(key === 'Dünya') earthMesh = mesh;
+        });
+
+        moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16), new THREE.MeshStandardMaterial({ map: textureLoader.load(planetData['Ay'].texture) }));
+        moonMesh.userData = { angle: 0 }; scene.add(moonMesh);
+
+        // Asteroit Kuşağı
+        const astGeo = new THREE.BufferGeometry();
+        const astPos = new Float32Array(3000 * 3);
+        for (let i = 0; i < 3000; i++) {
+            const r = 58 + Math.random() * 10, a = Math.random() * Math.PI * 2;
+            astPos[i*3] = Math.cos(a)*r; astPos[i*3+1] = (Math.random()-0.5)*4; astPos[i*3+2] = Math.sin(a)*r;
+        }
+        astGeo.setAttribute('position', new THREE.BufferAttribute(astPos, 3));
+        const asteroidBelt = new THREE.Points(astGeo, new THREE.PointsMaterial({ color: 0x888888, size: 0.4, transparent: true, opacity: 0.8 }));
+        scene.add(asteroidBelt);
+        const hitBox = new THREE.Mesh(new THREE.RingGeometry(58, 68, 32), new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
+        hitBox.rotation.x = Math.PI/2; hitBox.userData = { isAsteroidBelt: true }; scene.add(hitBox);
+
+        // Halley Kuyruklu Yıldızı
+        const halleyGroup = new THREE.Group();
+        const halleyMat = new THREE.MeshStandardMaterial({ map: textureLoader.load('https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/moonmap1k.jpg'), color: 0x99ccff, roughness: 0.9 });
+        const halleyNucleus = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 1), halleyMat);
+        
+        const tailGeo = new THREE.ConeGeometry(1.8, 14, 16);
+        const tailMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.4 });
+        const halleyTail = new THREE.Mesh(tailGeo, tailMat);
+        halleyTail.position.z = 7; halleyTail.rotation.x = Math.PI / 2;
+        
+        halleyGroup.add(halleyNucleus); halleyGroup.add(halleyTail);
+        halleyGroup.userData = { name: 'Halley', angle: 0, radius: 2.5 };
+        halleyGroup.visible = false; // Başlangıçta görünmez
+        scene.add(halleyGroup);
+
+        // Tıklama Sistemi
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        window.addEventListener('pointerdown', (e) => mouse.set(e.clientX, e.clientY));
+        window.addEventListener('pointerup', (e) => {
+            if (Math.hypot(e.clientX - mouse.x, e.clientY - mouse.y) > 5) return;
+            const mx = (e.clientX / window.innerWidth) * 2 - 1;
+            const my = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera({x: mx, y: my}, camera);
+            const intersects = raycaster.intersectObjects([sunMesh, ...planetMeshes, halleyGroup, hitBox], true);
+
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
+                if (obj.userData.isAsteroidBelt) {
+                    setFocus('Halley', halleyGroup);
+                } else {
+                    while (obj.parent && !obj.userData.name && obj.parent !== scene) obj = obj.parent;
+                    if (obj.userData.name) setFocus(obj.userData.name, obj);
+                }
+            } else resetCamera();
+        });
+
+        function setFocus(name, obj) {
+            document.getElementById('p-title').innerText = name;
+            document.getElementById('p-tag').innerText = planetData[name].tag;
+            document.getElementById('p-class').innerText = planetData[name].class;
+            document.getElementById('p-desc').innerText = planetData[name].desc;
+            document.getElementById('p-satellites').innerText = planetData[name].satellites;
+
+            if (name === 'Halley') {
+                halleyGroup.visible = true;
+            } else {
+                halleyGroup.visible = false;
+                document.getElementById('halley-label').style.display = 'none';
+            }
+
+            trackedMesh = obj; isTransitioningCamera = true; cameraTransitionProgress = 0;
+        }
+
+        let isPaused = false, speedMultiplier = 1.0, trackedMesh = null, isTransitioningCamera = false, cameraTransitionProgress = 0;
+        const currentTargetPos = new THREE.Vector3(0,0,0);
+        document.getElementById('speed-slider').addEventListener('input', (e) => { speedMultiplier = parseFloat(e.target.value); document.getElementById('speed-value').innerText = speedMultiplier.toFixed(1) + 'x'; });
+        function toggleAnimation() { isPaused = !isPaused; document.getElementById('btn-play-pause').classList.toggle('btn-active', !isPaused); }
+        
+        function resetCamera() { 
+            trackedMesh = null; 
+            isTransitioningCamera = true; 
+            cameraTransitionProgress = 0; 
+            
+            halleyGroup.visible = false;
+            document.getElementById('halley-label').style.display = 'none';
+            
+            document.getElementById('p-title').innerText = 'Güneş Sistemi';
+            document.getElementById('p-tag').innerText = 'Genel Görünüm';
+            document.getElementById('p-class').innerText = 'Samanyolu Galaksisi';
+            document.getElementById('p-desc').innerText = 'Güneş ve onun çekim etkisi altındaki gezegenler, uydular ve diğer gök cisimlerinden oluşan sistem. Herhangi bir gezegene tıklayarak inceleyebilirsiniz.';
+            document.getElementById('p-satellites').innerText = '-';
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sunMesh.rotation.y += 0.002 * speedMultiplier;
+            if (!isPaused) {
+                planetMeshes.forEach(m => {
+                    m.userData.angle -= m.userData.speed * speedMultiplier;
+                    m.position.set(Math.cos(m.userData.angle) * m.userData.orbit, 0, Math.sin(m.userData.angle) * m.userData.orbit);
+                    m.rotation.y += 0.02 * speedMultiplier;
+                });
+                moonMesh.userData.angle -= 0.05 * speedMultiplier;
+                moonMesh.position.set(earthMesh.position.x + Math.cos(moonMesh.userData.angle)*4, 0, earthMesh.position.z + Math.sin(moonMesh.userData.angle)*4);
+                asteroidBelt.rotation.y -= 0.0005 * speedMultiplier;
+
+                // Halley Asteroit Kuşağı İçinde Sabit Yörünge (Yarıçap: 63)
+                halleyGroup.userData.angle -= 0.003 * speedMultiplier;
+                halleyGroup.position.x = Math.cos(halleyGroup.userData.angle) * 63;
+                halleyGroup.position.z = Math.sin(halleyGroup.userData.angle) * 63;
+                halleyTail.lookAt(0, 0, 0); halleyTail.rotation.x += Math.PI / 2;
+                halleyNucleus.rotation.y += 0.01 * speedMultiplier;
+            }
+
+            if (trackedMesh === halleyGroup && halleyGroup.visible) {
+                const hLbl = document.getElementById('halley-label'); hLbl.style.display = 'block';
+                const tempV = halleyGroup.position.clone().add(new THREE.Vector3(0, 3, 0)).project(camera);
+                hLbl.style.left = `${(tempV.x * 0.5 + 0.5) * window.innerWidth}px`;
+                hLbl.style.top = `${(-tempV.y * 0.5 + 0.5) * window.innerHeight}px`;
+            }
+
+            if (trackedMesh && !isTransitioningCamera) {
+                currentTargetPos.lerp(trackedMesh.position, 0.2); 
+                controls.target.copy(currentTargetPos);
+                const r = trackedMesh.userData.radius || 10;
+                camera.position.lerp(currentTargetPos.clone().add(new THREE.Vector3(r*4+10, r*2+5, r*4+10)), 0.15); 
+            } else if (isTransitioningCamera) {
+                cameraTransitionProgress += 0.06; 
+                if (cameraTransitionProgress >= 1) { cameraTransitionProgress = 1; isTransitioningCamera = false; }
+                if (trackedMesh) {
+                    currentTargetPos.lerp(trackedMesh.position, cameraTransitionProgress);
+                    controls.target.copy(currentTargetPos);
+                    const r = trackedMesh.userData.radius || 10;
+                    camera.position.lerp(currentTargetPos.clone().add(new THREE.Vector3(r*4+10, r*2+5, r*4+10)), cameraTransitionProgress);
+                } else {
+                    controls.target.lerp(new THREE.Vector3(0,0,0), cameraTransitionProgress);
+                    camera.position.lerp(new THREE.Vector3(0, 80, 180), cameraTransitionProgress);
+                    currentTargetPos.copy(controls.target);
+                }
+            }
+            controls.update(); renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        // Ağırlık Hesaplayıcı
+        function modalAc() { document.getElementById('modal-karsilastir').style.display = 'flex'; hesapla(); }
+        function modalKapat() { document.getElementById('modal-karsilastir').style.display = 'none'; }
+        function modalDisiTiklama(e) { if (e.target.id === 'modal-karsilastir') modalKapat(); }
+        function hesapla() {
+            const list = document.getElementById('sonuc-listesi'); list.innerHTML = '';
+            const g = {'Güneş':27.9, 'Merkür':0.38, 'Venüs':0.91, 'Dünya':1.0, 'Ay':0.166, 'Mars':0.38, 'Jüpiter':2.34, 'Satürn':1.06, 'Uranüs':0.92, 'Neptün':1.19};
+            let kg = parseFloat(document.getElementById('dunya-kilo').value) || 70;
+            for (let c in g) {
+                let div = document.createElement('div'); div.className = `gezegen-kart ${c==='Güneş'?'gunes':''}`;
+                div.innerHTML = `<div class="isim">${c}</div><div class="ivme">Yerçekimi: ${(g[c]*9.81).toFixed(1)} m/s²</div><div class="kilo">${(kg*g[c]).toFixed(1)} kg</div><div class="newton">Ağırlık: ${(kg*g[c]*9.81).toFixed(1)} N</div>`;
+                list.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>

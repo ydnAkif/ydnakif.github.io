@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Güneş Sistemi — Etkileşimli Fen Ödevi</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 20%,#17254e,#070b19 48%,#02040b);color:#f5f7ff;font-family:Arial,sans-serif;min-height:100vh}
+header{text-align:center;padding:24px 16px 10px}h1{font-size:clamp(30px,6vw,54px);margin:0}.sub{color:#aeb8d5;line-height:1.5}
+.wrap{max-width:1200px;margin:auto;padding:10px 16px 40px}.tools{text-align:center;margin:10px}.btn{background:#111a35;color:#fff;border:1px solid #2c3a62;border-radius:12px;padding:10px 14px;margin:3px;cursor:pointer}
+.scene{height:min(62vw,650px);min-height:360px;position:relative;overflow:hidden;border:1px solid #28365c;border-radius:24px;background:radial-gradient(circle,#121a38,#050916 65%,#02040b);box-shadow:0 18px 70px #0008}
+.stars{position:absolute;inset:0;background-image:radial-gradient(#fff 1px,transparent 1px),radial-gradient(#fff 1px,transparent 1px);background-size:83px 83px,127px 127px;opacity:.35}
+.sun{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:bold;color:#3a1900;font-size:6px;background:radial-gradient(circle,#fff9a8,#ffd23c 35%,#ff8b00 70%,#e34c00);box-shadow:0 0 35px 12px #ffae2e88,0 0 110px 35px #ff8b0030;z-index:3}
+.orbit{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:1px solid #64719b55;border-radius:50%}.o0{width:14%;height:12%}.o1{width:25%;height:20%}.o2{width:36%;height:28%}.o3{width:47%;height:36%}.o4{width:59%;height:44%}.o5{width:71%;height:52%}.o6{width:83%;height:60%}.o7{width:95%;height:68%}
+.body{position:absolute;inset:0;perspective:900px}
+.planet{position:absolute;display:grid;place-items:end center;padding-bottom:4px;background-clip:padding-box;border:0;border-radius:50%;width:clamp(28px,4.2vw,52px);height:clamp(28px,4.2vw,52px);padding:0;cursor:pointer;z-index:5;touch-action:manipulation;box-shadow:inset -12px -12px 18px #0009,inset 5px 4px 10px #fff3,0 5px 18px #000d;transform-style:preserve-3d;transition:filter .2s,box-shadow .2s,transform .2s}
+.planet span{position:absolute;top:calc(100% + 5px);white-space:nowrap;background:#050916dd;border:1px solid #59688f99;border-radius:7px;padding:3px 6px;line-height:1;color:#fff;pointer-events:none}
+.p0{background:radial-gradient(circle at 30% 27%,#f3e6d3 0 8%,transparent 12%),radial-gradient(circle at 42% 42%,#c7b29a,#75604f 60%,#40372f)}
+.p1{background:radial-gradient(circle at 30% 25%,#fff0c9 0 7%,transparent 12%),radial-gradient(circle at 48% 45%,#f1c27f,#b66e42 58%,#693e2c)}
+.p2{background:radial-gradient(circle at 30% 24%,#dff8ff 0 7%,transparent 12%),radial-gradient(circle at 42% 42%,#55c8ff,#1763ad 55%,#14583d 72%,#082b3d)}
+.p3{background:radial-gradient(circle at 29% 25%,#ffd1a5 0 7%,transparent 12%),radial-gradient(circle at 45% 45%,#dc765b,#7c3028 58%,#451b1a)}
+.p4{background:radial-gradient(circle at 28% 23%,#fff3d0 0 7%,transparent 12%),radial-gradient(circle at 43% 45%,#e8bd7e,#ad6b35 52%,#5c351d);width:clamp(48px,7vw,78px);height:clamp(48px,7vw,78px)}
+.p5{background:radial-gradient(circle at 28% 23%,#fff7d5 0 7%,transparent 12%),radial-gradient(circle at 44% 45%,#dfcc9b,#a47f57 58%,#57462f);width:clamp(46px,6.6vw,74px);height:clamp(46px,6.6vw,74px)}
+.p6{background:radial-gradient(circle at 29% 24%,#efffff 0 7%,transparent 12%),radial-gradient(circle at 45% 45%,#bdebef,#5896a6 58%,#315d70)}
+.p7{background:radial-gradient(circle at 29% 24%,#e8f5ff 0 7%,transparent 12%),radial-gradient(circle at 45% 45%,#67b8ff,#2456a5 58%,#102e68)}
+.planet:hover,.planet:focus-visible{filter:brightness(1.18);box-shadow:inset -12px -12px 18px #0008,inset 6px 5px 12px #fff5,0 0 0 3px #ffffff55,0 7px 24px #000e;outline:none}
+.planet.selected{filter:brightness(1.22);box-shadow:inset -12px -12px 18px #0008,inset 6px 5px 12px #fff6,0 0 0 3px #fff,0 0 28px 7px #8bd7ff99,0 8px 26px #000e}
+.p0,.p1,.p2,.p3{width:clamp(24px,3.5vw,42px);height:clamp(24px,3.5vw,42px)}
+.p4{width:clamp(42px,6vw,68px);height:clamp(42px,6vw,68px)}
+.p5{width:clamp(38px,5.5vw,64px);height:clamp(38px,5.5vw,64px)}
+.p6,.p7{width:clamp(34px,5vw,58px);height:clamp(34px,5vw,58px)}
+.ring:after{content:"";position:absolute;inset:-9px -18px;border:3px solid #d9c99d99;border-radius:50%;transform:rotate(18deg)}
+.selectedBar{margin-top:12px;text-align:center;background:#0b1126ee;border:1px solid #34446f;border-radius:15px;padding:12px;font-size:clamp(16px,2.8vw,24px);font-weight:800}
+.selectedBar span{color:#9ec3ff}
+.planet{position:absolute;left:50%;top:0;transform:translate(-50%,-50%);width:clamp(42px,6vw,60px);height:clamp(42px,6vw,60px);border:0;border-radius:50%;cursor:pointer;color:#fff;font-weight:bold;font-size:clamp(10px,1.7vw,15px);text-shadow:0 1px 3px #000;touch-action:manipulation;box-shadow:inset -6px -6px 12px #0006,0 3px 15px #000b}.planet:hover,.planet:focus-visible{outline:3px solid #fff8;transform:translate(-50%,-50%) scale(1.18)}
+.planet.selected{outline:3px solid #8db6ff;box-shadow:0 0 0 5px #8db6ff33,inset -6px -6px 12px #0006,0 3px 15px #000b}
+
+.p0{background:linear-gradient(135deg,#d8c6ad,#6e5d4e)}.p1{background:linear-gradient(135deg,#f6d7a4,#b87546)}.p2{background:linear-gradient(135deg,#66c8ff,#1455a5 55%,#2f9a68)}.p3{background:linear-gradient(135deg,#e18b66,#7e3025)}.p4{background:linear-gradient(135deg,#e7bf85,#b36d32 55%,#6e3d1e)}.p5{background:linear-gradient(135deg,#ead9a8,#a98055)}.p6{background:linear-gradient(135deg,#bfe9ed,#5899a8)}.p7{background:linear-gradient(135deg,#6fb9ff,#1c4eae)}
+.planet:hover,.planet:focus-visible{filter:brightness(1.18);box-shadow:inset -12px -12px 18px #0008,inset 6px 5px 12px #fff5,0 0 0 3px #ffffff55,0 7px 24px #000e;outline:none}
+.planet.selected{filter:brightness(1.22);box-shadow:inset -12px -12px 18px #0008,inset 6px 5px 12px #fff6,0 0 0 3px #fff,0 0 28px 7px #8bd7ff99,0 8px 26px #000e}
+.p0,.p1,.p2,.p3{width:clamp(24px,3.5vw,42px);height:clamp(24px,3.5vw,42px)}
+.p4{width:clamp(42px,6vw,68px);height:clamp(42px,6vw,68px)}
+.p5{width:clamp(38px,5.5vw,64px);height:clamp(38px,5.5vw,64px)}
+.p6,.p7{width:clamp(34px,5vw,58px);height:clamp(34px,5vw,58px)}
+.ring:after{content:"";position:absolute;inset:-9px -18px;border:3px solid #d9c99d99;border-radius:50%;transform:rotate(18deg)}
+.legend{position:absolute;bottom:10px;left:10px;background:#050816bb;color:#aeb8d5;padding:7px;border-radius:9px;font-size:12px}
+.info{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:16px}.panel{background:#0b1126ee;border:1px solid #28365c;border-radius:20px;padding:20px}.panel h2{margin:0 0 8px}.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.fact{background:#111a35;padding:11px;border-radius:12px}.fact small{display:block;color:#aeb8d5}.moons{display:flex;flex-wrap:wrap;gap:7px}.moon{background:#1a2545;border:1px solid #34426a;border-radius:999px;padding:7px 10px;font-size:13px}.note{background:#101a35;border-left:4px solid #8db6ff;padding:12px;border-radius:8px;line-height:1.5;margin-top:12px}
+@media(max-width:800px){.info{grid-template-columns:1fr}.scene{height:72vw;min-height:330px}}@media(max-width:500px){.facts{grid-template-columns:1fr}}
+#pres{display:none;position:fixed;inset:0;background:#03050e;z-index:20;padding:30px}.presin{max-width:1000px;margin:auto;min-height:90vh;display:flex;flex-direction:column;justify-content:center}.pt{font-size:clamp(38px,7vw,78px)}.pb{font-size:clamp(20px,3vw,32px);line-height:1.45;color:#dce5ff}
+
+.planet{font-size:clamp(9px,1.35vw,14px);text-shadow:0 1px 3px #000;transition:filter .15s,transform .15s;touch-action:manipulation;z-index:6}
+.planet span{top:calc(100% + 5px);white-space:nowrap;background:#050916dd;border:1px solid #59688f99;border-radius:7px;padding:3px 6px;line-height:1;color:#fff}
+.planet:hover,.planet:focus-visible,.planet.selected{filter:brightness(1.18);transform:scale(1.18);outline:3px solid #9ec3ff}
+.selectedBar{margin-top:12px;text-align:center;background:#0b1126ee;border:1px solid #34446f;border-radius:15px;padding:12px;font-size:clamp(16px,2.8vw,24px);font-weight:800}
+.selectedBar span{color:#9ec3ff}
+</style></head><body>
+<header><h1>🌌 GÜNEŞ SİSTEMİ</h1><p class="sub">Dokun, keşfet, gezegenleri ve doğal uydularını incele. Çevrimdışı çalışır; internet gerektirmez.</p></header>
+<div class="wrap"><div class="tools"><button class="btn" id="presBtn">🎤 Sunum Modu</button><button class="btn" id="pause">⏸ Hareketi Durdur</button><button class="btn" onclick="scrollTo({top:0,behavior:'smooth'})">☀️ Başlangıç</button></div>
+<section class="scene"><div class="stars"></div><div class="sun">GÜNEŞ</div>
+<div class="orbit o0"></div><button class="planet p0" data-i="0" aria-label="Merkür"><span>Merkür</span></button>
+<div class="orbit o1"></div><button class="planet p1" data-i="1" aria-label="Venüs"><span>Venüs</span></button>
+<div class="orbit o2"></div><button class="planet p2" data-i="2" aria-label="Dünya"><span>Dünya</span></button>
+<div class="orbit o3"></div><button class="planet p3" data-i="3" aria-label="Mars"><span>Mars</span></button>
+<div class="orbit o4"></div><button class="planet p4" data-i="4" aria-label="Jüpiter"><span>Jüpiter</span></button>
+<div class="orbit o5"></div><button class="planet p5 ring" data-i="5" aria-label="Satürn"><span>Satürn</span></button>
+<div class="orbit o6"></div><button class="planet p6" data-i="6" aria-label="Uranüs"><span>Uranüs</span></button>
+<div class="orbit o7"></div><button class="planet p7" data-i="7" aria-label="Neptün"><span>Neptün</span></button>
+<div class="legend">Gezegenlere dokunarak bilgi kartını aç.</div></section>
+<div class="selectedBar">Seçilen gezegen: <span id="selectedName">Henüz seçilmedi</span></div>
+<div class="info"><div class="panel"><h2 id="name">Güneş Sistemi</h2><p id="desc">Bir gezegene dokunarak bilgi kartını aç.</p><div class="facts"><div class="fact"><small>Güneş'ten sırası</small><b id="order">—</b></div><div class="fact"><small>Doğal uydu sayısı</small><b id="count">—</b></div><div class="fact"><small>Bir yılı</small><b id="year">—</b></div><div class="fact"><small>Bir günü</small><b id="day">—</b></div></div></div>
+<div class="panel"><h2>🌙 Uyduları</h2><p id="mi">Gezegen seçildiğinde önemli uyduları burada görünecek.</p><div class="moons" id="ml"></div><div class="note">Sayılar NASA'nın Ağustos 2026'da yayımladığı güncel gezegen uydu sayımlarına göre verilmiştir. Çok sayıdaki küçük uydu arasından sunum için başlıca/önemli adlar gösterilir.</div></div></div>
+<div class="panel" style="margin-top:16px"><h2>🎤 Sunum İçin Kısa Akış</h2><div class="note">1. Güneş Sistemi yaklaşık 4,6 milyar yıl önce oluştu. 2. Sekiz gezegen vardır. 3. İç gezegenler kayalık; Jüpiter, Satürn, Uranüs ve Neptün dış gezegenlerdir. 4. Merkür ve Venüs'ün doğal uydusu yoktur. 5. Dünya'nın uydusu Ay'dır. 6. Jüpiter en büyük gezegendir. 7. Ağustos 2026 itibarıyla en fazla doğrulanmış uydu Satürn'dedir.</div>
+<p style="color:#aeb8d5;font-size:12px">Kaynak: NASA Science — Solar System Facts, Moons Facts, Jupiter/Saturn/Uranus/Neptune moon pages.</p></div></div>
+<div id="pres"><div class="presin"><h1 class="pt" id="pt"></h1><div class="pb" id="pb"></div><p id="pn" style="color:#8f9abb"></p></div><div style="position:fixed;bottom:20px;left:0;right:0;text-align:center"><button class="btn" id="prev">← Geri</button><button class="btn" id="next">İleri →</button><button class="btn" id="close">✕ Kapat</button></div></div>
+<script>
+const data=[{"name": "Merkür", "desc": "Güneş'e en yakın, küçük ve kayalık gezegen.", "count": "0", "moons": "Kalıcı doğal uydusu yok.", "year": "88 gün", "day": "58,6 gün"}, {"name": "Venüs", "desc": "Kalın atmosferi nedeniyle Güneş Sistemi'nin en sıcak gezegenidir.", "count": "0", "moons": "Doğal uydusu yok. Zoozve bir uydu değil, yarı-uydudur.", "year": "224,7 gün", "day": "243 gün"}, {"name": "Dünya", "desc": "Sıvı suyun yüzeyde bulunduğu ve bildiğimiz kadarıyla yaşamın bulunduğu gezegendir.", "count": "1", "moons": "Ay", "year": "365,25 gün", "day": "23 sa 56 dk"}, {"name": "Mars", "desc": "Kızıl görünümü demir oksitlerden gelir.", "count": "2", "moons": "Phobos, Deimos", "year": "687 gün", "day": "24 sa 37 dk"}, {"name": "Jüpiter", "desc": "Güneş Sistemi'nin en büyük gezegenidir; Büyük Kırmızı Leke'si dev bir fırtınadır.", "count": "115", "moons": "Io, Europa, Ganymede, Callisto ve çok sayıda küçük uydu.", "year": "11,86 yıl", "day": "9 sa 56 dk"}, {"name": "Satürn", "desc": "Gaz devidir ve belirgin halka sistemiyle tanınır.", "count": "293", "moons": "Titan, Enceladus, Rhea, Iapetus, Dione, Tethys, Mimas, Hyperion ve çok sayıda küçük uydu.", "year": "29,45 yıl", "day": "10 sa 42 dk"}, {"name": "Uranüs", "desc": "Buz devidir ve ekseni neredeyse yan yatmış durumdadır.", "count": "29", "moons": "Miranda, Ariel, Umbriel, Titania, Oberon ve daha küçük uydular.", "year": "84 yıl", "day": "17 sa 14 dk"}, {"name": "Neptün", "desc": "Güneş'e en uzak gezegendir; çok güçlü rüzgârlara sahip soğuk bir buz devidir.", "count": "16", "moons": "Triton, Nereid, Proteus, Larissa, Galatea, Despina ve diğerleri.", "year": "164,8 yıl", "day": "16 sa 6 dk"}];
+const moons=[
+[],[],["Ay"],["Phobos","Deimos"],
+["Io","Europa","Ganymede","Callisto","Amalthea","Himalia","Elara","Pasiphae","Sinope","Lysithea","Carme","Ananke","Leda","Thebe","Adrastea","Metis","Callirrhoe","Themisto","Megaclite","Taygete","Chaldene","Harpalyke","Kalyke","Iocaste","Erinome","Isonoe","Praxidike","Autonoe","Thyone","Hermippe","Aitne","Eurydome","Euanthe","Eukelade","Cyllene","Kore","Herse","Dia","Eirene","Philophrosyne","Eupheme","Valetudo","Pandia","Ersa"],
+["Titan","Enceladus","Rhea","Iapetus","Dione","Tethys","Mimas","Hyperion","Phoebe","Janus","Epimetheus","Prometheus","Pandora","Atlas","Pan","Daphnis","Telesto","Calypso","Helene","Kiviuq","Ijiraq","Paaliaq","Albiorix","Siarnaq","Tarvos","Ymir","Narvi","Skathi","Aegir","Bebhionn","Bergelmir","Bestla","Farbauti","Fenrir","Fornjot","Hati","Hyrrokkin","Kari","Loge","Skoll","Surtur","Thrymr","Angrboda","Beli","Gerd","Gridr","Gunnlod","Jarnsaxa","Greip","Mundilfari","Suttungr","Tarqeq"],
+["Miranda","Ariel","Umbriel","Titania","Oberon","Puck","Cordelia","Ophelia","Bianca","Cressida","Desdemona","Juliet","Portia","Rosalind","Belinda","Caliban","Sycorax","Prospero","Setebos","Stephano","Trinculo","Francisco","Margaret","Ferdinand","Perdita","Mab","Cupid","Francine","S/2025 U1"],
+["Triton","Nereid","Proteus","Larissa","Galatea","Despina","Thalassa","Naiad","Halimede","Sao","Laomedeia","Psamathe","Neso","Hippocamp"]
+];
+const scene=document.querySelector(".scene");
+const planets=[...document.querySelectorAll(".planet")];
+const orbitX=[.14,.25,.36,.47,.59,.71,.83,.95];
+const orbitY=[.12,.20,.28,.36,.44,.52,.60,.68];
+const startAngles=[20,67,118,172,225,278,320,145];
+const speeds=[.0018,.00145,.00115,.0009,.00065,.0005,.00038,.00028];
+let motionPaused=false, elapsed=0, lastFrame=performance.now();
+function placePlanets(t){
+ const r=scene.getBoundingClientRect(), cx=r.width/2, cy=r.height/2;
+ planets.forEach((p,i)=>{
+   const rx=r.width*orbitX[i]/2, ry=r.height*orbitY[i]/2;
+   const a=startAngles[i]*Math.PI/180+t*speeds[i];
+   p.style.left=(cx+rx*Math.sin(a)-p.offsetWidth/2)+"px";
+   p.style.top=(cy-ry*Math.cos(a)-p.offsetHeight/2)+"px";
+ });
+}
+function frame(now){
+ if(!motionPaused) elapsed+=now-lastFrame;
+ lastFrame=now; placePlanets(elapsed); requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.addEventListener("resize",()=>placePlanets(elapsed));
+function select(i){
+ const p=data[i]; name.textContent=p.name; document.getElementById("selectedName").textContent=p.name;desc.textContent=p.desc;order.textContent=(i+1)+". gezegen";count.textContent=p.count;year.textContent=p.year;day.textContent=p.day;
+ document.querySelectorAll(".planet").forEach(x=>x.classList.remove("selected")); document.querySelector(`.planet[data-i="${i}"]`).classList.add("selected");
+ mi.textContent=moons[i].length?"Önemli ve adı verilmiş uydulardan örnekler:":"Bu gezegenin doğrulanmış doğal uydusu yoktur.";
+ ml.innerHTML=moons[i].map(x=>'<span class="moon">'+x+'</span>').join('');
+ document.querySelector('.info').scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.querySelectorAll('[data-i]').forEach(x=>x.onclick=()=>select(+x.dataset.i));
+let stopped=false;pause.onclick=()=>{stopped=!stopped;motionPaused=stopped;pause.textContent=stopped?'▶ Hareketi Başlat':'⏸ Hareketi Durdur'};
+const slides=[
+["GÜNEŞ SİSTEMİ","Fen Bilimleri Projesi\nGezegenler • Uydular • Keşif"],
+["1 • GÜNEŞ","Güneş bir yıldızdır. Güneş Sistemi'nin merkezindedir ve gezegenlerin yörüngede kalmasını sağlayan temel çekim kaynağıdır."],
+["2 • İÇ GEZEGENLER","Merkür, Venüs, Dünya ve Mars kayalık gezegenlerdir. Merkür ve Venüs'ün doğal uydusu yoktur; Dünya'nın Ay'ı, Mars'ın Phobos ve Deimos adlı iki uydusu vardır."],
+["3 • DIŞ GEZEGENLER","Jüpiter ve Satürn gaz devleri; Uranüs ve Neptün ise buz devleridir. Büyük gezegenlerin çok sayıda doğal uydusu ve halka sistemleri vardır."],
+["4 • UYDULAR","Doğal uydular gezegenlerin çevresinde dolanan gök cisimleridir. Jüpiter'in dört Galilei uydusu Io, Europa, Ganymede ve Callisto'dur. Satürn'ün dikkat çekici uyduları arasında Titan ve Enceladus bulunur."],
+["5 • DÜNYA'NIN AY'I","Ay, Dünya'nın tek doğal uydusudur. Dünya'nın dönüş eksenindeki yalpalamayı dengelemeye yardımcı olur."],
+["6 • EN UZAK GEZEGEN","Neptün Güneş'e en uzak gezegendir. En büyük uydusu Triton, gezegenin dönüş yönünün tersine dolanır."],
+["7 • KAPANIŞ","Güneş Sistemi'nde sekiz gezegen vardır. Her gezegen farklı özelliklere ve farklı uydu sistemlerine sahiptir.\n\nTeşekkür ederim!"]
+];
+let si=0;function show(){pt.textContent=slides[si][0];pb.innerHTML=slides[si][1].replace(/\n/g,'<br>');pn.textContent='Slayt '+(si+1)+' / '+slides.length}
+presBtn.onclick=()=>{pres.style.display='block';si=0;show()};close.onclick=()=>pres.style.display='none';next.onclick=()=>{si=Math.min(si+1,slides.length-1);show()};prev.onclick=()=>{si=Math.max(si-1,0);show()};
+document.onkeydown=e=>{if(pres.style.display!=='block')return;if(e.key==='ArrowRight'||e.key===' ')next.click();if(e.key==='ArrowLeft')prev.click();if(e.key==='Escape')close.click()};
+</script></body></html>

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Etkileşimli Güneş Sistemi Laboratuvarı</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        header {
+            background: linear-gradient(180deg, rgba(10,15,30,0.8) 0%, rgba(10,15,30,0) 100%);
+            border-left: 4px solid #00f3ff;
+            padding: 15px 25px;
+            border-radius: 0 10px 10px 0;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #00f3ff;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+        header p {
+            margin: 5px 0 0 0;
+            font-size: 13px;
+            color: #8fa0dd;
+        }
+        #info-panel {
+            position: absolute;
+            right: 20px;
+            top: 100px;
+            width: 320px;
+            background: rgba(10, 16, 32, 0.85);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.7), inset 0 0 15px rgba(0, 243, 255, 0.1);
+            transform: translateX(360px);
+            transition: transform 0.5s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        #info-panel.active {
+            transform: translateX(0);
+        }
+        .panel-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            color: #ff3b3b;
+            font-weight: bold;
+        }
+        #info-content h2 {
+            margin-top: 0;
+            color: #00f3ff;
+            border-bottom: 2px solid rgba(0, 243, 255, 0.2);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 3px solid #ffaa00;
+        }
+        .stat-box strong { color: #ffaa00; }
+        #info-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d9ec;
+            margin-top: 15px;
+        }
+        #bottom-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(0deg, rgba(10,15,30,0.85) 0%, rgba(10,15,30,0) 100%);
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #speed-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+        #speed-slider-container label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #00f3ff;
+        }
+        #speed-slider {
+            width: 150px;
+            accent-color: #00f3ff;
+            cursor: pointer;
+        }
+        #planet-carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            max-width: 90%;
+            padding: 5px;
+        }
+        #planet-carousel::-webkit-scrollbar {
+            height: 4px;
+        }
+        #planet-carousel::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 10px;
+        }
+        .carousel-btn {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #a3b3cc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .carousel-btn:hover {
+            border-color: #00f3ff;
+            color: #00f3ff;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .carousel-btn.active {
+            background: #00f3ff;
+            color: #0a0f1e;
+            font-weight: bold;
+            border-color: #00f3ff;
+            box-shadow: 0 0 15px #00f3ff;
+        }
+        .space-label {
+            position: absolute;
+            z-index: 10;
+            transform: translate(-50%, -100%);
+            color: white;
+            font-family: monospace;
+            font-size: 11px;
+            background: rgba(5, 10, 20, 0.75);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: none;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .space-label.planet-lbl {
+            font-weight: bold;
+            border-color: #00f3ff;
+            color: #00f3ff;
+            font-size: 12px;
+        }
+        .space-label.moon-lbl {
+            font-size: 10px;
+            border-color: #ffaa00;
+            color: #ffaa00;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="labels-layer" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
+
+    <div id="ui-container">
+        <header class="interactive">
+            <h1>Güneş Sistemi Laboratuvarı</h1>
+            <p>6. Sınıf Fen Bilimleri Projesi — Uzay Keşif Modeli</p>
+        </header>
+
+        <div id="info-panel" class="interactive">
+            <span class="panel-close" onclick="closePanel()">✕ Kapat</span>
+            <div id="info-content">
+                <h2 id="info-title">Güneş</h2>
+                <div class="stat-box" id="info-type"><strong>Tür:</strong> Yıldız</div>
+                <div class="stat-box" id="info-moons"><strong>Uydu Sayısı:</strong> Yok</div>
+                <p id="info-desc">Sistemin merkezindeki ısı ve ışık kaynağımız.</p>
+            </div>
+        </div>
+
+        <div id="bottom-controls" class="interactive">
+            <div id="speed-slider-container">
+                <label for="speed-slider">Yörünge Hızı</label>
+                <input type="range" id="speed-slider" min="0" max="5" step="0.1" value="1">
+                <button class="carousel-btn" id="pause-btn" style="padding:4px 12px; font-size:11px;">Durdur</button>
+            </div>
+
+            <div id="planet-carousel">
+                <button class="carousel-btn active" onclick="selectTarget('Güneş')">Güneş</button>
+                <button class="carousel-btn" onclick="selectTarget('Merkür')">Merkür</button>
+                <button class="carousel-btn" onclick="selectTarget('Venüs')">Venüs</button>
+                <button class="carousel-btn" onclick="selectTarget('Dünya')">Dünya</button>
+                <button class="carousel-btn" onclick="selectTarget('Mars')">Mars</button>
+                <button class="carousel-btn" onclick="selectTarget('Jüpiter')">Jüpiter</button>
+                <button class="carousel-btn" onclick="selectTarget('Satürn')">Satürn</button>
+                <button class="carousel-btn" onclick="selectTarget('Uranüs')">Uranüs</button>
+                <button class="carousel-btn" onclick="selectTarget('Neptün')">Neptün</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        const spaceData = {
+            "Güneş": { type: "Yıldız", moons: "Yok", desc: "Güneş sisteminin merkezinde yer alan devasa ısı ve ışık kaynağı olan bir yıldızdır. İçine yaklaşık 1.3 milyon adet Dünya sığabilir." },
+            "Merkür": { type: "İç (Karasal) Gezegen", moons: "0", desc: "Güneş'e en yakın ve en küçük gezegendir. Uydusu ve halkası yoktur." },
+            "Venüs": { type: "İç (Karasal) Gezegen", moons: "0", desc: "Kalın karbondioksit atmosferi yüzünden seranın etkisinde kalmıştır ve sistemin en sıcak gezegenidir." },
+            "Dünya": { type: "İç (Karasal) Gezegen", moons: "1 (Ay)", desc: "Üzerinde yaşam olduğu bilinen tek gökcismidir. Yüzeyinin %70'i sularla kaplı olduğu için 'Mavi Gezegen' de denir." },
+            "Ay": { type: "Doğal Uydu (Dünya)", moons: "-", desc: "Dünya'nın tek doğal uydusudur. Kendi ekseni etrafında dönme süresi ile Dünya etrafında dolanma süresi eşittir." },
+            "Mars": { type: "İç (Karasal) Gezegen", moons: "2", desc: "Yüzeyindeki yoğun demir oksitten (pas) dolayı kırmızı görünür, bu yüzden 'Kızıl Gezegen' adı verilir." },
+            "Phobos": { type: "Doğal Uydu (Mars)", moons: "-", desc: "Mars'ın iki uydusundan büyük olanıdır. Kütlesi küçük olduğu için düzensiz patates şeklindedir." },
+            "Deimos": { type: "Doğal Uydu (Mars)", moons: "-", desc: "Mars'ın en dıştaki uydusudur. Tıpkı Phobos gibi düzensiz, kraterli bir asteroit yapısındadır." },
+            "Jüpiter": { type: "Dış (Gazsal) Gezegen", moons: "115 (Resmi Onaylı)", desc: "Güneş sisteminin en büyük gezegenidir. Üzerinde yüzlerce yıldır süren 'Büyük Kırmızı Leke' adında dev bir fırtına girdabı bulunur." },
+            "Io": { type: "Doğal Uydu (Jüpiter)", moons: "-", desc: "Jüpiter'in Galileo uydularından biridir. Üzerindeki yüzlerce aktif yanardağ yüzünden yüzeyi tamamen canlı kükürt sarısı ve turuncu renklerdedir." },
+            "Europa": { type: "Doğal Uydu (Jüpiter)", moons: "-", desc: "Jüpiter'in buzla kaplı gizemli uydusudur. Kalın buz tabakasının altında devasa sıvı okyanuslar olduğu düşünvelmektedir." },
+            "Ganymede": { type: "Doğal Uydu (Jüpiter)", moons: "-", desc: "Güneş sisteminin en büyük uydusudur. Merkür gezegeninden bile daha büyüktür." },
+            "Callisto": { type: "Doğal Uydu (Jüpiter)", moons: "-", desc: "Güneş sistemindeki en yaşlı ve en çok kraterle kaplı buz ve kaya yüzeyine sahip uydulardan biridir." },
+            "Satürn": { type: "Dış (Gazsal) Gezegen", moons: "293 (Uydu Kralı)", desc: "Görkemli ve geniş halkalarıyla tanınan dev gaz gezegenidir. Yoğunluğu sudan bile azdır." },
+            "Titan": { type: "Doğal Uydu (Satürn)", moons: "-", desc: "Satürn'ün en büyük uydusudur. Güneş sisteminde kendine has kalın ve yoğun bir atmosfer tabakası barındıran tek uydudur." },
+            "Enceladus": { type: "Doğal Uydu (Satürn)", moons: "-", desc: "Tamamen parlak beyaz bir buz tabakasıyla kaplıdır. Güney kutbundaki çatlaklardan uzay boşluğuna su buzu gayzerleri fışkırtır." },
+            "Rhea": { type: "Doğal Uydu (Satürn)", moons: "-", desc: "Satürn'ün yoğun kraterli, mat gri renkli ikinci büyük uydusudur." },
+            "Mimas": { type: "Doğal Uydu (Satürn)", moons: "-", desc: "Üzerindeki devasa Herschel krateri yüzünden şekli hafif bozuktur ve bilim kurgu filmlerindeki Ölüm Yıldızı'na benzer." },
+            "Uranüs": { type: "Dış (Gazsal) Gezegen", moons: "29", desc: "Güneş etrafındaki yörüngesinde yan yatmış bir varil gibi yuvarlanarak dönen sıra dışı bir gezegendir." },
+            "Titania": { type: "Doğal Uydu (Uranüs)", moons: "-", desc: "Uranüs gezegeninin en büyük uydusudur. Yüzeyi vadilerle ve kaya kraterleriyle kaplı gri bir gökcismidir." },
+            "Neptün": { type: "Dış (Gazsal) Gezegen", moons: "16", desc: "Güneş'e en uzak gezegendir. Süreklilik gösteren korkunç fırtınaları ve rüzgarlarıyla bilinir." },
+            "Triton": { type: "Doğal Uydu (Neptün)", moons: "-", desc: "Neptün'ün en büyük uydusudur. Gezegeninin dönüş yönünün tersine dolanan tek dev uydudur." }
+        };
+
+        let scene, camera, renderer, controls, clock;
+        let speedMultiplier = 1;
+        let isPaused = false;
+        let currentTargetMesh = null;
+        let targetName = "Güneş";
+
+        const labelLayer = document.getElementById('labels-layer');
+        const labelsData = [];
+
+        let sunMesh;
+        const planets = [];
+        const moons = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            clock = new THREE.Clock();
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(0, 150, 300);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.4);
+            dirLight1.position.set(1, 1, 1).normalize();
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.25);
+            dirLight2.position.set(-1, -0.5, -1).normalize();
+            scene.add(dirLight2);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 1500;
+            controls.minDistance = 5;
+
+            createStars();
+
+            const sunGeo = new THREE.SphereGeometry(18, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+            sunMesh = new THREE.Mesh(sunGeo, sunMat);
+            sunMesh.userData = { name: "Güneş" };
+            scene.add(sunMesh);
+            currentTargetMesh = sunMesh;
+            createLabel(sunMesh, "Güneş", true);
+
+            createAsteroidBelt(75, 90, 600);
+
+            const planetDefs = [
+                { name: "Merkür", size: 1.8, dist: 30, speed: 1.5, color: 0x888888, isSphere: true },
+                { name: "Venüs", size: 3.2, dist: 45, speed: 1.1, color: 0xe3bb76, isSphere: true },
+                { name: "Dünya", size: 3.5, dist: 62, speed: 0.9, color: 0x2b82c9, isSphere: true, moons: [
+                    { name: "Ay", size: 0.7, dist: 6, speed: 2.5, color: 0xcccccc, isSphere: true }
+                ]},
+                { name: "Mars", size: 2.2, dist: 105, speed: 0.7, color: 0xc1440e, isSphere: true, moons: [
+                    { name: "Phobos", size: 0.4, dist: 4, speed: 3.2, color: 0x8b7d7b, isSphere: false },
+                    { name: "Deimos", size: 0.3, dist: 5.5, speed: 2.2, color: 0x9c918f, isSphere: false }
+                ]},
+                { name: "Jüpiter", size: 9.0, dist: 145, speed: 0.4, color: 0xb07f5a, isSphere: true, moons: [
+                    { name: "Io", size: 0.7, dist: 13, speed: 2.8, color: 0xeaff00, isSphere: true },
+                    { name: "Europa", size: 0.6, dist: 16, speed: 2.2, color: 0xbadeff, isSphere: true },
+                    { name: "Ganymede", size: 0.9, dist: 20, speed: 1.6, color: 0xaaaaaa, isSphere: true },
+                    { name: "Callisto", size: 0.8, dist: 24, speed: 1.1, color: 0x5e5e5e, isSphere: true }
+                ]},
+                { name: "Satürn", size: 7.5, dist: 200, speed: 0.3, color: 0xe2bf7d, isSphere: true, hasRings: true, moons: [
+                    { name: "Titan", size: 0.9, dist: 15, speed: 1.9, color: 0xffaa00, isSphere: true },
+                    { name: "Enceladus", size: 0.4, dist: 11, speed: 2.6, color: 0xffffff, isSphere: true },
+                    { name: "Rhea", size: 0.5, dist: 18, speed: 1.4, color: 0xbcbcbc, isSphere: true },
+                    { name: "Mimas", size: 0.35, dist: 9, speed: 3.5, color: 0x888888, isSphere: false }
+                ]},
+                { name: "Uranüs", size: 5.0, dist: 255, speed: 0.2, color: 0x73c7c7, isSphere: true, moons: [
+                    { name: "Titania", size: 0.6, dist: 9, speed: 2.0, color: 0xbbbbbb, isSphere: true }
+                ]},
+                { name: "Neptün", size: 4.8, dist: 300, speed: 0.12, color: 0x274687, isSphere: true, moons: [
+                    { name: "Triton", size: 0.65, dist: 10, speed: -1.8, color: 0xffcbd1, isSphere: true }
+                ]}
+            ];
+
+            planetDefs.forEach(def => {
+                createOrbitTrail(def.dist);
+
+                let mat;
+                if(def.name === "Dünya") {
+                    mat = createEarthMaterial();
+                } else if(def.name === "Jüpiter" || def.name === "Satürn") {
+                    mat = createGasGiantMaterial(def.color);
+                } else {
+                    mat = new THREE.MeshStandardMaterial({
+                        color: def.color,
+                        roughness: 0.8,
+                        metalness: 0.1,
+                        flatShading: !def.isSphere
+                    });
+                }
+
+                const pGeo = new THREE.SphereGeometry(def.size, 32, 32);
+                const pMesh = new THREE.Mesh(pGeo, mat);
+                pMesh.userData = { name: def.name, dist: def.dist, speed: def.speed, angle: Math.random() * Math.PI * 2 };
+                scene.add(pMesh);
+                planets.push(pMesh);
+                createLabel(pMesh, def.name, true);
+
+                if(def.hasRings) {
+                    createSaturnRings(pMesh, def.size);
+                }
+
+                if(def.moons) {
+                    def.moons.forEach(mDef => {
+                        let mGeo;
+                        if(!mDef.isSphere) {
+                            mGeo = new THREE.DodecahedronGeometry(mDef.size, 1);
+                            const pos = mGeo.attributes.position;
+                            for (let i = 0; i < pos.count; i++) {
+                                pos.setX(i, pos.getX(i) + (Math.random() - 0.5) * (mDef.size * 0.3));
+                                pos.setY(i, pos.getY(i) + (Math.random() - 0.5) * (mDef.size * 0.3));
+                                pos.setZ(i, pos.getZ(i) + (Math.random() - 0.5) * (mDef.size * 0.3));
+                            }
+                            mGeo.computeVertexNormals();
+                        } else {
+                            mGeo = new THREE.SphereGeometry(mDef.size, 16, 16);
+                        }
+
+                        const mMat = new THREE.MeshStandardMaterial({
+                            color: mDef.color,
+                            roughness: 0.9,
+                            metalness: 0.05,
+                            flatShading: !mDef.isSphere
+                        });
+
+                        const mMesh = new THREE.Mesh(mGeo, mMat);
+                        mMesh.userData = { 
+                            name: mDef.name, 
+                            parent: pMesh, 
+                            dist: mDef.dist, 
+                            speed: mDef.speed, 
+                            angle: Math.random() * Math.PI * 2 
+                        };
+                        scene.add(mMesh);
+                        moons.push(mMesh);
+                        createLabel(mMesh, mDef.name, false);
+                    });
+                }
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('pointerdown', onSceneClick);
+
+            document.getElementById('speed-slider').addEventListener('input', (e) => {
+                speedMultiplier = parseFloat(e.target.value);
+            });
+            document.getElementById('pause-btn').addEventListener('click', (e) => {
+                isPaused = !isPaused;
+                e.target.innerText = isPaused ? "Devam Et" : "Durdur";
+                e.target.style.background = isPaused ? "#ffaa00" : "rgba(15, 23, 42, 0.7)";
+                e.target.style.color = isPaused ? "#000" : "#a3b3cc";
+            });
+
+            updatePanel("Güneş");
+        }
+
+        function createEarthMaterial() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#104e8b';
+            ctx.fillRect(0, 0, 512, 256);
+            
+            ctx.fillStyle = '#2e8b57';
+            for(let i=0; i<15; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random()*512, Math.random()*256, 30 + Math.random()*50, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#8b7355';
+            for(let i=0; i<8; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random()*512, Math.random()*256, 15 + Math.random()*25, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillRect(0, 40, 512, 15);
+            ctx.fillRect(100, 180, 300, 20);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 });
+        }
+
+        function createGasGiantMaterial(baseColor) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            const hex = '#' + baseColor.toString(16).padStart(6, '0');
+            ctx.fillStyle = hex;
+            ctx.fillRect(0, 0, 256, 128);
+
+            for(let y=10; y<120; y+=15) {
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.fillRect(0, y, 256, 4 + Math.random()*6);
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.fillRect(0, y+6, 256, 3);
+            }
+            
+            if(hex === '#b07f5a') {
+                ctx.fillStyle = '#cc3333';
+                ctx.beginPath();
+                ctx.ellipse(160, 90, 14, 8, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 });
+        }
+
+        function createSaturnRings(saturnMesh, size) {
+            const rGeo = new THREE.RingGeometry(size * 1.4, size * 2.3, 64);
+            const rMat = new THREE.MeshStandardMaterial({ 
+                color: 0xcbb48e, 
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ring = new THREE.Mesh(rGeo, rMat);
+            ring.rotation.x = Math.PI / 2.3;
+            saturnMesh.add(ring);
+        }
+
+        function createOrbitTrail(radius) {
+            const geo = new THREE.BufferGeometry();
+            const points = [];
+            for(let i=0; i<=128; i++) {
+                let theta = (i/128) * Math.PI * 2;
+                points.push(new THREE.Vector3(Math.cos(theta)*radius, 0, Math.sin(theta)*radius));
+            }
+            geo.setFromPoints(points);
+            const mat = new THREE.LineBasicMaterial({ color: 0x334466, transparent: true, opacity: 0.4 });
+            const line = new THREE.Line(geo, mat);
+            scene.add(line);
+        }
+
+        function createAsteroidBelt(minR, maxR, count) {
+            const geo = new THREE.BufferGeometry();
+            const positions = [];
+            for(let i=0; i<count; i++) {
+                let radius = minR + Math.random() * (maxR - minR);
+                let theta = Math.random() * Math.PI * 2;
+                let x = Math.cos(theta) * radius;
+                let y = (Math.random() - 0.5) * 1.5;
+                let z = Math.sin(theta) * radius;
+                positions.push(x, y, z);
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({ color: 0x665544, size: 0.6, transparent: true, opacity: 0.8 });
+            const belt = new THREE.Points(geo, mat);
+            scene.add(belt);
+        }
+
+        function createStars() {
+            const geo = new THREE.BufferGeometry();
+            const positions = [];
+            for(let i=0; i<2500; i++) {
+                let x = (Math.random() - 0.5) * 1500;
+                let y = (Math.random() - 0.5) * 1500;
+                let z = (Math.random() - 0.5) * 1500;
+                if(Math.sqrt(x*x + y*y + z*z) > 100) {
+                    positions.push(x, y, z);
+                }
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.9 });
+            const starField = new THREE.Points(geo, mat);
+            scene.add(starField);
+        }
+
+        function createLabel(mesh, text, isPlanet) {
+            const div = document.createElement('div');
+            div.className = `space-label ${isPlanet ? 'planet-lbl' : 'moon-lbl'}`;
+            div.innerText = text;
+            labelLayer.appendChild(div);
+            labelsData.push({ element: div, mesh: mesh });
+        }
+
+        function updateLabels() {
+            const tempV = new THREE.Vector3();
+            labelsData.forEach(label => {
+                label.mesh.getWorldPosition(tempV);
+                
+                tempV.project(camera);
+                if (tempV.z > 1) {
+                    label.element.style.opacity = 0;
+                    return;
+                }
+
+                const x = (tempV.x *  .5 + .5) * window.innerWidth;
+                const y = (tempV.y * -.5 + .5) * window.innerHeight;
+
+                label.element.style.left = `${x}px`;
+                label.element.style.top = `${y}px`;
+                label.element.style.opacity = 1;
+            });
+        }
+
+        function onSceneClick(event) {
+            if(event.clientY > window.innerHeight - 100 && event.clientX > window.innerWidth - 300) return;
+            if(event.clientX < 300 && event.clientY < 100) return;
+
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            
+            const targets = [sunMesh, ...planets, ...moons];
+            const intersects = raycaster.intersectObjects(targets);
+
+            if(intersects.length > 0) {
+                const clickedObj = intersects.object;
+                const name = clickedObj.userData.name;
+                selectTarget(name);
+            } else {
+                selectTarget("Güneş");
+            }
+        }
+
+        function selectTarget(name) {
+            targetName = name;
+            
+            const btns = document.querySelectorAll('.carousel-btn');
+            btns.forEach(btn => {
+                if(btn.innerText === name) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            if(name === "Güneş") {
+                currentTargetMesh = sunMesh;
+            } else {
+                const foundP = planets.find(p => p.userData.name === name);
+                const foundM = moons.find(m => m.userData.name === name);
+                currentTargetMesh = foundP || foundM || sunMesh;
+            }
+
+            updatePanel(name);
+        }
+
+        function updatePanel(name) {
+            const data = spaceData[name];
+            if(!data) return;
+
+            document.getElementById('info-title').innerText = name;
+            document.getElementById('info-type').innerHTML = `<strong>Tür:</strong> ${data.type}`;
+            document.getElementById('info-moons').innerHTML = `<strong>Uydu Sayısı:</strong> ${data.moons}`;
+            document.getElementById('info-desc').innerText = data.desc;
+            document.getElementById('info-panel').classList.add('active');
+        }
+
+        function closePanel() {
+            document.getElementById('info-panel').classList.remove('active');
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            if (!isPaused) {
+                planets.forEach(p => {
+                    p.userData.angle += p.userData.speed * delta * 0.15 * speedMultiplier;
+                    p.position.x = Math.cos(p.userData.angle) * p.userData.dist;
+                    p.position.z = Math.sin(p.userData.angle) * p.userData.dist;
+                    p.rotation.y += 0.01;
+                });
+
+                moons.forEach(m => {
+                    m.userData.angle += m.userData.speed * delta * 0.4 * speedMultiplier;
+                    const parentPos = m.userData.parent.position;
+                    m.position.x = parentPos.x + Math.cos(m.userData.angle) * m.userData.dist;
+                    m.position.z = parentPos.z + Math.sin(m.userData.angle) * m.userData.dist;
+                    m.position.y = parentPos.y;
+                    m.rotation.y += 0.02;
+                });
+
+                sunMesh.rotation.y += 0.002;
+            }
+
+            if(currentTargetMesh) {
+                const targetPos = new THREE.Vector3();
+                currentTargetMesh.getWorldPosition(targetPos);
+                controls.target.lerp(targetPos, 0.05);
+            }
+
+            controls.update();
+            updateLabels();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            init();
+            animate();
+        };
+    </script>
+</body>
+</html>

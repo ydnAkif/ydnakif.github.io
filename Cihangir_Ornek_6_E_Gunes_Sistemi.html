@@ -1,0 +1,3672 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gerçekçi Güneş Sistemi – NASA Dokuları</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: Arial, sans-serif; color: #fff; touch-action: none; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #ui {
+            position: absolute; top: 15px; left: 15px; z-index: 10;
+            background: rgba(10,15,30,0.88); padding: 10px; border-radius: 8px;
+            border: 1px solid #00d2ff; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+        }
+        .search-wrap { position: relative; display: inline-block; }
+        input[type="text"] {
+            padding: 8px; border-radius: 4px; border: 1px solid #444;
+            background: #111; color: #fff; outline: none; width: 200px;
+        }
+        #searchSuggest {
+            display: none; position: absolute; left: 0; top: 100%; margin-top: 4px;
+            width: 260px; max-height: 220px; overflow-y: auto; z-index: 30;
+            background: rgba(8,12,24,0.96); border: 1px solid #00d2ff; border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        #searchSuggest div {
+            padding: 7px 10px; cursor: pointer; color: #dde; font-size: 12px;
+            border-bottom: 1px solid #1a2030;
+        }
+        #searchSuggest div:hover, #searchSuggest div.active {
+            background: rgba(0,210,255,0.18); color: #fff;
+        }
+        #searchSuggest div span { color: #6af; font-size: 10px; margin-left: 6px; }
+        button {
+            padding: 8px 12px; background: #00d2ff; color: #000;
+            font-weight: bold; border: none; border-radius: 4px; cursor: pointer;
+        }
+        button:hover { background: #33e0ff; }
+        button.active { background: #ffaa33; color: #111; }
+        #speedLabel { user-select: none; }
+        #info-card {
+            max-height: 55vh; overflow-y: auto; position: absolute; bottom: 20px; right: 20px;
+            width: 290px; background: rgba(8,12,24,0.93); border: 1px solid #00d2ff;
+            border-radius: 10px; padding: 15px; display: none; z-index: 10;
+            box-shadow: 0 0 20px rgba(0,210,255,0.25); font-size: 13px; line-height: 1.45;
+        }
+        #info-card h2 { margin-top: 0; color: #00d2ff; font-size: 1.25em; }
+        .close-btn { float: right; cursor: pointer; color: #ff5555; font-weight: bold; font-size: 18px; }
+        .planet-label {
+            position: absolute; color: #fff; font-size: 11px;
+            background: rgba(0,0,0,0.78); padding: 2px 6px; border-radius: 3px;
+            pointer-events: none; transform: translate(-50%,-100%); white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.25); z-index: 5;
+        }
+        #loading {
+            position: absolute; inset: 0; background: #000; display: flex;
+            align-items: center; justify-content: center; z-index: 100; flex-direction: column; gap: 12px;
+        }
+        #loading .bar {
+            width: 220px; height: 6px; background: #222; border-radius: 3px; overflow: hidden;
+        }
+        #loading .fill { height: 100%; width: 0%; background: #00d2ff; transition: width 0.2s; }
+        #hint {
+            position: absolute; bottom: 12px; left: 15px; font-size: 12px;
+            color: rgba(255,255,255,0.5); z-index: 5; pointer-events: none;
+        }
+        #credit {
+            position: absolute; bottom: 12px; right: 15px; font-size: 10px;
+            color: rgba(255,255,255,0.4); z-index: 5; pointer-events: none; max-width: 260px; text-align: right;
+        }
+        @media (max-width: 700px) {
+            #info-card { left: 15px; right: 15px; bottom: 15px; width: auto; max-height: 45vh; }
+            #hint, #credit { display: none; }
+        }
+
+        /* Ana menü */
+        #main-menu {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at center, #0a1228 0%, #000 70%);
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        #main-menu.hidden {
+            opacity: 0; visibility: hidden; pointer-events: none;
+        }
+        #main-menu h1 {
+            font-size: 2.4rem; font-weight: 700; letter-spacing: 0.12em;
+            color: #fff; margin: 0 0 8px 0; text-align: center;
+            text-shadow: 0 0 24px rgba(0, 210, 255, 0.5), 0 0 60px rgba(0, 150, 255, 0.25);
+        }
+        #main-menu .subtitle {
+            font-size: 0.95rem; color: rgba(180, 210, 240, 0.7);
+            margin-bottom: 36px; letter-spacing: 0.08em;
+        }
+        #startBtn {
+            padding: 14px 48px; font-size: 1.15rem; font-weight: bold;
+            background: linear-gradient(180deg, #00d2ff 0%, #0099cc 100%);
+            color: #001018; border: none; border-radius: 8px; cursor: pointer;
+            letter-spacing: 0.06em;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4), 0 4px 16px rgba(0,0,0,0.4);
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        #startBtn:hover {
+            background: linear-gradient(180deg, #33e0ff 0%, #00b8e6 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.55), 0 6px 20px rgba(0,0,0,0.45);
+        }
+        #startBtn:active { transform: scale(0.98); }
+        #ui, #hint, #credit { visibility: hidden; }
+        body.started #ui, body.started #hint, body.started #credit { visibility: visible; }
+        /* info-card display:none ile kontrol edilir; visibility engellemesin */
+        #info-card { visibility: visible; }
+        #labels-container { visibility: hidden; }
+        body.started #labels-container { visibility: visible; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <!-- Ana menü -->
+    <div id="main-menu">
+        <h1>GÜNEŞ SİSTEMİ</h1>
+        <div class="subtitle">Gerçekçi 3D Simülasyon</div>
+        <button id="startBtn" type="button">Başlat</button>
+    </div>
+
+    <div id="loading" style="display:none">
+        <div style="font-size:18px;color:#00d2ff">NASA dokuları yükleniyor…</div>
+        <div class="bar"><div class="fill" id="loadFill"></div></div>
+        <div id="loadText" style="font-size:12px;color:#888">0%</div>
+    </div>
+
+    <div id="ui">
+        <div class="search-wrap">
+            <input type="text" id="searchInput" placeholder="Gezegen, yıldız, kara delik..." autocomplete="off"
+                   oninput="updateSearchSuggest()" onkeydown="searchKeydown(event)">
+            <div id="searchSuggest"></div>
+        </div>
+        <button onclick="searchObject()">Ara</button>
+        <button onclick="resetView()" title="Genel bakış">Sıfırla</button>
+        <span style="width:1px;height:22px;background:#335;margin:0 4px;display:inline-block"></span>
+        <button id="btnPause" onclick="togglePause()" title="Duraklat / Devam">⏸</button>
+        <button onclick="changeSpeed(0.5)" title="Yavaşlat">⏪</button>
+        <button onclick="changeSpeed(2)" title="Hızlandır">⏩</button>
+        <span id="speedLabel" style="font-size:12px;color:#8cf;min-width:48px;display:inline-block">×1</span>
+        <button id="btnOrbits" onclick="toggleOrbits()" title="Yörüngeleri aç/kapa">Yörünge</button>
+        <button id="btnStructure" onclick="toggleStructure()" title="İç yapıyı aç/kapa">Yapı: Açık</button>
+    </div>
+
+    <div id="info-card">
+        <span class="close-btn" onclick="hideInfo()">✕</span>
+        <h2 id="info-title">Gök Cismi</h2>
+        <p><strong>Tür:</strong> <span id="info-type">-</span></p>
+        <p><strong>Bilgi:</strong> <span id="info-desc">-</span></p>
+        <p><strong>Çap:</strong> <span id="info-diameter">-</span></p>
+        <p><strong>Kütle:</strong> <span id="info-mass">-</span></p>
+        <p><strong>Hacim:</strong> <span id="info-volume">-</span></p>
+        <p><strong>Dönüş Süresi:</strong> <span id="info-rotation">-</span></p>
+        <p><strong>Dolanış Süresi:</strong> <span id="info-orbit">-</span></p>
+        <p><strong>Atmosfer:</strong> <span id="info-atmosphere">-</span></p>
+        <p><strong>Katmanlar:</strong> <span id="info-layers">-</span></p>
+        <p><strong>Uydular:</strong> <span id="info-moons">-</span></p>
+        <p><strong>Ek bilgi:</strong> <span id="info-extra">-</span></p>
+    </div>
+
+    <div id="hint">Tıkla → odaklan (uydulara da) • Sürükle → döndür • Tekerlek / pinch → zoom (çok yakına gelebilirsin)</div>
+    <div id="credit">Dokular: Solar System Scope (NASA verisi, CC BY 4.0)</div>
+    <div id="labels-container"></div>
+    <div id="canvas-container"></div>
+
+    <script>
+        // ========== NASA / Solar System Scope doku URL'leri (Wikimedia, CORS dostu) ==========
+        const TEX = {
+            sun:     'https://upload.wikimedia.org/wikipedia/commons/c/cb/Solarsystemscope_texture_2k_sun.jpg',
+            mercury: 'https://upload.wikimedia.org/wikipedia/commons/9/92/Solarsystemscope_texture_2k_mercury.jpg',
+            venus:   'https://upload.wikimedia.org/wikipedia/commons/4/40/Solarsystemscope_texture_2k_venus_surface.jpg',
+            earth:   'https://upload.wikimedia.org/wikipedia/commons/c/c3/Solarsystemscope_texture_2k_earth_daymap.jpg',
+            moon:    'https://upload.wikimedia.org/wikipedia/commons/2/26/Solarsystemscope_texture_2k_moon.jpg',
+            mars:    'https://upload.wikimedia.org/wikipedia/commons/4/46/Solarsystemscope_texture_2k_mars.jpg',
+            jupiter: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Solarsystemscope_texture_2k_jupiter.jpg',
+            saturn:  'https://upload.wikimedia.org/wikipedia/commons/e/ea/Solarsystemscope_texture_2k_saturn.jpg',
+            uranus:  'https://upload.wikimedia.org/wikipedia/commons/9/95/Solarsystemscope_texture_2k_uranus.jpg',
+            neptune: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Solarsystemscope_texture_2k_neptune.jpg',
+            ring:    'https://upload.wikimedia.org/wikipedia/commons/7/7d/Solarsystemscope_texture_2k_saturn_ring_alpha.png',
+            milkyway: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Solarsystemscope_texture_2k_stars_milky_way.jpg'
+        };
+
+        // Uydu dokuları – NASA/Voyager/Galileo/Cassini görünümüne yakın yedekler
+        function createFallbackTexture(type) {
+            const c = document.createElement('canvas');
+            c.width = 1024; c.height = 512;
+            const ctx = c.getContext('2d');
+
+            if (type === 'io') {
+                // Io – sarı-turuncu volkanik yüzey (Galileo/Voyager)
+                const g = ctx.createLinearGradient(0,0,0,512);
+                g.addColorStop(0,'#c9a040'); g.addColorStop(0.4,'#e0b850'); g.addColorStop(0.7,'#b87830'); g.addColorStop(1,'#8a5020');
+                ctx.fillStyle = g; ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<1200;i++) {
+                    ctx.fillStyle = Math.random()>0.55 ? '#6b3010' : '#f0d070';
+                    ctx.beginPath(); ctx.arc(Math.random()*1024, Math.random()*512, 1+Math.random()*7, 0, 6.28); ctx.fill();
+                }
+                // volkanik lekeler
+                for (let i=0;i<25;i++) {
+                    ctx.fillStyle = 'rgba(180,40,20,0.55)';
+                    ctx.beginPath(); ctx.ellipse(Math.random()*1024, Math.random()*512, 8+Math.random()*22, 5+Math.random()*12, 0, 0, 6.28); ctx.fill();
+                }
+            } else if (type === 'europa') {
+                // Europa – buz + koyu çizgiler (lineae)
+                ctx.fillStyle = '#dce4ec'; ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<90;i++) {
+                    ctx.strokeStyle = `rgba(60,70,90,${0.25+Math.random()*0.35})`;
+                    ctx.lineWidth = 1 + Math.random()*3.5;
+                    ctx.beginPath();
+                    const y = Math.random()*512;
+                    ctx.moveTo(0, y);
+                    ctx.bezierCurveTo(250, y+(Math.random()-0.5)*40, 750, y+(Math.random()-0.5)*50, 1024, y+(Math.random()-0.5)*30);
+                    ctx.stroke();
+                }
+                for (let i=0;i<40;i++) {
+                    ctx.fillStyle = 'rgba(100,90,80,0.25)';
+                    ctx.beginPath(); ctx.ellipse(Math.random()*1024, Math.random()*512, 15+Math.random()*40, 4+Math.random()*10, Math.random(), 0, 6.28); ctx.fill();
+                }
+            } else if (type === 'titan') {
+                // Titan – turuncu hidrokarbon + koyu göller
+                ctx.fillStyle = '#a87840'; ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<400;i++) {
+                    ctx.strokeStyle = `rgba(50,30,15,${0.12+Math.random()*0.22})`;
+                    ctx.lineWidth = 1.5 + Math.random()*4;
+                    const y = Math.random()*512;
+                    ctx.beginPath(); ctx.moveTo(0,y); ctx.bezierCurveTo(300,y+(Math.random()-0.5)*40,700,y+(Math.random()-0.5)*40,1024,y); ctx.stroke();
+                }
+                ctx.fillStyle = 'rgba(25,35,45,0.4)';
+                for (let i=0;i<18;i++) {
+                    ctx.beginPath(); ctx.ellipse(Math.random()*1024, Math.random()*512, 25+Math.random()*60, 10+Math.random()*25, 0, 0, 6.28); ctx.fill();
+                }
+            } else if (type === 'enceladus') {
+                // Enceladus – parlak buz + tiger stripes
+                ctx.fillStyle = '#e8f2f4'; ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<80;i++) {
+                    ctx.strokeStyle = `rgba(70,90,100,${0.2+Math.random()*0.3})`;
+                    ctx.lineWidth = 1 + Math.random()*2.5;
+                    ctx.beginPath(); ctx.moveTo(Math.random()*1024, Math.random()*512); ctx.lineTo(Math.random()*1024, Math.random()*512); ctx.stroke();
+                }
+                // güney kutbu tiger stripes benzeri
+                for (let i=0;i<6;i++) {
+                    ctx.strokeStyle = 'rgba(100,130,150,0.45)';
+                    ctx.lineWidth = 2 + Math.random()*2;
+                    ctx.beginPath(); ctx.moveTo(200+i*90, 380); ctx.lineTo(280+i*90, 500); ctx.stroke();
+                }
+            } else if (type === 'ring') {
+                // Satürn halkası yedek alpha
+                c.width = 512; c.height = 64;
+                const grd = ctx.createLinearGradient(0, 0, 512, 0);
+                grd.addColorStop(0, 'rgba(0,0,0,0)');
+                grd.addColorStop(0.1, 'rgba(220,200,160,0.7)');
+                grd.addColorStop(0.25, 'rgba(180,160,120,0.4)');
+                grd.addColorStop(0.4, 'rgba(255,240,200,0.95)');
+                grd.addColorStop(0.55, 'rgba(150,130,100,0.3)');
+                grd.addColorStop(0.7, 'rgba(230,210,170,0.85)');
+                grd.addColorStop(0.9, 'rgba(200,180,140,0.5)');
+                grd.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, 512, 64);
+            } else if (type === 'milkyway') {
+                // Yıldızlı arka plan yedek
+                ctx.fillStyle = '#02040a';
+                ctx.fillRect(0, 0, 1024, 512);
+                for (let i = 0; i < 8000; i++) {
+                    const b = 0.4 + Math.random() * 0.6;
+                    ctx.fillStyle = `rgba(${200 + Math.random()*55|0},${200 + Math.random()*55|0},${220 + Math.random()*35|0},${b})`;
+                    ctx.fillRect(Math.random() * 1024, Math.random() * 512, 1, 1);
+                }
+                // Samanyolu bandı
+                const band = ctx.createLinearGradient(0, 180, 0, 340);
+                band.addColorStop(0, 'rgba(0,0,0,0)');
+                band.addColorStop(0.4, 'rgba(120,130,180,0.15)');
+                band.addColorStop(0.5, 'rgba(180,170,140,0.22)');
+                band.addColorStop(0.6, 'rgba(120,130,180,0.15)');
+                band.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = band;
+                ctx.fillRect(0, 0, 1024, 512);
+            } else {
+                // Genel kraterli uydu (Ganymede, Callisto, Rhea, Triton, Phobos...)
+                ctx.fillStyle = type === 'moon' ? '#9a9a9a' : '#7a7a7a';
+                ctx.fillRect(0,0,1024,512);
+                for (let i=0;i<6000;i++) {
+                    const r = 0.6 + Math.random()*5;
+                    ctx.fillStyle = Math.random()>0.5 ? '#5a5a5a' : '#b8b8b8';
+                    ctx.beginPath(); ctx.arc(Math.random()*1024, Math.random()*512, r, 0, 6.28); ctx.fill();
+                }
+                for (let i=0;i<60;i++) {
+                    const x=Math.random()*1024, y=Math.random()*512, r=5+Math.random()*22;
+                    ctx.fillStyle = 'rgba(40,40,40,0.45)';
+                    ctx.beginPath(); ctx.arc(x,y,r,0,6.28); ctx.fill();
+                    ctx.strokeStyle = 'rgba(140,140,140,0.35)'; ctx.lineWidth=1.2;
+                    ctx.beginPath(); ctx.arc(x,y,r*0.88,0,6.28); ctx.stroke();
+                }
+            }
+            const t = new THREE.CanvasTexture(c);
+            t.encoding = THREE.sRGBEncoding;
+            return t;
+        }
+
+        const celestialData = {
+            "Güneş": {
+                name:"Güneş", size:8.5, texKey:"sun", dist:0, rotSpeed:0.00025, orbSpeed:0, tilt:0.13,
+                desc:"Güneş Sistemi'nin merkezindeki yıldız; enerjisini çekirdek bölgesindeki nükleer füzyondan üretir.",
+                diameter:"1.392.700 km (≈109 Dünya)",
+                mass:"1,989 × 10³⁰ kg (≈333.000 Dünya)",
+                volume:"1,41 × 10¹⁸ km³ (≈1,3 milyon Dünya)",
+                rotTime:"Yaklaşık 25 gün (ekvatorda)", orbTime:"Merkez",
+                atmosphere:"Fotosfer, kromosfer ve korona",
+                layers:"Çekirdek → ışınım bölgesi → taşınım bölgesi → fotosfer → kromosfer → korona",
+                moonsText:"Uydu yok; gezegenler Güneş'in etrafında dolanır.",
+                extra:"Güneş Sistemi kütlesinin %99,8'ini oluşturur.",
+                interior: [
+                    { name: "Çekirdek", r: 0.25, color: 0xffee55 },
+                    { name: "Işınım bölgesi", r: 0.70, color: 0xff9922 },
+                    { name: "Taşınım bölgesi", r: 0.95, color: 0xff4400 },
+                    { name: "Fotosfer", r: 1.00, color: 0xffaa33 }
+                ]
+            },
+            "Merkür": {
+                name:"Merkür", size:0.55, texKey:"mercury", dist:24, rotSpeed:0.000022, orbSpeed:0.000038, tilt:0.001,
+                desc:"Güneş'e en yakın ve en küçük gezegen.",
+                diameter:"4.879 km (0,38 Dünya)",
+                mass:"3,30 × 10²³ kg (0,055 Dünya)",
+                volume:"6,08 × 10¹⁰ km³ (0,056 Dünya)",
+                rotTime:"58,6 gün", orbTime:"88 gün",
+                atmosphere:"Çok ince ekzosfer (O, Na, H, He, K izleri).",
+                layers:"Kabuk → manto → büyük metalik çekirdek",
+                moonsText:"Doğal uydusu yok.",
+                extra:"Yoğun kraterli yüzey. 3:2 dönüş-dolanım rezonansı.",
+                interior: [
+                    { name: "Metalik çekirdek", r: 0.75, color: 0xffcc44 },
+                    { name: "Manto", r: 0.95, color: 0xff6622 },
+                    { name: "Kabuk", r: 1.00, color: 0xcc5533 }
+                ]
+            },
+            "Venüs": {
+                name:"Venüs", size:1.15, texKey:"venus", dist:40, rotSpeed:-0.00012, orbSpeed:0.000022, tilt:3.1,
+                desc:"Kalın atmosferi ve sera etkisi nedeniyle yüzeyi ~465°C.",
+                diameter:"12.104 km (0,95 Dünya)",
+                mass:"4,87 × 10²⁴ kg (0,815 Dünya)",
+                volume:"9,28 × 10¹¹ km³ (0,857 Dünya)",
+                rotTime:"243 gün (retrograd)", orbTime:"225 gün",
+                atmosphere:"%96,5 CO₂, yoğun sülfürik asit bulutları.",
+                layers:"Kabuk → kayaç manto → demir çekirdek",
+                moonsText:"Doğal uydusu yok.",
+                extra:"En yavaş dönen gezegen; retrograd dönüş.",
+                interior: [
+                    { name: "Demir çekirdek", r: 0.50, color: 0xffdd55 },
+                    { name: "Kayaç manto", r: 0.95, color: 0xff6622 },
+                    { name: "Kabuk", r: 1.00, color: 0xdd5533 }
+                ]
+            },
+            "Dünya": {
+                name:"Dünya", size:1.25, texKey:"earth", dist:56, rotSpeed:0.00016, orbSpeed:0.000013, tilt:0.41,
+                desc:"Sıvı su ve bilinen yaşamın bulunduğu tek gezegen.",
+                diameter:"12.742 km",
+                mass:"5,97 × 10²⁴ kg",
+                volume:"1,08 × 10¹² km³",
+                rotTime:"23 saat 56 dk", orbTime:"365,25 gün",
+                atmosphere:"%78 N₂, %21 O₂, argon ve diğer gazlar.",
+                layers:"Kabuk → manto → dış/iç çekirdek",
+                moonsText:"1 doğal uydu: Ay",
+                extra:"≈23,4° eksen eğikliği mevsimleri oluşturur.",
+                interior: [
+                    { name: "İç çekirdek", r: 0.22, color: 0xffee66 },
+                    { name: "Dış çekirdek", r: 0.55, color: 0xff9900 },
+                    { name: "Manto", r: 0.96, color: 0xff4400 },
+                    { name: "Kabuk", r: 1.00, color: 0xcc5533 }
+                ],
+                moons:[{
+                    name:"Ay", size:0.34, texKey:"moon", dist:5.5, rotSpeed:0.00009, orbSpeed:0.00012, tilt:0.12,
+                    desc:"Dünya'nın doğal uydusu; gelgitler ve eksen kararlılığı üzerinde etkili.",
+                    diameter:"3.475 km (0,27 Dünya)",
+                    mass:"7,35 × 10²² kg (0,012 Dünya)",
+                    volume:"2,20 × 10¹⁰ km³ (0,020 Dünya)",
+                    rotTime:"27,3 gün", orbTime:"27,3 gün",
+                    atmosphere:"Çok seyrek ekzosfer",
+                    layers:"Kabuk → manto → küçük demir çekirdek",
+                    moonsText:"Uydu yok",
+                    extra:"Bağlı dönüş (tidal lock). Çok sayıda krater ve 'denizler'."
+                }]
+            },
+            "Mars": {
+                name:"Mars", size:0.72, texKey:"mars", dist:78, rotSpeed:0.00014, orbSpeed:0.000008, tilt:0.44,
+                desc:"Demir oksit nedeniyle kızıl görünen soğuk kayalık gezegen.",
+                diameter:"6.779 km (0,53 Dünya)",
+                mass:"6,42 × 10²³ kg (0,107 Dünya)",
+                volume:"1,63 × 10¹¹ km³ (0,151 Dünya)",
+                rotTime:"24 saat 37 dk", orbTime:"687 gün",
+                atmosphere:"Çoğunlukla CO₂; çok ince.",
+                layers:"Kabuk → manto → demir-kükürt çekirdek",
+                moonsText:"2 doğal uydu: Phobos ve Deimos",
+                extra:"Olympus Mons ve Valles Marineris gibi dev oluşumlar.",
+                interior: [
+                    { name: "Demir-kükürt çekirdek", r: 0.50, color: 0xffcc44 },
+                    { name: "Manto", r: 0.95, color: 0xff5511 },
+                    { name: "Kabuk", r: 1.00, color: 0xdd4422 }
+                ],
+                moons:[
+                    {name:"Phobos",size:0.16,texKey:"moon",dist:2.8,rotSpeed:0.00007,orbSpeed:0.00042,tilt:0.02,
+                     desc:"Mars'ın daha büyük ve yakın düzensiz uydusu.",rotTime:"~7s 40dk",orbTime:"~7s 39dk",
+                     atmosphere:"Yok",layers:"Kayaç gövde",moonsText:"Yok",extra:"Çok hızlı dolanır; yavaş yavaş düşüyor."},
+                    {name:"Deimos",size:0.12,texKey:"moon",dist:5.0,rotSpeed:0.00006,orbSpeed:0.00015,tilt:0.03,
+                     desc:"Mars'ın küçük uzak uydusu.",rotTime:"~30 saat",orbTime:"~30,3 saat",
+                     atmosphere:"Yok",layers:"Kayaç gövde",moonsText:"Yok",extra:"Phobos'tan daha küçük ve uzak."}
+                ]
+            },
+            "Jüpiter": {
+                name:"Jüpiter", size:4.2, texKey:"jupiter", dist:130, rotSpeed:0.00030, orbSpeed:0.0000035, tilt:0.05, hasRings:true, ringStyle:"jupiter",
+                desc:"En büyük gezegen; hidrojen-helyum gaz devidir.",
+                diameter:"139.820 km (11 Dünya)",
+                mass:"1,90 × 10²⁷ kg (318 Dünya)",
+                volume:"1,43 × 10¹⁵ km³ (1.321 Dünya)",
+                rotTime:"~9 saat 56 dk", orbTime:"11,86 yıl",
+                atmosphere:"H₂ + He; amonyak ve su bulutları.",
+                layers:"Atmosfer → moleküler H₂ → metalik H₂ → çekirdek",
+                moonsText:"95+ uydu; Io, Europa, Ganymede, Callisto başlıcaları.",
+                extra:"Büyük Kırmızı Leke yüzyıllardır süren fırtına. Güçlü manyetik alan.",
+                interior: [
+                    { name: "Kaya/metal çekirdek", r: 0.15, color: 0xffee55 },
+                    { name: "Metalik hidrojen", r: 0.55, color: 0xffaa22 },
+                    { name: "Moleküler hidrojen", r: 0.90, color: 0xff6622 },
+                    { name: "Üst atmosfer", r: 1.00, color: 0xee5533 }
+                ],
+                moons:[
+                    {name:"Io",size:0.26,texKey:"io",dist:7.5,rotSpeed:0.00009,orbSpeed:0.00026,tilt:0.01,
+                     desc:"En aktif volkanik cisim.",rotTime:"1,77 gün",orbTime:"1,77 gün",
+                     atmosphere:"İnce SO₂",layers:"Kayaç + metal çekirdek",moonsText:"Yok",extra:"Güneş Sistemi'nin en aktif volkanik cismi."},
+                    {name:"Europa",size:0.23,texKey:"europa",dist:11.0,rotSpeed:0.00008,orbSpeed:0.00014,tilt:0.008,
+                     desc:"Buz kabuğu altında okyanus olasılığı yüksek.",rotTime:"3,55 gün",orbTime:"3,55 gün",
+                     atmosphere:"Çok ince O₂",layers:"Buz → okyanus → manto → çekirdek",moonsText:"Yok",extra:"Yaşam potansiyeli yüksek aday."},
+                    {name:"Ganymede",size:0.32,texKey:"moon",dist:15.5,rotSpeed:0.00007,orbSpeed:0.000095,tilt:0.01,
+                     desc:"Güneş Sistemi'nin en büyük uydusu.",rotTime:"7,15 gün",orbTime:"7,15 gün",
+                     atmosphere:"Çok ince",layers:"Buz → manto → metal çekirdek",moonsText:"Yok",extra:"Kendi manyetik alanına sahip tek uydu."},
+                    {name:"Callisto",size:0.29,texKey:"moon",dist:21.0,rotSpeed:0.00006,orbSpeed:0.000065,tilt:0.01,
+                     desc:"Yoğun kraterli, çok eski yüzey.",rotTime:"16,69 gün",orbTime:"16,69 gün",
+                     atmosphere:"Çok ince",layers:"Buz-kaya karışımı",moonsText:"Yok",extra:"En fazla kraterli yüzeylerden biri."}
+                ]
+            },
+            "Satürn": {
+                name:"Satürn", size:3.5, texKey:"saturn", dist:185, rotSpeed:0.00025, orbSpeed:0.0000020, tilt:0.47, hasRings:true, ringStyle:"saturn",
+                desc:"Belirgin halka sistemiyle bilinen gaz devidir.",
+                diameter:"116.460 km (9,4 Dünya)",
+                mass:"5,68 × 10²⁶ kg (95 Dünya)",
+                volume:"8,27 × 10¹⁴ km³ (764 Dünya)",
+                rotTime:"~10,7 saat", orbTime:"29,45 yıl",
+                atmosphere:"H₂ + He; amonyak bulutları.",
+                layers:"Gaz → sıvı H₂ → metalik H₂ → çekirdek",
+                moonsText:"140+ uydu; Titan, Rhea, Iapetus, Dione, Tethys, Enceladus, Mimas başlıcaları.",
+                extra:"Halkalar büyük ölçüde su buzu. Yoğunluğu sudan düşük.",
+                interior: [
+                    { name: "Yoğun çekirdek", r: 0.20, color: 0xffee66 },
+                    { name: "Metalik hidrojen", r: 0.50, color: 0xffaa33 },
+                    { name: "Sıvı/moleküler H₂", r: 0.88, color: 0xff7733 },
+                    { name: "Gaz atmosfer", r: 1.00, color: 0xee6644 }
+                ],
+                moons:[
+                    // Halkalar ~10.7 dışına + geniş aralık
+                    {name:"Mimas",size:0.10,texKey:"moon",dist:12.5,rotSpeed:0.00010,orbSpeed:0.00038,tilt:0.03,
+                     desc:"Herschel krateriyle bilinen küçük buzlu uydu (Death Star'a benzer).",rotTime:"0,94 gün",orbTime:"0,94 gün",
+                     atmosphere:"Yok",layers:"Buz-kaya",moonsText:"Yok",extra:"Satürn'ün en iç büyük uydularından; halka sistemini etkiler."},
+                    {name:"Enceladus",size:0.14,texKey:"enceladus",dist:15.5,rotSpeed:0.00009,orbSpeed:0.00028,tilt:0.01,
+                     desc:"Güney kutbundan su buzu ve buhar püskürten buzlu uydu.",rotTime:"1,37 gün",orbTime:"1,37 gün",
+                     atmosphere:"Çok ince su buharı",layers:"Buz kabuğu → okyanus → kaya çekirdek",moonsText:"Yok",extra:"E halkasının ana kaynağı. Yaşam potansiyeli yüksek aday."},
+                    {name:"Tethys",size:0.18,texKey:"moon",dist:19.0,rotSpeed:0.00008,orbSpeed:0.00020,tilt:0.02,
+                     desc:"Büyük Odysseus krateri ve Ithaca Chasma vadisiyle bilinen buzlu uydu.",rotTime:"1,89 gün",orbTime:"1,89 gün",
+                     atmosphere:"Yok",layers:"Buz ağırlıklı",moonsText:"Yok",extra:"Yüzeyi çok parlak buzla kaplıdır."},
+                    {name:"Dione",size:0.17,texKey:"moon",dist:23.0,rotSpeed:0.00007,orbSpeed:0.00015,tilt:0.01,
+                     desc:"Buz ve kaya karışımı, parlak uçurumlara sahip uydu.",rotTime:"2,74 gün",orbTime:"2,74 gün",
+                     atmosphere:"Çok ince oksijen izleri",layers:"Buz-kaya",moonsText:"Yok",extra:"Yüzeyinde parlak buz kayalıkları görülür."},
+                    {name:"Rhea",size:0.22,texKey:"moon",dist:28.0,rotSpeed:0.00006,orbSpeed:0.00011,tilt:0.01,
+                     desc:"Satürn'ün ikinci büyük uydusu; yoğun kraterli buz-kaya yüzeyi.",rotTime:"4,52 gün",orbTime:"4,52 gün",
+                     atmosphere:"Çok ince",layers:"Buz-kaya karışımı",moonsText:"Yok",extra:"Parlak buz ve koyu kraterlerle kaplıdır."},
+                    {name:"Titan",size:0.42,texKey:"titan",dist:36.0,rotSpeed:0.00005,orbSpeed:0.00007,tilt:0.02, hasAtm:true,
+                     desc:"Yoğun atmosferi ve yüzeyinde sıvı hidrokarbon gölleri bulunan en büyük uydu.",rotTime:"15,95 gün",orbTime:"15,95 gün",
+                     atmosphere:"Azot ağırlıklı, yoğun; metan içerir",layers:"Buz/kaya → olası okyanus → iç",moonsText:"Yok",extra:"Dünya dışında stabil sıvı göller görülen tek bilinen dünya."},
+                    {name:"Iapetus",size:0.20,texKey:"moon",dist:46.0,rotSpeed:0.00004,orbSpeed:0.00004,tilt:0.15,
+                     desc:"İki yüzü farklı renkli (açık-koyu) ünlü uydu; ekvatoral sırtı vardır.",rotTime:"79,3 gün",orbTime:"79,3 gün",
+                     atmosphere:"Yok",layers:"Buz-kaya",moonsText:"Yok",extra:"Bir yarımküre koyu, diğeri parlak buz; ekvator boyunca dağ sırası."}
+                ]
+            },
+            "Uranüs": {
+                name:"Uranüs", size:2.15, texKey:"uranus", dist:250, rotSpeed:0.00022, orbSpeed:0.0000011, tilt:1.71, hasRings:true, ringStyle:"uranus",
+                desc:"≈98° eksen eğikliğiyle yan yatmış buz devidir.",
+                diameter:"50.724 km (4,0 Dünya)",
+                mass:"8,68 × 10²⁵ kg (14,5 Dünya)",
+                volume:"6,83 × 10¹³ km³ (63 Dünya)",
+                rotTime:"~17 saat 14 dk", orbTime:"84 yıl",
+                atmosphere:"H₂ + He; metan mavi-yeşil renk verir.",
+                layers:"Atmosfer → buzlu manto → kayaç çekirdek",
+                moonsText:"27 uydu; Titania, Oberon başlıcaları.",
+                extra:"Eksen eğikliği ~98°. Zayıf halkalar.",
+                interior: [
+                    { name: "Kayaç çekirdek", r: 0.25, color: 0xffcc44 },
+                    { name: "Buzlu manto", r: 0.85, color: 0xff7722 },
+                    { name: "Atmosfer", r: 1.00, color: 0xee5533 }
+                ],
+                moons:[
+                    {name:"Titania",size:0.20,texKey:"moon",dist:8.0,rotSpeed:0.00005,orbSpeed:0.00009,tilt:0.01,
+                     desc:"Uranüs'ün en büyük uydusu.",rotTime:"8,7 gün",orbTime:"8,7 gün",
+                     atmosphere:"Yok denecek kadar ince",layers:"Buz-kaya",moonsText:"Yok",extra:"Faylar ve kraterler."},
+                    {name:"Oberon",size:0.19,texKey:"moon",dist:12.5,rotSpeed:0.000045,orbSpeed:0.00007,tilt:0.01,
+                     desc:"Dıştaki büyük uydulardan.",rotTime:"13,5 gün",orbTime:"13,5 gün",
+                     atmosphere:"Yok denecek kadar ince",layers:"Buz-kaya",moonsText:"Yok",extra:"Kraterli koyu yüzey."}
+                ]
+            },
+            "Neptün": {
+                name:"Neptün", size:2.05, texKey:"neptune", dist:310, rotSpeed:0.00020, orbSpeed:0.0000007, tilt:0.49, hasRings:true, ringStyle:"neptune",
+                desc:"En dış büyük gezegen; çok güçlü rüzgârlar.",
+                diameter:"49.244 km (3,9 Dünya)",
+                mass:"1,02 × 10²⁶ kg (17 Dünya)",
+                volume:"6,25 × 10¹³ km³ (58 Dünya)",
+                rotTime:"~16 saat 6 dk", orbTime:"164,8 yıl",
+                atmosphere:"H₂ + He + metan (mavi renk).",
+                layers:"Atmosfer → sıcak yoğun manto → kayaç çekirdek",
+                moonsText:"14 uydu; en büyüğü Triton.",
+                extra:"En hızlı gezegensel rüzgârlar (2000+ km/s).",
+                interior: [
+                    { name: "Kayaç çekirdek", r: 0.25, color: 0xffdd55 },
+                    { name: "Sıcak yoğun manto", r: 0.85, color: 0xff6611 },
+                    { name: "Atmosfer", r: 1.00, color: 0xee4422 }
+                ],
+                moons:[{
+                    name:"Triton",size:0.28,texKey:"moon",dist:9.0,rotSpeed:0.00006,orbSpeed:-0.00009,tilt:2.74,
+                    desc:"Retrograd yörüngeli en büyük uydu.",rotTime:"5,88 gün",orbTime:"5,88 gün",
+                    atmosphere:"İnce azot",layers:"Azot/buz yüzeyi → buz → kaya çekirdek",moonsText:"Yok",
+                    extra:"Muhtemelen yakalanmış Kuiper cismi. Aktif geyserler."
+                }]
+            },
+            "Planet X": {
+                name:"Planet X", size:1.6, texKey:"neptune", dist:420, rotSpeed:0.00012, orbSpeed:0.00000025, tilt:0.35,
+                desc:"Hipotez edilen dokuzuncu gezegen (Planet Nine / Gezegen X). Henüz gözlemlenmedi.",
+                diameter:"~20.000–40.000 km (tahmini, 2–4 Dünya)",
+                mass:"~5–10 Dünya kütlesi (tahmini)",
+                volume:"Tahmini – buz devi ölçeği",
+                rotTime:"Bilinmiyor", orbTime:"~10.000–20.000 yıl (tahmini)",
+                atmosphere:"Muhtemel H₂/He + metan (tahmini)",
+                layers:"Tahmini: atmosfer → buzlu manto → kayaç çekirdek",
+                moonsText:"Bilinmiyor",
+                extra:"Kuiper kuşağı cisimlerinin yörüngelerini açıklamak için önerildi (Batygin & Brown, 2016). Çok uzak ve sönük olabilir.",
+                interior: [
+                    { name: "Kayaç çekirdek", r: 0.30, color: 0xffdd55 },
+                    { name: "Buzlu manto", r: 0.85, color: 0xff6611 },
+                    { name: "Atmosfer", r: 1.00, color: 0xee4422 }
+                ]
+            },
+            "Plüton": {
+                name:"Plüton", isDwarf:true, size:0.55, texKey:"moon", dist:360, rotSpeed:0.00008, orbSpeed:0.0000004, tilt:2.1,
+                desc:"Kuiper kuşağındaki cüce gezegen. 2006'ya kadar 9. gezegen sayılırdı.",
+                diameter:"2.377 km (0,19 Dünya)",
+                mass:"1,31 × 10²² kg (0,002 Dünya)",
+                volume:"7,15 × 10⁹ km³",
+                rotTime:"6,4 gün", orbTime:"248 yıl",
+                atmosphere:"İnce azot, metan, CO (dönemsel)",
+                layers:"Buz kabuğu → olası okyanus → kaya çekirdek",
+                moonsText:"5 uydu; en büyüğü Charon",
+                extra:"New Horizons (2015) kalp şeklinde Tombaugh Regio'yu görüntüledi.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffdd55 },
+                    { name: "Olası okyanus", r: 0.75, color: 0xff9922 },
+                    { name: "Buz kabuğu", r: 1.00, color: 0xee6622 }
+                ],
+                moons:[{
+                    name:"Charon", size:0.28, texKey:"moon", dist:3.2, rotSpeed:0.00006, orbSpeed:0.00015, tilt:0.05,
+                    desc:"Plüton'un en büyük uydusu; neredeyse ikili sistem.",
+                    diameter:"1.212 km", mass:"1,59 × 10²¹ kg", volume:"9,32 × 10⁸ km³",
+                    rotTime:"6,4 gün", orbTime:"6,4 gün",
+                    atmosphere:"Yok", layers:"Buz-kaya", moonsText:"Yok",
+                    extra:"Plüton ile bağlı dönüş (tidal lock)."
+                }]
+            },
+            "Eris": {
+                name:"Eris", isDwarf:true, size:0.52, texKey:"moon", dist:390, rotSpeed:0.00007, orbSpeed:0.0000003, tilt:0.77,
+                desc:"Kuiper kuşağının ötesinde (saçılmış disk) cüce gezegen. Plüton'dan biraz daha kütleli.",
+                diameter:"2.326 km",
+                mass:"1,66 × 10²² kg",
+                volume:"~6,6 × 10⁹ km³",
+                rotTime:"25,9 saat", orbTime:"558 yıl",
+                atmosphere:"Çok ince (metan buzu)",
+                layers:"Buz + kaya",
+                moonsText:"1 uydu: Dysnomia",
+                extra:"2005 keşfi cüce gezegen tanımını tetikledi.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.60, color: 0xffdd55 },
+                    { name: "Buz manto", r: 1.00, color: 0xff7722 }
+                ]
+            },
+            "Makemake": {
+                name:"Makemake", isDwarf:true, size:0.42, texKey:"moon", dist:375, rotSpeed:0.00009, orbSpeed:0.00000035, tilt:0.5,
+                desc:"Kuiper kuşağında parlak cüce gezegen.",
+                diameter:"~1.430 km",
+                mass:"~3 × 10²¹ kg",
+                volume:"~1,5 × 10⁹ km³",
+                rotTime:"22,8 saat", orbTime:"306 yıl",
+                atmosphere:"Çok ince veya yok",
+                layers:"Buz-kaya",
+                moonsText:"1 küçük uydu",
+                extra:"Adı Rapa Nui yaratılış mitolojisinden.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffcc44 },
+                    { name: "Buz kabuğu", r: 1.00, color: 0xee6633 }
+                ]
+            },
+            "Haumea": {
+                name:"Haumea", isDwarf:true, size:0.38, texKey:"moon", dist:368, rotSpeed:0.00035, orbSpeed:0.00000038, tilt:0.5,
+                desc:"Hızlı dönen, elipsoid cüce gezegen. Halka sistemi var.",
+                diameter:"~1.600 km (uzun eksen)",
+                mass:"~4 × 10²¹ kg",
+                volume:"~1,5 × 10⁹ km³",
+                rotTime:"3,9 saat (çok hızlı)", orbTime:"284 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya (hızlı dönüşle yassı)",
+                moonsText:"2 uydu: Hiʻiaka, Namaka",
+                extra:"Halka sistemi keşfedildi. Hawai mitolojisinden ad.",
+                hasRings:true, ringStyle:"haumea",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.50, color: 0xffdd55 },
+                    { name: "Buz", r: 1.00, color: 0xff8833 }
+                ]
+            },
+            "Sedna": {
+                name:"Sedna", isDwarf:true, size:0.36, texKey:"moon", dist:480, rotSpeed:0.00005, orbSpeed:0.00000012, tilt:0.2,
+                desc:"Aşırı uzak trans-Neptün cismi. Kırmızımsı yüzeyiyle ünlü.",
+                diameter:"~1.000 km",
+                mass:"~1 × 10²¹ kg",
+                volume:"~5 × 10⁸ km³",
+                rotTime:"~10 saat", orbTime:"~11.400 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya",
+                moonsText:"Bilinen uydu yok",
+                extra:"Güneş'ten en uzak bilinen büyük cisimlerden. İç Oort bulutu adayı.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffdd55 },
+                    { name: "Buz", r: 1.00, color: 0xee5533 }
+                ]
+            },
+            "Quaoar": {
+                name:"Quaoar", isDwarf:true, size:0.40, texKey:"moon", dist:385, rotSpeed:0.00008, orbSpeed:0.00000032, tilt:0.15,
+                desc:"Kuiper kuşağında büyük cüce gezegen adayı. Halka sistemi keşfedildi.",
+                diameter:"~1.110 km",
+                mass:"~1,4 × 10²¹ kg",
+                volume:"~7 × 10⁸ km³",
+                rotTime:"~17,7 saat", orbTime:"288 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya",
+                moonsText:"1 uydu: Weywot",
+                extra:"Tongva mitolojisinden ad. Beklenmedik halka sistemi var.",
+                hasRings:true, ringStyle:"haumea",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffcc44 },
+                    { name: "Buz", r: 1.00, color: 0xff7733 }
+                ]
+            },
+            "Gonggong": {
+                name:"Gonggong", isDwarf:true, size:0.39, texKey:"moon", dist:400, rotSpeed:0.00006, orbSpeed:0.00000028, tilt:0.5,
+                desc:"Saçılmış disk cüce gezegen adayı. Kırmızımsı yüzey.",
+                diameter:"~1.230 km",
+                mass:"~1,8 × 10²¹ kg",
+                volume:"~1 × 10⁹ km³",
+                rotTime:"~22 saat", orbTime:"554 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya",
+                moonsText:"1 uydu: Xiangliu",
+                extra:"Çin mitolojisindeki su tanrısından ad.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffdd55 },
+                    { name: "Buz", r: 1.00, color: 0xdd5522 }
+                ]
+            },
+            "Orcus": {
+                name:"Orcus", isDwarf:true, size:0.35, texKey:"moon", dist:370, rotSpeed:0.00007, orbSpeed:0.00000036, tilt:0.3,
+                desc:"Kuiper kuşağında Plüton'a benzer yörüngeli cisim (plutino).",
+                diameter:"~910 km",
+                mass:"~6 × 10²⁰ kg",
+                volume:"~4 × 10⁸ km³",
+                rotTime:"~13 saat", orbTime:"247 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya",
+                moonsText:"1 uydu: Vanth",
+                extra:"Plüton'un 'anti-Plüton'u olarak anılır.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.55, color: 0xffcc44 },
+                    { name: "Buz", r: 1.00, color: 0xee7744 }
+                ]
+            },
+            "Varuna": {
+                name:"Varuna", isDwarf:true, size:0.32, texKey:"moon", dist:355, rotSpeed:0.0004, orbSpeed:0.0000004, tilt:0.2,
+                desc:"Hızlı dönen Kuiper cismi; yassı şekilli olabilir.",
+                diameter:"~700 km",
+                mass:"~4 × 10²⁰ kg",
+                volume:"~1,8 × 10⁸ km³",
+                rotTime:"~6,3 saat", orbTime:"283 yıl",
+                atmosphere:"Yok",
+                layers:"Buz-kaya",
+                moonsText:"Bilinen uydu yok",
+                extra:"Hindu mitolojisindeki gök tanrısından ad.",
+                interior: [
+                    { name: "Kaya çekirdek", r: 0.5, color: 0xffdd55 },
+                    { name: "Buz", r: 1.00, color: 0xff8833 }
+                ]
+            }
+        };
+
+        // ========== Sahne ==========
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 8000);
+        camera.position.set(0, 90, 280);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        if (typeof THREE.OrbitControls !== 'function') {
+            console.error('OrbitControls yüklenemedi');
+        }
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 0.8;   // çok yakına zoom (uydulara kadar)
+        controls.maxDistance = 3500;  // Samanyolu ve galaksileri görmek için
+        controls.zoomSpeed = 1.4;
+        controls.rotateSpeed = 0.9;
+
+        scene.add(new THREE.AmbientLight(0x12161f, 0.32));
+        const sunLight = new THREE.PointLight(0xfff5e0, 3.2, 2000, 1.2);
+        scene.add(sunLight);
+
+        // Yıldızlar – çok yoğun arka plan
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = [];
+        const starCols = [];
+        for (let i = 0; i < 28000; i++) {
+            const r = 200 + Math.random() * 2600;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos.push(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta) * 0.7,
+                r * Math.cos(phi)
+            );
+            const t = Math.random();
+            if (t < 0.25) starCols.push(0.7, 0.85, 1.0);
+            else if (t < 0.55) starCols.push(1.0, 1.0, 1.0);
+            else if (t < 0.8) starCols.push(1.0, 0.95, 0.82);
+            else starCols.push(1.0, 0.85, 0.65);
+        }
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.Float32BufferAttribute(starCols, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+            size: 0.95,
+            vertexColors: true,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0.95,
+            depthWrite: false
+        })));
+
+        // Ekstra uzak soluk yıldız tabakası
+        const farStarGeo = new THREE.BufferGeometry();
+        const farPos = [];
+        for (let i = 0; i < 14000; i++) {
+            const r = 1400 + Math.random() * 2200;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            farPos.push(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta) * 0.65,
+                r * Math.cos(phi)
+            );
+        }
+        farStarGeo.setAttribute('position', new THREE.Float32BufferAttribute(farPos, 3));
+        scene.add(new THREE.Points(farStarGeo, new THREE.PointsMaterial({
+            color: 0xaabbcc,
+            size: 0.55,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0.6,
+            depthWrite: false
+        })));
+
+        // ========== Samanyolu + uzak galaksiler ==========
+        let milkyWayMesh = null;
+        const distantGalaxies = [];
+        const galaxyClickables = []; // tıklanabilir galaksiler
+
+        function createGalaxySpriteTexture(type) {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 512;
+            const ctx = c.getContext('2d');
+            const cx = 256, cy = 256;
+
+            // yumuşak rastgele
+            function nrand() { return Math.random() * 2 - 1; }
+            let g;
+
+            if (type === 'spiral') {
+                // Disk halo
+                g = ctx.createRadialGradient(cx, cy, 8, cx, cy, 240);
+                g.addColorStop(0, 'rgba(255,248,235,0.2)');
+                g.addColorStop(0.2, 'rgba(170,160,220,0.15)');
+                g.addColorStop(0.55, 'rgba(80,90,150,0.1)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, 512, 512);
+
+                // Sarmal kollar (kıvrımlı, yumuşak)
+                const arms = 2 + Math.floor(Math.random() * 2);
+                const armTwist = 2.6 + Math.random() * 0.7;
+                for (let arm = 0; arm < arms; arm++) {
+                    for (let a = 0.12; a < Math.PI * 2.5; a += 0.035) {
+                        const r = 22 + a * 33;
+                        const ang = a * armTwist / 2.8 + arm * (Math.PI * 2 / arms);
+                        const x = cx + Math.cos(ang) * r + nrand() * 5;
+                        const y = cy + Math.sin(ang) * r * 0.58 + nrand() * 4;
+                        const blue = Math.random() > 0.45;
+                        const alpha = 0.1 + Math.random() * 0.25;
+                        const rad = 4 + Math.random() * 11 + Math.max(0, (1 - a / 7) * 5);
+                        g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+                        if (blue) {
+                            g.addColorStop(0, `rgba(160,205,255,${alpha})`);
+                            g.addColorStop(0.45, `rgba(100,145,230,${alpha * 0.4})`);
+                        } else {
+                            g.addColorStop(0, `rgba(255,220,175,${alpha})`);
+                            g.addColorStop(0.45, `rgba(210,155,100,${alpha * 0.35})`);
+                        }
+                        g.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(x, y, rad, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Kol boyunca ekstra parlak düğümler
+                for (let arm = 0; arm < arms; arm++) {
+                    for (let a = 0.4; a < Math.PI * 2.2; a += 0.25 + Math.random() * 0.15) {
+                        const r = 30 + a * 30;
+                        const ang = a * armTwist / 2.8 + arm * (Math.PI * 2 / arms);
+                        const x = cx + Math.cos(ang) * r;
+                        const y = cy + Math.sin(ang) * r * 0.58;
+                        g = ctx.createRadialGradient(x, y, 0, x, y, 6 + Math.random() * 8);
+                        g.addColorStop(0, 'rgba(255,255,255,0.55)');
+                        g.addColorStop(0.4, 'rgba(180,210,255,0.25)');
+                        g.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Merkez şişkinlik
+                g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 55);
+                g.addColorStop(0, 'rgba(255,250,240,0.98)');
+                g.addColorStop(0.25, 'rgba(255,230,200,0.72)');
+                g.addColorStop(0.55, 'rgba(220,180,140,0.28)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 55, 0, Math.PI * 2);
+                ctx.fill();
+
+                g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 12);
+                g.addColorStop(0, 'rgba(255,255,255,1)');
+                g.addColorStop(0.4, 'rgba(255,240,210,0.8)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Yıldızlar
+                for (let i = 0; i < 450; i++) {
+                    const rr = Math.pow(Math.random(), 0.65) * 220;
+                    const aa = Math.random() * Math.PI * 2;
+                    const x = cx + Math.cos(aa) * rr;
+                    const y = cy + Math.sin(aa) * rr * 0.58;
+                    ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.5})`;
+                    ctx.fillRect(x, y, Math.random() > 0.9 ? 2 : 1, 1);
+                }
+
+            } else if (type === 'elliptical') {
+                g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 200);
+                g.addColorStop(0, 'rgba(255,252,245,1)');
+                g.addColorStop(0.12, 'rgba(255,240,210,0.85)');
+                g.addColorStop(0.35, 'rgba(230,200,150,0.45)');
+                g.addColorStop(0.65, 'rgba(140,120,90,0.15)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, 200, 130, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let i = 0; i < 18; i++) {
+                    const ox = cx + nrand() * 50;
+                    const oy = cy + nrand() * 30;
+                    const rad = 25 + Math.random() * 50;
+                    g = ctx.createRadialGradient(ox, oy, 0, ox, oy, rad);
+                    g.addColorStop(0, `rgba(255,230,190,${0.08 + Math.random() * 0.12})`);
+                    g.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(ox, oy, rad, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+                g.addColorStop(0, 'rgba(255,255,255,1)');
+                g.addColorStop(0.5, 'rgba(255,235,200,0.55)');
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let i = 0; i < 200; i++) {
+                    const rr = Math.pow(Math.random(), 0.7) * 180;
+                    const aa = Math.random() * Math.PI * 2;
+                    const x = cx + Math.cos(aa) * rr;
+                    const y = cy + Math.sin(aa) * rr * 0.55;
+                    ctx.fillStyle = `rgba(255,255,240,${0.1 + Math.random() * 0.35})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+
+            } else {
+                for (let i = 0; i < 16; i++) {
+                    const ox = cx + nrand() * 95;
+                    const oy = cy + nrand() * 75;
+                    const rad = 35 + Math.random() * 75;
+                    g = ctx.createRadialGradient(ox, oy, 0, ox, oy, rad);
+                    if (Math.random() > 0.4) {
+                        g.addColorStop(0, `rgba(200,230,255,${0.35 + Math.random() * 0.4})`);
+                        g.addColorStop(0.45, `rgba(120,160,220,${0.12 + Math.random() * 0.18})`);
+                    } else {
+                        g.addColorStop(0, `rgba(255,230,190,${0.3 + Math.random() * 0.35})`);
+                        g.addColorStop(0.45, `rgba(200,150,100,${0.1 + Math.random() * 0.15})`);
+                    }
+                    g.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(ox, oy, rad, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                for (let i = 0; i < 45; i++) {
+                    const x = cx + nrand() * 130;
+                    const y = cy + nrand() * 95;
+                    g = ctx.createRadialGradient(x, y, 0, x, y, 3 + Math.random() * 9);
+                    g.addColorStop(0, 'rgba(255,255,255,0.9)');
+                    g.addColorStop(0.35, 'rgba(180,220,255,0.45)');
+                    g.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                for (let i = 0; i < 180; i++) {
+                    const x = cx + nrand() * 150;
+                    const y = cy + nrand() * 110;
+                    ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.4})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+
+            // Kenar yumuşatma (dairesel maske)
+            ctx.globalCompositeOperation = 'destination-in';
+            g = ctx.createRadialGradient(cx, cy, 80, cx, cy, 250);
+            g.addColorStop(0, 'rgba(255,255,255,1)');
+            g.addColorStop(0.7, 'rgba(255,255,255,0.85)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 512, 512);
+            ctx.globalCompositeOperation = 'source-over';
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.encoding = THREE.sRGBEncoding;
+            return tex;
+        }
+
+        function buildDeepSky() {
+            // Samanyolu gökkubbesi (içten görünen büyük küre)
+            const mwTex = textures.milkyway || null;
+            if (mwTex) {
+                mwTex.encoding = THREE.sRGBEncoding;
+                const mwGeo = new THREE.SphereGeometry(2200, 64, 32);
+                const mwMat = new THREE.MeshBasicMaterial({
+                    map: mwTex,
+                    side: THREE.BackSide,
+                    transparent: true,
+                    opacity: 0.55, // başlangıçta görünür
+                    depthWrite: false
+                });
+                milkyWayMesh = new THREE.Mesh(mwGeo, mwMat);
+                milkyWayMesh.rotation.z = 0.35; // bant eğimi
+                scene.add(milkyWayMesh);
+            }
+
+            // Uzak galaksiler (tıklayıp zoom yapılabilir)
+            const galaxyTypes = ['spiral', 'elliptical', 'irregular'];
+            const galaxyData = [
+                { name: 'Andromeda (M31)', type: 'spiral', dist: 900, size: 280, color: 0xddeeff,
+                  desc: 'Samanyolu\'na en yakın büyük spiral galaksi. Yaklaşık 2,5 milyon ışık yılı uzakta.',
+                  extra: 'Yerel Grup\'un en büyük üyesi. Samanyolu ile çarpışma yolu üzerinde.' },
+                { name: 'Triangulum (M33)', type: 'spiral', dist: 1050, size: 130, color: 0xcce0ff,
+                  desc: 'Yerel Grup\'taki üçüncü büyük galaksi. Sarmal yapıya sahip.',
+                  extra: 'Andromeda\'nın uydusu olabileceği düşünülüyor.' },
+                { name: 'Büyük Macellan', type: 'irregular', dist: 750, size: 150, color: 0xffeecc,
+                  desc: 'Samanyolu\'nun en büyük uydu galaksisi. Düzensiz yapı.',
+                  extra: 'Güney gökyüzünden çıplak gözle görülebilir.' },
+                { name: 'Küçük Macellan', type: 'irregular', dist: 820, size: 90, color: 0xddeeff,
+                  desc: 'Samanyolu\'nun küçük uydu galaksisi.',
+                  extra: 'Büyük Macellan ile etkileşim halinde.' },
+                { name: 'Centaurus A', type: 'elliptical', dist: 1200, size: 120, color: 0xffe8cc,
+                  desc: 'Aktif çekirdekli eliptik galaksi. Güçlü radyo kaynağı.',
+                  extra: 'Toz şeridiyle ünlü; süper kütleli kara delik barındırır.' },
+                { name: 'Whirlpool (M51)', type: 'spiral', dist: 1150, size: 115, color: 0xccbbff,
+                  desc: 'Klasik sarmal galaksi. Etkileşim halindeki iki galaksiden oluşur.',
+                  extra: 'Girdap Galaksisi olarak da bilinir.' },
+                { name: 'Sombrero (M104)', type: 'spiral', dist: 1300, size: 105, color: 0xffe8d0,
+                  desc: 'Sombrero şapkasına benzeyen parlak şişkinlikli spiral galaksi.',
+                  extra: 'Belirgin toz halkası vardır.' },
+                { name: 'Pinwheel (M101)', type: 'spiral', dist: 1180, size: 125, color: 0xaaccff,
+                  desc: 'Geniş, yüz yüze görünen sarmal galaksi.',
+                  extra: 'Çok sayıda H II bölgesi ve yıldız oluşum alanı içerir.' }
+            ];
+
+            for (let i = 0; i < 30; i++) {
+                galaxyData.push({
+                    name: '',
+                    type: galaxyTypes[Math.floor(Math.random() * 3)],
+                    dist: 700 + Math.random() * 900,
+                    size: 35 + Math.random() * 70,
+                    color: new THREE.Color().setHSL(0.55 + Math.random() * 0.2, 0.3, 0.78 + Math.random() * 0.15).getHex(),
+                    desc: 'Uzak bir galaksi.',
+                    extra: 'Samanyolu dışındaki derin uzay cismi.'
+                });
+            }
+
+            galaxyData.forEach((g) => {
+                // Gerçekçi prosedürel galaksi (fotoğraf değil)
+                const tex = createGalaxySpriteTexture(g.type);
+                const baseOp = g.name ? 1.0 : 0.7 + Math.random() * 0.25;
+                const mat = new THREE.SpriteMaterial({
+                    map: tex,
+                    color: 0xffffff, // tam parlaklık
+                    transparent: true,
+                    opacity: Math.max(0.65, baseOp * 0.9),
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const sprite = new THREE.Sprite(mat);
+                const theta = Math.random() * Math.PI * 2;
+                const phi = (Math.random() - 0.5) * Math.PI * 0.65;
+                sprite.position.set(
+                    Math.cos(phi) * Math.cos(theta) * g.dist,
+                    Math.sin(phi) * g.dist * 0.55,
+                    Math.cos(phi) * Math.sin(theta) * g.dist
+                );
+                const sx = g.size;
+                const sy = g.size * (g.type === 'elliptical' ? 0.55 : 0.72);
+                sprite.scale.set(sx, sy, 1);
+                sprite.userData = {
+                    isGalaxy: true,
+                    baseOpacity: baseOp,
+                    rotSpeed: (0.0004 + Math.random() * 0.001) * (Math.random() > 0.5 ? 1 : -1),
+                    name: g.name || 'Uzak Galaksi',
+                    data: {
+                        name: g.name || 'Uzak Galaksi',
+                        size: g.size * 0.15,
+                        desc: g.desc || 'Uzak bir galaksi.',
+                        rotTime: '-',
+                        orbTime: '-',
+                        atmosphere: '-',
+                        layers: g.type === 'spiral' ? 'Sarmal kollar → disk → şişkinlik → kara delik' :
+                                g.type === 'elliptical' ? 'Eliptik yıldız dağılımı → merkezi kara delik' :
+                                'Düzensiz yıldız/gaz dağılımı',
+                        moonsText: '-',
+                        extra: g.extra || 'Samanyolu dışındaki derin uzay cismi.',
+                        interior: null
+                    }
+                };
+                // Raycaster için sanal tıklama hedefi (görünmez küre)
+                const hitGeo = new THREE.SphereGeometry(Math.max(sx * 0.55, 25), 10, 8);
+                const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+                hitMesh.position.copy(sprite.position);
+                hitMesh.userData.parentGroup = sprite;
+                scene.add(hitMesh);
+                galaxyClickables.push(hitMesh);
+
+                scene.add(sprite);
+                distantGalaxies.push(sprite);
+
+                if (g.name && labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.opacity = '0';
+                    lbl.innerText = g.name;
+                    labelsContainer.appendChild(lbl);
+                    sprite.userData.label = lbl;
+                }
+            });
+
+            // ========== Kara delikler, yıldızlar, ötegezegenler ==========
+            const deepObjects = []; // animasyon için
+
+            function placeDeep(dist) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = (Math.random() - 0.5) * Math.PI * 0.7;
+                return new THREE.Vector3(
+                    Math.cos(phi) * Math.cos(theta) * dist,
+                    Math.sin(phi) * dist * 0.5,
+                    Math.cos(phi) * Math.sin(theta) * dist
+                );
+            }
+
+            function addDeepClickable(group, size) {
+                const hit = new THREE.Mesh(
+                    new THREE.SphereGeometry(Math.max(size * 0.6, 8), 8, 6),
+                    new THREE.MeshBasicMaterial({ visible: false })
+                );
+                hit.position.copy(group.position);
+                hit.userData.parentGroup = group;
+                scene.add(hit);
+                galaxyClickables.push(hit);
+            }
+
+            // --- Kara delikler ---
+            const blackHoleData = [
+                { name: 'Sagittarius A*', dist: 550, size: 18, mass: '≈ 4×10⁶ M☉',
+                  desc: 'Samanyolu merkezindeki süper kütleli kara delik.',
+                  extra: 'Event Horizon Telescope ile görüntülendi. Akresyon diski + olay ufku.' },
+                { name: 'M87*', dist: 1600, size: 35, mass: '≈ 6,5×10⁹ M☉',
+                  desc: 'M87 galaksisinin merkezindeki dev kara delik.',
+                  extra: 'İlk olay ufku fotoğrafı (EHT, 2019). Güçlü jet.' },
+                { name: 'Cygnus X-1', dist: 700, size: 12, mass: '≈ 21 M☉',
+                  desc: 'İlk keşfedilen yıldız kütleli kara delik adaylarından.',
+                  extra: 'Yoldaş yıldızdan madde emer; güçlü X-ışını kaynağı.' },
+                { name: 'TON 618', dist: 1900, size: 55, mass: '≈ 66 milyar M☉',
+                  desc: 'Bilinen en büyük kara deliklerden. Ultramassive.',
+                  extra: '≈ 10,4 milyar ışık yılı. Bir kuazarın motoru.' },
+                { name: 'Phoenix A*', dist: 1850, size: 50, mass: '≈ 100 milyar M☉',
+                  desc: 'Phoenix kümesindeki aşırı kütleli kara delik adayı.',
+                  extra: 'En büyük kara delik adaylarından biri (tartışmalı).' },
+                { name: 'IC 1101*', dist: 1750, size: 42, mass: '≈ 40–100 milyar M☉',
+                  desc: 'Dev eliptik galaksi IC 1101 merkezi kara deliği.',
+                  extra: 'Abell 2029 kümesinde. Çok büyük galaksi çekirdeği.' },
+                { name: 'OJ 287', dist: 1500, size: 38, mass: '≈ 18 milyar M☉',
+                  desc: 'İkili süper kütleli kara delik sistemi (blazar).',
+                  extra: 'Periyodik parlamalar; ikili yörünge modeli.' },
+                { name: '3C 273*', dist: 1400, size: 32, mass: '≈ 900 milyon M☉',
+                  desc: 'İlk tanımlanan kuazarın merkezi kara deliği.',
+                  extra: 'Parlak jet ve akresyon diski.' },
+                { name: 'Centaurus A*', dist: 900, size: 22, mass: '≈ 55 milyon M☉',
+                  desc: 'Centaurus A galaksisinin merkezi kara deliği.',
+                  extra: 'Yakın aktif galaksi; radyo jetleri.' },
+                { name: 'Andromeda*', dist: 850, size: 24, mass: '≈ 1–2×10⁸ M☉',
+                  desc: 'Andromeda (M31) merkezindeki süper kütleli kara delik.',
+                  extra: 'Samanyolu\'nun komşu galaksisinin kalbi.' },
+                { name: 'V404 Cygni', dist: 650, size: 11, mass: '≈ 9 M☉',
+                  desc: 'Yıldız kütleli kara delik; X-ışını yenilemeleriyle ünlü.',
+                  extra: '2015\'te yeniden parladı; yoğun gözlem.' },
+                { name: 'GRO J1655-40', dist: 620, size: 10, mass: '≈ 7 M☉',
+                  desc: 'Mikrokuasar; jetleri olan yıldız kütleli kara delik.',
+                  extra: 'Samanyolu içinde; yüksek spin.' },
+                { name: 'A0620-00', dist: 580, size: 9, mass: '≈ 6,6 M☉',
+                  desc: 'Yakın X-ışını ikili sistemi; kara delik adayı.',
+                  extra: '≈ 3.400 ışık yılı. Nova Monocerotis 1975.' },
+                { name: 'HLX-1', dist: 1200, size: 20, mass: '≈ 10⁴–10⁵ M☉',
+                  desc: 'Ara kütle kara delik adayı (Hyper-Luminous X-ray).',
+                  extra: 'ESO 243-49 galaksisinde. IMBH sınıfı.' },
+                { name: 'NGC 1277*', dist: 1300, size: 30, mass: '≈ 17 milyar M☉',
+                  desc: 'Kompakt galakside orantısız büyük kara delik.',
+                  extra: 'Galaksi kütlesinin büyük kısmı merkezde.' },
+                { name: 'SDSS J0100*', dist: 2000, size: 48, mass: '≈ 10–20 milyar M☉',
+                  desc: 'Uzak kuazar merkezi; aşırı kütleli kara delik.',
+                  extra: 'Erken evrende büyümüş süper kütleli örnek.' }
+            ];
+
+            blackHoleData.forEach(bh => {
+                const group = new THREE.Group();
+                group.position.copy(placeDeep(bh.dist));
+
+                // Olay ufku (siyah küre)
+                const hole = new THREE.Mesh(
+                    new THREE.SphereGeometry(bh.size * 0.35, 32, 24),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 })
+                );
+                group.add(hole);
+
+                // Foton küresi / parlak halka
+                const photon = new THREE.Mesh(
+                    new THREE.TorusGeometry(bh.size * 0.42, bh.size * 0.04, 12, 48),
+                    new THREE.MeshBasicMaterial({ color: 0xffeeaa, transparent: true, opacity: 0.9 })
+                );
+                photon.rotation.x = Math.PI / 2.2;
+                group.add(photon);
+
+                // Akresyon diski (renkli halkalar)
+                const diskColors = [0xff6600, 0xffaa22, 0xffee88, 0xffffff];
+                diskColors.forEach((col, i) => {
+                    const inner = bh.size * (0.5 + i * 0.22);
+                    const outer = inner + bh.size * 0.2;
+                    const disk = new THREE.Mesh(
+                        new THREE.RingGeometry(inner, outer, 64),
+                        new THREE.MeshBasicMaterial({
+                            color: col,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.55 - i * 0.08,
+                            depthWrite: false
+                        })
+                    );
+                    disk.rotation.x = Math.PI / 2.15;
+                    group.add(disk);
+                });
+
+                // Glow
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(bh.size * 0.9, 16, 12),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff8822,
+                        transparent: true,
+                        opacity: 0.12,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                group.add(glow);
+
+                group.userData = {
+                    isGalaxy: true, // zoom/odak sistemiyle uyumlu
+                    isBlackHole: true,
+                    baseOpacity: 1,
+                    rotSpeed: 0.008 + Math.random() * 0.01,
+                    name: bh.name,
+                    data: {
+                        name: bh.name,
+                        size: bh.size * 0.2,
+                        desc: bh.desc,
+                        diameter: 'Olay ufku ölçeğinde',
+                        mass: bh.mass || '—',
+                        volume: '-',
+                        rotTime: 'Yüksek spin',
+                        orbTime: '-',
+                        atmosphere: 'Akresyon diski (plazma)',
+                        layers: 'Olay ufku → foton küresi → akresyon diski',
+                        moonsText: '-',
+                        extra: bh.extra,
+                        interior: null
+                    }
+                };
+
+                if (labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.borderColor = '#ff8800';
+                    lbl.innerText = bh.name;
+                    labelsContainer.appendChild(lbl);
+                    group.userData.label = lbl;
+                }
+
+                scene.add(group);
+                distantGalaxies.push(group);
+                deepObjects.push(group);
+                addDeepClickable(group, bh.size);
+            });
+
+            // --- Kara delik çarpışmaları (birleşme) ---
+            function makeMiniBlackHole(size) {
+                const g = new THREE.Group();
+                const hole = new THREE.Mesh(
+                    new THREE.SphereGeometry(size * 0.32, 24, 18),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 })
+                );
+                g.add(hole);
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(size * 0.4, size * 0.035, 10, 40),
+                    new THREE.MeshBasicMaterial({ color: 0xffcc66, transparent: true, opacity: 0.85 })
+                );
+                ring.rotation.x = Math.PI / 2.3;
+                g.add(ring);
+                const disk = new THREE.Mesh(
+                    new THREE.RingGeometry(size * 0.48, size * 0.95, 48),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff7722,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.45,
+                        depthWrite: false
+                    })
+                );
+                disk.rotation.x = Math.PI / 2.2;
+                g.add(disk);
+                return g;
+            }
+
+            const mergers = [
+                {
+                    name: 'GW150914',
+                    dist: 1100,
+                    size: 22,
+                    desc: 'İlk tespit edilen kara delik birleşmesi (LIGO, 2015).',
+                    extra: '≈ 36 + 29 M☉ → 62 M☉. Kütle farkı yerçekimi dalgası olarak yayıldı.'
+                },
+                {
+                    name: 'GW190521',
+                    dist: 1450,
+                    size: 28,
+                    desc: 'Ara kütle aralığındaki kara delik birleşmesi.',
+                    extra: '≈ 85 + 66 M☉ → 142 M☉. Ara kütle kara delik oluşumu.'
+                },
+                {
+                    name: 'BH Birleşme',
+                    dist: 1250,
+                    size: 20,
+                    desc: 'İki kara deliğin sarmal yaklaşımı ve birleşmesi (temsilî).',
+                    extra: 'Yerçekimi dalgaları uzay-zamanı titreştirir. Birleşme anında parlak halka.'
+                }
+            ];
+
+            mergers.forEach(m => {
+                const group = new THREE.Group();
+                group.position.copy(placeDeep(m.dist));
+
+                const bhA = makeMiniBlackHole(m.size * 0.55);
+                const bhB = makeMiniBlackHole(m.size * 0.45);
+                group.add(bhA);
+                group.add(bhB);
+
+                // Yerçekimi dalgası halkaları
+                const waveRings = [];
+                for (let i = 0; i < 3; i++) {
+                    const wr = new THREE.Mesh(
+                        new THREE.RingGeometry(m.size * (1.2 + i * 0.5), m.size * (1.35 + i * 0.5), 64),
+                        new THREE.MeshBasicMaterial({
+                            color: 0xaaddff,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.2 - i * 0.05,
+                            depthWrite: false
+                        })
+                    );
+                    wr.rotation.x = Math.PI / 2;
+                    group.add(wr);
+                    waveRings.push(wr);
+                }
+
+                // Ortak parıltı
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(m.size * 1.1, 16, 12),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffaa44,
+                        transparent: true,
+                        opacity: 0.1,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                group.add(glow);
+
+                group.userData = {
+                    isGalaxy: true,
+                    isBlackHole: true,
+                    isMerger: true,
+                    baseOpacity: 1,
+                    rotSpeed: 0.012,
+                    mergerPhase: Math.random() * Math.PI * 2,
+                    mergerSep: m.size * 1.8,
+                    initialSep: m.size * 1.8,
+                    minSep: m.size * 0.55,
+                    bhA, bhB, waveRings, glow,
+                    name: m.name,
+                    data: {
+                        name: m.name,
+                        size: m.size * 0.25,
+                        desc: m.desc,
+                        diameter: 'Birleşen olay ufukları',
+                        mass: m.name.includes('150914') ? '≈ 36 + 29 → 62 M☉' :
+                              m.name.includes('190521') ? '≈ 85 + 66 → 142 M☉' : 'Değişken',
+                        volume: '-',
+                        rotTime: 'Sarmal ilham (inspiral)',
+                        orbTime: 'Milisaniye–saniye (gerçek); simülasyonda yavaşlatılmış',
+                        atmosphere: 'Akresyon / plazma',
+                        layers: 'İki olay ufku → ortak ufuk → yerçekimi dalgası',
+                        moonsText: '-',
+                        extra: m.extra,
+                        interior: null
+                    }
+                };
+
+                if (labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.borderColor = '#ffaa44';
+                    lbl.innerText = m.name;
+                    labelsContainer.appendChild(lbl);
+                    group.userData.label = lbl;
+                }
+
+                scene.add(group);
+                distantGalaxies.push(group);
+                deepObjects.push(group);
+                addDeepClickable(group, m.size * 1.5);
+            });
+
+            // --- Diğer yıldızlar ---
+            const starData = [
+                { name: 'Sirius', dist: 480, size: 14, color: 0xaaccff,
+                  desc: 'Gökyüzünün en parlak yıldızı. A tipi ana kol.',
+                  extra: '≈ 8,6 ışık yılı. Çift yıldız sistemi (Sirius A + B).' },
+                { name: 'Proxima Centauri', dist: 420, size: 6, color: 0xff8866,
+                  desc: 'Güneş\'e en yakın yıldız. Kırmızı cüce.',
+                  extra: '≈ 4,24 ışık yılı. Ötegezegenleri vardır.' },
+                { name: 'Betelgeuse', dist: 620, size: 22, color: 0xff6622,
+                  desc: 'Kırmızı süperdev. Avcı takımyıldızında.',
+                  extra: 'Süpernova adayı. Çapı Güneş\'ten yüzlerce kat büyük.' },
+                { name: 'Vega', dist: 520, size: 11, color: 0xccddff,
+                  desc: 'Parlak A tipi yıldız. Lir takımyıldızı.',
+                  extra: 'Eski kutup yıldızı. Toz diski vardır.' },
+                { name: 'Rigel', dist: 680, size: 16, color: 0x88aaff,
+                  desc: 'Mavi süperdev. Avcı\'nın ayağı.',
+                  extra: 'Çok parlak ve sıcak.' },
+                { name: 'Polaris', dist: 580, size: 9, color: 0xffeecc,
+                  desc: 'Kutup Yıldızı. Sefeid değişkeni.',
+                  extra: 'Kuzey yönünü gösterir.' }
+            ];
+
+            // Ek rastgele yıldızlar
+            for (let i = 0; i < 40; i++) {
+                starData.push({
+                    name: '',
+                    dist: 400 + Math.random() * 900,
+                    size: 3 + Math.random() * 8,
+                    color: new THREE.Color().setHSL(0.05 + Math.random() * 0.6, 0.5, 0.7).getHex(),
+                    desc: 'Uzak bir yıldız.',
+                    extra: 'Samanyolu veya ötesinde bir yıldız.'
+                });
+            }
+
+            starData.forEach(st => {
+                const group = new THREE.Group();
+                group.position.copy(placeDeep(st.dist));
+
+                const core = new THREE.Mesh(
+                    new THREE.SphereGeometry(st.size * 0.35, 16, 12),
+                    new THREE.MeshBasicMaterial({ color: st.color })
+                );
+                group.add(core);
+
+                const halo = new THREE.Mesh(
+                    new THREE.SphereGeometry(st.size * 0.9, 12, 10),
+                    new THREE.MeshBasicMaterial({
+                        color: st.color,
+                        transparent: true,
+                        opacity: 0.25,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                group.add(halo);
+
+                const outer = new THREE.Mesh(
+                    new THREE.SphereGeometry(st.size * 1.6, 10, 8),
+                    new THREE.MeshBasicMaterial({
+                        color: st.color,
+                        transparent: true,
+                        opacity: 0.08,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                group.add(outer);
+
+                group.userData = {
+                    isGalaxy: true,
+                    isStar: true,
+                    baseOpacity: 1,
+                    rotSpeed: 0.002,
+                    name: st.name || 'Yıldız',
+                    data: {
+                        name: st.name || 'Yıldız',
+                        size: st.size * 0.15,
+                        desc: st.desc,
+                        diameter: st.name ? 'Yıldız ölçeği' : '-',
+                        mass: '-',
+                        volume: '-',
+                        rotTime: '-',
+                        orbTime: '-',
+                        atmosphere: 'Yıldız atmosferi / fotosfer',
+                        layers: 'Çekirdek → radyatif/konvektif bölge → fotosfer',
+                        moonsText: '-',
+                        extra: st.extra,
+                        interior: null
+                    }
+                };
+
+                if (st.name && labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.borderColor = '#aaddff';
+                    lbl.innerText = st.name;
+                    labelsContainer.appendChild(lbl);
+                    group.userData.label = lbl;
+                }
+
+                scene.add(group);
+                distantGalaxies.push(group);
+                deepObjects.push(group);
+                addDeepClickable(group, st.size);
+            });
+
+            // --- Ötegezegenler (yıldızların yanında) ---
+            const exoData = [
+                { name: 'Proxima b', host: 'Proxima Centauri', dist: 430, size: 3.5, color: 0x6688aa,
+                  desc: 'Proxima Centauri\'nin yaşanabilir bölgesindeki ötegezegen.',
+                  extra: '≈ 1,2 Dünya kütlesi. Kırmızı cüce etrafında dolanır.' },
+                { name: 'Kepler-452b', host: null, dist: 900, size: 4.2, color: 0x5577aa,
+                  desc: 'Dünya benzeri ötegezegen adayı (Kepler görevi).',
+                  extra: 'Güneş benzeri yıldızın yaşanabilir bölgesinde.' },
+                { name: 'TRAPPIST-1e', host: null, dist: 750, size: 3.2, color: 0x669988,
+                  desc: 'TRAPPIST-1 sistemindeki kayalık ötegezegen.',
+                  extra: '7 gezegenli kompakt sistemin üyesi.' },
+                { name: 'HD 209458 b', host: null, dist: 850, size: 5.5, color: 0xaa6644,
+                  desc: 'Sıcak Jüpiter. Atmosferi gözlemlenen ilk ötegezegenlerden.',
+                  extra: 'Yıldızına çok yakın yörünge.' },
+                { name: '51 Pegasi b', host: null, dist: 800, size: 5.0, color: 0xbb7744,
+                  desc: 'Ana kol yıldızı etrafında bulunan ilk ötegezegen.',
+                  extra: '1995 keşfi. Sıcak Jüpiter sınıfı.' },
+                { name: 'Kepler-22b', host: null, dist: 920, size: 4.0, color: 0x5599aa,
+                  desc: 'Yaşanabilir bölgede bulunan ilk Kepler ötegezegenlerinden.',
+                  extra: '≈ 2,4 Dünya yarıçapı. Güneş benzeri yıldız.' },
+                { name: 'TOI-700 d', host: null, dist: 780, size: 3.4, color: 0x66aa88,
+                  desc: 'TESS görevinde bulunan kayalık, yaşanabilir bölge adayı.',
+                  extra: 'Kırmızı cüce etrafında Dünya boyutuna yakın.' },
+                { name: 'WASP-12b', host: null, dist: 880, size: 6.0, color: 0xcc5533,
+                  desc: 'Yıldızına çok yakın sıcak Jüpiter; atmosferi buharlaşıyor.',
+                  extra: 'Yıldız gelgitleriyle parçalanıyor olabilir.' },
+                { name: 'K2-18b', host: null, dist: 860, size: 4.5, color: 0x4488bb,
+                  desc: 'Mini-Neptün; atmosferinde su buharı tespit edildi.',
+                  extra: 'Yaşanabilir bölgede. Hidrojen zengin atmosfer.' },
+                { name: 'LHS 1140 b', host: null, dist: 720, size: 3.6, color: 0x778866,
+                  desc: 'Kayalık süper-Dünya. Kırmızı cüce etrafında.',
+                  extra: 'Atmosfer ve okyanus potansiyeli araştırılıyor.' },
+                { name: 'Gliese 581 g', host: null, dist: 740, size: 3.3, color: 0x669977,
+                  desc: 'Tartışmalı yaşanabilir bölge adayı.',
+                  extra: 'Gliese 581 sisteminde.' },
+                { name: 'Kepler-186f', host: null, dist: 890, size: 3.5, color: 0x5588aa,
+                  desc: 'Dünya boyutunda, yaşanabilir bölgede Kepler gezegeni.',
+                  extra: 'Kırmızı cüce etrafında.' },
+                { name: 'Kepler-442b', host: null, dist: 910, size: 3.4, color: 0x66aa99,
+                  desc: 'Yüksek yaşanabilirlik indeksine sahip kayalık aday.',
+                  extra: '≈ 1,3 Dünya yarıçapı.' },
+                { name: 'GJ 1214 b', host: null, dist: 760, size: 4.0, color: 0x4477aa,
+                  desc: 'Süper-Dünya / mini-Neptün. Kalın atmosfer.',
+                  extra: 'Transit spektroskopisiyle incelendi.' },
+                { name: '55 Cancri e', host: null, dist: 830, size: 3.8, color: 0xcc7744,
+                  desc: 'Lav dünyası olabilecek süper-Dünya.',
+                  extra: 'Yıldızına çok yakın; yüzey çok sıcak.' },
+                { name: 'HR 8799 b', host: null, dist: 1000, size: 7.0, color: 0xddaa55,
+                  desc: 'Doğrudan görüntülenen genç gaz devi.',
+                  extra: 'HR 8799 sisteminin dış gezegeni.' },
+                { name: 'PDS 70 b', host: null, dist: 950, size: 6.5, color: 0xcc9944,
+                  desc: 'Hâlâ oluşum halinde gaz devi; disk içinde görüntülendi.',
+                  extra: 'Protoplanet adayı.' }
+            ];
+
+            exoData.forEach(ex => {
+                const group = new THREE.Group();
+                group.position.copy(placeDeep(ex.dist));
+
+                const body = new THREE.Mesh(
+                    new THREE.SphereGeometry(ex.size * 0.4, 20, 16),
+                    new THREE.MeshStandardMaterial({
+                        color: ex.color,
+                        roughness: 0.7,
+                        metalness: 0.1
+                    })
+                );
+                group.add(body);
+
+                // İnce atmosfer ışıması
+                const atm = new THREE.Mesh(
+                    new THREE.SphereGeometry(ex.size * 0.48, 12, 10),
+                    new THREE.MeshBasicMaterial({
+                        color: ex.color,
+                        transparent: true,
+                        opacity: 0.15,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                group.add(atm);
+
+                group.userData = {
+                    isGalaxy: true,
+                    isExoplanet: true,
+                    baseOpacity: 1,
+                    rotSpeed: 0.003,
+                    name: ex.name,
+                    data: {
+                        name: ex.name,
+                        size: ex.size * 0.12,
+                        desc: ex.desc,
+                        diameter: 'Ötegezegen ölçeği',
+                        mass: '-',
+                        volume: '-',
+                        rotTime: '-',
+                        orbTime: 'Yıldızına bağlı',
+                        atmosphere: 'Ötegezegen atmosferi (çeşitli)',
+                        layers: 'Kabuk / manto / çekirdek (tahmini)',
+                        moonsText: '-',
+                        extra: ex.extra,
+                        interior: null
+                    },
+                    mesh: body,
+                    currentRotSpeed: 0.004
+                };
+
+                if (labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.borderColor = '#66aacc';
+                    lbl.innerText = ex.name;
+                    labelsContainer.appendChild(lbl);
+                    group.userData.label = lbl;
+                }
+
+                scene.add(group);
+                distantGalaxies.push(group);
+                deepObjects.push(group);
+                addDeepClickable(group, ex.size);
+            });
+
+            // --- Yıldız sistemleri + yörünge çizgileri ---
+            function makeSystemOrbitLine(radius, color) {
+                const pts = [];
+                for (let i = 0; i <= 96; i++) {
+                    const a = (i / 96) * Math.PI * 2;
+                    pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, -Math.sin(a) * radius));
+                }
+                const geo = new THREE.BufferGeometry().setFromPoints(pts);
+                return new THREE.Line(geo, new THREE.LineBasicMaterial({
+                    color: color || 0x6699cc,
+                    transparent: true,
+                    opacity: 0.55
+                }));
+            }
+
+            const starSystems = [
+                {
+                    name: 'Proxima Sistemi',
+                    dist: 450, starSize: 7, starColor: 0xff7755,
+                    desc: 'Güneş\'e en yakın yıldız sistemi (Proxima Centauri).',
+                    extra: 'Kırmızı cüce + ötegezegenler.',
+                    planets: [
+                        { name: 'Proxima b', r: 18, size: 2.8, color: 0x6688aa, speed: 0.004 },
+                        { name: 'Proxima c', r: 32, size: 3.5, color: 0x557799, speed: 0.0022 },
+                        { name: 'Proxima d', r: 12, size: 2.0, color: 0x7799aa, speed: 0.006 }
+                    ]
+                },
+                {
+                    name: 'TRAPPIST-1 Sistemi',
+                    dist: 780, starSize: 5, starColor: 0xff6644,
+                    desc: '7 kayalık gezegenli kompakt sistem.',
+                    extra: 'Birden fazla yaşanabilir bölge adayı.',
+                    planets: [
+                        { name: 'TRAPPIST-1b', r: 10, size: 2.2, color: 0xaa6644, speed: 0.008 },
+                        { name: 'TRAPPIST-1c', r: 14, size: 2.3, color: 0x998866, speed: 0.006 },
+                        { name: 'TRAPPIST-1d', r: 18, size: 2.1, color: 0x779977, speed: 0.0045 },
+                        { name: 'TRAPPIST-1e', r: 22, size: 2.4, color: 0x669988, speed: 0.0035 },
+                        { name: 'TRAPPIST-1f', r: 27, size: 2.5, color: 0x5588aa, speed: 0.0028 },
+                        { name: 'TRAPPIST-1g', r: 33, size: 2.6, color: 0x4477bb, speed: 0.0022 },
+                        { name: 'TRAPPIST-1h', r: 40, size: 2.0, color: 0x556688, speed: 0.0016 }
+                    ]
+                },
+                {
+                    name: 'Kepler-90 Sistemi',
+                    dist: 1050, starSize: 10, starColor: 0xffeeaa,
+                    desc: 'Güneş benzeri yıldız; bilinen en çok gezegenli Kepler sistemi (8).',
+                    extra: 'Kepler-90i yapay zekâ ile keşfedildi.',
+                    planets: [
+                        { name: 'Kepler-90b', r: 14, size: 2.0, color: 0xaa8866, speed: 0.007 },
+                        { name: 'Kepler-90c', r: 20, size: 2.2, color: 0x998877, speed: 0.005 },
+                        { name: 'Kepler-90d', r: 28, size: 3.5, color: 0x8877aa, speed: 0.0035 },
+                        { name: 'Kepler-90e', r: 36, size: 3.8, color: 0x7799cc, speed: 0.0025 },
+                        { name: 'Kepler-90f', r: 45, size: 4.0, color: 0x66aadd, speed: 0.0018 },
+                        { name: 'Kepler-90g', r: 55, size: 5.5, color: 0xccaa66, speed: 0.0012 },
+                        { name: 'Kepler-90h', r: 68, size: 6.0, color: 0xdd9955, speed: 0.0008 },
+                        { name: 'Kepler-90i', r: 24, size: 2.4, color: 0x88aa77, speed: 0.004 }
+                    ]
+                },
+                {
+                    name: 'TOI-700 Sistemi',
+                    dist: 820, starSize: 6, starColor: 0xff9966,
+                    desc: 'TESS kırmızı cüce sistemi; TOI-700 d yaşanabilir bölgede.',
+                    extra: 'Kayalık gezegen adayları.',
+                    planets: [
+                        { name: 'TOI-700 b', r: 14, size: 2.2, color: 0x887766, speed: 0.005 },
+                        { name: 'TOI-700 c', r: 22, size: 3.0, color: 0x6688aa, speed: 0.003 },
+                        { name: 'TOI-700 d', r: 30, size: 2.6, color: 0x66aa88, speed: 0.002 }
+                    ]
+                },
+                {
+                    name: 'HD 10180 Sistemi',
+                    dist: 980, starSize: 9, starColor: 0xffeecc,
+                    desc: 'Çok gezegenli G tipi yıldız sistemi.',
+                    extra: 'En az 6–9 gezegen adayı.',
+                    planets: [
+                        { name: 'HD 10180 b', r: 16, size: 2.5, color: 0xaa7755, speed: 0.005 },
+                        { name: 'HD 10180 c', r: 26, size: 4.0, color: 0xcc9944, speed: 0.003 },
+                        { name: 'HD 10180 d', r: 38, size: 4.5, color: 0xddaa55, speed: 0.002 },
+                        { name: 'HD 10180 e', r: 50, size: 5.0, color: 0x8899bb, speed: 0.0014 },
+                        { name: 'HD 10180 f', r: 62, size: 3.5, color: 0x77aacc, speed: 0.001 }
+                    ]
+                },
+                {
+                    name: 'HR 8799 Sistemi',
+                    dist: 1020, starSize: 11, starColor: 0xaaccff,
+                    desc: 'Doğrudan görüntülenen çok gezegenli genç sistem.',
+                    extra: '4 gaz devi fotoğraflandı.',
+                    planets: [
+                        { name: 'HR 8799 e', r: 22, size: 5.0, color: 0xddaa44, speed: 0.004 },
+                        { name: 'HR 8799 d', r: 35, size: 5.5, color: 0xcc9944, speed: 0.0025 },
+                        { name: 'HR 8799 c', r: 48, size: 5.8, color: 0xbb8833, speed: 0.0016 },
+                        { name: 'HR 8799 b', r: 62, size: 6.2, color: 0xaa7722, speed: 0.001 }
+                    ]
+                },
+                {
+                    name: 'Gliese 581 Sistemi',
+                    dist: 700, starSize: 6, starColor: 0xff6644,
+                    desc: 'Kırmızı cüce; birden fazla süper-Dünya adayı.',
+                    extra: 'Yaşanabilir bölge tartışmalarıyla ünlü.',
+                    planets: [
+                        { name: 'Gliese 581 e', r: 12, size: 2.2, color: 0xaa8866, speed: 0.007 },
+                        { name: 'Gliese 581 b', r: 18, size: 3.5, color: 0x998866, speed: 0.004 },
+                        { name: 'Gliese 581 c', r: 26, size: 3.0, color: 0x779977, speed: 0.0028 },
+                        { name: 'Gliese 581 d', r: 36, size: 3.2, color: 0x6688aa, speed: 0.0018 }
+                    ]
+                },
+                {
+                    name: '55 Cancri Sistemi',
+                    dist: 860, starSize: 9, starColor: 0xffcc88,
+                    desc: 'Güneş benzeri yıldız; sıcak süper-Dünya + gaz devleri.',
+                    extra: '55 Cancri e lav dünyası adayı.',
+                    planets: [
+                        { name: '55 Cancri e', r: 12, size: 3.2, color: 0xcc6633, speed: 0.008 },
+                        { name: '55 Cancri b', r: 22, size: 5.0, color: 0xcc9944, speed: 0.004 },
+                        { name: '55 Cancri c', r: 34, size: 3.5, color: 0x8899aa, speed: 0.0025 },
+                        { name: '55 Cancri f', r: 48, size: 4.0, color: 0x77aacc, speed: 0.0015 },
+                        { name: '55 Cancri d', r: 65, size: 5.5, color: 0xddaa55, speed: 0.0009 }
+                    ]
+                }
+            ];
+
+            starSystems.forEach(sys => {
+                const systemGroup = new THREE.Group();
+                systemGroup.position.copy(placeDeep(sys.dist));
+
+                // Merkez yıldız
+                const starCore = new THREE.Mesh(
+                    new THREE.SphereGeometry(sys.starSize * 0.35, 16, 12),
+                    new THREE.MeshBasicMaterial({ color: sys.starColor })
+                );
+                systemGroup.add(starCore);
+                const starHalo = new THREE.Mesh(
+                    new THREE.SphereGeometry(sys.starSize * 0.85, 12, 10),
+                    new THREE.MeshBasicMaterial({
+                        color: sys.starColor,
+                        transparent: true,
+                        opacity: 0.3,
+                        side: THREE.BackSide,
+                        depthWrite: false
+                    })
+                );
+                systemGroup.add(starHalo);
+
+                // Yörünge çizgileri
+                sys.planets.forEach(pl => {
+                    const orbitLine = makeSystemOrbitLine(pl.r, 0x5577aa);
+                    systemGroup.add(orbitLine);
+                });
+
+                // Gezegenler
+                const planetNodes = [];
+                sys.planets.forEach((pl, idx) => {
+                    const pGroup = new THREE.Group();
+                    const body = new THREE.Mesh(
+                        new THREE.SphereGeometry(pl.size * 0.35, 16, 12),
+                        new THREE.MeshStandardMaterial({ color: pl.color, roughness: 0.7, metalness: 0.1 })
+                    );
+                    pGroup.add(body);
+                    const phase = (idx / sys.planets.length) * Math.PI * 2;
+                    pGroup.position.set(Math.cos(phase) * pl.r, 0, -Math.sin(phase) * pl.r);
+
+                    pGroup.userData = {
+                        isGalaxy: true,
+                        isExoplanet: true,
+                        isSystemPlanet: true,
+                        orbitR: pl.r,
+                        orbitSpeed: pl.speed,
+                        angle: phase,
+                        baseOpacity: 1,
+                        name: pl.name,
+                        mesh: body,
+                        currentRotSpeed: 0.005,
+                        data: {
+                            name: pl.name,
+                            size: pl.size * 0.1,
+                            desc: sys.name + ' gezegeni.',
+                            diameter: 'Ötegezegen ölçeği',
+                            mass: '-',
+                            volume: '-',
+                            rotTime: '-',
+                            orbTime: 'Yıldızına bağlı yörünge',
+                            atmosphere: '-',
+                            layers: '-',
+                            moonsText: '-',
+                            extra: sys.extra,
+                            interior: null
+                        }
+                    };
+
+                    if (labelsContainer) {
+                        const lbl = document.createElement('div');
+                        lbl.className = 'planet-label';
+                        lbl.style.fontSize = '9px';
+                        lbl.style.borderColor = '#66aacc';
+                        lbl.innerText = pl.name;
+                        labelsContainer.appendChild(lbl);
+                        pGroup.userData.label = lbl;
+                    }
+
+                    systemGroup.add(pGroup);
+                    planetNodes.push(pGroup);
+                    distantGalaxies.push(pGroup);
+                    // tıklama için hit (dünya konumunda güncellenir)
+                    const hit = new THREE.Mesh(
+                        new THREE.SphereGeometry(Math.max(pl.size * 0.5, 4), 8, 6),
+                        new THREE.MeshBasicMaterial({ visible: false })
+                    );
+                    pGroup.add(hit);
+                    hit.userData.parentGroup = pGroup;
+                    galaxyClickables.push(hit);
+                });
+
+                systemGroup.userData = {
+                    isGalaxy: true,
+                    isStarSystem: true,
+                    isStar: true,
+                    baseOpacity: 1,
+                    planetNodes: planetNodes,
+                    name: sys.name,
+                    data: {
+                        name: sys.name,
+                        size: sys.starSize * 0.2,
+                        desc: sys.desc,
+                        diameter: 'Yıldız sistemi',
+                        mass: '-',
+                        volume: '-',
+                        rotTime: '-',
+                        orbTime: '-',
+                        atmosphere: '-',
+                        layers: 'Merkez yıldız + ' + sys.planets.length + ' gezegen',
+                        moonsText: sys.planets.map(p => p.name).join(', '),
+                        extra: sys.extra,
+                        interior: null
+                    }
+                };
+
+                if (labelsContainer) {
+                    const lbl = document.createElement('div');
+                    lbl.className = 'planet-label';
+                    lbl.style.fontSize = '10px';
+                    lbl.style.borderColor = '#ffaa66';
+                    lbl.innerText = sys.name;
+                    labelsContainer.appendChild(lbl);
+                    systemGroup.userData.label = lbl;
+                }
+
+                scene.add(systemGroup);
+                distantGalaxies.push(systemGroup);
+                deepObjects.push(systemGroup);
+                addDeepClickable(systemGroup, sys.starSize + 20);
+            });
+        }
+
+        // ========== Kuyruklu yıldızlar (gerçekçi) ==========
+        // Kuyruk Güneş'ten uzağa bakar; iyon (mavi) + toz (sarımsı) kuyruk
+        const comets = [];
+
+        function makeTailTexture(r, g, b, soft) {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 64;
+            const ctx = c.getContext('2d');
+            // uzunlamasına solma
+            const grad = ctx.createLinearGradient(0, 0, 512, 0);
+            grad.addColorStop(0.00, `rgba(${r},${g},${b},0)`);
+            grad.addColorStop(0.04, `rgba(${r},${g},${b},${soft ? 0.5 : 0.9})`);
+            grad.addColorStop(0.20, `rgba(${r},${g},${b},${soft ? 0.35 : 0.55})`);
+            grad.addColorStop(0.55, `rgba(${r},${g},${b},0.12)`);
+            grad.addColorStop(1.00, `rgba(${r},${g},${b},0)`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 64);
+            // enine yumuşak kenar
+            const yg = ctx.createLinearGradient(0, 0, 0, 64);
+            yg.addColorStop(0, 'rgba(0,0,0,0.85)');
+            yg.addColorStop(0.35, 'rgba(0,0,0,0)');
+            yg.addColorStop(0.65, 'rgba(0,0,0,0)');
+            yg.addColorStop(1, 'rgba(0,0,0,0.85)');
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = yg;
+            ctx.fillRect(0, 0, 512, 64);
+            ctx.globalCompositeOperation = 'source-over';
+            return new THREE.CanvasTexture(c);
+        }
+
+        const ionTailTex = makeTailTexture(120, 180, 255, false);   // mavi iyon
+        const dustTailTex = makeTailTexture(255, 220, 160, true);  // sarımsı toz
+
+        function spawnComet() {
+            const group = new THREE.Group();
+
+            // Çekirdek (küçük, parlak)
+            const coreSize = 0.25 + Math.random() * 0.35;
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(coreSize, 14, 12),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            group.add(core);
+
+            // Koma (bulanık gaz bulutu)
+            const coma = new THREE.Mesh(
+                new THREE.SphereGeometry(coreSize * 2.8, 12, 10),
+                new THREE.MeshBasicMaterial({
+                    color: 0xaaddff,
+                    transparent: true,
+                    opacity: 0.35,
+                    side: THREE.BackSide,
+                    depthWrite: false
+                })
+            );
+            group.add(coma);
+
+            // Dış koma
+            const coma2 = new THREE.Mesh(
+                new THREE.SphereGeometry(coreSize * 5.5, 10, 8),
+                new THREE.MeshBasicMaterial({
+                    color: 0x6688cc,
+                    transparent: true,
+                    opacity: 0.12,
+                    side: THREE.BackSide,
+                    depthWrite: false
+                })
+            );
+            group.add(coma2);
+
+            // İyon kuyruğu (düz, mavi, Güneş'ten uzağa)
+            const ionLen = 28 + Math.random() * 45;
+            const ionGeo = new THREE.PlaneGeometry(ionLen, 0.9 + Math.random() * 0.8);
+            ionGeo.translate(ionLen * 0.5, 0, 0); // baş origin'de, kuyruk +X
+            const ionTail = new THREE.Mesh(ionGeo, new THREE.MeshBasicMaterial({
+                map: ionTailTex,
+                transparent: true,
+                opacity: 0.75,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            }));
+            group.add(ionTail);
+
+            // Toz kuyruğu (daha kısa, kalın, sarımsı)
+            const dustLen = 16 + Math.random() * 28;
+            const dustGeo = new THREE.PlaneGeometry(dustLen, 2.2 + Math.random() * 2.0);
+            dustGeo.translate(dustLen * 0.5, 0, 0);
+            const dustTail = new THREE.Mesh(dustGeo, new THREE.MeshBasicMaterial({
+                map: dustTailTex,
+                transparent: true,
+                opacity: 0.55,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            }));
+            group.add(dustTail);
+
+            // Dümdüz çapraz geçiş: kenardan kenara sabit hız
+            const span = 380 + Math.random() * 180;
+            const diagonals = [
+                { from: [-span,  80 + Math.random()*60, -span*0.3], dir: [1, -0.35, 0.4] },
+                { from: [ span,  60 + Math.random()*50,  span*0.2], dir: [-1, -0.3, -0.35] },
+                { from: [-span, -40 - Math.random()*40,  span*0.4], dir: [1,  0.25, -0.45] },
+                { from: [ span, -30 - Math.random()*50, -span*0.5], dir: [-1, 0.2,  0.4] },
+                { from: [-span*0.5, 100, -span], dir: [0.5, -0.4, 1] },
+                { from: [ span*0.4, -70,  span], dir: [-0.45, 0.3, -1] }
+            ];
+            const pick = diagonals[Math.floor(Math.random() * diagonals.length)];
+            const start = new THREE.Vector3(pick.from[0], pick.from[1], pick.from[2]);
+            // hafif rastgele sapma
+            start.x += (Math.random()-0.5)*40;
+            start.y += (Math.random()-0.5)*30;
+            start.z += (Math.random()-0.5)*40;
+
+            const vel = new THREE.Vector3(pick.dir[0], pick.dir[1], pick.dir[2]).normalize();
+            const speed = 0.55 + Math.random() * 0.45; // sabit hız
+            vel.multiplyScalar(speed);
+
+            group.position.copy(start);
+
+            // Kuyruğu hareket yönünün TERSİNE hizala (arkada kalsın)
+            const antiVel = vel.clone().normalize().multiplyScalar(-1);
+            ionTail.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), antiVel);
+            dustTail.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), antiVel);
+            dustTail.rotateZ((Math.random()-0.5)*0.12);
+
+            group.userData = {
+                isComet: true,
+                velocity: vel,
+                life: 0,
+                maxLife: 1400 + Math.random() * 1000,
+                ionTail, dustTail, core, coma, coma2
+            };
+
+            scene.add(group);
+            comets.push(group);
+        }
+
+        // Kuyruklu yıldızlar simülasyon başlayınca spawn edilir
+
+        const clickableObjects = [];
+        const labelsContainer = document.getElementById('labels-container');
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = 'anonymous';
+
+        // Yükleme durumu
+        const loadKeys = Object.keys(TEX);
+        let loaded = 0;
+        const textures = {};
+
+        function updateLoad() {
+            loaded++;
+            const pct = Math.round((loaded / loadKeys.length) * 100);
+            document.getElementById('loadFill').style.width = pct + '%';
+            document.getElementById('loadText').textContent = pct + '%';
+            if (loaded >= loadKeys.length) {
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    try {
+                        buildScene();
+                        buildDeepSky();
+                        spawnComet();
+                        animate();
+                    } catch (err) {
+                        console.error('Sahne kurulum hatası:', err);
+                        alert('Sahne yüklenirken hata: ' + (err && err.message ? err.message : err));
+                    }
+                }, 300);
+            }
+        }
+
+        let simulationStarted = false;
+
+        function startSimulation() {
+            if (simulationStarted) return;
+            simulationStarted = true;
+
+            const menu = document.getElementById('main-menu');
+            menu.classList.add('hidden');
+            document.body.classList.add('started');
+
+            document.getElementById('loading').style.display = 'flex';
+
+            loadKeys.forEach(key => {
+                textureLoader.load(
+                    TEX[key],
+                    (tex) => {
+                        tex.encoding = THREE.sRGBEncoding;
+                        textures[key] = tex;
+                        updateLoad();
+                    },
+                    undefined,
+                    () => {
+                        console.warn('Doku yüklenemedi:', key);
+                        textures[key] = createFallbackTexture(key);
+                        updateLoad();
+                    }
+                );
+            });
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startSimulation);
+
+        function getTex(key) {
+            if (textures[key]) return textures[key];
+            return createFallbackTexture(key);
+        }
+
+        // Yörünge çizgileri grubu
+        const orbitsGroup = new THREE.Group();
+        orbitsGroup.visible = true;
+        scene.add(orbitsGroup);
+
+        function makeOrbitLine(radius, color) {
+            const pts = [];
+            const seg = 128;
+            for (let i = 0; i <= seg; i++) {
+                const a = (i / seg) * Math.PI * 2;
+                // Gezegen yörüngesiyle aynı: z = -sin (saat yönünün tersi)
+                pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, -Math.sin(a) * radius));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({
+                color: color || 0x446688,
+                transparent: true,
+                opacity: 0.45
+            });
+            return new THREE.Line(geo, mat);
+        }
+
+        function buildScene() {
+            Object.keys(celestialData).forEach(key => {
+                const data = celestialData[key];
+                const planetGroup = new THREE.Group();
+
+                const planetGeo = new THREE.SphereGeometry(data.size, 64, 48);
+                let planetMat;
+                if (data.dist === 0) {
+                    planetMat = new THREE.MeshBasicMaterial({ map: getTex(data.texKey) });
+                } else {
+                    planetMat = new THREE.MeshStandardMaterial({
+                        map: getTex(data.texKey),
+                        roughness: 0.72,
+                        metalness: 0.05
+                    });
+                }
+
+                const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+                planetMesh.rotation.z = data.tilt || 0;
+                planetGroup.add(planetMesh);
+
+                // Gezegen yörünge çizgisi
+                if (data.dist > 0) {
+                    orbitsGroup.add(makeOrbitLine(data.dist, 0x3a5a7a));
+                }
+
+                // Güneş glow
+                if (data.dist === 0) {
+                    const g1 = new THREE.Mesh(
+                        new THREE.SphereGeometry(data.size * 1.18, 32, 24),
+                        new THREE.MeshBasicMaterial({ color: 0xffaa33, transparent: true, opacity: 0.22, side: THREE.BackSide })
+                    );
+                    planetGroup.add(g1);
+                    const g2 = new THREE.Mesh(
+                        new THREE.SphereGeometry(data.size * 1.45, 24, 16),
+                        new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.08, side: THREE.BackSide })
+                    );
+                    planetGroup.add(g2);
+                }
+
+                // Atmosfer (Dünya & Venüs)
+                if (data.name === 'Dünya' || data.name === 'Venüs') {
+                    const atm = new THREE.Mesh(
+                        new THREE.SphereGeometry(data.size * 1.035, 32, 24),
+                        new THREE.MeshBasicMaterial({
+                            color: data.name === 'Dünya' ? 0x4488ff : 0xffcc88,
+                            transparent: true,
+                            opacity: data.name === 'Dünya' ? 0.11 : 0.16,
+                            side: THREE.BackSide
+                        })
+                    );
+                    planetGroup.add(atm);
+                }
+
+                planetGroup.userData = {
+                    name: data.name,
+                    data: data,
+                    angle: Math.random() * Math.PI * 2,
+                    currentRotSpeed: data.rotSpeed,
+                    mesh: planetMesh
+                };
+
+                // Yörünge
+                if (data.dist > 0) {
+                    const pts = [];
+                    for (let i = 0; i <= 128; i++) {
+                        const th = (i / 128) * Math.PI * 2;
+                        pts.push(new THREE.Vector3(Math.cos(th) * data.dist, 0, Math.sin(th) * data.dist));
+                    }
+                    scene.add(new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints(pts),
+                        new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.11 })
+                    ));
+                }
+
+                // Halkalar (Jüpiter, Satürn, Uranüs, Neptün)
+                if (data.hasRings) {
+                    const style = data.ringStyle || 'saturn';
+                    let innerR, outerR, opacity, color, useTex;
+
+                    if (style === 'saturn') {
+                        // Satürn: geniş, parlak, belirgin halkalar
+                        innerR = data.size + 0.65;
+                        outerR = data.size + 6.2;
+                        opacity = 1.0;
+                        useTex = true;
+                    } else if (style === 'jupiter') {
+                        innerR = data.size + 0.55;
+                        outerR = data.size + 2.4;
+                        opacity = 0.22;
+                        color = 0xbbaa88;
+                        useTex = false;
+                    } else if (style === 'uranus') {
+                        innerR = data.size + 0.45;
+                        outerR = data.size + 1.9;
+                        opacity = 0.35;
+                        color = 0x8899aa;
+                        useTex = false;
+                    } else if (style === 'haumea') {
+                        innerR = data.size + 0.35;
+                        outerR = data.size + 1.4;
+                        opacity = 0.4;
+                        color = 0xccbbaa;
+                        useTex = false;
+                    } else { // neptune
+                        innerR = data.size + 0.4;
+                        outerR = data.size + 1.7;
+                        opacity = 0.28;
+                        color = 0x6688aa;
+                        useTex = false;
+                    }
+
+                    function makeRingMesh(inner, outer, mat, tiltZ) {
+                        const geo = new THREE.RingGeometry(inner, outer, 128);
+                        const p = geo.attributes.position;
+                        const u = geo.attributes.uv;
+                        for (let i = 0; i < p.count; i++) {
+                            const v = new THREE.Vector3().fromBufferAttribute(p, i);
+                            const len = Math.sqrt(v.x * v.x + v.y * v.y);
+                            u.setXY(i, (len - inner) / (outer - inner), 0.5);
+                        }
+                        u.needsUpdate = true;
+                        const mesh = new THREE.Mesh(geo, mat);
+                        mesh.rotation.x = Math.PI / 2;
+                        mesh.rotation.z = tiltZ;
+                        return mesh;
+                    }
+
+                    let ringMat;
+                    if (useTex && style === 'saturn') {
+                        // Ana halka – NASA dokusu, çok belirgin
+                        ringMat = new THREE.MeshBasicMaterial({
+                            map: getTex('ring'),
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 1.0,
+                            depthWrite: false
+                        });
+                        const mainRing = makeRingMesh(innerR, outerR, ringMat, data.tilt || 0.47);
+                        planetGroup.add(mainRing);
+
+                        // İkinci daha parlak iç halka katmanı (Cassini bölünmesi hissi)
+                        const brightCanvas = document.createElement('canvas');
+                        brightCanvas.width = 512;
+                        brightCanvas.height = 1;
+                        const bctx = brightCanvas.getContext('2d');
+                        const bg = bctx.createLinearGradient(0, 0, 512, 0);
+                        bg.addColorStop(0.00, 'rgba(0,0,0,0)');
+                        bg.addColorStop(0.08, 'rgba(210,190,150,0.3)');
+                        bg.addColorStop(0.18, 'rgba(240,220,180,0.95)');
+                        bg.addColorStop(0.32, 'rgba(180,160,120,0.5)');
+                        bg.addColorStop(0.42, 'rgba(255,240,200,1.0)');
+                        bg.addColorStop(0.55, 'rgba(160,140,100,0.35)');
+                        bg.addColorStop(0.68, 'rgba(230,210,170,0.9)');
+                        bg.addColorStop(0.82, 'rgba(200,180,140,0.6)');
+                        bg.addColorStop(0.95, 'rgba(220,200,160,0.4)');
+                        bg.addColorStop(1.00, 'rgba(0,0,0,0)');
+                        bctx.fillStyle = bg;
+                        bctx.fillRect(0, 0, 512, 1);
+                        const brightTex = new THREE.CanvasTexture(brightCanvas);
+                        const brightMat = new THREE.MeshBasicMaterial({
+                            map: brightTex,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.85,
+                            depthWrite: false,
+                            blending: THREE.AdditiveBlending
+                        });
+                        const brightRing = makeRingMesh(data.size + 0.8, data.size + 5.5, brightMat, data.tilt || 0.47);
+                        planetGroup.add(brightRing);
+
+                        // Dış ince halka (E halkası benzeri, daha soluk)
+                        const outerMat = new THREE.MeshBasicMaterial({
+                            color: 0xd4c4a0,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 0.18,
+                            depthWrite: false
+                        });
+                        const outerRing = makeRingMesh(data.size + 5.6, data.size + 7.2, outerMat, data.tilt || 0.47);
+                        planetGroup.add(outerRing);
+                    } else if (useTex) {
+                        ringMat = new THREE.MeshStandardMaterial({
+                            map: getTex('ring'),
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: opacity,
+                            roughness: 0.85,
+                            metalness: 0.05
+                        });
+                        planetGroup.add(makeRingMesh(innerR, outerR, ringMat, data.tilt || 0));
+                    } else {
+                        const rc = document.createElement('canvas');
+                        rc.width = 256; rc.height = 1;
+                        const rctx = rc.getContext('2d');
+                        const rg = rctx.createLinearGradient(0, 0, 256, 0);
+                        rg.addColorStop(0, 'rgba(0,0,0,0)');
+                        rg.addColorStop(0.15, 'rgba(180,180,180,0.5)');
+                        rg.addColorStop(0.4, 'rgba(220,220,220,0.9)');
+                        rg.addColorStop(0.6, 'rgba(160,160,160,0.4)');
+                        rg.addColorStop(0.85, 'rgba(200,200,200,0.7)');
+                        rg.addColorStop(1, 'rgba(0,0,0,0)');
+                        rctx.fillStyle = rg;
+                        rctx.fillRect(0, 0, 256, 1);
+                        const rtex = new THREE.CanvasTexture(rc);
+                        ringMat = new THREE.MeshBasicMaterial({
+                            map: rtex,
+                            color: color,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: opacity,
+                            depthWrite: false
+                        });
+                        const tiltZ = (style === 'uranus') ? (data.tilt || 1.71) : (data.tilt || 0);
+                        planetGroup.add(makeRingMesh(innerR, outerR, ringMat, tiltZ));
+                    }
+                }
+
+                // Etiket
+                const label = document.createElement('div');
+                label.className = 'planet-label';
+                label.innerText = data.name;
+                labelsContainer.appendChild(label);
+                planetGroup.userData.label = label;
+
+                // Uydular
+                if (data.moons) {
+                    data.moons.forEach(m => {
+                        const moonGroup = new THREE.Group();
+                        moonGroup.rotation.x = (m.tilt || 0) * 0.25;
+
+                        const moonGeo = new THREE.SphereGeometry(m.size, 32, 24);
+                        const moonMat = new THREE.MeshStandardMaterial({
+                            map: getTex(m.texKey),
+                            roughness: 0.9,
+                            metalness: 0
+                        });
+                        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+                        if (m.tilt) moonMesh.rotation.z = m.tilt;
+                        moonGroup.add(moonMesh);
+
+                        // Titan yoğun atmosfer kabuğu
+                        if (m.hasAtm) {
+                            const atmGeo = new THREE.SphereGeometry(m.size * 1.08, 24, 16);
+                            const atmMat = new THREE.MeshBasicMaterial({
+                                color: 0xc48a40,
+                                transparent: true,
+                                opacity: 0.22,
+                                side: THREE.BackSide
+                            });
+                            moonGroup.add(new THREE.Mesh(atmGeo, atmMat));
+                        }
+
+                        moonGroup.userData = {
+                            name: m.name,
+                            data: m,
+                            angle: Math.random() * Math.PI * 2,
+                            parentPlanet: planetGroup,
+                            currentRotSpeed: m.rotSpeed,
+                            mesh: moonMesh
+                        };
+
+                        const mLabel = document.createElement('div');
+                        mLabel.className = 'planet-label';
+                        mLabel.innerText = m.name;
+                        labelsContainer.appendChild(mLabel);
+                        moonGroup.userData.label = mLabel;
+
+                        scene.add(moonGroup);
+                        clickableObjects.push(moonMesh);
+                        moonMesh.userData.parentGroup = moonGroup;
+                    });
+                }
+
+                scene.add(planetGroup);
+                clickableObjects.push(planetMesh);
+                planetMesh.userData.parentGroup = planetGroup;
+            });
+
+            // ========== ASTEROİT KUŞAĞI (Mars ~48 ile Jüpiter ~72 arası) ==========
+            const asteroidCount = 1800;
+            const aPositions = new Float32Array(asteroidCount * 3);
+            const aColors = new Float32Array(asteroidCount * 3);
+            const aSizes = new Float32Array(asteroidCount);
+
+            for (let i = 0; i < asteroidCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                // Ana kuşak: ~52–66 birim (Mars-Jüpiter arası)
+                // Mars (78) ile Jüpiter (130) arası
+                const radius = 92 + Math.random() * 28 + (Math.random() - 0.5) * 3;
+                const y = (Math.random() - 0.5) * 2.8; // hafif kalınlık
+
+                aPositions[i * 3]     = Math.cos(angle) * radius;
+                aPositions[i * 3 + 1] = y;
+                aPositions[i * 3 + 2] = Math.sin(angle) * radius;
+
+                // gri-kahverengi tonlar
+                const shade = 0.35 + Math.random() * 0.45;
+                aColors[i * 3]     = shade * (0.7 + Math.random() * 0.3);
+                aColors[i * 3 + 1] = shade * (0.55 + Math.random() * 0.25);
+                aColors[i * 3 + 2] = shade * (0.4 + Math.random() * 0.2);
+
+                aSizes[i] = 0.08 + Math.random() * 0.28;
+            }
+
+            const aGeo = new THREE.BufferGeometry();
+            aGeo.setAttribute('position', new THREE.BufferAttribute(aPositions, 3));
+            aGeo.setAttribute('color', new THREE.BufferAttribute(aColors, 3));
+            aGeo.setAttribute('size', new THREE.BufferAttribute(aSizes, 1));
+
+            // Basit nokta malzemesi (performans)
+            const aMat = new THREE.PointsMaterial({
+                size: 0.22,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                sizeAttenuation: true,
+                depthWrite: false
+            });
+
+            const asteroidBelt = new THREE.Points(aGeo, aMat);
+            asteroidBelt.userData = { isAsteroidBelt: true, angle: 0 };
+            scene.add(asteroidBelt);
+
+            // Birkaç büyük asteroid (görsel vurgu)
+            const bigAsteroids = [
+                { name: 'Ceres', size: 0.28, dist: 100, angle: 0.8 },
+                { name: 'Vesta', size: 0.18, dist: 96, angle: 2.1 },
+                { name: 'Pallas', size: 0.16, dist: 108, angle: 4.0 },
+                { name: 'Hygiea', size: 0.14, dist: 115, angle: 5.5 }
+            ];
+            bigAsteroids.forEach(a => {
+                const g = new THREE.Group();
+                const mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(a.size, 16, 12),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x8a7a68,
+                        roughness: 0.95,
+                        metalness: 0.05,
+                        map: createFallbackTexture('moon')
+                    })
+                );
+                g.add(mesh);
+                g.userData = {
+                    name: a.name,
+                    data: {
+                        name: a.name,
+                        size: a.size,
+                        dist: a.dist,
+                        orbSpeed: 0.000006 + Math.random() * 0.000002,
+                        rotSpeed: 0.0001,
+                        desc: a.name + ' – Ana asteroit kuşağındaki büyük cisim.',
+                        rotTime: 'Birkaç saat',
+                        orbTime: '3–6 yıl',
+                        atmosphere: 'Yok',
+                        layers: 'Kayaç / buz-kaya gövde',
+                        moonsText: 'Küçük veya yok',
+                        extra: 'Mars ile Jüpiter arasındaki ana asteroit kuşağında yer alır.'
+                    },
+                    angle: a.angle,
+                    currentRotSpeed: 0.00012,
+                    mesh: mesh
+                };
+                const lbl = document.createElement('div');
+                lbl.className = 'planet-label';
+                lbl.innerText = a.name;
+                labelsContainer.appendChild(lbl);
+                g.userData.label = lbl;
+                scene.add(g);
+                clickableObjects.push(mesh);
+                mesh.userData.parentGroup = g;
+            });
+
+            // ========== Voyager 1 & 2 ==========
+            function buildVoyagerModel() {
+                const body = new THREE.Group();
+                const silver = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.7, roughness: 0.35 });
+                const gold = new THREE.MeshStandardMaterial({ color: 0xddaa44, metalness: 0.6, roughness: 0.4 });
+                const dark = new THREE.MeshStandardMaterial({ color: 0x333344, metalness: 0.4, roughness: 0.5 });
+
+                // Ana gövde
+                const bus = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.18), silver);
+                body.add(bus);
+
+                // Büyük parabolik anten (yüksek kazanç)
+                const dish = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.2, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.45),
+                    gold
+                );
+                dish.rotation.x = Math.PI;
+                dish.position.set(0, 0.14, 0);
+                body.add(dish);
+                // Anten direği
+                const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 8), silver);
+                boom.position.set(0, 0.06, 0);
+                body.add(boom);
+
+                // RTG (güç kaynağı) – üç silindir
+                for (let i = 0; i < 3; i++) {
+                    const rtg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.1, 10), dark);
+                    rtg.rotation.z = Math.PI / 2;
+                    rtg.position.set(-0.16, 0, -0.06 + i * 0.06);
+                    body.add(rtg);
+                }
+
+                // Manyetometre kolu
+                const magBoom = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.55, 6), silver);
+                magBoom.rotation.z = Math.PI / 2;
+                magBoom.position.set(0.38, 0, 0);
+                body.add(magBoom);
+
+                body.scale.setScalar(1.4);
+                return body;
+            }
+
+            const voyagers = [
+                {
+                    name: 'Voyager 1',
+                    dist: 380,
+                    angle: 0.9,
+                    tilt: 0.55, // ekliptik üstü
+                    desc: 'İnsanoğlunun en uzak uzay aracı. Yıldızlararası uzaya ulaşan ilk sonda.',
+                    extra: '1977 fırlatıldı. Golden Record taşır. ~24 milyar km+ uzakta (sürekli artıyor).',
+                    diameter: '≈ 3,7 m (anten çapı)',
+                    mass: '≈ 825 kg',
+                    volume: '-'
+                },
+                {
+                    name: 'Voyager 2',
+                    dist: 355,
+                    angle: 3.8,
+                    tilt: -0.4, // ekliptik altı
+                    desc: 'Dört dev gezegeni ziyaret eden tek sonda (Jüpiter, Satürn, Uranüs, Neptün).',
+                    extra: '1977 fırlatıldı. Golden Record taşır. Yıldızlararası uzaya girdi (2018).',
+                    diameter: '≈ 3,7 m (anten çapı)',
+                    mass: '≈ 825 kg',
+                    volume: '-'
+                }
+            ];
+
+            voyagers.forEach(v => {
+                const group = new THREE.Group();
+                const model = buildVoyagerModel();
+                group.add(model);
+
+                // Hit küresi (kolay seçim)
+                const hit = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.55, 10, 8),
+                    new THREE.MeshBasicMaterial({ visible: false })
+                );
+                group.add(hit);
+
+                group.userData = {
+                    name: v.name,
+                    data: {
+                        name: v.name,
+                        size: 0.4,
+                        dist: v.dist,
+                        orbSpeed: 0.000012,
+                        desc: v.desc,
+                        diameter: v.diameter,
+                        mass: v.mass,
+                        volume: v.volume,
+                        rotTime: 'Stabilize tutum',
+                        orbTime: 'Güneş\'ten uzaklaşıyor',
+                        atmosphere: 'Yok',
+                        layers: 'Anten + gövde + RTG + aletler',
+                        moonsText: 'Yok',
+                        extra: v.extra
+                    },
+                    angle: v.angle,
+                    currentRotSpeed: 0.0015,
+                    mesh: model,
+                    isVoyager: true,
+                    voyagerTilt: v.tilt
+                };
+
+                // Başlangıç konumu (Neptün ötesi)
+                group.position.set(
+                    Math.cos(v.angle) * v.dist,
+                    v.tilt * 25,
+                    -Math.sin(v.angle) * v.dist
+                );
+
+                const lbl = document.createElement('div');
+                lbl.className = 'planet-label';
+                lbl.style.fontSize = '10px';
+                lbl.style.borderColor = '#88ffaa';
+                lbl.innerText = v.name;
+                labelsContainer.appendChild(lbl);
+                group.userData.label = lbl;
+
+                scene.add(group);
+                clickableObjects.push(hit);
+                hit.userData.parentGroup = group;
+            });
+        }
+
+        // ========== Etkileşim ==========
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let targetFocusGroup = null;
+        let cameraAngle = 0;
+
+        function onSelect(e) {
+            if (!simulationStarted) return;
+            // UI / menü / bilgi kartı tıklamalarını yoksay
+            const t = e.target;
+            if (t && t.closest && t.closest('#ui, #info-card, #main-menu, #loading, #searchSuggest, button, input')) return;
+
+            const cx = e.clientX || (e.touches && e.touches[0].clientX);
+            const cy = e.clientY || (e.touches && e.touches[0].clientY);
+            if (cx === undefined) return;
+            mouse.x = (cx / window.innerWidth) * 2 - 1;
+            mouse.y = -(cy / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            // Önce gezegen/uydular
+            let hits = raycaster.intersectObjects(clickableObjects);
+            if (hits.length > 0) {
+                const grp = hits[0].object.userData && hits[0].object.userData.parentGroup;
+                if (grp) focusObject(grp);
+                return;
+            }
+            // Sonra galaksiler
+            hits = raycaster.intersectObjects(galaxyClickables);
+            if (hits.length > 0) {
+                const grp = hits[0].object.userData && hits[0].object.userData.parentGroup;
+                if (grp) focusObject(grp);
+            }
+        }
+        window.addEventListener('click', onSelect);
+        window.addEventListener('touchstart', onSelect, { passive: true });
+
+        // ========== İç yapı kesiti (Dünya diyagramı tarzı) ==========
+        let cutawayGroup = null;
+        let cutawayLabels = [];
+        let cutawayHiddenMesh = null;
+
+        function clearCutaway() {
+            if (cutawayHiddenMesh) {
+                cutawayHiddenMesh.visible = true;
+                cutawayHiddenMesh = null;
+            }
+            if (cutawayGroup) {
+                scene.remove(cutawayGroup);
+                cutawayGroup.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                    if (o.material) {
+                        if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                        else o.material.dispose();
+                    }
+                });
+                cutawayGroup = null;
+            }
+            cutawayLabels.forEach(el => el.remove());
+            cutawayLabels = [];
+        }
+
+        function showCutaway(data, worldPos, planetMesh) {
+            clearCutaway();
+            if (!data.interior || !data.interior.length) return;
+
+            const baseSize = Math.max((data.size || 1) * 1.2, 1.0);
+            cutawayGroup = new THREE.Group();
+
+            // Orijinal yüzeyi gizle
+            if (planetMesh) {
+                cutawayHiddenMesh = planetMesh;
+                planetMesh.visible = false;
+            }
+
+            // İçten dışa sırala (r küçük → büyük)
+            const layers = [...data.interior].sort((a, b) => a.r - b.r);
+
+            // 1) En iç çekirdek – tam opak küre
+            const core = layers[0];
+            const coreR = baseSize * core.r;
+            const coreMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(coreR, 48, 32),
+                new THREE.MeshBasicMaterial({ color: core.color })
+            );
+            cutawayGroup.add(coreMesh);
+
+            // 2) Dış katmanlar – yarım küre kabuk (opak, şeffaf yok)
+            for (let i = 1; i < layers.length; i++) {
+                const outerR = baseSize * layers[i].r;
+                const shell = new THREE.Mesh(
+                    new THREE.SphereGeometry(outerR, 64, 48, -Math.PI / 2, Math.PI),
+                    new THREE.MeshBasicMaterial({
+                        color: layers[i].color,
+                        side: THREE.DoubleSide,
+                        depthWrite: true
+                    })
+                );
+                cutawayGroup.add(shell);
+            }
+
+            // 3) Kesit yüzü – her katman için opak halka (iç r → dış r)
+            //    Böylece iç çekirdek / dış çekirdek / manto / kabuk net görünür
+            for (let i = 0; i < layers.length; i++) {
+                const outerR = baseSize * layers[i].r;
+                const innerR = i === 0 ? 0 : baseSize * layers[i - 1].r;
+                let face;
+                if (i === 0) {
+                    face = new THREE.Mesh(
+                        new THREE.CircleGeometry(outerR, 48),
+                        new THREE.MeshBasicMaterial({
+                            color: layers[i].color,
+                            side: THREE.DoubleSide,
+                            depthWrite: true
+                        })
+                    );
+                } else {
+                    face = new THREE.Mesh(
+                        new THREE.RingGeometry(innerR, outerR, 64),
+                        new THREE.MeshBasicMaterial({
+                            color: layers[i].color,
+                            side: THREE.DoubleSide,
+                            depthWrite: true
+                        })
+                    );
+                }
+                face.rotation.y = Math.PI / 2;
+                // Hafif öne al (z-fighting önle)
+                face.position.x = 0.002 * (layers.length - i);
+                cutawayGroup.add(face);
+
+                // Etiket – katman ortasına
+                const midR = (innerR + outerR) * 0.5;
+                const lbl = document.createElement('div');
+                lbl.className = 'planet-label';
+                lbl.style.fontSize = '11px';
+                lbl.style.fontWeight = 'bold';
+                lbl.style.borderColor = '#' + (layers[i].color >>> 0).toString(16).padStart(6, '0');
+                lbl.innerText = layers[i].name;
+                labelsContainer.appendChild(lbl);
+                cutawayLabels.push(lbl);
+                face.userData.layerLabel = lbl;
+                face.userData.layerRadius = midR || outerR * 0.5;
+            }
+
+            // Dış kenar çizgisi
+            const rim = new THREE.Mesh(
+                new THREE.RingGeometry(baseSize * 0.99, baseSize * 1.03, 64),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.5
+                })
+            );
+            rim.rotation.y = Math.PI / 2;
+            rim.position.x = 0.01;
+            cutawayGroup.add(rim);
+
+            cutawayGroup.position.copy(worldPos);
+            scene.add(cutawayGroup);
+        }
+
+        function focusObject(group) {
+            targetFocusGroup = group;
+            cameraAngle = 0;
+            const isGalaxy = !!(group.userData && group.userData.isGalaxy);
+            const d = group.userData.data || {};
+
+            if (isGalaxy) {
+                clearCutaway();
+                const gSize = group.scale ? group.scale.x : 80;
+                controls.minDistance = Math.max(5, gSize * 0.12);
+                controls.maxDistance = 5000;
+                if (group.material) group.material.opacity = group.userData.baseOpacity || 0.9;
+                const gpos = new THREE.Vector3();
+                group.getWorldPosition(gpos);
+                const approach = Math.max(gSize * 0.55, 35);
+                const dir = camera.position.clone().sub(gpos).normalize();
+                if (dir.lengthSq() < 0.01) dir.set(0.3, 0.2, 1).normalize();
+                camera.position.copy(gpos).add(dir.multiplyScalar(approach));
+                controls.target.copy(gpos);
+            } else {
+                const sz = d.size || 1;
+                controls.minDistance = Math.max(0.35, sz * 1.15);
+                controls.maxDistance = Math.max(80, sz * 25 + 40);
+            }
+
+            document.getElementById('info-title').innerText = d.name || group.userData.name || 'Gök Cismi';
+            // Tür etiketi
+            let typeLabel = '-';
+            if (d.isDwarf) typeLabel = 'Cüce gezegen';
+            else if (group.userData.isVoyager) typeLabel = 'Uzay sondası';
+            else if (group.userData.isBlackHole) typeLabel = group.userData.isMerger ? 'Kara delik birleşmesi' : 'Kara delik';
+            else if (group.userData.isStarSystem) typeLabel = 'Yıldız sistemi';
+            else if (group.userData.isStar) typeLabel = 'Yıldız';
+            else if (group.userData.isExoplanet) typeLabel = 'Ötegezegen';
+            else if (group.userData.isGalaxy) typeLabel = 'Galaksi';
+            else if (d.dist === 0) typeLabel = 'Yıldız (Güneş)';
+            else if (d.dist != null && d.name) typeLabel = group.userData.parentPlanet ? 'Uydu' : 'Gezegen';
+            else if (group.userData.parentPlanet) typeLabel = 'Uydu';
+            const typeEl = document.getElementById('info-type');
+            if (typeEl) typeEl.innerText = typeLabel;
+            document.getElementById('info-desc').innerText = d.desc || '-';
+            document.getElementById('info-diameter').innerText = d.diameter || '-';
+            document.getElementById('info-mass').innerText = d.mass || '-';
+            document.getElementById('info-volume').innerText = d.volume || '-';
+            document.getElementById('info-rotation').innerText = d.rotTime || '-';
+            document.getElementById('info-orbit').innerText = d.orbTime || '-';
+            document.getElementById('info-atmosphere').innerText = d.atmosphere || '-';
+            // Katman listesi (renkli)
+            if (d.interior && d.interior.length) {
+                document.getElementById('info-layers').innerHTML = d.interior.map(L => {
+                    const hex = '#' + (L.color >>> 0).toString(16).padStart(6, '0');
+                    return `<span style="display:inline-block;width:10px;height:10px;background:${hex};border-radius:2px;margin-right:5px;vertical-align:middle"></span>${L.name}`;
+                }).join('<br>');
+            } else {
+                document.getElementById('info-layers').innerText = d.layers || '-';
+            }
+            document.getElementById('info-moons').innerText = d.moonsText || '-';
+            document.getElementById('info-extra').innerText = d.extra || '-';
+            document.getElementById('info-card').style.display = 'block';
+
+            // 3D kesit
+            if (structureEnabled && !isGalaxy && d.interior && d.interior.length) {
+                const pos = new THREE.Vector3();
+                group.getWorldPosition(pos);
+                showCutaway(d, pos, group.userData.mesh || null);
+            } else {
+                clearCutaway();
+            }
+        }
+
+        function hideInfo() {
+            document.getElementById('info-card').style.display = 'none';
+            targetFocusGroup = null;
+            clearCutaway();
+        }
+
+        // Özel olaylar: kara delik çarpışması & yıldız patlaması
+        let activeSupernova = null;
+        const mergerExplosions = [];
+
+        function spawnMergerExplosion(worldPos, scale) {
+            const s = scale || 20;
+            const group = new THREE.Group();
+            group.position.copy(worldPos);
+            group.userData = { life: 0, maxLife: 120 };
+
+            // Merkez flaş
+            const flash = new THREE.Mesh(
+                new THREE.SphereGeometry(s * 0.4, 20, 16),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 1,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(flash);
+            group.userData.flash = flash;
+
+            // Turuncu/sarı kabuklar
+            const shells = [];
+            [0xffee88, 0xff9922, 0xff4400, 0xaa66ff].forEach((col, i) => {
+                const sh = new THREE.Mesh(
+                    new THREE.SphereGeometry(s * (0.5 + i * 0.15), 28, 20),
+                    new THREE.MeshBasicMaterial({
+                        color: col,
+                        transparent: true,
+                        opacity: 0.7 - i * 0.12,
+                        side: THREE.DoubleSide,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                group.add(sh);
+                shells.push(sh);
+            });
+            group.userData.shells = shells;
+
+            // Enerji halkaları
+            const rings = [];
+            for (let i = 0; i < 4; i++) {
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(s * 0.3, s * 0.45, 48),
+                    new THREE.MeshBasicMaterial({
+                        color: i % 2 ? 0xaaccff : 0xffcc66,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.6,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                ring.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+                ring.rotation.z = Math.random() * Math.PI;
+                group.add(ring);
+                rings.push(ring);
+            }
+            group.userData.rings = rings;
+
+            // Parçacıklar
+            const n = 250;
+            const arr = new Float32Array(n * 3);
+            const vels = [];
+            for (let i = 0; i < n; i++) {
+                arr[i * 3] = arr[i * 3 + 1] = arr[i * 3 + 2] = 0;
+                const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+                vels.push(d.multiplyScalar(0.6 + Math.random() * 2.2));
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+            const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+                color: 0xffeebb,
+                size: 2.2,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            }));
+            group.add(pts);
+            group.userData.particles = pts;
+            group.userData.pVel = vels;
+
+            scene.add(group);
+            mergerExplosions.push(group);
+        }
+
+        function triggerBlackHoleCollision() {
+            // Mevcut birleşmeyi bul veya ilk merger'ı kullan
+            let merger = distantGalaxies.find(g => g.userData && g.userData.isMerger);
+            if (!merger) {
+                alert('Kara delik birleşmesi sahnesi yüklenemedi.');
+                return;
+            }
+            const u = merger.userData;
+            // Hızlı çarpışma için ayarla
+            u.mergerSep = u.initialSep || 35;
+            u.mergerPhase = 0;
+            u.mergeTimer = 0;
+            u.fastMerge = true;
+            u.rotSpeed = 0.08;
+            if (u.glow && u.glow.material) u.glow.material.opacity = 0.15;
+            focusObject(merger);
+            // Birkaç saniye sonra normale dön
+            setTimeout(() => {
+                if (u) {
+                    u.fastMerge = false;
+                    u.rotSpeed = 0.012;
+                }
+            }, 12000);
+        }
+
+        function triggerSupernova() {
+            // Betelgeuse veya rastgele isimli yıldız
+            let star = distantGalaxies.find(g =>
+                g.userData && g.userData.isStar &&
+                (g.userData.name || '').toLowerCase().includes('betelgeuse')
+            );
+            if (!star) {
+                star = distantGalaxies.find(g => g.userData && g.userData.isStar && g.userData.name);
+            }
+            if (!star) {
+                alert('Patlatılacak yıldız bulunamadı.');
+                return;
+            }
+
+            // Eski süpernova temizle
+            if (activeSupernova) {
+                scene.remove(activeSupernova);
+                activeSupernova = null;
+            }
+
+            const pos = star.position.clone();
+            focusObject(star);
+
+            const snGroup = new THREE.Group();
+            snGroup.position.copy(pos);
+            snGroup.userData = { isSupernova: true, life: 0, maxLife: 400 };
+
+            // Parlak çekirdek flaş
+            const flash = new THREE.Mesh(
+                new THREE.SphereGeometry(8, 24, 16),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 1,
+                    depthWrite: false
+                })
+            );
+            snGroup.add(flash);
+            snGroup.userData.flash = flash;
+
+            // Genişleyen kabuklar
+            const shells = [];
+            const shellColors = [0xffeeaa, 0xff8822, 0xff4400, 0xaa66ff];
+            shellColors.forEach((col, i) => {
+                const shell = new THREE.Mesh(
+                    new THREE.SphereGeometry(5 + i * 2, 32, 24),
+                    new THREE.MeshBasicMaterial({
+                        color: col,
+                        transparent: true,
+                        opacity: 0.55 - i * 0.1,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    })
+                );
+                snGroup.add(shell);
+                shells.push(shell);
+            });
+            snGroup.userData.shells = shells;
+
+            // Parçacıklar
+            const pCount = 400;
+            const pPos = new Float32Array(pCount * 3);
+            const pVel = [];
+            for (let i = 0; i < pCount; i++) {
+                pPos[i * 3] = 0;
+                pPos[i * 3 + 1] = 0;
+                pPos[i * 3 + 2] = 0;
+                const dir = new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize();
+                pVel.push(dir.multiplyScalar(0.8 + Math.random() * 2.5));
+            }
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            const pMat = new THREE.PointsMaterial({
+                color: 0xffcc88,
+                size: 2.5,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            const particles = new THREE.Points(pGeo, pMat);
+            snGroup.add(particles);
+            snGroup.userData.particles = particles;
+            snGroup.userData.pVel = pVel;
+
+            scene.add(snGroup);
+            activeSupernova = snGroup;
+
+            // Yıldızı geçici söndür
+            star.visible = false;
+            setTimeout(() => {
+                if (star) star.visible = true;
+            }, 8000);
+        }
+
+        // Arama önerileri kataloğu
+        function buildSearchCatalog() {
+            const items = [];
+            const add = (name, type) => {
+                if (!name) return;
+                items.push({ name, type, key: name.toLowerCase() });
+            };
+            // Özel komutlar
+            add('kara delik çarpışması', 'olay');
+            add('yıldız patlaması', 'olay');
+            add('süpernova', 'olay');
+            // Gezegenler + uydular
+            Object.keys(celestialData).forEach(k => {
+                const d = celestialData[k];
+                add(d.name, d.isDwarf ? 'cüce gezegen' : (d.dist === 0 ? 'yıldız' : 'gezegen'));
+                if (d.moons) d.moons.forEach(m => add(m.name, 'uydu'));
+            });
+            // Voyager, asteroid, galaksi, kara delik, yıldız...
+            clickableObjects.forEach(o => {
+                const g = o.userData && o.userData.parentGroup;
+                if (g && g.userData && g.userData.name) {
+                    let type = 'cisim';
+                    if (g.userData.isVoyager) type = 'sonde';
+                    else if (g.userData.isBlackHole) type = 'kara delik';
+                    else if (g.userData.isStar) type = 'yıldız';
+                    else if (g.userData.isExoplanet) type = 'ötegezegen';
+                    else if (g.userData.isMerger) type = 'birleşme';
+                    else if (g.userData.isStarSystem) type = 'sistem';
+                    else if (g.userData.isGalaxy) type = 'galaksi';
+                    add(g.userData.name, type);
+                }
+            });
+            distantGalaxies.forEach(g => {
+                if (g.userData && g.userData.name) {
+                    let type = 'galaksi';
+                    if (g.userData.isBlackHole) type = g.userData.isMerger ? 'birleşme' : 'kara delik';
+                    else if (g.userData.isStar) type = g.userData.isStarSystem ? 'sistem' : 'yıldız';
+                    else if (g.userData.isExoplanet) type = 'ötegezegen';
+                    add(g.userData.name, type);
+                }
+            });
+            // Tekilleştir
+            const seen = new Set();
+            return items.filter(it => {
+                if (seen.has(it.key)) return false;
+                seen.add(it.key);
+                return true;
+            });
+        }
+
+        let searchCatalog = null;
+        let suggestIndex = -1;
+
+        function hideSearchSuggest() {
+            const box = document.getElementById('searchSuggest');
+            if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+            suggestIndex = -1;
+        }
+
+        function updateSearchSuggest() {
+            const input = document.getElementById('searchInput');
+            const box = document.getElementById('searchSuggest');
+            if (!input || !box) return;
+            const q = input.value.trim().toLowerCase();
+            if (!q) { hideSearchSuggest(); return; }
+            if (!searchCatalog) searchCatalog = buildSearchCatalog();
+
+            const matches = searchCatalog.filter(it => it.key.includes(q)).slice(0, 12);
+            if (!matches.length) { hideSearchSuggest(); return; }
+
+            box.innerHTML = matches.map((it, i) =>
+                `<div data-i="${i}" data-name="${it.name.replace(/"/g, '&quot;')}" class="${i === suggestIndex ? 'active' : ''}">${it.name}<span>${it.type}</span></div>`
+            ).join('');
+            box.style.display = 'block';
+            box.querySelectorAll('div').forEach(el => {
+                el.onmousedown = (e) => {
+                    e.preventDefault();
+                    input.value = el.getAttribute('data-name');
+                    hideSearchSuggest();
+                    searchObject();
+                };
+            });
+        }
+
+        function searchKeydown(e) {
+            const box = document.getElementById('searchSuggest');
+            const items = box ? box.querySelectorAll('div') : [];
+            if (e.key === 'ArrowDown' && items.length) {
+                e.preventDefault();
+                suggestIndex = Math.min(items.length - 1, suggestIndex + 1);
+                items.forEach((el, i) => el.classList.toggle('active', i === suggestIndex));
+            } else if (e.key === 'ArrowUp' && items.length) {
+                e.preventDefault();
+                suggestIndex = Math.max(0, suggestIndex - 1);
+                items.forEach((el, i) => el.classList.toggle('active', i === suggestIndex));
+            } else if (e.key === 'Enter') {
+                if (suggestIndex >= 0 && items[suggestIndex]) {
+                    e.preventDefault();
+                    document.getElementById('searchInput').value = items[suggestIndex].getAttribute('data-name');
+                    hideSearchSuggest();
+                    searchObject();
+                } else {
+                    hideSearchSuggest();
+                    searchObject();
+                }
+            } else if (e.key === 'Escape') {
+                hideSearchSuggest();
+            }
+        }
+
+        window.updateSearchSuggest = updateSearchSuggest;
+        window.searchKeydown = searchKeydown;
+
+        function searchObject() {
+            hideSearchSuggest();
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!q) return;
+
+            // Özel komutlar
+            if (q.includes('kara delik') && (q.includes('çarpış') || q.includes('carpıs') || q.includes('birleş') || q.includes('birles') || q.includes('collision') || q.includes('merge'))) {
+                triggerBlackHoleCollision();
+                return;
+            }
+            if (q.includes('yıldız patla') || q.includes('yildiz patla') || q.includes('süpernova') || q.includes('supernova') || q.includes('patlama')) {
+                triggerSupernova();
+                return;
+            }
+
+            let found = clickableObjects.find(o => {
+                if (!o.userData || !o.userData.parentGroup) return false;
+                const n = (o.userData.parentGroup.userData.name || '').toLowerCase();
+                return n === q || n.includes(q);
+            });
+            if (found) {
+                focusObject(found.userData.parentGroup);
+                return;
+            }
+            found = distantGalaxies.find(g => {
+                const n = (g.userData.name || '').toLowerCase();
+                return n && (n === q || n.includes(q));
+            });
+            if (found) focusObject(found);
+            else alert('Bulunamadı! Örnek: Dünya, TON 618, kara delik çarpışması, yıldız patlaması…');
+        }
+
+        function resetView() {
+            targetFocusGroup = null;
+            document.getElementById('info-card').style.display = 'none';
+            const search = document.getElementById('searchInput');
+            if (search) search.value = '';
+            hideSearchSuggest();
+            clearCutaway();
+            controls.minDistance = 0.8;
+            controls.maxDistance = 3500;
+            camera.position.set(0, 90, 280);
+            controls.target.set(0, 0, 0);
+        }
+
+        // ========== Simülasyon kontrolleri ==========
+        let timeScale = 1;
+        let paused = false;
+        let structureEnabled = true;
+        let orbitsVisible = true;
+
+        function updateSpeedLabel() {
+            const el = document.getElementById('speedLabel');
+            if (el) el.textContent = paused ? '⏸' : ('×' + (timeScale % 1 === 0 ? timeScale : timeScale.toFixed(1)));
+        }
+
+        function togglePause() {
+            paused = !paused;
+            const btn = document.getElementById('btnPause');
+            if (btn) {
+                btn.textContent = paused ? '▶' : '⏸';
+                btn.classList.toggle('active', paused);
+            }
+            updateSpeedLabel();
+        }
+
+        function changeSpeed(factor) {
+            if (paused) {
+                paused = false;
+                const btn = document.getElementById('btnPause');
+                if (btn) { btn.textContent = '⏸'; btn.classList.remove('active'); }
+            }
+            timeScale = Math.max(0.125, Math.min(32, timeScale * factor));
+            // Yuvarla okunaklı değerler
+            const steps = [0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32];
+            let best = steps[0];
+            for (const s of steps) if (Math.abs(s - timeScale) < Math.abs(best - timeScale)) best = s;
+            timeScale = best;
+            updateSpeedLabel();
+        }
+
+        function toggleOrbits() {
+            orbitsVisible = !orbitsVisible;
+            orbitsGroup.visible = orbitsVisible;
+            const btn = document.getElementById('btnOrbits');
+            if (btn) btn.classList.toggle('active', !orbitsVisible);
+        }
+
+        function toggleStructure() {
+            structureEnabled = !structureEnabled;
+            const btn = document.getElementById('btnStructure');
+            if (btn) {
+                btn.textContent = structureEnabled ? 'Yapı: Açık' : 'Yapı: Kapalı';
+                btn.classList.toggle('active', !structureEnabled);
+            }
+            if (!structureEnabled) clearCutaway();
+            else if (targetFocusGroup && targetFocusGroup.userData && targetFocusGroup.userData.data) {
+                const d = targetFocusGroup.userData.data;
+                if (d.interior && d.interior.length && !targetFocusGroup.userData.isGalaxy) {
+                    const pos = new THREE.Vector3();
+                    targetFocusGroup.getWorldPosition(pos);
+                    showCutaway(d, pos, targetFocusGroup.userData.mesh || null);
+                }
+            }
+        }
+
+        // HTML onclick için global erişim
+        window.searchObject = searchObject;
+        window.resetView = resetView;
+        window.hideInfo = hideInfo;
+        window.togglePause = togglePause;
+        window.changeSpeed = changeSpeed;
+        window.toggleOrbits = toggleOrbits;
+        window.toggleStructure = toggleStructure;
+
+        // ========== Animasyon ==========
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Uzaklaşınca Samanyolu + galaksiler belirginleşsin
+            const camDist = camera.position.length();
+            // 120'den itibaren yavaşça aç; odaklanınca her zaman tam görünür
+            const deepFade = Math.max(0.35, Math.min(1, (camDist - 80) / 500));
+
+            if (milkyWayMesh && milkyWayMesh.material) {
+                milkyWayMesh.material.opacity = Math.max(0.4, deepFade * 1.0);
+                milkyWayMesh.rotation.y += 0.00002;
+            }
+            distantGalaxies.forEach(g => {
+                // Galaksi / kara delik / yıldız animasyonu
+                if (!paused) {
+                    if (g.material && g.material.rotation !== undefined) {
+                        g.material.rotation += (g.userData.rotSpeed || 0.0003) * timeScale;
+                    }
+                    if (g.userData && g.userData.isBlackHole && !g.userData.isMerger) {
+                        g.rotation.y += (g.userData.rotSpeed || 0.008) * timeScale;
+                    }
+                    // Kara delik çarpışması: sarmal yaklaşım + birleşme + reset
+                    if (g.userData && g.userData.isMerger) {
+                        const u = g.userData;
+                        const speedMul = u.fastMerge ? 4 : 1;
+                        u.mergerPhase += (u.rotSpeed || 0.012) * timeScale * speedMul;
+                        // Yavaşça (veya hızlı komutta) birbirine yaklaş
+                        u.mergerSep = Math.max(
+                            u.minSep,
+                            u.mergerSep - 0.004 * timeScale * speedMul * (u.mergerSep * 0.15 + 0.5)
+                        );
+                        const sep = u.mergerSep;
+                        const px = Math.cos(u.mergerPhase) * sep * 0.55;
+                        const pz = Math.sin(u.mergerPhase) * sep * 0.55;
+                        if (u.bhA) u.bhA.position.set(px, 0, pz);
+                        if (u.bhB) u.bhB.position.set(-px * 0.9, 0, -pz * 0.9);
+                        if (u.bhA) u.bhA.rotation.y += 0.02 * timeScale;
+                        if (u.bhB) u.bhB.rotation.y -= 0.025 * timeScale;
+                        // Dalga halkaları genleşsin
+                        if (u.waveRings) {
+                            u.waveRings.forEach((wr, i) => {
+                                const pulse = 1 + 0.15 * Math.sin(u.mergerPhase * 2 + i);
+                                wr.scale.setScalar(pulse);
+                                if (wr.material) {
+                                    wr.material.opacity = (0.22 - i * 0.05) * (0.6 + 0.4 * Math.sin(u.mergerPhase + i));
+                                }
+                            });
+                        }
+                        // Birleşme anı → patlama + reset
+                        if (u.mergerSep <= u.minSep + 0.02) {
+                            if (!u.exploded) {
+                                u.exploded = true;
+                                const wp = new THREE.Vector3();
+                                g.getWorldPosition(wp);
+                                spawnMergerExplosion(wp, (u.initialSep || 30) * 0.9);
+                                if (u.bhA) u.bhA.visible = false;
+                                if (u.bhB) u.bhB.visible = false;
+                            }
+                            if (u.glow && u.glow.material) {
+                                u.glow.material.opacity = Math.min(0.7, (u.glow.material.opacity || 0.1) + 0.04 * timeScale);
+                                u.glow.scale.setScalar(1 + (u.mergeTimer || 0) * 0.03);
+                            }
+                            u.mergerSep = u.minSep;
+                            if (!u.mergeTimer) u.mergeTimer = 0;
+                            u.mergeTimer += timeScale;
+                            if (u.mergeTimer > 100) {
+                                u.mergerSep = u.initialSep || 35;
+                                u.mergeTimer = 0;
+                                u.exploded = false;
+                                if (u.bhA) u.bhA.visible = true;
+                                if (u.bhB) u.bhB.visible = true;
+                                if (u.glow && u.glow.material) {
+                                    u.glow.material.opacity = 0.1;
+                                    u.glow.scale.setScalar(1);
+                                }
+                            }
+                        } else if (u.glow && u.glow.material) {
+                            u.glow.material.opacity = 0.08 + 0.05 * (1 - u.mergerSep / 40);
+                            u.exploded = false;
+                        }
+                    }
+                    if (g.userData && g.userData.isExoplanet && g.userData.mesh) {
+                        g.userData.mesh.rotation.y += (g.userData.currentRotSpeed || 0.004) * timeScale;
+                    }
+                    // Yıldız sistemi gezegenleri yörüngede
+                    if (g.userData && g.userData.isStarSystem && g.userData.planetNodes) {
+                        g.userData.planetNodes.forEach(pn => {
+                            const pu = pn.userData;
+                            if (!pu) return;
+                            pu.angle += (pu.orbitSpeed || 0.002) * timeScale;
+                            const r = pu.orbitR || 20;
+                            pn.position.x = Math.cos(pu.angle) * r;
+                            pn.position.z = -Math.sin(pu.angle) * r;
+                            if (pu.mesh) pu.mesh.rotation.y += 0.01 * timeScale;
+                        });
+                    }
+                }
+                const focused = (targetFocusGroup === g);
+                const base = g.userData.baseOpacity || 0.55;
+                const targetOp = focused ? Math.min(1, base * 1.15) : Math.max(0.45, base * deepFade);
+                if (g.material) g.material.opacity = targetOp;
+                if (g.userData.label) {
+                    if (deepFade > 0.2 || focused) {
+                        const v = new THREE.Vector3();
+                        g.getWorldPosition(v);
+                        v.project(camera);
+                        const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (v.y * -0.5 + 0.5) * window.innerHeight;
+                        if (v.z < 1 && x > -50 && x < window.innerWidth + 50) {
+                            g.userData.label.style.display = 'block';
+                            g.userData.label.style.opacity = focused ? '1' : String(Math.min(1, deepFade));
+                            g.userData.label.style.transform = `translate(-50%,-100%) translate(${x}px,${y}px)`;
+                        } else {
+                            g.userData.label.style.display = 'none';
+                        }
+                    } else {
+                        g.userData.label.style.display = 'none';
+                    }
+                }
+            });
+
+            // Kara delik birleşme patlamaları
+            for (let i = mergerExplosions.length - 1; i >= 0; i--) {
+                const ex = mergerExplosions[i];
+                const u = ex.userData;
+                if (!paused) u.life += timeScale;
+                const t = u.life / u.maxLife;
+                if (u.flash && u.flash.material) {
+                    u.flash.material.opacity = Math.max(0, 1 - t * 2.5);
+                    u.flash.scale.setScalar(1 + t * 10);
+                }
+                if (u.shells) {
+                    u.shells.forEach((sh, j) => {
+                        sh.scale.setScalar(1 + t * (8 + j * 5));
+                        if (sh.material) sh.material.opacity = Math.max(0, (0.7 - j * 0.12) * (1 - t));
+                    });
+                }
+                if (u.rings) {
+                    u.rings.forEach((r, j) => {
+                        r.scale.setScalar(1 + t * (6 + j * 3));
+                        if (r.material) r.material.opacity = Math.max(0, 0.55 * (1 - t));
+                        r.rotation.z += 0.02 * timeScale;
+                    });
+                }
+                if (u.particles && u.pVel) {
+                    const pos = u.particles.geometry.attributes.position.array;
+                    for (let j = 0; j < u.pVel.length; j++) {
+                        if (!paused) {
+                            pos[j * 3] += u.pVel[j].x * timeScale;
+                            pos[j * 3 + 1] += u.pVel[j].y * timeScale;
+                            pos[j * 3 + 2] += u.pVel[j].z * timeScale;
+                        }
+                    }
+                    u.particles.geometry.attributes.position.needsUpdate = true;
+                    if (u.particles.material) u.particles.material.opacity = Math.max(0, 1 - t);
+                }
+                if (u.life >= u.maxLife) {
+                    scene.remove(ex);
+                    mergerExplosions.splice(i, 1);
+                }
+            }
+
+            // Süpernova animasyonu
+            if (activeSupernova) {
+                const sn = activeSupernova;
+                const u = sn.userData;
+                if (!paused) u.life += timeScale;
+                const t = u.life / u.maxLife;
+                if (u.flash && u.flash.material) {
+                    u.flash.material.opacity = Math.max(0, 1 - t * 3);
+                    u.flash.scale.setScalar(1 + t * 8);
+                }
+                if (u.shells) {
+                    u.shells.forEach((sh, i) => {
+                        const sc = 1 + t * (12 + i * 6);
+                        sh.scale.setScalar(sc);
+                        if (sh.material) sh.material.opacity = Math.max(0, (0.55 - i * 0.1) * (1 - t));
+                    });
+                }
+                if (u.particles && u.pVel) {
+                    const pos = u.particles.geometry.attributes.position.array;
+                    for (let i = 0; i < u.pVel.length; i++) {
+                        if (!paused) {
+                            pos[i * 3] += u.pVel[i].x * timeScale;
+                            pos[i * 3 + 1] += u.pVel[i].y * timeScale;
+                            pos[i * 3 + 2] += u.pVel[i].z * timeScale;
+                        }
+                    }
+                    u.particles.geometry.attributes.position.needsUpdate = true;
+                    if (u.particles.material) u.particles.material.opacity = Math.max(0, 1 - t);
+                }
+                if (u.life >= u.maxLife) {
+                    scene.remove(sn);
+                    activeSupernova = null;
+                }
+            }
+
+            // Kuyruklu yıldızlar – dümdüz çapraz kayma
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const c = comets[i];
+                const u = c.userData;
+                if (paused) continue;
+                u.life += timeScale;
+                c.position.add(u.velocity.clone().multiplyScalar(timeScale));
+
+                // Kuyruk her zaman hareket yönünün arkasında kalsın
+                const anti = u.velocity.clone().normalize().multiplyScalar(-1);
+                if (u.ionTail) {
+                    u.ionTail.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), anti);
+                }
+                if (u.dustTail) {
+                    u.dustTail.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), anti);
+                }
+
+                const far = 520;
+                if (u.life > u.maxLife ||
+                    Math.abs(c.position.x) > far ||
+                    Math.abs(c.position.y) > far ||
+                    Math.abs(c.position.z) > far) {
+                    scene.remove(c);
+                    c.traverse(o => {
+                        if (o.geometry) o.geometry.dispose();
+                        if (o.material) {
+                            if (o.material.map !== ionTailTex && o.material.map !== dustTailTex) {
+                                if (o.material.map) o.material.map.dispose();
+                            }
+                            o.material.dispose();
+                        }
+                    });
+                    comets.splice(i, 1);
+                    if (comets.length < 1 && Math.random() < 0.4) spawnComet();
+                }
+            }
+            if (comets.length === 0 && Math.random() < 0.0015) spawnComet();
+            if (comets.length < 2 && Math.random() < 0.00035) spawnComet();
+
+            scene.children.forEach(child => {
+                // Asteroit kuşağı yavaş dönüş
+                if (child.userData && child.userData.isAsteroidBelt) {
+                    if (!paused) child.rotation.y += 0.00008 * timeScale;
+                    return;
+                }
+                if (!child.userData || !child.userData.data) return;
+                const u = child.userData;
+                const d = u.data;
+
+                const dt = paused ? 0 : timeScale;
+                // Kendi ekseni: çoğu CCW (+Y); Venüs saat yönü (negatif rotSpeed);
+                // Uranüs yan yatmış → X ekseninde yuvarlanır
+                if (u.mesh) {
+                    if (d.name === 'Uranüs') {
+                        u.mesh.rotation.x += Math.abs(u.currentRotSpeed || 0.00018) * dt;
+                    } else {
+                        u.mesh.rotation.y += (u.currentRotSpeed || 0) * dt;
+                    }
+                } else {
+                    child.rotation.y += (u.currentRotSpeed || 0) * dt;
+                }
+
+                // Yörünge: saat yönünün tersi (yukarıdan CCW → z = -sin)
+                if (d.dist > 0 && !u.parentPlanet) {
+                    if (u.isVoyager) {
+                        // Yıldızlararası: yavaşça uzaklaş + ekliptik dışı
+                        d.dist += 0.0008 * dt;
+                        u.angle += Math.abs(d.orbSpeed || 0) * dt * 0.15;
+                        child.position.x = Math.cos(u.angle) * d.dist;
+                        child.position.z = -Math.sin(u.angle) * d.dist;
+                        child.position.y = (u.voyagerTilt || 0) * (20 + d.dist * 0.04);
+                    } else {
+                        u.angle += Math.abs(d.orbSpeed || 0) * dt;
+                        child.position.x = Math.cos(u.angle) * d.dist;
+                        child.position.z = -Math.sin(u.angle) * d.dist;
+                    }
+                }
+                if (u.parentPlanet) {
+                    // Triton retrograd: orbSpeed negatif kalabilir
+                    u.angle += (d.orbSpeed || 0) * dt;
+                    const lx = Math.cos(u.angle) * d.dist;
+                    const lz = -Math.sin(u.angle) * d.dist;
+                    child.position.x = u.parentPlanet.position.x + lx;
+                    child.position.z = u.parentPlanet.position.z + lz;
+                    child.position.y = u.parentPlanet.position.y;
+                }
+
+                if (u.label) {
+                    const v = new THREE.Vector3();
+                    child.getWorldPosition(v);
+                    v.project(camera);
+                    const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+                    const y = (v.y * -0.5 + 0.5) * window.innerHeight;
+                    if (v.z < 1 && x > -40 && x < window.innerWidth + 40) {
+                        u.label.style.display = 'block';
+                        u.label.style.transform = `translate(-50%,-100%) translate(${x}px,${y}px)`;
+                    } else u.label.style.display = 'none';
+                }
+            });
+
+            if (targetFocusGroup) {
+                const pos = new THREE.Vector3();
+                targetFocusGroup.getWorldPosition(pos);
+                const isGal = !!(targetFocusGroup.userData && targetFocusGroup.userData.isGalaxy);
+                let dist;
+                if (isGal) {
+                    const gSize = targetFocusGroup.scale ? targetFocusGroup.scale.x : 80;
+                    dist = Math.max(gSize * 0.5, 28);
+                    if (targetFocusGroup.material) {
+                        targetFocusGroup.material.opacity = targetFocusGroup.userData.baseOpacity || 0.9;
+                    }
+                } else {
+                    const size = (targetFocusGroup.userData.data && targetFocusGroup.userData.data.size) || 1;
+                    dist = Math.max(size * 2.2 + 1.8, size * 2.8);
+                }
+                cameraAngle += isGal ? 0.00025 : 0.0009;
+                const camX = pos.x + Math.sin(cameraAngle) * dist;
+                const camZ = pos.z + Math.cos(cameraAngle) * dist;
+                const camY = pos.y + dist * (isGal ? 0.12 : 0.22);
+                camera.position.lerp(new THREE.Vector3(camX, camY, camZ), isGal ? 0.08 : 0.06);
+                controls.target.lerp(pos, isGal ? 0.1 : 0.06);
+
+                // Kesit gezegenle birlikte taşınsın, yüzü kameraya dönsün
+                if (cutawayGroup && !isGal) {
+                    cutawayGroup.position.copy(pos);
+                    cutawayGroup.rotation.y = Math.atan2(
+                        camera.position.x - pos.x,
+                        camera.position.z - pos.z
+                    );
+                    cutawayGroup.children.forEach(child => {
+                        if (child.userData && child.userData.layerLabel) {
+                            const r = child.userData.layerRadius || 1;
+                            const lv = pos.clone();
+                            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cutawayGroup.quaternion);
+                            lv.addScaledVector(right, r * 0.9);
+                            lv.y += r * 0.15;
+                            lv.project(camera);
+                            const lx = (lv.x * 0.5 + 0.5) * window.innerWidth;
+                            const ly = (lv.y * -0.5 + 0.5) * window.innerHeight;
+                            if (lv.z < 1) {
+                                child.userData.layerLabel.style.display = 'block';
+                                child.userData.layerLabel.style.transform =
+                                    `translate(-50%,-100%) translate(${lx}px,${ly}px)`;
+                            } else {
+                                child.userData.layerLabel.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

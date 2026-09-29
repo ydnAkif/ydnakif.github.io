@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>3D Güneş Sistemi</title>
+
+<style>
+
+/* =========================
+   GENEL
+========================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #02030a;
+    color: white;
+}
+
+/* Yıldızlar */
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image:
+        radial-gradient(white 1px, transparent 1px),
+        radial-gradient(white 1px, transparent 1px),
+        radial-gradient(white 1px, transparent 1px);
+
+    background-size:
+        80px 80px,
+        130px 130px,
+        200px 200px;
+
+    background-position:
+        10px 20px,
+        50px 70px,
+        100px 120px;
+
+    opacity: .6;
+    pointer-events: none;
+}
+
+/* =========================
+   GİRİŞ EKRANI
+========================= */
+
+#welcome {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background:
+        radial-gradient(circle at center,
+        #172554,
+        #020617 60%,
+        #000);
+}
+
+.welcome-box {
+    text-align: center;
+}
+
+.welcome-box h1 {
+    font-size: 55px;
+    margin-bottom: 10px;
+
+    color: #fde047;
+    text-shadow:
+        0 0 20px #facc15,
+        0 0 50px #f59e0b;
+}
+
+.welcome-box p {
+    font-size: 20px;
+    color: #cbd5e1;
+}
+
+#startButton {
+    margin-top: 30px;
+
+    padding: 15px 45px;
+
+    border: none;
+    border-radius: 30px;
+
+    font-size: 20px;
+    font-weight: bold;
+
+    color: white;
+    background: linear-gradient(90deg,#2563eb,#7c3aed);
+
+    cursor: pointer;
+
+    box-shadow: 0 0 25px #4f46e5;
+
+    transition: .3s;
+}
+
+#startButton:hover {
+    transform: scale(1.1);
+}
+
+/* =========================
+   ANA SİTE
+========================= */
+
+#site {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* =========================
+   MENÜ
+========================= */
+
+.menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    padding: 12px 20px;
+
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    background: rgba(2,6,23,.85);
+
+    backdrop-filter: blur(10px);
+
+    border-bottom: 1px solid #334155;
+
+    z-index: 500;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #fde047;
+}
+
+.menu button,
+.menu input {
+    padding: 9px 14px;
+
+    border-radius: 8px;
+
+    border: 1px solid #475569;
+
+    background: #0f172a;
+    color: white;
+}
+
+.menu button {
+    cursor: pointer;
+}
+
+.menu button:hover {
+    background: #1e293b;
+}
+
+#search {
+    margin-left: auto;
+    width: 220px;
+}
+
+/* =========================
+   SAAT
+========================= */
+
+#clock {
+    position: fixed;
+
+    top: 70px;
+    right: 20px;
+
+    padding: 10px 15px;
+
+    background: rgba(15,23,42,.8);
+
+    border: 1px solid #475569;
+
+    border-radius: 10px;
+
+    z-index: 400;
+}
+
+/* =========================
+   UZAY
+========================= */
+
+#space {
+    position: absolute;
+
+    left: 50%;
+    top: 54%;
+
+    width: 900px;
+    height: 700px;
+
+    transform:
+        translate(-50%,-50%)
+        scale(var(--zoom,1));
+
+    transition: transform .5s;
+
+    perspective: 1200px;
+}
+
+/* =========================
+   GÜNEŞ
+========================= */
+
+.sun {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 130px;
+    height: 130px;
+
+    transform: translate(-50%,-50%);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 30% 30%,
+            #fff7ae,
+            #ffd000 35%,
+            #ff8c00 65%,
+            #e53900
+        );
+
+    box-shadow:
+        0 0 30px #ffd000,
+        0 0 80px #ff8c00,
+        0 0 150px #ff6600;
+
+    z-index: 10;
+}
+
+/* =========================
+   YÖRÜNGELER
+========================= */
+
+.orbit {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%,-50%);
+
+    border: 1px solid rgba(148,163,184,.25);
+
+    border-radius: 50%;
+}
+
+/* =========================
+   GEZEGEN
+========================= */
+
+.planet {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    transform-style: preserve-3d;
+
+    transition: .5s;
+
+    z-index: 20;
+}
+
+.planet:hover {
+    filter: brightness(1.3);
+
+    box-shadow:
+        0 0 25px white;
+}
+
+/* İsim */
+
+.planet-name {
+    position: absolute;
+
+    top: -30px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    white-space: nowrap;
+
+    font-weight: bold;
+
+    text-shadow: 0 2px 5px black;
+}
+
+/* =========================
+   GEZEGENLER
+========================= */
+
+.mercury {
+    width: 25px;
+    height: 25px;
+
+    margin-left: 90px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #ddd,
+        #777 50%,
+        #222);
+}
+
+.venus {
+    width: 45px;
+    height: 45px;
+
+    margin-left: 150px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #ffe6a8,
+        #d88935 55%,
+        #713c15);
+}
+
+.earth {
+    width: 50px;
+    height: 50px;
+
+    margin-left: 220px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #5ee7ff,
+        #0875c1 55%,
+        #03234c);
+}
+
+.mars {
+    width: 38px;
+    height: 38px;
+
+    margin-left: 290px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #ff9b70,
+        #c44022 55%,
+        #54140b);
+}
+
+.jupiter {
+    width: 100px;
+    height: 100px;
+
+    margin-left: 390px;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            #e8c59d 0px,
+            #e8c59d 10px,
+            #b8794d 13px,
+            #f1d2aa 22px
+        );
+}
+
+.saturn {
+    width: 85px;
+    height: 85px;
+
+    margin-left: 510px;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            #f1d39c 0px,
+            #f1d39c 10px,
+            #c39b61 13px,
+            #ffe9b9 22px
+        );
+}
+
+.saturn::after {
+    content: "";
+
+    position: absolute;
+
+    width: 150px;
+    height: 35px;
+
+    left: -32px;
+    top: 25px;
+
+    border: 7px solid #d5b878;
+
+    border-radius: 50%;
+
+    transform: rotate(-15deg);
+
+    z-index: -1;
+}
+
+.uranus {
+    width: 60px;
+    height: 60px;
+
+    margin-left: 610px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #d8ffff,
+        #55c6d6 55%,
+        #267080);
+}
+
+.neptune {
+    width: 60px;
+    height: 60px;
+
+    margin-left: 690px;
+
+    background:
+        radial-gradient(circle at 30% 30%,
+        #82b7ff,
+        #2457c5 55%,
+        #101e66);
+}
+
+/* =========================
+   BİLGİ KARTI
+========================= */
+
+#info {
+    position: fixed;
+
+    right: 20px;
+    bottom: 20px;
+
+    width: 300px;
+
+    padding: 20px;
+
+    background:
+        rgba(15,23,42,.94);
+
+    border:
+        1px solid #475569;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 10px 40px black;
+
+    display: none;
+
+    z-index: 600;
+}
+
+#info h2 {
+    color: #fde047;
+    margin-top: 0;
+}
+
+#info p {
+    line-height: 1.5;
+    color: #cbd5e1;
+}
+
+#closeInfo {
+    float: right;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+}
+
+/* =========================
+   KONTROLLER
+========================= */
+
+.controls {
+    position: fixed;
+
+    bottom: 20px;
+    left: 20px;
+
+    z-index: 600;
+
+    display: flex;
+    gap: 8px;
+}
+
+.controls button {
+    border: 1px solid #475569;
+
+    background: rgba(15,23,42,.9);
+
+    color: white;
+
+    padding: 10px 13px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+}
+
+.controls button:hover {
+    background: #334155;
+}
+
+/* =========================
+   MOBİL
+========================= */
+
+@media(max-width:700px) {
+
+    .menu {
+        flex-wrap: wrap;
+    }
+
+    #search {
+        width: 150px;
+    }
+
+    #space {
+        transform:
+            translate(-50%,-50%)
+            scale(.65);
+    }
+
+    #info {
+        width: 90%;
+        right: 5%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+
+<!-- =========================
+     GİRİŞ
+========================= -->
+
+<div id="welcome">
+
+    <div class="welcome-box">
+
+        <h1>🌌 Güneş Sistemine Hoş Geldin!</h1>
+
+        <p>
+            6. Sınıf Fen Bilimleri
+            <br>
+            3D Güneş Sistemi
+        </p>
+
+        <button id="startButton">
+            🚀 BAŞLA
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     ANA SİTE
+========================= -->
+
+<div id="site">
+
+    <!-- MENÜ -->
+
+    <nav class="menu">
+
+        <div class="logo">
+            🌌 Güneş Sistemi
+        </div>
+
+        <button onclick="showAll()">
+            🌍 Sistem
+        </button>
+
+        <button onclick="stopAnimation()">
+            ⏸ Dur
+        </button>
+
+        <button onclick="startAnimation()">
+            ▶ Başlat
+        </button>
+
+        <button onclick="changeSpeed(-0.2)">
+            🐢 Yavaşlat
+        </button>
+
+        <button onclick="changeSpeed(0.2)">
+            🐇 Hızlandır
+        </button>
+
+        <input
+            id="search"
+            type="text"
+            placeholder="Gezegen veya uydu ara..."
+            onkeyup="searchPlanet()"
+        >
+
+    </nav>
+
+
+    <!-- SAAT -->
+
+    <div id="clock">
+        🕒 00:00:00
+    </div>
+
+
+    <!-- UZAY -->
+
+    <div id="space">
+
+        <div class="sun" title="Güneş"></div>
+
+
+        <!-- YÖRÜNGELER -->
+
+        <div class="orbit"
+             style="width:190px;height:120px;"></div>
+
+        <div class="orbit"
+             style="width:270px;height:180px;"></div>
+
+        <div class="orbit"
+             style="width:350px;height:240px;"></div>
+
+        <div class="orbit"
+             style="width:440px;height:300px;"></div>
+
+        <div class="orbit"
+             style="width:560px;height:380px;"></div>
+
+        <div class="orbit"
+             style="width:670px;height:450px;"></div>
+
+        <div class="orbit"
+             style="width:770px;height:520px;"></div>
+
+
+        <!-- GEZEGENLER -->
+
+        <div class="planet mercury"
+             onclick="selectPlanet('Merkür')"
+             title="Merkür">
+
+            <span class="planet-name">
+                Merkür
+            </span>
+
+        </div>
+
+
+        <div class="planet venus"
+             onclick="selectPlanet('Venüs')"
+             title="Venüs">
+
+            <span class="planet-name">
+                Venüs
+            </span>
+
+        </div>
+
+
+        <div class="planet earth"
+             onclick="selectPlanet('Dünya')"
+             title="Dünya">
+
+            <span class="planet-name">
+                Dünya
+            </span>
+
+        </div>
+
+
+        <div class="planet mars"
+             onclick="selectPlanet('Mars')"
+             title="Mars">
+
+            <span class="planet-name">
+                Mars
+            </span>
+
+        </div>
+
+
+        <div class="planet jupiter"
+             onclick="selectPlanet('Jüpiter')"
+             title="Jüpiter">
+
+            <span class="planet-name">
+                Jüpiter
+            </span>
+
+        </div>
+
+
+        <div class="planet saturn"
+             onclick="selectPlanet('Satürn')"
+             title="Satürn">
+
+            <span class="planet-name">
+                Satürn
+            </span>
+
+        </div>
+
+
+        <div class="planet uranus"
+             onclick="selectPlanet('Uranüs')"
+             title="Uranüs">
+
+            <span class="planet-name">
+                Uranüs
+            </span>
+
+        </div>
+
+
+        <div class="planet neptune"
+             onclick="selectPlanet('Neptün')"
+             title="Neptün">
+
+            <span class="planet-name">
+                Neptün
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         BİLGİ KARTI
+    ========================= -->
+
+    <div id="info">
+
+        <button id="closeInfo"
+                onclick="closeInfo()">
+            ✕
+        </button>
+
+        <h2 id="infoTitle">
+            Gezegen
+        </h2>
+
+        <p id="infoText">
+            Bilgi
+        </p>
+
+    </div>
+
+
+    <!-- =========================
+         KONTROLLER
+    ========================= -->
+
+    <div class="controls">
+
+        <button onclick="zoomIn()">
+            🔍+
+        </button>
+
+        <button onclick="zoomOut()">
+            🔍-
+        </button>
+
+        <button onclick="resetZoom()">
+            🔄 Zoom
+        </button>
+
+        <button onclick="previousPlanet()">
+            ◀
+        </button>
+
+        <button onclick="nextPlanet()">
+            ▶
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   GEZEGEN BİLGİLERİ
+========================= */
+
+const planets = {
+
+    "Merkür": {
+        uydu: "0",
+        bilgi:
+        "Merkür Güneş'e en yakın gezegendir. Kayalık bir gezegendir ve Güneş Sistemi'ndeki en küçük gezegendir."
+    },
+
+    "Venüs": {
+        uydu: "0",
+        bilgi:
+        "Venüs Güneş'e ikinci gezegendir. Çok sıcak bir gezegendir ve diğer gezegenlerin çoğunun tersine kendi ekseni etrafında saat yönünde döner."
+    },
+
+    "Dünya": {
+        uydu: "1",
+        bilgi:
+        "Dünya üzerinde yaşam olduğunu bildiğimiz gezegendir. Tek doğal uydusu Ay'dır."
+    },
+
+    "Mars": {
+        uydu: "2",
+        bilgi:
+        "Mars kızıl görünümü nedeniyle Kızıl Gezegen olarak bilinir. Phobos ve Deimos adlı iki doğal uydusu vardır."
+    },
+
+    "Jüpiter": {
+        uydu: "101",
+        bilgi:
+        "Jüpiter Güneş Sistemi'nin en büyük gezegenidir. Büyük bir gaz devidir ve çok sayıda doğal uydusu bulunur."
+    },
+
+    "Satürn": {
+        uydu: "274",
+        bilgi:
+        "Satürn büyük ve belirgin halkalarıyla tanınan bir gaz devidir. Çok sayıda doğal uydusu vardır."
+    },
+
+    "Uranüs": {
+        uydu: "29",
+        bilgi:
+        "Uranüs bir buz devidir. Ekseninin çok eğik olması nedeniyle yan yatmış gibi döner."
+    },
+
+    "Neptün": {
+        uydu: "16",
+        bilgi:
+        "Neptün Güneş Sistemi'nin sekizinci ve en uzak gezegenidir. Mavi görünür ve güçlü rüzgârlara sahiptir."
+    }
+
+};
+
+
+/* =========================
+   BAŞLAT
+========================= */
+
+document.getElementById("startButton")
+.addEventListener("click", function() {
+
+    document.getElementById("welcome").style.display = "none";
+
+    document.getElementById("site").style.display = "block";
+
+});
+
+
+/* =========================
+   BİLGİ KARTI
+========================= */
+
+function selectPlanet(name) {
+
+    const data = planets[name];
+
+    document.getElementById("infoTitle").innerText =
+        "🪐 " + name;
+
+    document.getElementById("infoText").innerHTML =
+        data.bilgi +
+        "<br><br>" +
+        "<strong>🌙 Uydu sayısı: " +
+        data.uydu +
+        "</strong>";
+
+    document.getElementById("info").style.display =
+        "block";
+
+}
+
+
+/* =========================
+   KARTI KAPAT
+========================= */
+
+function closeInfo() {
+
+    document.getElementById("info").style.display =
+        "none";
+
+}
+
+
+/* =========================
+   ZOOM
+========================= */
+
+let zoom = 1;
+
+function zoomIn() {
+
+    zoom += .15;
+
+    if (zoom > 2) zoom = 2;
+
+    document.documentElement
+        .style.setProperty("--zoom", zoom);
+
+}
+
+function zoomOut() {
+
+    zoom -= .15;
+
+    if (zoom < .5) zoom = .5;
+
+    document.documentElement
+        .style.setProperty("--zoom", zoom);
+
+}
+
+function resetZoom() {
+
+    zoom = 1;
+
+    document.documentElement
+        .style.setProperty("--zoom", zoom);
+
+}
+
+
+/* =========================
+   ANİMASYON HIZI
+========================= */
+
+let speed = 1;
+
+function changeSpeed(value) {
+
+    speed += value;
+
+    if (speed < .2)
+        speed = .2;
+
+    if (speed > 3)
+        speed = 3;
+
+    document.querySelectorAll(".planet")
+    .forEach((planet,index) => {
+
+        planet.style.animationDuration =
+            (8 / speed) + "s";
+
+    });
+
+}
+
+
+/* =========================
+   DURDUR
+========================= */
+
+function stopAnimation() {
+
+    document.querySelectorAll(".planet")
+    .forEach(planet => {
+
+        planet.style.animationPlayState =
+            "paused";
+
+    });
+
+}
+
+
+/* =========================
+   BAŞLAT
+========================= */
+
+function startAnimation() {
+
+    document.querySelectorAll(".planet")
+    .forEach(planet => {
+
+        planet.style.animationPlayState =
+            "running";
+
+    });
+
+}
+
+
+/* =========================
+   ARAMA
+========================= */
+
+function searchPlanet() {
+
+    const text =
+        document.getElementById("search")
+        .value
+        .toLowerCase();
+
+    document.querySelectorAll(".planet")
+    .forEach(planet => {
+
+        const name =
+            planet.innerText.toLowerCase();
+
+        if (
+            text === "" ||
+            name.includes(text)
+        ) {
+
+            planet.style.opacity = "1";
+            planet.style.transform = "scale(1.3)";
+
+        } else {
+
+            planet.style.opacity = ".15";
+            planet.style.transform = "scale(.7)";
+
+        }
+
+    });
+
+}
+
+
+/* =========================
+   GEZEGEN DEĞİŞTİRME
+========================= */
+
+const planetNames = [
+    "Merkür",
+    "Venüs",
+    "Dünya",
+    "Mars",
+    "Jüpiter",
+    "Satürn",
+    "Uranüs",
+    "Neptün"
+];
+
+let currentPlanet = 0;
+
+function nextPlanet() {
+
+    currentPlanet++;
+
+    if (
+        currentPlanet >=
+        planetNames.length
+    ) {
+
+        currentPlanet = 0;
+
+    }
+
+    selectPlanet(
+        planetNames[currentPlanet]
+    );
+
+}
+
+function previousPlanet() {
+
+    currentPlanet--;
+
+    if (currentPlanet < 0) {
+
+        currentPlanet =
+            planetNames.length - 1;
+
+    }
+
+    selectPlanet(
+        planetNames[currentPlanet]
+    );
+
+}
+
+
+/* =========================
+   OTOMATİK GEZEGEN DEĞİŞTİRME
+========================= */
+
+setInterval(function() {
+
+    if (
+        document.getElementById("site")
+        .style.display === "block"
+    ) {
+
+        nextPlanet();
+
+    }
+
+}, 10000);
+
+
+/* =========================
+   SAAT
+========================= */
+
+function updateClock() {
+
+    const now = new Date();
+
+    let h =
+        String(now.getHours())
+        .padStart(2,"0");
+
+    let m =
+        String(now.getMinutes())
+        .padStart(2,"0");
+
+    let s =
+        String(now.getSeconds())
+        .padStart(2,"0");
+
+    document.getElementById("clock")
+        .innerText =
+        "🕒 " + h + ":" + m + ":" + s;
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+
+
+/* =========================
+   TÜM SİSTEM
+========================= */
+
+function showAll() {
+
+    document.querySelectorAll(".planet")
+    .forEach(planet => {
+
+        planet.style.opacity = "1";
+        planet.style.transform =
+            "scale(1)";
+
+    });
+
+    closeInfo();
+
+}
+
+</script>
+
+</body>
+</html>

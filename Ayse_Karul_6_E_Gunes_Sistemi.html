@@ -1,0 +1,3227 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>3 Boyutlu Güneş Sistemi Modeli — Ayşe Karul · Ali Yalkın Ortaokulu · 6/E · No 602</title>
+<style>
+  :root{
+    --panel:#0d1424;
+    --panel2:#141d33;
+    --line:#26324e;
+    --text:#e8edf7;
+    --dim:#94a3c4;
+    --accent:#ffc94d;
+    --accent2:#5aa9ff;
+    --chatw:360px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#04060d;color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+  canvas{display:block}
+
+  /* ---------- SAHNE ---------- */
+  #sahne{position:fixed;top:0;left:0;right:var(--chatw);bottom:0}
+  body.chat-kapali #sahne{right:0}
+
+  /* ---------- ÜST ÇUBUK ---------- */
+  #ustBar{position:fixed;top:0;left:0;right:var(--chatw);z-index:20;
+    display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    padding:8px 12px;background:linear-gradient(180deg,rgba(6,10,20,.92),rgba(6,10,20,0));
+    pointer-events:none}
+  body.chat-kapali #ustBar{right:0}
+  #ustBar > *{pointer-events:auto}
+  #baslik{font-weight:700;font-size:15px;margin-right:4px;letter-spacing:.2px}
+  #baslik small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
+  /* Öğrencinin adı: ödevi açan ilk anda görsün */
+  #ogrenci{display:flex;align-items:center;gap:8px;margin-right:12px;
+    padding:6px 14px;border-radius:22px;
+    background:linear-gradient(135deg,rgba(255,201,77,.16),rgba(90,169,255,.12));
+    border:1px solid rgba(255,201,77,.45);
+    box-shadow:0 0 18px rgba(255,201,77,.10)}
+  #ogrenciMetin{display:flex;flex-direction:column;line-height:1.15}
+  #ogrenciAd{font-size:19px;font-weight:800;letter-spacing:.3px;color:#fff;
+    text-shadow:0 1px 10px rgba(255,201,77,.35);white-space:nowrap}
+  #ogrenciOkul{font-size:11.5px;font-weight:700;letter-spacing:.2px;
+    color:#ffd98a;white-space:nowrap;opacity:.95}
+  #ogrenciSinif{font-size:13px;font-weight:800;color:#1b1405;background:var(--accent);
+    border-radius:12px;padding:2px 9px;white-space:nowrap}
+  #ogrenciNo{font-size:13px;font-weight:800;color:#06131f;background:#8fc4ff;
+    border-radius:12px;padding:2px 9px;white-space:nowrap}
+  /* Üst çubuğun ikinci satırı */
+  #satir2{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+    padding-left:2px}
+  #satir2 .etiket{font-size:11px;color:var(--dim);margin-right:2px}
+  .gz.ek{border-color:#3a5a8c}
+  .gz.ek:hover{border-color:var(--accent2);color:var(--accent2)}
+  .gz.ek.aktif{background:var(--accent2);color:#04132b;border-color:var(--accent2)}
+  .gz{border:1px solid var(--line);background:rgba(20,29,51,.85);color:var(--text);
+    border-radius:20px;padding:5px 11px;font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .gz:hover{border-color:var(--accent);color:var(--accent)}
+  .gz.aktif{background:var(--accent);color:#1b1405;border-color:var(--accent);font-weight:700}
+
+  /* ---------- ALT KONTROL ---------- */
+  #altBar{position:fixed;bottom:0;left:0;right:var(--chatw);z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;
+    padding:10px 12px 12px;background:linear-gradient(0deg,rgba(6,10,20,.92),rgba(6,10,20,0))}
+  body.chat-kapali #altBar{right:0}
+  #altBar label{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:7px}
+  input[type=range]{width:120px;accent-color:var(--accent)}
+  #hizYazi{color:var(--accent);font-weight:700;min-width:34px;display:inline-block;text-align:right}
+
+  /* ---------- BİLGİ KARTI ---------- */
+  #kart{position:fixed;left:14px;bottom:62px;width:290px;max-width:calc(100vw - 28px);z-index:25;
+    background:rgba(13,20,36,.96);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;display:none;backdrop-filter:blur(6px);
+    box-shadow:0 12px 34px rgba(0,0,0,.55)}
+  #kart.acik{display:block;animation:gir .22s ease}
+  #kart{max-height:calc(100vh - 150px);overflow-y:auto}
+  #kart::-webkit-scrollbar{width:6px}
+  #kart::-webkit-scrollbar-thumb{background:#2b3a5c;border-radius:3px}
+  @keyframes gir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  #kartBaslik{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:700;margin-bottom:2px}
+  #kartNokta{width:14px;height:14px;border-radius:50%;flex:none}
+  #kartTur{font-size:11px;color:var(--dim);margin-bottom:10px}
+  #kart table{width:100%;border-collapse:collapse;font-size:12.5px}
+  #kart td{padding:3px 0;vertical-align:top}
+  #kart td:first-child{color:var(--dim);width:46%}
+  #kart td:last-child{text-align:right;font-weight:600}
+  #kartNot{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--dim);line-height:1.55;white-space:pre-wrap}
+  #kartKapat{position:absolute;top:9px;right:11px;cursor:pointer;color:var(--dim);
+    font-size:17px;line-height:1;border:0;background:none}
+  #kartKapat:hover{color:#fff}
+
+  /* ---------- SAĞ SOHBET PANELİ ---------- */
+  #chat{position:fixed;top:0;right:0;bottom:0;width:var(--chatw);z-index:30;
+    background:var(--panel);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;transition:transform .3s ease}
+  body.chat-kapali #chat{transform:translateX(100%)}
+  #chatBas{padding:12px 14px 10px;border-bottom:1px solid var(--line);flex:none}
+  #chatBas h2{margin:0 0 3px;font-size:14px;letter-spacing:.2px}
+  #chatBas p{margin:0;font-size:11px;color:var(--dim);line-height:1.5}
+  #chatAkis{flex:1;overflow-y:auto;padding:12px 12px 16px;scroll-behavior:smooth}
+  #chatAkis::-webkit-scrollbar{width:7px}
+  #chatAkis::-webkit-scrollbar-thumb{background:#2b3a5c;border-radius:4px}
+  .msj{margin-bottom:11px;animation:msjGir .3s ease}
+  @keyframes msjGir{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .msj .kim{font-size:10.5px;color:var(--dim);margin-bottom:3px;display:flex;
+    justify-content:space-between;gap:8px}
+  .msj .balon{border-radius:12px;padding:9px 11px;font-size:12.5px;line-height:1.62;
+    white-space:pre-wrap;word-wrap:break-word}
+  .msj.ogr .balon{background:#1d2b4a;border:1px solid #2b3f68;border-top-left-radius:4px}
+  .msj.yz  .balon{background:#17203a;border:1px solid var(--line);border-top-right-radius:4px}
+  .msj.yz .kim{color:#8ab4ff}
+  .msj.not .balon{background:#221a08;border:1px solid #4a3a12;color:#ffd98a;font-size:12px}
+  .imlec{display:inline-block;width:7px;height:14px;background:var(--accent);
+    vertical-align:-2px;animation:yanip .8s steps(1) infinite}
+  @keyframes yanip{50%{opacity:0}}
+  #chatAlt{flex:none;padding:9px 12px;border-top:1px solid var(--line);
+    display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  #chatAlt .gz{font-size:11px;padding:4px 9px}
+  #chatDurum{font-size:10.5px;color:var(--dim);margin-left:auto}
+
+  #chatAc{position:fixed;top:10px;right:10px;z-index:31;display:none}
+  body.chat-kapali #chatAc{display:block}
+
+  /* ---------- İPUCU / HATA ---------- */
+  #ipucu{position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:22;
+    font-size:11.5px;color:var(--dim);background:rgba(13,20,36,.8);
+    border:1px solid var(--line);border-radius:18px;padding:5px 14px;
+    transition:opacity .6s;pointer-events:none}
+  #yukleme{position:fixed;inset:0;z-index:60;display:flex;align-items:center;
+    justify-content:center;background:#04060d;font-size:14px;color:var(--dim);
+    text-align:center;padding:24px;line-height:1.7}
+
+  /* ---------- KÜÇÜK EKRAN ---------- */
+  @media (max-width:900px){
+    :root{--chatw:0px}
+    #chat{width:100%;max-width:420px}
+    #sahne,#ustBar,#altBar{right:0}
+    body:not(.chat-kapali) #chatAc{display:none}
+    #chatAc{display:block}
+    #baslik small{display:none}
+    /* Sağ üstteki "yazışma" düğmesi üst çubuktaki gezegen
+       düğmelerinin üstüne binmesin. */
+    body.chat-kapali #ustBar{padding-right:178px}
+    #kart{width:250px;bottom:70px}
+  }
+</style>
+</head>
+<body class="chat-kapali">
+
+<div id="sahne"></div>
+
+<div id="ustBar">
+  <div id="ogrenci">
+    <div id="ogrenciMetin">
+      <span id="ogrenciAd">Ayşe Karul</span>
+      <span id="ogrenciOkul">Ali Yalkın Ortaokulu</span>
+    </div>
+    <span id="ogrenciSinif">6/E</span>
+    <span id="ogrenciNo">No 602</span>
+  </div>
+  <div id="baslik">☀️ Güneş Sistemi
+    <small>3 boyutlu ve etkileşimli model · Fen Bilimleri</small>
+  </div>
+  <button class="gz" data-gez="-1">Genel görünüm</button>
+  <span id="gezButonlar"></span>
+  <button class="gz" id="kuyrukBtn">☄️ Halley</button>
+  <button class="gz" id="galaksiBtn">🌌 Komşu galaksiler</button>
+
+  <div id="satir2">
+    <span class="etiket">Uzaydaki araçlar:</span>
+    <button class="gz ek" id="ayBtn">🌙 Ay</button>
+    <button class="gz ek" id="uydularBtn">🛰️ Uydular</button>
+    <button class="gz ek" id="teleskopBtn">🔭 Uzay teleskobu</button>
+    <button class="gz ek" id="aracBtn">🚀 Uzay aracı</button>
+    <button class="gz ek" id="istasyonBtn">🛸 Uzay istasyonu</button>
+    <button class="gz ek" id="astronotBtn">👨‍🚀 Astronot imleci</button>
+  </div>
+</div>
+
+<div id="altBar">
+  <button class="gz" id="oynatBtn">⏸ Durdur</button>
+  <label>Hız <input type="range" id="hizKay" min="0" max="500" value="100"><span id="hizYazi">1.0x</span></label>
+  <button class="gz" id="yorungeBtn">Yörüngeler: Açık</button>
+  <button class="gz" id="isimBtn">İsimler: Açık</button>
+  <button class="gz" id="sifirlaBtn">Kamerayı sıfırla</button>
+</div>
+
+<div id="ipucu">Sürükle = döndür · Tekerlek / iki parmak = yakınlaştır · Gezegene tıkla = bilgi kartı</div>
+
+<div id="kart">
+  <button id="kartKapat" title="Kapat">✕</button>
+  <div id="kartBaslik"><span id="kartNokta"></span><span id="kartAd"></span></div>
+  <div id="kartTur"></div>
+  <table id="kartTablo"></table>
+  <div id="kartNot"></div>
+</div>
+
+<button class="gz" id="chatAc">💬 Yapay zekâ yazışması</button>
+
+<aside id="chat">
+  <div id="chatBas">
+    <h2>💬 Ayşe'nin Yapay Zekâ ile Yazışması</h2>
+    <p>Bu modeli hazırlarken yapay zekâya ne yazdığımın ve çıkan modeli
+       nasıl düzelttirdiğimin kaydıdır. Sağdaki akış kendiliğinden ilerler.</p>
+  </div>
+  <div id="chatAkis"></div>
+  <div id="chatAlt">
+    <button class="gz" id="chatDuraklat">⏸</button>
+    <button class="gz" id="chatBastan">↺ Baştan</button>
+    <button class="gz" id="chatHepsi">Tümünü göster</button>
+    <button class="gz" id="chatKapat">✕</button>
+    <span id="chatDurum">0 / 0</span>
+  </div>
+</aside>
+
+<div id="yukleme">Model yükleniyor…</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+   3 BOYUTLU GÜNEŞ SİSTEMİ — tek dosya
+   Ölçek uyarısı: gezegenlerin büyüklükleri ve Güneş"e uzaklıkları
+   GERÇEK ORANDA DEĞİLDİR. Gerçek oranla çizilseydi Neptün ekrana
+   sığmaz, Merkür ise bir piksel bile olmazdı. Bilgi kartlarındaki
+   sayılar ise gerçektir.
+   ============================================================ */
+
+if (typeof THREE === "undefined") {
+  document.getElementById("yukleme").innerHTML =
+    "⚠️ 3 boyut kütüphanesi (Three.js) yüklenemedi.<br><br>" +
+    "Bu dosya internete bağlıyken açılmalıdır.<br>" +
+    "Lütfen bağlantınızı kontrol edip sayfayı yenileyin.";
+  throw new Error("Three.js yuklenemedi");
+}
+
+/* ---------- 1. VERİLER ---------- */
+/* Kaynak: NASA Gezegen Bilgi Föyleri (nssdc.gsfc.nasa.gov) */
+
+var GUNES_BILGI = {
+  ad: "Güneş",
+  tur: "Sarı cüce yıldız (G2V) — Güneş Sistemi'nin merkezi",
+  renk: "#ffcc44",
+  satirlar: [
+    ["Çapı", "1.392.700 km"],
+    ["Kütlesi", "Sistemin %99,86'sı"],
+    ["Yüzey sıcaklığı", "yaklaşık 5.500 °C"],
+    ["Merkez sıcaklığı", "yaklaşık 15.000.000 °C"],
+    ["Kendi ekseninde", "yaklaşık 25 günde 1 tur"],
+    ["Yaşı", "yaklaşık 4,6 milyar yıl"],
+    ["Galaksideki hızı", "saatte 828.000 km"],
+    ["Galaksi turu", "230 milyon yıl"]
+  ],
+  not: "Katmanları: çekirdek, ışınım bölgesi, konveksiyon bölgesi, " +
+       "fotosfer, kromosfer ve korona. İçindeki hidrojen helyuma dönüşürken " +
+       "açığa çıkan enerji Dünya'ya ışık ve ısı olarak gelir.\n\n" +
+       "GÜNEŞ PATLAMALARI: Yüzeyinden zaman zaman dev plazma kemerleri " +
+       "yükselir. Manyetik alan çizgilerini izledikleri için kavis çizerek " +
+       "çıkar, sonra yine yüzeye inerler. Bazıları Dünya'nın çapının " +
+       "onlarca katı büyüklüğündedir. Güçlü patlamalar Dünya'da kutup " +
+       "ışıklarına ve haberleşme kesintilerine yol açabilir.\n\n" +
+       "GÜNEŞ DE HAREKET EDER: Güneş sabit durmaz; Samanyolu'nun merkezi " +
+       "çevresinde saatte 828.000 km hızla ilerler ve bir turu 230 milyon " +
+       "yılda tamamlar. Bütün gezegenleri de peşinden sürükler. Bu yüzden " +
+       "gezegenler aslında kapalı çemberler değil, uzayda uzayıp giden bir " +
+       "yay (helis) çizer."
+};
+
+var GEZEGENLER = [
+  {
+    ad:"Merkür", tur:"Kayaç (yer benzeri) gezegen", renk:"#a9a29b",
+    yaricap:0.62, yorunge:17.5, egim:0.03,
+    dolanmaGun:88, donmeSaat:1407.6,
+    satirlar:[
+      ["Çapı","4.879 km"],
+      ["Güneş'e uzaklığı","57,9 milyon km"],
+      ["Dolanma süresi","88 gün"],
+      ["Kendi ekseninde","58,6 gün"],
+      ["Uydu sayısı","0"],
+      ["Sıcaklık","-173 °C / +427 °C"]
+    ],
+    not:"Güneş'e en yakın ve en küçük gezegendir. Kayda değer bir " +
+        "atmosferi olmadığı için gece ile gündüz arasındaki sıcaklık farkı " +
+        "600 °C'yi geçer."
+  },
+  {
+    ad:"Venüs", tur:"Kayaç (yer benzeri) gezegen", renk:"#e3c07b",
+    yaricap:0.95, yorunge:24, egim:177.4,
+    dolanmaGun:224.7, donmeSaat:-5832.5,
+    satirlar:[
+      ["Çapı","12.104 km"],
+      ["Güneş'e uzaklığı","108,2 milyon km"],
+      ["Dolanma süresi","225 gün"],
+      ["Kendi ekseninde","243 gün (ters yönde)"],
+      ["Uydu sayısı","0"],
+      ["Sıcaklık","yaklaşık 464 °C"]
+    ],
+    not:"Sistemin en sıcak gezegenidir. Merkür Güneş'e daha yakın olsa " +
+        "da Venüs'ün kalın karbondioksit atmosferi ısıyı hapseder. " +
+        "Kendi ekseninde diğerlerinin tersine döner."
+  },
+  {
+    ad:"Dünya", tur:"Kayaç gezegen — üzerinde yaşam bulunan tek gezegen", renk:"#3b82f6",
+    yaricap:1.0, yorunge:31, egim:23.4,
+    dolanmaGun:365.25, donmeSaat:23.9, ay:true,
+    satirlar:[
+      ["Çapı","12.756 km"],
+      ["Güneş'e uzaklığı","149,6 milyon km"],
+      ["Dolanma süresi","365,25 gün"],
+      ["Kendi ekseninde","23 saat 56 dakika"],
+      ["Uydu sayısı","1 (Ay)"],
+      ["Sıcaklık","ortalama 15 °C"]
+    ],
+    not:"Yüzeyinde sıvı su bulunan bilinen tek gezegendir. Eksen eğikliği " +
+        "23,4° olduğu için mevsimler oluşur. Tek uydusu Ay, Dünya'nın " +
+        "çevresindeki turunu 27,3 günde tamamlar."
+  },
+  {
+    ad:"Mars", tur:"Kayaç (yer benzeri) gezegen", renk:"#c1440e",
+    yaricap:0.72, yorunge:39, egim:25.2,
+    dolanmaGun:687, donmeSaat:24.6,
+    satirlar:[
+      ["Çapı","6.792 km"],
+      ["Güneş'e uzaklığı","227,9 milyon km"],
+      ["Dolanma süresi","687 gün"],
+      ["Kendi ekseninde","24 saat 37 dakika"],
+      ["Uydu sayısı","2 (Phobos, Deimos)"],
+      ["Sıcaklık","ortalama -65 °C"]
+    ],
+    not:"Kızıl rengini toprağındaki demir oksitten (pastan) alır. Güneş " +
+        "Sistemi'nin en yüksek dağı olan Olympus Mons (21 km) buradadır."
+  },
+  {
+    ad:"Jüpiter", tur:"Gaz devi", renk:"#d8ac7a",
+    yaricap:3.1, yorunge:56, egim:3.1,
+    dolanmaGun:4331, donmeSaat:9.9,
+    satirlar:[
+      ["Çapı","142.984 km"],
+      ["Güneş'e uzaklığı","778,6 milyon km"],
+      ["Dolanma süresi","11,9 yıl"],
+      ["Kendi ekseninde","9 saat 56 dakika"],
+      ["Uydu sayısı","95 (doğrulanmış)"],
+      ["Sıcaklık","yaklaşık -110 °C"]
+    ],
+    not:"En büyük gezegendir; içine 1.300'den fazla Dünya sığar. " +
+        "Yüzeyindeki Büyük Kırmızı Leke, en az 150 yıldır sürdüğü bilinen " +
+        "dev bir fırtınadır."
+  },
+  {
+    ad:"Satürn", tur:"Gaz devi", renk:"#e0c88b",
+    yaricap:2.7, yorunge:74, egim:26.7, halka:true,
+    dolanmaGun:10747, donmeSaat:10.7,
+    satirlar:[
+      ["Çapı","120.536 km"],
+      ["Güneş'e uzaklığı","1,43 milyar km"],
+      ["Dolanma süresi","29,5 yıl"],
+      ["Kendi ekseninde","10 saat 42 dakika"],
+      ["Uydu sayısı","274 (doğrulanmış)"],
+      ["Sıcaklık","yaklaşık -140 °C"]
+    ],
+    not:"Halkaları buz ve kaya parçalarından oluşur; genişliği yüz binlerce " +
+        "kilometre olmasına karşın kalınlığı yer yer 10 metre kadardır. " +
+        "Yoğunluğu sudan azdır."
+  },
+  {
+    ad:"Uranüs", tur:"Buz devi", renk:"#87d3e0",
+    yaricap:1.8, yorunge:90, egim:97.8,
+    dolanmaGun:30589, donmeSaat:-17.2,
+    satirlar:[
+      ["Çapı","51.118 km"],
+      ["Güneş'e uzaklığı","2,87 milyar km"],
+      ["Dolanma süresi","84 yıl"],
+      ["Kendi ekseninde","17 saat 14 dakika"],
+      ["Uydu sayısı","28"],
+      ["Sıcaklık","yaklaşık -195 °C"]
+    ],
+    not:"Ekseni 98° yatıktır; yani âdeta yan yatmış olarak yuvarlanır. " +
+        "Mavi-yeşil rengini atmosferindeki metan gazından alır."
+  },
+  {
+    ad:"Neptün", tur:"Buz devi", renk:"#3f6cd6",
+    yaricap:1.75, yorunge:104, egim:28.3,
+    dolanmaGun:59800, donmeSaat:16.1,
+    satirlar:[
+      ["Çapı","49.528 km"],
+      ["Güneş'e uzaklığı","4,50 milyar km"],
+      ["Dolanma süresi","165 yıl"],
+      ["Kendi ekseninde","16 saat 6 dakika"],
+      ["Uydu sayısı","16"],
+      ["Sıcaklık","yaklaşık -200 °C"]
+    ],
+    not:"Güneş'e en uzak gezegendir. Sistemin en hızlı rüzgârları " +
+        "buradadır: saatte 2.000 km'yi aşar. Teleskopla değil, " +
+        "hesapla bulunan ilk gezegendir."
+  }
+];
+
+/* ---------- 2. SAHNE KURULUMU ---------- */
+
+var sahneDiv = document.getElementById("sahne");
+var scene  = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(50, 1, 0.1, 5000);
+var renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+sahneDiv.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.26));
+var gunesIsigi = new THREE.PointLight(0xffffff, 1.95, 0, 2);
+scene.add(gunesIsigi);
+
+/* --- yıldızlı arka plan --- */
+function yildizlariEkle(){
+  var g = new THREE.BufferGeometry();
+  var n = 6000, poz = new Float32Array(n*3), renk = new Float32Array(n*3), boy = [];
+  for (var i=0;i<n;i++){
+    var r = 700 + Math.random()*1400;
+    var t = Math.random()*Math.PI*2;
+    var f = Math.acos(2*Math.random()-1);
+    poz[i*3]   = r*Math.sin(f)*Math.cos(t);
+    poz[i*3+1] = r*Math.cos(f)*0.65;
+    poz[i*3+2] = r*Math.sin(f)*Math.sin(t);
+    var p = 0.72 + Math.random()*0.28;
+    renk[i*3]=p; renk[i*3+1]=p; renk[i*3+2]=Math.min(1,p+Math.random()*0.15);
+  }
+  g.setAttribute("position", new THREE.BufferAttribute(poz,3));
+  g.setAttribute("color",    new THREE.BufferAttribute(renk,3));
+  var m = new THREE.PointsMaterial({size:2.4, vertexColors:true, sizeAttenuation:false});
+  scene.add(new THREE.Points(g,m));
+}
+yildizlariEkle();
+
+/* --- gezegen yüzeyi (kod içinde üretilen doku) --- */
+function dokuUret(anaRenk, tip){
+  var c = document.createElement("canvas");
+  c.width = 512; c.height = 256;
+  var x = c.getContext("2d");
+  x.fillStyle = anaRenk; x.fillRect(0,0,512,256);
+
+  function karistir(hex, oran){
+    var r=parseInt(hex.substr(1,2),16), g=parseInt(hex.substr(3,2),16), b=parseInt(hex.substr(5,2),16);
+    r=Math.max(0,Math.min(255,r+oran)); g=Math.max(0,Math.min(255,g+oran)); b=Math.max(0,Math.min(255,b+oran));
+    return "rgb("+(r|0)+","+(g|0)+","+(b|0)+")";
+  }
+
+  if (tip === "dunya"){                      /* Dünya: okyanus + kıtalar + bulut */
+    x.fillStyle = "#1b56b8"; x.fillRect(0,0,512,256);
+    /* okyanus derinliği */
+    for (var oi=0; oi<260; oi++){
+      x.beginPath();
+      x.globalAlpha = 0.20;
+      x.fillStyle = Math.random()<0.5 ? "#2f74d8" : "#12408c";
+      x.arc(Math.random()*512, Math.random()*256, 8+Math.random()*34, 0, Math.PI*2);
+      x.fill();
+    }
+    /* kıtalar — kabaca kara parçaları */
+    x.globalAlpha = 1;
+    var karalar = [[70,90],[86,120],[112,96],[128,150],[150,120],[196,60],
+                   [210,92],[236,74],[300,108],[318,150],[330,96],[356,128],
+                   [382,84],[404,112],[430,150],[452,96],[60,190],[300,196],
+                   [420,196],[168,178]];
+    karalar.forEach(function(k){
+      for (var j=0;j<16;j++){
+        x.beginPath();
+        x.fillStyle = Math.random()<0.62 ? "#2f7d36" : "#5f7a34";
+        x.globalAlpha = 0.85;
+        x.arc(k[0] + (Math.random()-0.5)*54, k[1] + (Math.random()-0.5)*40,
+              7 + Math.random()*17, 0, Math.PI*2);
+        x.fill();
+      }
+    });
+    /* çöller */
+    [[196,104],[420,116],[300,118]].forEach(function(k){
+      for (var j2=0;j2<9;j2++){
+        x.beginPath(); x.globalAlpha = 0.55; x.fillStyle = "#b99b56";
+        x.arc(k[0]+(Math.random()-0.5)*40, k[1]+(Math.random()-0.5)*24,
+              5+Math.random()*11, 0, Math.PI*2);
+        x.fill();
+      }
+    });
+    /* bulutlar */
+    for (var bi=0; bi<150; bi++){
+      x.beginPath();
+      x.globalAlpha = 0.16 + Math.random()*0.20;
+      x.fillStyle = "#ffffff";
+      x.arc(Math.random()*512, Math.random()*256, 6+Math.random()*22, 0, Math.PI*2);
+      x.fill();
+    }
+    /* kutup buzulları */
+    x.globalAlpha = 1;
+    var kg = x.createLinearGradient(0,0,0,256);
+    kg.addColorStop(0,   "rgba(255,255,255,.96)");
+    kg.addColorStop(0.09,"rgba(255,255,255,.55)");
+    kg.addColorStop(0.15,"rgba(255,255,255,0)");
+    kg.addColorStop(0.86,"rgba(255,255,255,0)");
+    kg.addColorStop(0.93,"rgba(255,255,255,.60)");
+    kg.addColorStop(1,   "rgba(255,255,255,.96)");
+    x.fillStyle = kg; x.fillRect(0,0,512,256);
+    var td = new THREE.CanvasTexture(c);
+    td.wrapS = THREE.RepeatWrapping;
+    return td;
+  }
+
+  if (tip === "bant"){                       /* gaz ve buz devleri */
+    for (var y=0;y<256;y+=3){
+      var d = Math.sin(y*0.10)*26 + Math.sin(y*0.31)*14 + (Math.random()-0.5)*9;
+      x.fillStyle = karistir(anaRenk, d);
+      x.fillRect(0, y, 512, 4);
+    }
+  } else {                                    /* kayaç gezegenler */
+    for (var i=0;i<900;i++){
+      var r2 = 3 + Math.random()*26;
+      x.beginPath();
+      x.fillStyle = karistir(anaRenk, (Math.random()-0.5)*62);
+      x.globalAlpha = 0.30;
+      x.arc(Math.random()*512, Math.random()*256, r2, 0, Math.PI*2);
+      x.fill();
+    }
+    x.globalAlpha = 1;
+  }
+  /* kutup bölgeleri */
+  var ug = x.createLinearGradient(0,0,0,256);
+  ug.addColorStop(0,"rgba(255,255,255,.30)");
+  ug.addColorStop(0.18,"rgba(255,255,255,0)");
+  ug.addColorStop(0.82,"rgba(255,255,255,0)");
+  ug.addColorStop(1,"rgba(255,255,255,.30)");
+  x.fillStyle = ug; x.fillRect(0,0,512,256);
+
+  var t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  return t;
+}
+
+/* --- GÜNEŞ --- */
+/* Güneş yüzeyi: granülasyon (kaynayan plazma taneleri) + güneş lekeleri.
+   Doku kürenin çevresini sardığı için gürültü, dikiş izi kalmasın diye
+   bir çember üzerinden örnekleniyor. */
+var gunesDoku = (function(){
+  var en=1024, boy=512;
+  var c=document.createElement("canvas"); c.width=en; c.height=boy;
+  var x=c.getContext("2d");
+  var img = x.createImageData(en, boy), d = img.data;
+  for (var j=0;j<boy;j++){
+    for (var i=0;i<en;i++){
+      var aci = i/en*Math.PI*2;
+      var cx = 30 + Math.cos(aci)*5.0, cy = 30 + Math.sin(aci)*5.0;
+      /* iri hücreler + ince taneler */
+      var iri  = katmanliGurultu(cx*3.0, cy*3.0 + j*0.045, 2);
+      var ince = katmanliGurultu(cx*16.0, cy*16.0 + j*0.30, 2);
+      var t = iri*0.62 + ince*0.38;
+      var p = (j*en+i)*4;
+      d[p]   = Math.max(0, Math.min(255, 196 + t*110));
+      d[p+1] = Math.max(0, Math.min(255,  92 + t*150));
+      d[p+2] = Math.max(0, Math.min(255,   6 + t*96));
+      d[p+3] = 255;
+    }
+  }
+  x.putImageData(img,0,0);
+  /* güneş lekeleri: çevresindeki yüzeyden daha soğuk oldukları için koyu */
+  for (var k=0;k<11;k++){
+    var lx = Math.random()*en, ly = 110 + Math.random()*292;
+    var lr = 12 + Math.random()*30;
+    var lg = x.createRadialGradient(lx,ly,1, lx,ly,lr);
+    lg.addColorStop(0,   "rgba(60,16,0,.88)");
+    lg.addColorStop(0.45,"rgba(120,44,0,.62)");
+    lg.addColorStop(1,   "rgba(190,90,10,0)");
+    x.fillStyle = lg;
+    x.beginPath(); x.ellipse(lx,ly,lr,lr*0.72,Math.random()*3,0,Math.PI*2); x.fill();
+  }
+  var gt = new THREE.CanvasTexture(c);
+  gt.wrapS = THREE.RepeatWrapping;
+  gt.anisotropy = 4;
+  return gt;
+})();
+
+var gunes = new THREE.Mesh(
+  new THREE.SphereGeometry(6.4, 48, 48),
+  new THREE.MeshBasicMaterial({map:gunesDoku})
+);
+gunes.userData.bilgi = GUNES_BILGI;
+scene.add(gunes);
+
+/* Güneş parıltısı (korona) */
+var gunesParilti = (function(){
+  var c=document.createElement("canvas"); c.width=c.height=256;
+  var x=c.getContext("2d");
+  var g=x.createRadialGradient(128,128,10,128,128,128);
+  g.addColorStop(0,"rgba(255,214,120,.95)");
+  g.addColorStop(0.28,"rgba(255,170,40,.42)");
+  g.addColorStop(1,"rgba(255,140,0,0)");
+  x.fillStyle=g; x.fillRect(0,0,256,256);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(c), blending:THREE.AdditiveBlending, depthWrite:false
+  }));
+  sp.scale.set(34,34,1);
+  scene.add(sp);
+  return sp;
+})();
+
+/* Dış korona — daha geniş, daha yavaş nefes alan ikinci katman */
+var gunesKorona = (function(){
+  var c=document.createElement("canvas"); c.width=c.height=256;
+  var x=c.getContext("2d");
+  var g=x.createRadialGradient(128,128,40,128,128,128);
+  g.addColorStop(0,"rgba(255,190,90,.17)");
+  g.addColorStop(0.45,"rgba(255,140,50,.07)");
+  g.addColorStop(1,"rgba(255,110,30,0)");
+  x.fillStyle=g; x.fillRect(0,0,256,256);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(c), blending:THREE.AdditiveBlending, depthWrite:false
+  }));
+  sp.scale.set(44,44,1);
+  scene.add(sp);
+  return sp;
+})();
+
+/* ---------- GÜNEŞ PATLAMALARI (protuberans / plazma kemerleri) ----------
+   Güneş"in yüzeyinden zaman zaman dev plazma kemerleri yükselir. Bunlar
+   Güneş"in manyetik alan çizgilerini izlediği için kavis çizerek çıkar ve
+   yine yüzeye iner. Bazıları Dünya"nın çapının onlarca katı büyüklüktedir.
+   Aşağıdaki kemerler rastgele yerlerden, rastgele zamanlarda yükselir. */
+
+var GUNES_R = 6.4;
+var patlamalar = [];
+(function(){
+  /* Kemer düz bir boru gibi değil, kenarları sönümlenen bir gaz bulutu
+     gibi görünsün diye yumuşak bir doku veriyoruz. */
+  var pc = document.createElement("canvas"); pc.width = 32; pc.height = 32;
+  var px = pc.getContext("2d");
+  var pg = px.createLinearGradient(0,0,0,32);
+  pg.addColorStop(0,   "rgba(255,255,255,0)");
+  pg.addColorStop(0.32,"rgba(255,255,255,.55)");
+  pg.addColorStop(0.5, "rgba(255,255,255,1)");
+  pg.addColorStop(0.68,"rgba(255,255,255,.55)");
+  pg.addColorStop(1,   "rgba(255,255,255,0)");
+  px.fillStyle = pg; px.fillRect(0,0,32,32);
+  var pDoku = new THREE.CanvasTexture(pc);
+
+  for (var i=0;i<8;i++){
+    var geo = new THREE.TorusGeometry(1, 0.13, 10, 40, Math.PI*1.12);
+    var mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color:0xff5a18, map:pDoku, transparent:true, opacity:0,
+      blending:THREE.AdditiveBlending, depthWrite:false,
+      side:THREE.DoubleSide}));
+    mesh.visible = false;
+    gunes.add(mesh);                     /* Güneş"le birlikte döner */
+    patlamalar.push({mesh:mesh, t:0, sure:0, bekle:Math.random()*7, buyuk:1});
+  }
+})();
+
+/* Kemeri yüzeyin rastgele bir noktasına dikip dışa doğru kavis yaptırır */
+var pYon = new THREE.Vector3(), pYukari = new THREE.Vector3(0,1,0);
+function patlamaBaslat(p){
+  var a = Math.random()*Math.PI*2;
+  var f = Math.acos(2*Math.random()-1);
+  pYon.set(Math.sin(f)*Math.cos(a), Math.cos(f), Math.sin(f)*Math.sin(a));
+  p.mesh.position.copy(pYon).multiplyScalar(GUNES_R*0.94);
+  p.mesh.quaternion.setFromUnitVectors(pYukari, pYon);
+  p.mesh.rotateY(Math.random()*Math.PI*2);   /* kemer düzlemi rastgele */
+  p.buyuk = 0.55 + Math.random()*1.15;       /* kemerin boyu */
+  p.sure  = 2.6 + Math.random()*3.4;         /* kaç saniye sürecek */
+  p.t = 0;
+  p.mesh.visible = true;
+  /* sarıdan kırmızıya rastgele bir ton */
+  p.mesh.material.color.setHSL(0.028 + Math.random()*0.040, 1, 0.52);
+}
+
+
+/* ============================================================
+   GEZEGEN YÜZEYLERİ
+
+   Dünya ve Ay için three.js"in yanında gelen GERÇEK uydu haritaları
+   kullanılıyor (NASA görüntülerinden hazırlanmış). Yaklaştıkça kıtalar,
+   çöller, buzullar, bulutlar ve gece tarafındaki şehir ışıkları seçilir.
+
+   Diğer gezegenlerin yüzeyleri kodun içinde üretiliyor: her gezegen
+   kendi gerçek görünümüne göre çiziliyor — Merkür"de kraterler,
+   Mars"ta pas rengi toprak ve kutup buzulları, Jüpiter"de kuşaklar ve
+   Büyük Kırmızı Leke, Neptün"de koyu leke gibi.
+   ============================================================ */
+
+var DOKU_ADRES = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/textures/planets/";
+
+/* --- basit gürültü (noise): doğal görünen lekeler için --- */
+function hamGurultu(x, y){
+  var n = Math.sin(x*127.1 + y*311.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+function yumusakGurultu(x, y){
+  var x0 = Math.floor(x), y0 = Math.floor(y);
+  var fx = x - x0, fy = y - y0;
+  fx = fx*fx*(3-2*fx); fy = fy*fy*(3-2*fy);      /* yumuşat */
+  var a = hamGurultu(x0,   y0),   b = hamGurultu(x0+1, y0);
+  var c = hamGurultu(x0,   y0+1), d = hamGurultu(x0+1, y0+1);
+  return (a + (b-a)*fx) + ((c-a) + (d-c)*fx - (b-a)*fx)*fy;
+}
+function katmanliGurultu(x, y, katman){
+  var toplam = 0, genlik = 1, olcek = 1, agirlik = 0;
+  for (var i=0;i<katman;i++){
+    toplam  += yumusakGurultu(x*olcek, y*olcek) * genlik;
+    agirlik += genlik;
+    genlik  *= 0.5;
+    olcek   *= 2.1;
+  }
+  return toplam/agirlik;
+}
+
+/* --- krater çizici ---
+   Doku dikdörtgen, küre ise yuvarlak. Kutuplara doğru doku yatayda
+   gitgide daha çok geriliyor; oraya çizilen daire küre üzerinde
+   uzun bir yalama hâline geliyor. Bunu önlemek için krateri enine
+   ÖNCEDEN genişletiyoruz, böylece kürede yuvarlak görünüyor. */
+function kraterCiz(x, cx, cy, r, boy){
+  var enlem = (cy/boy - 0.5) * Math.PI;
+  var esne  = 1 / Math.max(0.22, Math.cos(enlem));
+  if (esne > 3.2) return;                 /* kutba çok yakınsa hiç çizme */
+  var rx = r*esne, ry = r;
+
+  x.save();
+  x.translate(cx, cy); x.scale(esne, 1); x.translate(-cx, -cy);
+
+  x.globalAlpha = 0.20; x.fillStyle = "#000000";
+  x.beginPath(); x.arc(cx, cy, r, 0, Math.PI*2); x.fill();
+
+  x.globalAlpha = 0.16; x.strokeStyle = "#ffffff";
+  x.lineWidth = Math.max(0.8, r*0.16);
+  x.beginPath(); x.arc(cx, cy, r*0.9, Math.PI*1.05, Math.PI*2.0); x.stroke();
+
+  x.globalAlpha = 0.14; x.strokeStyle = "#000000";
+  x.beginPath(); x.arc(cx, cy, r*0.9, Math.PI*2.05, Math.PI*3.0); x.stroke();
+
+  x.restore();
+  x.globalAlpha = 1;
+}
+
+/* --- kayaç gezegen yüzeyi: gürültüyle üretilen doğal leke deseni --- */
+function kayacYuzey(en, boy, acik, koyu, kabaOlcek, inceGuc){
+  var c = document.createElement("canvas"); c.width = en; c.height = boy;
+  var x = c.getContext("2d");
+  var img = x.createImageData(en, boy), d = img.data;
+  for (var j=0;j<boy;j++){
+    for (var i=0;i<en;i++){
+      var aci = i/en*Math.PI*2;
+      var nx = 18 + Math.cos(aci)*kabaOlcek;
+      var ny = 18 + Math.sin(aci)*kabaOlcek;
+      /* geniş açık/koyu bölgeler (albedo farkları) */
+      var kaba = katmanliGurultu(nx, ny + j*0.016, 4);
+      kaba = kaba*kaba*(3-2*kaba);
+      /* ince toz dokusu */
+      var ince = (katmanliGurultu(nx*9, ny*9 + j*0.19, 3) - 0.5) * inceGuc;
+      var p = (j*en+i)*4;
+      d[p]   = Math.max(0, Math.min(255, koyu[0] + (acik[0]-koyu[0])*kaba + ince));
+      d[p+1] = Math.max(0, Math.min(255, koyu[1] + (acik[1]-koyu[1])*kaba + ince));
+      d[p+2] = Math.max(0, Math.min(255, koyu[2] + (acik[2]-koyu[2])*kaba + ince));
+      d[p+3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return {tuval:c, ctx:x};
+}
+
+/* --- gaz devleri: kuşaklı yüzey --- */
+function bantliYuzey(en, boy, renkler, karisiklik, kutupSoluk){
+  var c = document.createElement("canvas"); c.width = en; c.height = boy;
+  var x = c.getContext("2d");
+  var img = x.createImageData(en, boy);
+  var d = img.data;
+  /* Gürültüyü doğrudan x"e göre almıyoruz: doku kürenin çevresini
+     sarıyor, dolayısıyla soldaki kenar sağdaki kenara dikilecek. Düz
+     x kullanılırsa orada bir DİKİŞ ÇİZGİSİ oluşuyor. Bunun yerine
+     gürültüyü bir ÇEMBER üzerinden örnekliyoruz; çemberin başı ile
+     sonu aynı nokta olduğu için ek yeri görünmüyor. */
+  var sonK = renkler.length - 1;
+  for (var j=0; j<boy; j++){
+    var v = j/boy;                                   /* 0 kuzey, 1 güney */
+    for (var i=0; i<en; i++){
+      var aci = i/en * Math.PI*2;
+      var cx  = 24 + Math.cos(aci)*3.4;
+      var cy  = 24 + Math.sin(aci)*3.4;
+
+      /* kuşak sınırlarını hafifçe dalgalandıran türbülans */
+      var burus = (katmanliGurultu(cx*2.1, cy*2.1 + j*0.085, 3) - 0.5) * karisiklik;
+      var k  = Math.max(0, Math.min(sonK, v*sonK + burus*1.15));
+      var k0 = Math.floor(k), k1 = Math.min(sonK, k0+1), f = k-k0;
+      /* Düz geçiş kuşakları birbirine karıştırıp bulanıklaştırıyor.
+         İki kez yumuşatma uygulayınca kuşak sınırları belirginleşiyor. */
+      f = f*f*(3-2*f); f = f*f*(3-2*f);
+      var r = renkler[k0][0] + (renkler[k1][0]-renkler[k0][0])*f;
+      var g = renkler[k0][1] + (renkler[k1][1]-renkler[k0][1])*f;
+      var b = renkler[k0][2] + (renkler[k1][2]-renkler[k0][2])*f;
+
+      /* kuşak içindeki ince, yatay uzanan bulut dokusu */
+      var ince = (katmanliGurultu(cx*7.5, cy*7.5 + j*0.55, 2) - 0.5) * 20;
+      /* kutuplara doğru soluklaşma */
+      var kut = 1 - kutupSoluk*Math.pow(Math.abs(v-0.5)*2, 3);
+      var p = (j*en + i)*4;
+      d[p]   = Math.max(0, Math.min(255, (r+ince)*kut));
+      d[p+1] = Math.max(0, Math.min(255, (g+ince)*kut));
+      d[p+2] = Math.max(0, Math.min(255, (b+ince)*kut));
+      d[p+3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return {tuval:c, ctx:x};
+}
+
+/* --- her gezegen için yüzey --- */
+function gezegenDoku(ad){
+  var c, x, i, j, sonuc;
+
+  if (ad === "Merkür"){
+    sonuc = kayacYuzey(1024, 512, [128,122,114], [74,70,66], 4.2, 18);
+    c = sonuc.tuval; x = sonuc.ctx;
+    /* Merkür"ün en belirgin özelliği krater bolluğudur */
+    for (i=0;i<560;i++){
+      kraterCiz(x, Math.random()*1024, Math.random()*512, 2+Math.random()*11, 512);
+    }
+    for (i=0;i<16;i++){             /* birkaç dev çarpma havzası */
+      kraterCiz(x, Math.random()*1024, 100+Math.random()*312, 22+Math.random()*30, 512);
+    }
+  }
+
+  else if (ad === "Venüs"){
+    /* Venüs"ü kalın bulut örtüsü sarar; yüzeyi görünmez, yalnızca
+       sarımsı bulut girdapları seçilir. */
+    sonuc = kayacYuzey(1024, 512, [252,242,206], [230,202,144], 2.6, 9);
+    c = sonuc.tuval; x = sonuc.ctx;
+    for (j=0;j<512;j+=3){
+      var kay = Math.sin(j*0.022)*70 + Math.sin(j*0.008)*120;
+      for (i=0;i<14;i++){
+        x.globalAlpha = 0.05;
+        x.fillStyle = Math.random()<0.5 ? "#fffaea" : "#d8b878";
+        x.beginPath();
+        x.ellipse((Math.random()*1024 + kay + 1024)%1024, j + Math.random()*8,
+                  50+Math.random()*150, 3+Math.random()*7, 0, 0, Math.PI*2);
+        x.fill();
+      }
+    }
+    x.globalAlpha = 1;
+  }
+
+  else if (ad === "Dünya"){
+    /* Gerçek uydu haritası yüklenene kadar kullanılacak yedek */
+    sonuc = kayacYuzey(1024, 512, [46,120,58], [22,70,150], 3.0, 16);
+    c = sonuc.tuval;
+  }
+
+  else if (ad === "Mars"){
+    /* Mars"a uzaydan bakınca göze çarpan şey kraterler değil, açık
+       toz çölleri ile koyu kayalık bölgeler arasındaki renk farkıdır. */
+    sonuc = kayacYuzey(1024, 512, [230,160,106], [168,98,60], 3.4, 15);
+    c = sonuc.tuval; x = sonuc.ctx;
+
+    /* Syrtis Major ve Mare Erythraeum benzeri büyük koyu bölgeler */
+    x.globalAlpha = 0.20; x.fillStyle = "#7a4526";
+    [[690,215,120,70,-0.3],[250,300,150,58,0.2],[470,180,80,42,0.5],
+     [900,260,96,50,-0.1]].forEach(function(o){
+      x.beginPath(); x.ellipse(o[0],o[1],o[2],o[3],o[4],0,Math.PI*2); x.fill();
+    });
+    /* Hellas: parlak dev çarpma havzası */
+    x.globalAlpha = 0.22; x.fillStyle = "#e0a870";
+    x.beginPath(); x.ellipse(560, 350, 88, 52, 0, 0, Math.PI*2); x.fill();
+    x.globalAlpha = 1;
+
+    /* seyrek ve silik kraterler */
+    for (i=0;i<240;i++){
+      kraterCiz(x, Math.random()*1024, 60+Math.random()*392, 2+Math.random()*9, 512);
+    }
+
+    /* Valles Marineris — Güneş Sistemi"nin en büyük kanyonu */
+    x.globalAlpha = 0.30; x.strokeStyle = "#4e2410";
+    x.lineWidth = 7; x.lineCap = "round";
+    x.beginPath(); x.moveTo(360,272);
+    x.bezierCurveTo(450,254, 545,268, 650,248);
+    x.stroke();
+    x.globalAlpha = 1;
+
+    /* kutup buzulları — yatay geçiş olduğu için kutupta iz bırakmaz */
+    var mg = x.createLinearGradient(0,0,0,512);
+    mg.addColorStop(0,    "rgba(255,255,255,.95)");
+    mg.addColorStop(0.042,"rgba(255,250,246,.62)");
+    mg.addColorStop(0.085,"rgba(255,255,255,0)");
+    mg.addColorStop(0.905,"rgba(255,255,255,0)");
+    mg.addColorStop(0.955,"rgba(255,250,246,.55)");
+    mg.addColorStop(1,    "rgba(255,255,255,.92)");
+    x.fillStyle = mg; x.fillRect(0,0,1024,512);
+  }
+
+  else if (ad === "Jüpiter"){
+    sonuc = bantliYuzey(1024, 512, [
+      [214,198,168],[236,228,210],[146,104,70],[230,220,200],
+      [112,74,48],[238,230,212],[158,116,80],[128,88,58],
+      [232,222,202],[150,108,74],[222,208,184],[120,80,52]
+    ], 0.50, 0.20);
+    c = sonuc.tuval; x = sonuc.ctx;
+    /* Büyük Kırmızı Leke — en az 150 yıldır süren dev fırtına */
+    x.globalAlpha = 0.85;
+    var bkl = x.createRadialGradient(700,318, 8, 700,318, 74);
+    bkl.addColorStop(0,   "#d4593a");
+    bkl.addColorStop(0.55,"#c05a33");
+    bkl.addColorStop(1,   "rgba(190,110,70,0)");
+    x.fillStyle = bkl;
+    x.beginPath(); x.ellipse(700, 318, 74, 40, 0, 0, Math.PI*2); x.fill();
+    /* birkaç küçük beyaz oval fırtına */
+    x.globalAlpha = 0.35; x.fillStyle = "#f4efe4";
+    [[300,360,30,14],[430,150,24,11],[880,206,20,9]].forEach(function(o){
+      x.beginPath(); x.ellipse(o[0],o[1],o[2],o[3],0,0,Math.PI*2); x.fill();
+    });
+    x.globalAlpha = 1;
+  }
+
+  else if (ad === "Satürn"){
+    sonuc = bantliYuzey(1024, 512, [
+      [214,194,150],[234,220,188],[192,168,124],[228,214,180],
+      [180,156,112],[226,212,178],[200,178,134]
+    ], 0.34, 0.24);
+    c = sonuc.tuval;
+  }
+
+  else if (ad === "Uranüs"){
+    sonuc = bantliYuzey(768, 384, [
+      [156,212,220],[172,224,230],[148,204,214],[166,218,226],[158,212,220]
+    ], 0.16, 0.12);
+    c = sonuc.tuval;
+  }
+
+  else if (ad === "Neptün"){
+    sonuc = bantliYuzey(1024, 512, [
+      [44,82,172],[58,102,192],[36,68,152],[64,110,198],[48,88,178]
+    ], 0.28, 0.16);
+    c = sonuc.tuval; x = sonuc.ctx;
+    /* Büyük Karanlık Leke */
+    x.globalAlpha = 0.55;
+    var nkl = x.createRadialGradient(360,300,4, 360,300,64);
+    nkl.addColorStop(0,"#16305e");
+    nkl.addColorStop(1,"rgba(22,48,94,0)");
+    x.fillStyle = nkl;
+    x.beginPath(); x.ellipse(360,300,64,34,0,0,Math.PI*2); x.fill();
+    /* beyaz metan bulutu şeritleri */
+    x.globalAlpha = 0.20; x.fillStyle = "#e8f4ff";
+    [[600,210,90,7],[200,150,70,5],[820,330,110,6]].forEach(function(o){
+      x.beginPath(); x.ellipse(o[0],o[1],o[2],o[3],0,0,Math.PI*2); x.fill();
+    });
+    x.globalAlpha = 1;
+  }
+
+  else {
+    return dokuUret("#999999", "kaya");
+  }
+
+  var t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  return t;
+}
+
+/* --- GEZEGENLER --- */
+var AY_BILGI = null, ayNesnesi = null, ayEtiket = null;
+var tiklanabilir = [gunes];
+var gezegenler = [];
+var yorungeCizgileri = [];
+
+function yorungeCiz(r){
+  var noktalar = [];
+  for (var i=0;i<=180;i++){
+    var a = i/180*Math.PI*2;
+    noktalar.push(new THREE.Vector3(Math.cos(a)*r, 0, Math.sin(a)*r));
+  }
+  var g = new THREE.BufferGeometry().setFromPoints(noktalar);
+  var l = new THREE.Line(g, new THREE.LineBasicMaterial({
+    color:0x5f79b0, transparent:true, opacity:0.32
+  }));
+  scene.add(l);
+  yorungeCizgileri.push(l);
+}
+
+GEZEGENLER.forEach(function(v, i){
+  yorungeCiz(v.yorunge);
+
+  var pivot = new THREE.Object3D();          /* Güneş çevresindeki dolanma */
+  scene.add(pivot);
+
+  /* Yakınlaşınca ayrıntı seçilsin diye küre bölüntüsü ve doku çözünürlüğü
+     yüksek tutuldu. */
+  var mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(v.yaricap, 64, 48),
+    new THREE.MeshStandardMaterial({
+      map: gezegenDoku(v.ad),
+      roughness: (v.ad==="Jüpiter"||v.ad==="Satürn"||v.ad==="Uranüs"||v.ad==="Neptün") ? 0.90 : 0.88,
+      metalness: 0.0
+    })
+  );
+  mesh.position.x = v.yorunge;
+  mesh.rotation.z = v.egim * Math.PI / 180;
+  mesh.userData.bilgi = v;
+  pivot.add(mesh);
+  tiklanabilir.push(mesh);
+
+  /* Satürn halkaları */
+  if (v.halka){
+    var hc = document.createElement("canvas"); hc.width=256; hc.height=8;
+    var hx = hc.getContext("2d");
+    for (var p=0;p<256;p++){
+      var a2;
+      if (p > 152 && p < 172)      a2 = 0.04;   /* Cassini Boşluğu */
+      else if (p < 14 || p > 246)  a2 = 0.10;   /* iç ve dış kenar solar */
+      else                         a2 = 0.30 + Math.random()*0.55;
+      hx.fillStyle = "rgba(230,211,167,"+a2.toFixed(2)+")";
+      hx.fillRect(p,0,1,8);
+    }
+    var icR = v.yaricap*1.35, disR = v.yaricap*2.35;
+    var halkaGeo = new THREE.RingGeometry(icR, disR, 128, 1);
+    /* RingGeometry"nin hazır doku koordinatları halkayı enine şeritlere
+       böler. Doğru görünüm için her noktanın dokudaki yerini merkeze olan
+       UZAKLIĞINA göre yeniden hesaplıyoruz. */
+    (function(){
+      var poz = halkaGeo.attributes.position;
+      var uv  = halkaGeo.attributes.uv;
+      for (var k=0; k<poz.count; k++){
+        var d = Math.sqrt(poz.getX(k)*poz.getX(k) + poz.getY(k)*poz.getY(k));
+        uv.setXY(k, (d - icR) / (disR - icR), 0.5);
+      }
+      uv.needsUpdate = true;
+    })();
+    var halka = new THREE.Mesh(
+      halkaGeo,
+      new THREE.MeshBasicMaterial({
+        map:new THREE.CanvasTexture(hc), side:THREE.DoubleSide,
+        transparent:true, opacity:0.95
+      })
+    );
+    halka.rotation.x = Math.PI/2;
+    mesh.add(halka);
+  }
+
+  /* Gezegenin yanında duran, gezegenle birlikte Güneş çevresinde dolanan
+     ama gezegenin KENDİ DÖNÜŞÜNDEN etkilenmeyen tutucu. Ay, uydular ve
+     isim etiketi buraya bağlanır — yoksa hepsi Dünya kendi ekseninde
+     döndükçe onunla birlikte savrulurdu. */
+  var tutucu = new THREE.Object3D();
+  tutucu.position.x = v.yorunge;
+  pivot.add(tutucu);
+
+  /* Dünya"nın Ay"ı */
+  var ayPivot = null, ayMesh = null;
+  if (v.ay){
+    ayPivot = new THREE.Object3D();
+    tutucu.add(ayPivot);
+    ayMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.30, 48, 36),
+      new THREE.MeshStandardMaterial({map:dokuUret("#b8b8b8","kaya"),
+        color:0xb2ada4, roughness:1})
+    );
+    ayMesh.position.x = 4.6;
+    AY_BILGI = {
+      ad:"Ay", renk:"#d5d0c8",
+      tur:"Dünya'nın tek doğal uydusu — Güneş Sistemi'nin 5. büyük uydusu",
+      satirlar:[
+        ["Çapı","3.475 km"],
+        ["Dünya'ya uzaklığı","384.400 km"],
+        ["Dolanma süresi","27,3 gün"],
+        ["Kendi ekseninde","27,3 gün"],
+        ["Yerçekimi","Dünya'nın 1/6'sı"],
+        ["Yüzey sıcaklığı","-173 °C / +127 °C"],
+        ["Yaşı","yaklaşık 4,5 milyar yıl"],
+        ["İlk insanlı iniş","20 Temmuz 1969"]
+      ],
+      not:"Ay, Dünya'nın tek doğal uydusudur ve gökyüzünde Güneş'ten sonra " +
+          "en parlak görünen gök cismidir. Kendi ışığı yoktur; Güneş'ten " +
+          "aldığı ışığı yansıtır.\n\n" +
+          "HEP AYNI YÜZÜ: Kendi ekseninde dönme süresi ile Dünya'nın " +
+          "çevresini dolanma süresi tam olarak eşittir (27,3 gün). Bu yüzden " +
+          "bize hep aynı yüzünü gösterir. Ay'ın arka yüzü 1959'a kadar hiç " +
+          "görülmemişti.\n\n" +
+          "YÜZEYİ: Koyu renkli düzlüklere 'deniz' denir ama içlerinde su " +
+          "yoktur; bunlar milyarlarca yıl önce soğuyup katılaşmış lav " +
+          "ovalarıdır. Açık renkli, kraterlerle kaplı yüksek bölgeler ise " +
+          "dağlık yaylalardır.\n\n" +
+          "Atmosferi yoktur: gökyüzü gündüz bile kapkaradır, ses duyulmaz, " +
+          "rüzgâr esmez. Bu yüzden astronotların 1969'da bıraktığı ayak " +
+          "izleri hâlâ silinmemiştir.\n\n" +
+          "Dünya'daki gelgitlerin başlıca sebebi Ay'ın çekim kuvvetidir. " +
+          "Her yıl Dünya'dan yaklaşık 3,8 cm uzaklaşmaktadır."
+    };
+    ayMesh.userData.bilgi = AY_BILGI;
+    ayPivot.add(ayMesh);
+
+    /* Ay küçük olduğu için üstüne tam basmak zor: görünmez ve daha
+       geniş bir tıklama hedefi ekliyoruz. */
+    var ayHedef = new THREE.Mesh(
+      new THREE.SphereGeometry(0.62, 10, 10),
+      new THREE.MeshBasicMaterial({visible:false}));
+    ayHedef.userData.bilgi = AY_BILGI;
+    ayMesh.add(ayHedef);
+    tiklanabilir.push(ayHedef);
+    tiklanabilir.push(ayMesh);
+
+    /* Ay"ın isim etiketi */
+    var ayEtiketC = document.createElement("canvas");
+    ayEtiketC.width = 256; ayEtiketC.height = 64;
+    var ayEx = ayEtiketC.getContext("2d");
+    ayEx.font = "bold 28px Segoe UI, Arial";
+    ayEx.fillStyle = "#dfd9cf"; ayEx.textAlign = "center";
+    ayEx.fillText("Ay", 128, 42);
+    ayEtiket = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:new THREE.CanvasTexture(ayEtiketC), transparent:true, depthTest:false}));
+    ayEtiket.scale.set(2.4,0.6,1);
+    ayMesh.add(ayEtiket);
+    ayNesnesi = ayMesh;
+  }
+
+  /* isim etiketi */
+  var etiketC = document.createElement("canvas");
+  etiketC.width = 256; etiketC.height = 64;
+  var ex = etiketC.getContext("2d");
+  ex.font = "bold 30px Segoe UI, Arial";
+  ex.fillStyle = "#dce6ff";
+  ex.textAlign = "center";
+  ex.fillText(v.ad, 128, 42);
+  var etiket = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(etiketC), transparent:true, depthTest:false
+  }));
+  etiket.scale.set(7,1.75,1);
+  tutucu.add(etiket);
+
+  gezegenler.push({
+    veri:v, pivot:pivot, mesh:mesh, tutucu:tutucu,
+    ayPivot:ayPivot, ayMesh:ayMesh, etiket:etiket,
+    aci: Math.random()*Math.PI*2
+  });
+});
+
+
+/* ============================================================
+   DÜNYA"YI UZAYDAN GÖRÜNDÜĞÜ GİBİ GÖSTERME
+
+   Buraya kadar bütün yüzeyler kodun içinde çizildi. Dünya"da ise
+   three.js"in yanında gelen GERÇEK uydu haritaları kullanılıyor:
+
+     • yüzey haritası  — kıtalar, okyanuslar, çöller, buzullar
+     • kabartma (normal) haritası — dağ sıraları yandan ışık alınca
+       gerçekten kabarık görünür
+     • gece ışıkları   — karanlık tarafta şehirlerin ışıkları
+     • bulut haritası  — yüzeyin biraz üstünde, ayrı hızda döner
+
+   Haritalar internetten gelir. Ulaşılamazsa model çökmez; kodun içinde
+   çizilmiş yedek yüzey görünmeye devam eder.
+   ============================================================ */
+
+var dunyaBulut = null, dunyaHale = null;
+
+(function(){
+  var dny = null;
+  for (var i=0;i<gezegenler.length;i++){
+    if (gezegenler[i].veri.ad === "Dünya") dny = gezegenler[i];
+  }
+  if (!dny) return;
+
+  var yukleyici = new THREE.TextureLoader();
+  yukleyici.setCrossOrigin("anonymous");
+  var mlz = dny.mesh.material;
+
+  /* 1) yüzey haritası */
+  yukleyici.load(DOKU_ADRES + "earth_atmos_2048.jpg", function(t){
+    t.anisotropy = 8;
+    mlz.map = t;
+    mlz.needsUpdate = true;
+  });
+
+  /* 2) kabartma haritası — dağlar ve kıta kenarları belirginleşir */
+  yukleyici.load(DOKU_ADRES + "earth_normal_2048.jpg", function(t){
+    mlz.normalMap = t;
+    mlz.normalScale = new THREE.Vector2(0.9, 0.9);
+    mlz.needsUpdate = true;
+  });
+
+  /* 3) gece tarafındaki şehir ışıkları */
+  yukleyici.load(DOKU_ADRES + "earth_lights_2048.png", function(t){
+    mlz.emissiveMap = t;
+    mlz.emissive = new THREE.Color(0xffd79a);
+    mlz.emissiveIntensity = 0.55;
+    mlz.needsUpdate = true;
+  });
+
+  /* 4) bulut katmanı — yüzeyin hemen üstünde, biraz farklı hızda döner */
+  dunyaBulut = new THREE.Mesh(
+    new THREE.SphereGeometry(dny.veri.yaricap*1.012, 64, 48),
+    new THREE.MeshStandardMaterial({
+      color:0xffffff, transparent:true, opacity:0,
+      depthWrite:false, roughness:1, metalness:0
+    })
+  );
+  dunyaBulut.rotation.z = dny.veri.egim * Math.PI/180;
+  dny.tutucu.add(dunyaBulut);
+  /* Bu PNG beyaz renkli, saydamlığı kendi alfa kanalında taşır.
+     alphaMap olarak verilirse üç boyut kütüphanesi yalnız yeşil kanala
+     bakar ve bulutlar keskin kareler hâlinde çıkar. Doğrusu doku olarak
+     verip saydamlığı açmaktır. */
+  yukleyici.load(DOKU_ADRES + "earth_clouds_1024.png", function(t){
+    t.anisotropy = 8;
+    dunyaBulut.material.map     = t;
+    dunyaBulut.material.opacity = 0.92;
+    dunyaBulut.material.needsUpdate = true;
+  });
+
+  /* 5) atmosfer halesi — uzaydan bakınca Dünya"nın çevresindeki
+        ince mavi ışık çizgisi */
+  var hc = document.createElement("canvas"); hc.width = hc.height = 256;
+  var hx = hc.getContext("2d");
+  var hg = hx.createRadialGradient(128,128, 74, 128,128, 128);
+  hg.addColorStop(0,    "rgba(120,180,255,0)");
+  hg.addColorStop(0.78, "rgba(110,175,255,0)");
+  hg.addColorStop(0.845,"rgba(130,195,255,.26)");
+  hg.addColorStop(0.90, "rgba(160,212,255,.26)");
+  hg.addColorStop(1,    "rgba(170,215,255,0)");
+  hx.fillStyle = hg; hx.fillRect(0,0,256,256);
+  dunyaHale = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(hc), transparent:true, depthWrite:false,
+    blending:THREE.AdditiveBlending
+  }));
+  var hb = dny.veri.yaricap*2.45;
+  dunyaHale.scale.set(hb, hb, 1);
+  dny.tutucu.add(dunyaHale);
+
+  /* 6) Ay"ın gerçek yüzey haritası */
+  if (dny.ayMesh){
+    yukleyici.load(DOKU_ADRES + "moon_1024.jpg", function(t){
+      t.anisotropy = 8;
+      dny.ayMesh.material.map = t;
+      dny.ayMesh.material.needsUpdate = true;
+    });
+  }
+})();
+
+/* --- ASTEROİT KUŞAĞI (Mars ile Jüpiter arasında) --- */
+var asteroitGrubu = new THREE.Object3D();
+scene.add(asteroitGrubu);
+(function(){
+  var g = new THREE.BufferGeometry();
+  var n = 2200, poz = new Float32Array(n*3);
+  for (var i=0;i<n;i++){
+    var a = Math.random()*Math.PI*2;
+    var r = 44 + Math.random()*7.5;
+    poz[i*3]   = Math.cos(a)*r;
+    poz[i*3+1] = (Math.random()-0.5)*1.6;
+    poz[i*3+2] = Math.sin(a)*r;
+  }
+  g.setAttribute("position", new THREE.BufferAttribute(poz,3));
+  /* sizeAttenuation kapalı: asteroitler kameraya yaklaşınca kocaman
+     karelere dönüşmesin, her uzaklıkta küçük birer nokta kalsın. */
+  asteroitGrubu.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color:0x9c8f7c, size:2.2, sizeAttenuation:false
+  })));
+})();
+
+/* ============================================================
+   DÜNYA ÇEVRESİNDEKİ İNSAN YAPIMI UYDULAR
+
+   ⚠ Yörünge YÜKSEKLİKLERİ görülebilsin diye büyütülmüştür. Gerçekte
+   ISS ve Hubble Dünya yüzeyine çok yakındır (400-540 km, yani Dünya
+   çapının yüzde beşinden az). Buna karşılık:
+     • uyduların SIRASI gerçektir (ISS < Hubble < GPS < TÜRKSAT < Ay),
+     • dolanma sürelerinin SIRASI da gerçektir: yörünge yükseldikçe
+       uydu yavaşlar. Bu, Kepler"in üçüncü yasasıdır.
+   Süreler, hem ISS hem Ay aynı ekranda izlenebilsin diye sıkıştırıldı.
+   ============================================================ */
+
+var UYDULAR = [
+  {
+    ad:"Uluslararası Uzay İstasyonu", kisa:"ISS", tip:"istasyon",
+    r:1.35, saat:1.548, egim:51.6, faz:0.0, renk:"#e6e6e6",
+    tur:"İnsanlı uzay istasyonu — Dünya"+"'"+"nın en büyük yapay uydusu",
+    satirlar:[
+      ["Yörünge yüksekliği","408 km"],
+      ["Bir tur süresi","92 dakika"],
+      ["Hızı","saatte 27.600 km"],
+      ["Yörünge eğikliği","51,6°"],
+      ["Uzunluğu","109 metre"],
+      ["İlk parçası","1998"]
+    ],
+    not:"Günde yaklaşık 16 kez Dünya"+"'"+"nın çevresini dolanır. İçinde " +
+        "sürekli astronot bulunur. Açık havada, gün doğumundan önce veya gün " +
+        "batımından sonra çıplak gözle parlak bir nokta olarak görülebilir."
+  },
+  {
+    ad:"Hubble Uzay Teleskobu", kisa:"Hubble", tip:"teleskop",
+    r:1.62, saat:1.59, egim:28.5, faz:2.1, renk:"#cfd8e8",
+    tur:"Uzay teleskobu — Dünya yörüngesinden gözlem yapar",
+    satirlar:[
+      ["Yörünge yüksekliği","540 km"],
+      ["Bir tur süresi","95 dakika"],
+      ["Ayna çapı","2,4 metre"],
+      ["Uzunluğu","13,2 metre"],
+      ["Fırlatılışı","24 Nisan 1990"],
+      ["Yörünge eğikliği","28,5°"]
+    ],
+    not:"Atmosferin dışında olduğu için görüntüleri bulanıklaşmaz; yeryüzündeki " +
+        "teleskoplardan çok daha net görür. Evrenin yaşının hesaplanmasına ve " +
+        "binlerce gök cisminin keşfine yardım etti."
+  },
+  {
+    ad:"GPS Uydusu", kisa:"GPS", tip:"uydu",
+    r:2.60, saat:11.967, egim:55, faz:4.0, renk:"#bfc6d0",
+    tur:"Konum belirleme (navigasyon) uydusu",
+    satirlar:[
+      ["Yörünge yüksekliği","20.200 km"],
+      ["Bir tur süresi","11 saat 58 dakika"],
+      ["Takımdaki uydu sayısı","31"],
+      ["Görevi","Konum ve zaman bilgisi"],
+      ["İlk fırlatma","1978"]
+    ],
+    not:"Telefonundaki harita bu uydularla çalışır. Konumunu bulabilmesi için " +
+        "aynı anda en az dört uydudan sinyal alması gerekir. Uydular o kadar " +
+        "hızlı gider ki saatleri, Dünya"+"'"+"daki saatlere göre günde birkaç " +
+        "mikrosaniye kayar; bu fark hesaba katılmasa harita kilometrelerce şaşardı."
+  },
+  {
+    ad:"TÜRKSAT 5B", kisa:"TÜRKSAT 5B", tip:"uydu",
+    r:3.35, saat:24, egim:0, faz:0.8, renk:"#e8d8a8",
+    tur:"Haberleşme uydusu — yer sabit (geostationary) yörüngede",
+    satirlar:[
+      ["Yörünge yüksekliği","35.786 km"],
+      ["Bir tur süresi","24 saat"],
+      ["Yörünge konumu","42° Doğu"],
+      ["Fırlatılışı","19 Aralık 2021"],
+      ["Görev süresi","30 yıl"],
+      ["Görevi","İnternet, televizyon, haberleşme"]
+    ],
+    not:"Bu yükseklikte bir uydu Dünya"+"'"+"nın kendi dönüşüyle aynı sürede, " +
+        "yani 24 saatte bir tur atar. Bu yüzden yeryüzünden bakınca gökyüzünde " +
+        "hep AYNI NOKTADA durur — çanak antenlerin sabit kalabilmesinin sebebi budur."
+  },
+  {
+    ad:"TÜRKSAT 6A", kisa:"TÜRKSAT 6A", tip:"uydu",
+    r:3.35, saat:24, egim:0, faz:3.6, renk:"#f0c98a",
+    tur:"Haberleşme uydusu — Türkiye"+"'"+"nin ilk yerli üretim iletişim uydusu",
+    satirlar:[
+      ["Yörünge yüksekliği","35.786 km"],
+      ["Bir tur süresi","24 saat"],
+      ["Yörünge konumu","42° Doğu"],
+      ["Fırlatılışı","9 Temmuz 2024"],
+      ["Görev süresi","15 yıl"],
+      ["Görevi","Televizyon ve haberleşme"]
+    ],
+    not:"Türkiye"+"'"+"nin yerli imkânlarla üretilen ilk haberleşme uydusudur. " +
+        "TÜRKSAT 5B ile aynı yükseklikte, yer sabit yörüngede bulunur ve " +
+        "yayın alanını Asya"+"'"+"ya kadar genişletmiştir."
+  }
+];
+
+/* Uyduların ekrandaki dolanma süresi.
+   Gerçek süreler 92 dakika ile 24 saat arasında değişiyor; aradaki fark
+   16 kat. Ay ise 27 günde dolanıyor. Hepsi aynı ekranda izlenebilsin diye
+   süreler bir üs alma ile sıkıştırıldı: sıralama korunuyor, aradaki oran
+   küçülüyor. */
+function uyduSuresi(saat){ return 1.10 * Math.pow(saat, 0.45); }
+
+var uydular = [];
+
+(function(){
+  /* Dünya"nın tutucusunu bul */
+  var dunya = null;
+  for (var i=0;i<gezegenler.length;i++){
+    if (gezegenler[i].veri.ad === "Dünya") dunya = gezegenler[i];
+  }
+  if (!dunya) return;
+
+  var govdeMlz = new THREE.MeshStandardMaterial({
+    color:0xd4d8de, metalness:0.55, roughness:0.38, emissive:0x2a2f36});
+  var panelMlz = new THREE.MeshStandardMaterial({
+    color:0x1e3f77, metalness:0.30, roughness:0.45, emissive:0x0d2144,
+    side:THREE.DoubleSide});
+  var altinMlz = new THREE.MeshStandardMaterial({
+    color:0xc9a227, metalness:0.7, roughness:0.35, emissive:0x3a2f08});
+
+  /* ışıldayan nokta — uydular çok küçük olduğu için uzaktan
+     görünebilmelerini sağlar */
+  var parilti = (function(){
+    var c=document.createElement("canvas"); c.width=c.height=64;
+    var x=c.getContext("2d");
+    var g=x.createRadialGradient(32,32,1,32,32,32);
+    g.addColorStop(0,"rgba(255,255,255,.95)");
+    g.addColorStop(0.35,"rgba(190,215,255,.35)");
+    g.addColorStop(1,"rgba(160,200,255,0)");
+    x.fillStyle=g; x.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  })();
+
+  UYDULAR.forEach(function(v){
+    /* yörünge düzlemi: eğikliği burada veriyoruz */
+    var duzlem = new THREE.Object3D();
+    duzlem.rotation.x = v.egim * Math.PI/180;
+    dunya.tutucu.add(duzlem);
+
+    /* yörünge çizgisi */
+    var nk = [];
+    for (var i=0;i<=120;i++){
+      var a = i/120*Math.PI*2;
+      nk.push(new THREE.Vector3(Math.cos(a)*v.r, 0, Math.sin(a)*v.r));
+    }
+    duzlem.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(nk),
+      new THREE.LineBasicMaterial({color:0x7d93bd, transparent:true, opacity:0.30})
+    ));
+
+    /* uydunun kendisi */
+    var kol = new THREE.Object3D();          /* dolanmayı bu döndürür */
+    kol.rotation.y = v.faz;
+    duzlem.add(kol);
+
+    var govde = new THREE.Object3D();
+    govde.position.x = v.r;
+    kol.add(govde);
+
+    if (v.tip === "teleskop"){
+      /* Hubble: silindir gövde, ucu altın kaplama, iki panel */
+      var tup = new THREE.Mesh(new THREE.CylinderGeometry(0.058,0.058,0.20,12), govdeMlz);
+      tup.rotation.z = Math.PI/2;
+      govde.add(tup);
+      var agiz = new THREE.Mesh(new THREE.CylinderGeometry(0.062,0.062,0.03,12), altinMlz);
+      agiz.rotation.z = Math.PI/2; agiz.position.x = 0.11;
+      govde.add(agiz);
+      [1,-1].forEach(function(s){
+        var pn = new THREE.Mesh(new THREE.BoxGeometry(0.19,0.010,0.085), panelMlz);
+        pn.position.z = s*0.115;
+        govde.add(pn);
+      });
+    } else if (v.tip === "istasyon"){
+      /* ISS: uzun bir kiriş ve dört panel */
+      var kiris = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.045,0.42), govdeMlz);
+      govde.add(kiris);
+      var modul = new THREE.Mesh(new THREE.CylinderGeometry(0.048,0.048,0.20,10), govdeMlz);
+      modul.rotation.z = Math.PI/2;
+      govde.add(modul);
+      [[0.15,1],[0.15,-1],[-0.15,1],[-0.15,-1]].forEach(function(q){
+        var pn = new THREE.Mesh(new THREE.BoxGeometry(0.115,0.008,0.15), panelMlz);
+        pn.position.set(q[1]*0.115, 0, q[0]);
+        govde.add(pn);
+      });
+    } else {
+      /* haberleşme / navigasyon uydusu: kutu gövde, iki uzun panel, anten */
+      var kutu = new THREE.Mesh(new THREE.BoxGeometry(0.115,0.105,0.105), govdeMlz);
+      govde.add(kutu);
+      [1,-1].forEach(function(s){
+        var pn = new THREE.Mesh(new THREE.BoxGeometry(0.235,0.012,0.095), panelMlz);
+        pn.position.x = s*0.175;
+        govde.add(pn);
+      });
+      var canak = new THREE.Mesh(
+        new THREE.SphereGeometry(0.052,12,10,0,Math.PI*2,0,Math.PI/2),
+        new THREE.MeshStandardMaterial({color:0xe8e2d2, side:THREE.DoubleSide,
+                                        metalness:0.2, roughness:0.6}));
+      canak.rotation.x = Math.PI;      /* çanak Dünya"ya baksın */
+      canak.position.y = -0.085;
+      govde.add(canak);
+    }
+
+    /* uzaktan görünsün diye ışıltı */
+    var isik = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:parilti, transparent:true, depthWrite:false,
+      blending:THREE.AdditiveBlending, color:new THREE.Color(v.renk)}));
+    isik.scale.set(0.85,0.85,1);
+    govde.add(isik);
+
+    /* tıklama hedefi: uydular çok küçük olduğu için görünmez ve daha
+       büyük bir küre koyuyoruz, yoksa tam üstüne basmak gerekirdi */
+    var hedef = new THREE.Mesh(
+      new THREE.SphereGeometry(0.34,10,10),
+      new THREE.MeshBasicMaterial({visible:false}));
+    hedef.userData.bilgi = {
+      ad:v.ad, tur:v.tur, renk:v.renk,
+      satirlar:v.satirlar,
+      not:v.not + "\n\n⚠ Modelde yörünge yüksekliği görülebilsin diye " +
+          "büyütülmüştür; gerçekte bu uydu Dünya"+"'"+"ya çok daha yakındır."
+    };
+    govde.add(hedef);
+    tiklanabilir.push(hedef);
+
+    uydular.push({veri:v, kol:kol, govde:govde, isik:isik,
+                  sure:uyduSuresi(v.saat)});
+  });
+})();
+
+
+/* ============================================================
+   KUYRUKLU YILDIZ — Halley (1P/Halley)
+
+   Yörüngesi gezegenlerinki gibi çember değil, çok BASIK bir elipstir.
+   Güneş elipsin merkezinde değil, ODAKLARINDAN birindedir. Bu yüzden
+   kuyruklu yıldız Güneş"e yaklaşınca hızlanır, uzaklaşınca yavaşlar
+   (Kepler"in ikinci yasası). Aşağıdaki hesap bunu gerçekten yapar.
+
+   ⚠ Gerçek yörüngesi bu ekrana sığmaz: en uzak noktası Neptün"ün bile
+   sekiz katı uzaklıktadır ve bir turu 76 YIL sürer. Yörünge kısaltıldı
+   ve hızlandırıldı; elipsin basıklığı ve hız değişimi ise gerçektir.
+   ============================================================ */
+
+var K_PERI = 13, K_APH = 122;                      /* ekran ölçeğinde */
+var K_A = (K_PERI + K_APH)/2;                      /* büyük yarı eksen */
+var K_E = (K_APH - K_PERI)/(K_APH + K_PERI);       /* basıklık (0,807) */
+var K_B = K_A * Math.sqrt(1 - K_E*K_E);            /* küçük yarı eksen */
+var K_PERIYOT = 52;                                /* saniye (1.0x hızda) */
+var kuyrukM = 5.45;                                /* ortalama anomali   */
+
+var kuyrukDuzlem = new THREE.Object3D();
+kuyrukDuzlem.rotation.z = 19 * Math.PI/180;        /* yörünge eğik */
+kuyrukDuzlem.rotation.y = 0.7;
+scene.add(kuyrukDuzlem);
+
+/* Kepler denklemi: M = E - e·sinE  →  E"yi sayısal olarak buluyoruz */
+function kuyrukKonum(M, hedef){
+  var E = M;
+  for (var i=0;i<8;i++){
+    E = E - (E - K_E*Math.sin(E) - M) / (1 - K_E*Math.cos(E));
+  }
+  hedef.set(K_A*(Math.cos(E) - K_E), 0, K_B*Math.sin(E));
+  return hedef;
+}
+
+/* yörünge çizgisi */
+(function(){
+  var nk = [], gecici3 = new THREE.Vector3();
+  for (var i=0;i<=360;i++){
+    var E = i/360*Math.PI*2;
+    nk.push(new THREE.Vector3(K_A*(Math.cos(E)-K_E), 0, K_B*Math.sin(E)));
+  }
+  kuyrukDuzlem.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(nk),
+    new THREE.LineBasicMaterial({color:0x6fd3e0, transparent:true, opacity:0.30})
+  ));
+})();
+
+var kuyrukGovde = new THREE.Object3D();
+kuyrukDuzlem.add(kuyrukGovde);
+
+/* ÇEKİRDEK
+   Kuyruklu yıldız çekirdeği gezegen gibi yuvarlak değildir: buz, toz ve
+   kayadan oluşmuş, patates biçiminde düzensiz bir parçadır. Üstelik
+   Güneş Sistemi"nin en KARA cisimlerindendir — Halley"in yüzeyi kömürden
+   bile koyudur, gelen ışığın ancak yüzde dördünü yansıtır. Yani gördüğümüz
+   parlaklık çekirdekten değil, çevresindeki gaz bulutundan (komadan) gelir.
+   Bu yüzden burada küre yerine gürültüyle bozulmuş, koyu bir taş var. */
+var kuyrukCekirdek = (function(){
+  var g = new THREE.IcosahedronGeometry(0.17, 3);
+  var poz = g.attributes.position;
+  var v = new THREE.Vector3();
+  for (var i=0;i<poz.count;i++){
+    v.fromBufferAttribute(poz, i).normalize();
+    /* her yönde farklı çıkıntı ve çukur */
+    var n1 = katmanliGurultu(9 + v.x*2.6 + v.z*1.4, 9 + v.y*2.6 + v.z*0.8, 3);
+    var n2 = katmanliGurultu(4 + v.y*7.0, 4 + v.x*7.0 + v.z*3.0, 2);
+    var r = 0.17 * (0.52 + n1*0.86 + n2*0.22);
+    poz.setXYZ(i, v.x*r, v.y*r*0.82, v.z*r);   /* hafifçe uzun */
+  }
+  poz.needsUpdate = true;
+  g.computeVertexNormals();
+  var mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    color:0x39332b, roughness:1, metalness:0, flatShading:true,
+    emissive:0x120f0b
+  }));
+  kuyrukGovde.add(mesh);
+  return mesh;
+})();
+
+/* GAZ PÜSKÜRTMELERİ (jetler)
+   Güneş ısıttıkça çekirdeğin buzu doğrudan gaza dönüşür ve yüzeydeki
+   çatlaklardan GÜNEŞ"E DOĞRU fışkırır. Komayı besleyen şey bu jetlerdir. */
+var jetGrup = new THREE.Object3D();
+kuyrukGovde.add(jetGrup);
+var jetler = [];
+(function(){
+  var jc = document.createElement("canvas"); jc.width = 8; jc.height = 64;
+  var jx = jc.getContext("2d");
+  var jg = jx.createLinearGradient(0,0,0,64);
+  jg.addColorStop(0,   "rgba(255,255,255,.95)");
+  jg.addColorStop(0.45,"rgba(255,255,255,.30)");
+  jg.addColorStop(1,   "rgba(255,255,255,0)");
+  jx.fillStyle = jg; jx.fillRect(0,0,8,64);
+  var jDoku = new THREE.CanvasTexture(jc);
+
+  var acilar = [[0,0],[0.42,0.9],[-0.36,-1.2],[0.24,2.4]];
+  acilar.forEach(function(a){
+    var g = new THREE.ConeGeometry(0.115, 1, 12, 1, true);
+    g.translate(0, -0.5, 0);
+    var mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({
+      color:0xbfeaff, map:jDoku, transparent:true, opacity:0,
+      blending:THREE.AdditiveBlending, depthWrite:false,
+      side:THREE.DoubleSide}));
+    mesh.rotation.set(a[0], a[1], 0);
+    jetGrup.add(mesh);
+    jetler.push(mesh);
+  });
+})();
+
+/* koma: çekirdeği saran parlak gaz bulutu */
+var kuyrukKoma = (function(){
+  var c=document.createElement("canvas"); c.width=c.height=128;
+  var x=c.getContext("2d");
+  var g=x.createRadialGradient(64,64,2,64,64,64);
+  g.addColorStop(0,"rgba(220,245,255,.95)");
+  g.addColorStop(0.25,"rgba(150,220,255,.45)");
+  g.addColorStop(1,"rgba(120,200,255,0)");
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false,
+    blending:THREE.AdditiveBlending}));
+  kuyrukGovde.add(sp);
+  return sp;
+})();
+
+/* İki kuyruk: iyon kuyruğu (mavi, Güneş"in tam tersi yönde) ve
+   toz kuyruğu (sarımsı, hareketin gerisinde kalır). */
+/* Kuyruk dokusu: çekirdeğin yanında parlak, uzaklaştıkça sönümlenen
+   bir geçiş. Düz renkli bir koni cansız görünüyordu. */
+function kuyrukDoku(){
+  var c = document.createElement("canvas"); c.width = 8; c.height = 128;
+  var x = c.getContext("2d");
+  var g = x.createLinearGradient(0,0,0,128);
+  g.addColorStop(0,    "rgba(255,255,255,1)");     /* çekirdek tarafı */
+  g.addColorStop(0.16, "rgba(255,255,255,.72)");
+  g.addColorStop(0.45, "rgba(255,255,255,.34)");
+  g.addColorStop(0.75, "rgba(255,255,255,.12)");
+  g.addColorStop(1,    "rgba(255,255,255,0)");     /* kuyruğun ucu   */
+  x.fillStyle = g; x.fillRect(0,0,8,128);
+  return new THREE.CanvasTexture(c);
+}
+
+function kuyrukYap(renk, saydam, genislik){
+  var g = new THREE.ConeGeometry(genislik, 1, 18, 1, true);
+  g.translate(0, -0.5, 0);          /* sivri ucu başlangıç noktasında */
+  var m = new THREE.MeshBasicMaterial({
+    color:renk, map:kuyrukDoku(), transparent:true, opacity:saydam,
+    blending:THREE.AdditiveBlending, depthWrite:false,
+    side:THREE.DoubleSide});
+  var mesh = new THREE.Mesh(g, m);
+  kuyrukGovde.add(mesh);
+  return mesh;
+}
+var iyonKuyruk = kuyrukYap(0x9fe2ff, 0.70, 0.085);
+var tozKuyruk  = kuyrukYap(0xffcf86, 0.40, 0.185);
+
+var KUYRUK_BILGI = {
+  ad:"Halley Kuyruklu Yıldızı", renk:"#8fd8ff",
+  tur:"Kuyruklu yıldız (1P/Halley) — buz, toz ve kayadan oluşur",
+  satirlar:[
+    ["Çekirdek boyutu","15 × 8 km"],
+    ["Güneş'e en yakın","87,8 milyon km"],
+    ["Güneş'e en uzak","5,25 milyar km"],
+    ["Dolanma süresi","75-76 yıl"],
+    ["Son geçişi","1986"],
+    ["Beklenen geçişi","2061"]
+  ],
+  not:"Kuyruklu yıldızın kuyruğu HER ZAMAN Güneş'in ters yönündedir; " +
+      "arkasında sürüklenmez. Çünkü kuyruğu oluşturan şey Güneş'ten gelen " +
+      "ışık ve Güneş rüzgârıdır. Güneş'e yaklaştıkça buzu buharlaşır ve " +
+      "kuyruk uzar; uzaklaşınca kaybolur.\n\n" +
+      "İki kuyruğu vardır: mavi iyon kuyruğu Güneş'in tam tersine dümdüz " +
+      "uzanır, sarımsı toz kuyruğu ise hareketin gerisinde kalıp hafifçe kıvrılır.\n\n" +
+      "⚠ Modelde yörünge kısaltılmış ve hızlandırılmıştır; elipsin basıklığı ve " +
+      "Güneş'e yaklaşınca hızlanması ise gerçektir."
+};
+
+var kuyrukHedef = new THREE.Mesh(
+  new THREE.SphereGeometry(0.55, 10, 10),
+  new THREE.MeshBasicMaterial({visible:false}));
+kuyrukHedef.userData.bilgi = KUYRUK_BILGI;
+kuyrukGovde.add(kuyrukHedef);
+tiklanabilir.push(kuyrukHedef);
+
+/* etiket */
+(function(){
+  var c=document.createElement("canvas"); c.width=256; c.height=64;
+  var x=c.getContext("2d");
+  x.font="bold 26px Segoe UI, Arial"; x.fillStyle="#bfe9f5";
+  x.textAlign="center"; x.fillText("Halley", 128, 42);
+  var sp=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(c), transparent:true, depthTest:false}));
+  sp.scale.set(6,1.5,1);
+  sp.position.y = 1.4;
+  kuyrukGovde.add(sp);
+  kuyrukEtiket = sp;
+})();
+var kuyrukEtiket;
+
+/* kuyruk yönü hesabı için yardımcılar */
+var kY1 = new THREE.Vector3(), kY2 = new THREE.Vector3();
+var kYon = new THREE.Vector3(), kHiz = new THREE.Vector3();
+var kTozYon = new THREE.Vector3();
+var kEksen = new THREE.Vector3(0,-1,0);
+
+/* ============================================================
+   DÜNYA"DAN AY"A GİDEN UZAY ARACI — Artemis I / Orion
+
+   Gerçek görev: 16 Kasım 2022"de fırlatıldı, Ay"ın çevresinde dolandı
+   ve 11 Aralık 2022"de Dünya"ya döndü. 25 gün 10 saat sürdü.
+
+   Modeldeki uçuş dört bölümden oluşur ve sürekli tekrarlanır:
+     1) Dünya çevresinden ayrılış      2) Ay"a gidiş (yolculuk)
+     3) Ay çevresinde dolanma          4) Dünya"ya dönüş
+   ============================================================ */
+
+var ARTEMIS_BILGI = {
+  ad:"Artemis I — Orion", renk:"#ffd27a",
+  tur:"İnsansız deneme uçuşu — Dünya'dan Ay'a giden uzay aracı",
+  satirlar:[
+    ["Fırlatılışı","16 Kasım 2022"],
+    ["Dönüşü","11 Aralık 2022"],
+    ["Görev süresi","25 gün 10 saat"],
+    ["Dünya'ya uzaklığı","en fazla 432.210 km"],
+    ["Ay'a yaklaşması","130 km"],
+    ["Kat ettiği yol","2,25 milyon km"]
+  ],
+  not:"Ay'a gitmek için sürekli motor çalıştırmak gerekmez. Araç bir kez " +
+      "hızlandırılır, sonra Dünya'nın ve Ay'ın çekimiyle yol alır — bu " +
+      "yüzden yolu düz değil, kavislidir.\n\n" +
+      "Artemis I insansızdı; koltuklarda ışınım ölçen mankenler vardı. Ay'ın " +
+      "çevresinde dolandıktan sonra Dünya'ya dönüp Büyük Okyanus'a indi.\n\n" +
+      "Apollo 17'den (1972) sonra Ay'ın çevresine giden, insan taşıyabilecek " +
+      "ilk araçtır.\n\n" +
+      "⚠ Modelde yolculuk süresi kısaltılmıştır: gerçekte Dünya ile Ay arasındaki " +
+      "yol yaklaşık beş gün sürer."
+};
+
+var artemis = null;
+
+(function(){
+  var dunya = null;
+  for (var i=0;i<gezegenler.length;i++){
+    if (gezegenler[i].veri.ad === "Dünya") dunya = gezegenler[i];
+  }
+  if (!dunya) return;
+
+  var grup = new THREE.Object3D();
+  dunya.tutucu.add(grup);
+
+  /* Orion: koni biçimli kapsül + servis modülü + dört panel */
+  var kapsul = new THREE.Mesh(
+    new THREE.ConeGeometry(0.075, 0.12, 12),
+    new THREE.MeshStandardMaterial({color:0xdfe3e8, metalness:0.5, roughness:0.4,
+                                    emissive:0x2b3038}));
+  kapsul.rotation.z = -Math.PI/2;
+  kapsul.position.x = 0.09;
+  grup.add(kapsul);
+
+  var servis = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.062,0.062,0.13,12),
+    new THREE.MeshStandardMaterial({color:0xb9bec6, metalness:0.6, roughness:0.35,
+                                    emissive:0x24282e}));
+  servis.rotation.z = Math.PI/2;
+  grup.add(servis);
+
+  var panelMlz = new THREE.MeshStandardMaterial({
+    color:0x24457d, metalness:0.3, roughness:0.45, emissive:0x102449,
+    side:THREE.DoubleSide});
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(q){
+    var pn = new THREE.Mesh(new THREE.BoxGeometry(0.085,0.010,0.16), panelMlz);
+    pn.position.set(-0.02, q[1]*0.115, q[0]*0.115);
+    if (q[1] !== 0) pn.rotation.x = Math.PI/2;
+    grup.add(pn);
+  });
+
+  /* motor alevi — yalnızca hızlanma anlarında görünür */
+  var alev = new THREE.Mesh(
+    new THREE.ConeGeometry(0.05, 0.22, 10, 1, true),
+    new THREE.MeshBasicMaterial({color:0xffb04a, transparent:true, opacity:0.75,
+                                 blending:THREE.AdditiveBlending, depthWrite:false,
+                                 side:THREE.DoubleSide}));
+  alev.rotation.z = Math.PI/2;
+  alev.position.x = -0.19;
+  alev.visible = false;
+  grup.add(alev);
+
+  /* tıklama hedefi */
+  var hedef = new THREE.Mesh(
+    new THREE.SphereGeometry(0.40,10,10),
+    new THREE.MeshBasicMaterial({visible:false}));
+  hedef.userData.bilgi = ARTEMIS_BILGI;
+  grup.add(hedef);
+  tiklanabilir.push(hedef);
+
+  /* etiket */
+  var ec = document.createElement("canvas"); ec.width=256; ec.height=64;
+  var ex2 = ec.getContext("2d");
+  ex2.font = "bold 24px Segoe UI, Arial"; ex2.fillStyle = "#ffd27a";
+  ex2.textAlign = "center"; ex2.fillText("Artemis I", 128, 42);
+  var etk = new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(ec), transparent:true, depthTest:false}));
+  etk.scale.set(3.4,0.85,1);
+  etk.position.y = 0.55;
+  grup.add(etk);
+
+  /* geçtiği yolu gösteren iz */
+  var IZ = 260;
+  var izGeo = new THREE.BufferGeometry();
+  izGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(IZ*3), 3));
+  izGeo.setDrawRange(0, 0);
+  var iz = new THREE.Line(izGeo, new THREE.LineBasicMaterial({
+    color:0xffc46b, transparent:true, opacity:0.55}));
+  dunya.tutucu.add(iz);
+
+  artemis = {grup:grup, alev:alev, etiket:etk,
+             iz:iz, izGeo:izGeo, izSayi:0, izMax:IZ,
+             t:0, sure:46,                    /* bir tam görev = 46 saniye */
+             oncekiKonum:new THREE.Vector3(), ilk:true};
+})();
+
+/* Ay"ın, Dünya tutucusu içindeki anlık konumu */
+var ayKonum = new THREE.Vector3();
+function ayiBul(g){
+  if (!g.ayMesh) return ayKonum.set(0,0,0);
+  g.ayMesh.getWorldPosition(ayKonum);
+  g.tutucu.worldToLocal(ayKonum);
+  return ayKonum;
+}
+
+/* Aracın o andaki konumu — dört bölümlü uçuş planı */
+var aKon = new THREE.Vector3(), aYrd = new THREE.Vector3();
+function artemisKonum(t, ay, hedef){
+  /* t: 0 ile 1 arasında, görevin neresinde olduğumuz */
+  var parkR = 1.05;                       /* Dünya çevresindeki bekleme yörüngesi */
+  if (t < 0.12){
+    /* 1) Dünya çevresinde tur atıyor, ayrılmaya hazırlanıyor */
+    var a = t/0.12 * Math.PI*4;
+    hedef.set(Math.cos(a)*parkR, 0.10, Math.sin(a)*parkR);
+  } else if (t < 0.40){
+    /* 2) Ay"a gidiş — kavisli yol (Bezier eğrisi) */
+    var u = (t-0.12)/0.28;
+    aKon.set(parkR, 0.10, 0);
+    /* kontrol noktası: yolu düz değil kavisli yapar */
+    aYrd.set(ay.x*0.45 + 1.6, 1.5, ay.z*0.45 - 2.4);
+    var m = 1-u;
+    hedef.set(
+      m*m*aKon.x + 2*m*u*aYrd.x + u*u*(ay.x*0.86),
+      m*m*aKon.y + 2*m*u*aYrd.y + u*u*(ay.y + 0.35),
+      m*m*aKon.z + 2*m*u*aYrd.z + u*u*(ay.z*0.86)
+    );
+  } else if (t < 0.68){
+    /* 3) Ay"ın çevresinde dolanıyor (iki buçuk tur) */
+    var b = (t-0.40)/0.28 * Math.PI*5;
+    hedef.set(ay.x + Math.cos(b)*0.95,
+              ay.y + Math.sin(b)*0.16,
+              ay.z + Math.sin(b)*0.95);
+  } else if (t < 0.94){
+    /* 4) Dünya"ya dönüş */
+    var u2 = (t-0.68)/0.26;
+    aKon.set(ay.x + 0.95, ay.y, ay.z);
+    aYrd.set(ay.x*0.45 - 1.2, -1.3, ay.z*0.45 + 2.2);
+    var m2 = 1-u2;
+    hedef.set(
+      m2*m2*aKon.x + 2*m2*u2*aYrd.x + u2*u2*parkR,
+      m2*m2*aKon.y + 2*m2*u2*aYrd.y + u2*u2*0.10,
+      m2*m2*aKon.z + 2*m2*u2*aYrd.z + u2*u2*0
+    );
+  } else {
+    /* Dünya çevresinde son tur, sonra görev baştan başlar */
+    var c = (t-0.94)/0.06 * Math.PI*2;
+    hedef.set(Math.cos(c)*parkR, 0.10, Math.sin(c)*parkR);
+  }
+  return hedef;
+}
+
+/* Dünya"yı bir kez bulup saklıyoruz — her karede aramamak için. */
+var artemisDunya = (function(){
+  for (var i=0;i<gezegenler.length;i++){
+    if (gezegenler[i].veri.ad === "Dünya") return gezegenler[i];
+  }
+  return null;
+})();
+
+/* Kamera kuyruklu yıldızı takip ediyor mu? */
+var kuyrukTakip = false;
+
+
+/* ============================================================
+   KOMŞU GALAKSİLER
+
+   Kamera yeterince uzaklaşınca çevredeki galaksiler beliriyor ve
+   adları yazılıyor. Yaklaşınca yeniden sönümleniyorlar.
+
+   ⚠ Konumları ve uzaklıkları ÖLÇEKLİ DEĞİLDİR. Gerçekte en yakın
+   büyük komşumuz Andromeda, Neptün"ün yörüngesinden yaklaşık
+   500 MİLYAR kat daha uzaktadır; aynı ekrana sığdırmanın yolu yok.
+   Bilgi kartlarındaki uzaklıklar ise gerçektir.
+   ============================================================ */
+
+var GALAKSILER = [
+  {
+    ad:"Andromeda Galaksisi", kisa:"Andromeda", tip:"sarmal",
+    renk:"#cfd8ff", boy:230, yon:[ 1.00, 0.28,-0.55], egim:0.55,
+    tur:"Sarmal galaksi (M31) — Samanyolu'nun en yakın dev komşusu",
+    satirlar:[
+      ["Uzaklığı","2,5 milyon ışık yılı"],
+      ["Çapı","220.000 ışık yılı"],
+      ["Yıldız sayısı","yaklaşık 1 trilyon"],
+      ["Türü","Sarmal"],
+      ["Katalog adı","M31 / NGC 224"]
+    ],
+    not:"Çıplak gözle görülebilen EN UZAK cisimdir. Karanlık bir gecede " +
+        "gökyüzünde soluk, bulanık bir leke gibi görünür — ve o lekeye " +
+        "baktığında 2,5 milyon yıl önce yola çıkmış ışığı görürsün.\n\n" +
+        "Samanyolu'ndan büyüktür ve bize saniyede 110 km hızla " +
+        "YAKLAŞMAKTADIR. Yaklaşık 4,5 milyar yıl sonra iki galaksi " +
+        "çarpışıp tek bir dev galaksi olacak. Yıldızlar birbirine o kadar " +
+        "uzak ki, çarpışmada muhtemelen hiçbir yıldız bir diğerine " +
+        "çarpmayacak."
+  },
+  {
+    ad:"Üçgen Galaksisi", kisa:"Üçgen", tip:"sarmal",
+    renk:"#bfe0ff", boy:150, yon:[ 0.72,-0.32,-0.62], egim:-0.9,
+    tur:"Sarmal galaksi (M33) — Yerel Grup'un üçüncü büyük üyesi",
+    satirlar:[
+      ["Uzaklığı","2,7 milyon ışık yılı"],
+      ["Çapı","60.000 ışık yılı"],
+      ["Yıldız sayısı","yaklaşık 40 milyar"],
+      ["Türü","Sarmal"],
+      ["Katalog adı","M33 / NGC 598"]
+    ],
+    not:"Samanyolu ve Andromeda'dan sonra Yerel Grup'un üçüncü büyük " +
+        "galaksisidir. Çok karanlık gecelerde, keskin gözlü gözlemciler " +
+        "tarafından çıplak gözle görülebildiği söylenir.\n\n" +
+        "Andromeda'nın bir uydu galaksisi olabileceği düşünülüyor."
+  },
+  {
+    ad:"Büyük Macellan Bulutu", kisa:"Büyük Macellan", tip:"duzensiz",
+    renk:"#ffe6c0", boy:130, yon:[-0.58,-0.42, 0.70], egim:0.3,
+    tur:"Düzensiz cüce galaksi — Samanyolu'nun uydu galaksisi",
+    satirlar:[
+      ["Uzaklığı","163.000 ışık yılı"],
+      ["Çapı","14.000 ışık yılı"],
+      ["Yıldız sayısı","yaklaşık 30 milyar"],
+      ["Türü","Düzensiz cüce"],
+      ["Görünürlüğü","Güney yarımküre, çıplak gözle"]
+    ],
+    not:"Samanyolu'nun çevresinde dolanan uydu galaksilerinden en " +
+        "büyüğüdür. Güney yarımküreden çıplak gözle, gökyüzüne yapışmış " +
+        "kopuk bir bulut gibi görünür.\n\n" +
+        "Adını, dünyayı dolaşan Macellan'ın mürettebatından alır. 1987'de " +
+        "burada patlayan yıldız (SN 1987A), dört yüzyıldır çıplak gözle " +
+        "görülen en yakın süpernovaydı."
+  },
+  {
+    ad:"Küçük Macellan Bulutu", kisa:"Küçük Macellan", tip:"duzensiz",
+    renk:"#ffd9b0", boy:95, yon:[-0.78,-0.30, 0.54], egim:-0.4,
+    tur:"Düzensiz cüce galaksi — Samanyolu'nun uydu galaksisi",
+    satirlar:[
+      ["Uzaklığı","200.000 ışık yılı"],
+      ["Çapı","7.000 ışık yılı"],
+      ["Yıldız sayısı","yaklaşık 3 milyar"],
+      ["Türü","Düzensiz cüce"],
+      ["Görünürlüğü","Güney yarımküre, çıplak gözle"]
+    ],
+    not:"Büyük Macellan Bulutu'nun komşusudur; ikisi bir arada dolanır ve " +
+        "aralarında bir gaz köprüsü vardır.\n\n" +
+        "Astronomi tarihinde özel bir yeri var: Henrietta Leavitt bu " +
+        "galaksideki yıldızları inceleyerek, gök cisimlerinin uzaklığını " +
+        "ölçmenin yolunu buldu. Evrenin ne kadar büyük olduğunu bu sayede " +
+        "anlayabildik."
+  },
+  {
+    ad:"Girdap Galaksisi", kisa:"Girdap", tip:"sarmal",
+    renk:"#d8e4ff", boy:120, yon:[ 0.10, 0.86, 0.50], egim:0.0,
+    tur:"Sarmal galaksi (M51) — sarmal kolları en net görünen galaksi",
+    satirlar:[
+      ["Uzaklığı","23 milyon ışık yılı"],
+      ["Çapı","76.000 ışık yılı"],
+      ["Türü","Sarmal"],
+      ["Katalog adı","M51 / NGC 5194"]
+    ],
+    not:"Tam tepeden göründüğü için sarmal kolları kusursuz seçilir; bu " +
+        "yüzden sarmal galaksinin ders kitaplarındaki örneğidir.\n\n" +
+        "Yanındaki küçük galaksiyi çekim kuvvetiyle çekiştiriyor; " +
+        "kollarının bu kadar belirgin olmasının sebebi de bu."
+  },
+  {
+    ad:"Sombrero Galaksisi", kisa:"Sombrero", tip:"kenar",
+    renk:"#ffeccd", boy:108, yon:[ 0.42, 0.62,-0.66], egim:0.25,
+    tur:"Sarmal galaksi (M104) — kenarından görünür, toz halkalı",
+    satirlar:[
+      ["Uzaklığı","29 milyon ışık yılı"],
+      ["Çapı","50.000 ışık yılı"],
+      ["Türü","Sarmal (kenarından)"],
+      ["Katalog adı","M104 / NGC 4594"]
+    ],
+    not:"Adını biçiminden alır: tam kenarından gördüğümüz için, ortasında " +
+        "parlak bir şişkinlik ve çevresinde koyu bir toz şeridi bulunan " +
+        "bir şapkaya benzer.\n\n" +
+        "Merkezinde Güneş'ten bir milyar kat ağır bir kara delik olduğu " +
+        "düşünülüyor."
+  },
+  {
+    ad:"Centaurus A", kisa:"Centaurus A", tip:"eliptik",
+    renk:"#ffd7d0", boy:100, yon:[-0.30, 0.70, 0.65], egim:0.0,
+    tur:"Eliptik galaksi (NGC 5128) — bize en yakın dev eliptik galaksi",
+    satirlar:[
+      ["Uzaklığı","12 milyon ışık yılı"],
+      ["Çapı","60.000 ışık yılı"],
+      ["Türü","Eliptik"],
+      ["Katalog adı","NGC 5128"]
+    ],
+    not:"Bize en yakın dev eliptik galaksidir. Ortasından geçen kalın " +
+        "karanlık toz şeridi, uzak geçmişte bir sarmal galaksiyi yutmuş " +
+        "olmasından kalmadır.\n\n" +
+        "Merkezindeki dev kara delikten iki yana fışkıran ışınlar yüzünden " +
+        "gökyüzündeki en güçlü radyo kaynaklarından biridir."
+  }
+];
+
+var galaksiler = [];
+var galaksiGorunur = 0;
+
+(function(){
+  /* --- galaksi resmi çizen yardımcı --- */
+  function galaksiDoku(tip, renk){
+    var B = 256;
+    var c = document.createElement("canvas"); c.width = c.height = B;
+    var x = c.getContext("2d");
+    var m = B/2;
+
+    function nokta(px, py, r, a){
+      var g = x.createRadialGradient(px,py,0, px,py,r);
+      g.addColorStop(0, "rgba(255,255,255,"+a.toFixed(3)+")");
+      g.addColorStop(0.4, "rgba(220,232,255,"+(a*0.45).toFixed(3)+")");
+      g.addColorStop(1, "rgba(180,205,255,0)");
+      x.fillStyle = g;
+      x.beginPath(); x.arc(px,py,r,0,Math.PI*2); x.fill();
+    }
+
+    if (tip === "sarmal"){
+      /* ışıyan çekirdek */
+      nokta(m, m, 30, 0.95);
+      /* sarmal kollar */
+      for (var kol=0; kol<2; kol++){
+        var bas = kol*Math.PI;
+        for (var t=0.10; t<1; t+=0.0045){
+          var aci = bas + t*5.0;
+          var r   = t*(m-14);
+          var px  = m + Math.cos(aci)*r;
+          var py  = m + Math.sin(aci)*r;
+          var sap = (Math.random()-0.5)*14*t;
+          nokta(px+sap, py+sap*0.7, 3.5+Math.random()*5.5, 0.12*(1-t*0.62));
+        }
+      }
+      /* disk pusu */
+      var dg = x.createRadialGradient(m,m,10, m,m,m);
+      dg.addColorStop(0,"rgba(190,215,255,.20)");
+      dg.addColorStop(0.55,"rgba(160,190,255,.07)");
+      dg.addColorStop(1,"rgba(140,175,255,0)");
+      x.fillStyle = dg; x.fillRect(0,0,B,B);
+    }
+    else if (tip === "eliptik"){
+      var eg = x.createRadialGradient(m,m,4, m,m,m-8);
+      eg.addColorStop(0,   "rgba(255,255,255,.92)");
+      eg.addColorStop(0.18,"rgba(255,240,225,.42)");
+      eg.addColorStop(0.55,"rgba(240,215,200,.13)");
+      eg.addColorStop(1,   "rgba(220,195,185,0)");
+      x.fillStyle = eg;
+      x.beginPath(); x.ellipse(m,m,m-8,(m-8)*0.72,0,0,Math.PI*2); x.fill();
+      /* toz şeridi */
+      x.globalCompositeOperation = "destination-out";
+      x.fillStyle = "rgba(0,0,0,.75)";
+      x.beginPath(); x.ellipse(m,m,m-18,9,0.12,0,Math.PI*2); x.fill();
+      x.globalCompositeOperation = "source-over";
+    }
+    else if (tip === "kenar"){
+      /* kenarından görünen disk + toz halkası */
+      var kg = x.createRadialGradient(m,m,2, m,m,42);
+      kg.addColorStop(0,"rgba(255,255,255,.98)");
+      kg.addColorStop(1,"rgba(255,238,210,0)");
+      x.fillStyle = kg;
+      x.beginPath(); x.ellipse(m,m,44,34,0,0,Math.PI*2); x.fill();
+
+      var dg2 = x.createLinearGradient(0,m-22,0,m+22);
+      dg2.addColorStop(0,   "rgba(255,240,215,0)");
+      dg2.addColorStop(0.5, "rgba(255,240,215,.40)");
+      dg2.addColorStop(1,   "rgba(255,240,215,0)");
+      x.fillStyle = dg2;
+      x.beginPath(); x.ellipse(m,m,m-10,20,0,0,Math.PI*2); x.fill();
+
+      x.globalCompositeOperation = "destination-out";
+      x.fillStyle = "rgba(0,0,0,.85)";
+      x.beginPath(); x.ellipse(m,m+7,m-12,6,0,0,Math.PI*2); x.fill();
+      x.globalCompositeOperation = "source-over";
+    }
+    else {  /* düzensiz — Macellan Bulutları gibi */
+      /* Önce gövdeyi taşıyan puslu ışık: düzensiz galaksilerin biçimi
+         belirsizdir ama gökyüzünde SOLUK DEĞİL, belirgin bir leke olarak
+         görünürler. */
+      var pg = x.createRadialGradient(m-10, m+4, 6, m, m, m-12);
+      pg.addColorStop(0,   "rgba(255,250,240,.55)");
+      pg.addColorStop(0.35,"rgba(240,232,215,.24)");
+      pg.addColorStop(0.72,"rgba(210,205,200,.08)");
+      pg.addColorStop(1,   "rgba(190,190,195,0)");
+      x.fillStyle = pg;
+      x.beginPath(); x.ellipse(m, m, m-12, (m-12)*0.70, 0.18, 0, Math.PI*2); x.fill();
+
+      /* Merkezden geçen çubuk — Büyük Macellan Bulutu"nun en belirgin yapısı */
+      var cg = x.createLinearGradient(m-70, m, m+70, m);
+      cg.addColorStop(0,   "rgba(255,245,225,0)");
+      cg.addColorStop(0.5, "rgba(255,248,235,.62)");
+      cg.addColorStop(1,   "rgba(255,245,225,0)");
+      x.fillStyle = cg;
+      x.beginPath(); x.ellipse(m-6, m+3, 74, 15, 0.16, 0, Math.PI*2); x.fill();
+
+      /* Dağınık yıldız kümeleri */
+      for (var i=0;i<130;i++){
+        var a2 = Math.random()*Math.PI*2;
+        var r2 = Math.pow(Math.random(), 0.60)*(m-24);
+        nokta(m + Math.cos(a2)*r2*1.18, m + Math.sin(a2)*r2*0.74,
+              4+Math.random()*13, 0.16+Math.random()*0.20);
+      }
+      /* Parlak yıldız doğum bölgeleri (gerçekte Tarantula Bulutsusu gibi) */
+      for (var j=0;j<5;j++){
+        var aj = Math.random()*Math.PI*2;
+        var rj = Math.pow(Math.random(), 0.5)*(m-40);
+        nokta(m + Math.cos(aj)*rj*1.1, m + Math.sin(aj)*rj*0.7,
+              12+Math.random()*10, 0.62+Math.random()*0.25);
+      }
+      nokta(m-14, m+6, 30, 0.85);       /* en yoğun çekirdek bölgesi */
+    }
+
+    var t2 = new THREE.CanvasTexture(c);
+    return t2;
+  }
+
+  var UZAKLIK = 2600;     /* sahne birimi — yıldız küresinin dışında */
+
+  GALAKSILER.forEach(function(v){
+    var yon = new THREE.Vector3(v.yon[0], v.yon[1], v.yon[2]).normalize();
+    var konum = yon.clone().multiplyScalar(UZAKLIK);
+
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: galaksiDoku(v.tip, v.renk),
+      color: new THREE.Color(v.renk),
+      transparent:true, opacity:0, depthWrite:false, depthTest:true,
+      blending:THREE.AdditiveBlending,
+      rotation: v.egim
+    }));
+    sp.scale.set(v.boy, v.boy, 1);
+    sp.position.copy(konum);
+    sp.renderOrder = -1;
+    scene.add(sp);
+
+    /* adı */
+    var ec = document.createElement("canvas"); ec.width = 512; ec.height = 96;
+    var ex = ec.getContext("2d");
+    ex.font = "bold 34px Segoe UI, Arial";
+    ex.fillStyle = "#e6ecff"; ex.textAlign = "center";
+    ex.fillText(v.ad, 256, 42);
+    ex.font = "22px Segoe UI, Arial";
+    ex.fillStyle = "#93a6cc";
+    ex.fillText(v.satirlar[0][1], 256, 74);
+    var et = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:new THREE.CanvasTexture(ec), transparent:true,
+      opacity:0, depthTest:false, depthWrite:false}));
+    et.position.copy(konum);
+    et.renderOrder = 1;
+    scene.add(et);
+
+    /* tıklama hedefi */
+    var hedef = new THREE.Mesh(
+      new THREE.SphereGeometry(v.boy*0.42, 8, 8),
+      new THREE.MeshBasicMaterial({visible:false}));
+    hedef.position.copy(konum);
+    hedef.userData.bilgi = {
+      ad:v.ad, tur:v.tur, renk:v.renk,
+      satirlar:v.satirlar,
+      not:v.not + "\n\n⚠ Modeldeki konumu ve uzaklığı ölçekli değildir; " +
+          "gerçekte Güneş Sistemi'nin yanında gösterilemeyecek kadar uzaktır."
+    };
+    hedef.visible = false;
+    scene.add(hedef);
+    tiklanabilir.push(hedef);
+
+    galaksiler.push({veri:v, sprite:sp, etiket:et, hedef:hedef, konum:konum});
+  });
+})();
+
+/* Kamera uzaklaştıkça galaksileri göster, yaklaşınca sönümle */
+function galaksileriGuncelle(){
+  /* Ölçüt kameranın GÜNEŞ"e uzaklığıdır — galaksiyi yakından izlerken
+     kamera galaksinin yanında ama Güneş"ten çok uzakta olur; kam.mesafe
+     ölçü alınsaydı tam bakarken sönerlerdi.
+     420 birimde belirmeye başlar, 700 birimde tam görünür */
+  var g = (camera.position.length() - 420) / 280;
+  g = Math.max(0, Math.min(1, g));
+  galaksiGorunur = g;
+  for (var i=0;i<galaksiler.length;i++){
+    var G = galaksiler[i];
+    G.sprite.material.opacity = 0.92*g;
+    G.etiket.material.opacity = g;
+    G.sprite.visible = g > 0.01;
+    G.etiket.visible = g > 0.20 && isimAcik;
+    G.hedef.visible  = g > 0.20;      /* görünmezken tıklanamasın */
+    /* etiket ekranda sabit büyüklükte, galaksinin altında dursun */
+    var u = G.konum.distanceTo(camera.position);
+    var o = u * 0.028;
+    G.etiket.scale.set(o*5.33, o, 1);
+    G.etiket.position.copy(G.konum);
+    /* Etiket galaksinin altında dursun; ama çok yaklaşıldığında
+       ekranın dışına taşmasın diye kameraya göre de sınırlanır. */
+    G.etiket.position.y -= Math.min(G.veri.boy*0.62, u*0.33);
+  }
+}
+
+/* ---------- 3. KAMERA KONTROLÜ (fare + dokunma) ---------- */
+
+var kam = {mesafe:190, yatay:0.6, dikey:0.95, hedef:new THREE.Vector3(0,0,0)};
+var hedefMesafe = 190, hedefYatay = 0.6, hedefDikey = 0.95;
+var takipEdilen = -1;
+
+function kamerayiYerlestir(){
+  kam.mesafe += (hedefMesafe - kam.mesafe)*0.10;
+  kam.yatay  += (hedefYatay  - kam.yatay )*0.14;
+  kam.dikey  += (hedefDikey  - kam.dikey )*0.14;
+  var d = kam.dikey;
+  camera.position.x = kam.hedef.x + kam.mesafe*Math.sin(d)*Math.cos(kam.yatay);
+  camera.position.y = kam.hedef.y + kam.mesafe*Math.cos(d);
+  camera.position.z = kam.hedef.z + kam.mesafe*Math.sin(d)*Math.sin(kam.yatay);
+  camera.lookAt(kam.hedef);
+}
+
+var suruklu=false, sonX=0, sonY=0, hareketEtti=false, sonMesafe=0;
+
+function bas(x,y){ suruklu=true; sonX=x; sonY=y; hareketEtti=false; }
+function hareket(x,y){
+  if(!suruklu) return;
+  var dx = x-sonX, dy = y-sonY;
+  if (Math.abs(dx)+Math.abs(dy) > 4) hareketEtti = true;
+  hedefYatay -= dx*0.006;
+  hedefDikey  = Math.max(0.12, Math.min(Math.PI-0.12, hedefDikey - dy*0.006));
+  sonX=x; sonY=y;
+}
+function birak(){ suruklu=false; }
+function yakinlas(mik){
+  hedefMesafe = Math.max(9, Math.min(1100, hedefMesafe * (1 + mik*0.0012)));
+}
+
+var cv = renderer.domElement;
+cv.addEventListener("mousedown", function(e){ bas(e.clientX,e.clientY); });
+window.addEventListener("mousemove", function(e){ hareket(e.clientX,e.clientY); });
+window.addEventListener("mouseup", birak);
+cv.addEventListener("wheel", function(e){ e.preventDefault(); yakinlas(e.deltaY); }, {passive:false});
+
+cv.addEventListener("touchstart", function(e){
+  if(e.touches.length===1) bas(e.touches[0].clientX, e.touches[0].clientY);
+  else if(e.touches.length===2){
+    sonMesafe = Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY);
+  }
+}, {passive:true});
+cv.addEventListener("touchmove", function(e){
+  if(e.touches.length===1) hareket(e.touches[0].clientX, e.touches[0].clientY);
+  else if(e.touches.length===2){
+    var m = Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY);
+    yakinlas((sonMesafe-m)*2.2);
+    sonMesafe = m;
+    hareketEtti = true;
+  }
+  e.preventDefault();
+}, {passive:false});
+cv.addEventListener("touchend", birak);
+
+/* ---------- 4. TIKLAMA → BİLGİ KARTI ---------- */
+
+var isin = new THREE.Raycaster();
+var fare = new THREE.Vector2();
+var kart = document.getElementById("kart");
+
+function kartiGoster(b){
+  document.getElementById("kartAd").textContent = b.ad;
+  document.getElementById("kartNokta").style.background = b.renk;
+  document.getElementById("kartTur").textContent = b.tur;
+  var t = "";
+  b.satirlar.forEach(function(s){
+    t += "<tr><td>"+s[0]+"</td><td>"+s[1]+"</td></tr>";
+  });
+  document.getElementById("kartTablo").innerHTML = t;
+  document.getElementById("kartNot").textContent = b.not;
+  kart.classList.add("acik");
+}
+document.getElementById("kartKapat").onclick = function(){ kart.classList.remove("acik"); };
+
+function secimDenemesi(cx, cy){
+  var r = cv.getBoundingClientRect();
+  fare.x =  ((cx-r.left)/r.width )*2 - 1;
+  fare.y = -((cy-r.top )/r.height)*2 + 1;
+  isin.setFromCamera(fare, camera);
+  var k = isin.intersectObjects(tiklanabilir, false);
+  if (k.length && k[0].object.userData.bilgi){
+    var bilgi = k[0].object.userData.bilgi;
+    kartiGoster(bilgi);
+
+    /* Tıklanan şeye kamerayı da yönlendir */
+    if (k[0].object === kuyrukHedef){ kuyrukluyaGit(); return; }
+    /* galaksiye tıklandıysa kamerayı ona çevir */
+    for (var gi=0; gi<galaksiler.length; gi++){
+      if (galaksiler[gi].hedef === k[0].object){
+        galaksiSira = gi;
+        galaksiyeBak(gi);
+        document.getElementById("galaksiBtn").textContent =
+          "🌌 " + galaksiler[gi].veri.kisa + " (" + (gi+1) + "/" + galaksiler.length + ")";
+        return;
+      }
+    }
+    if (bilgi === AY_BILGI && ayNesnesi){
+      araciTakipEt(ayNesnesi, null, 1.55, "ayBtn"); return;
+    }
+    if (bilgi === ARTEMIS_BILGI && artemis){
+      araciTakipEt(artemis.grup, null, 1.9, "aracBtn"); return;
+    }
+    for (var u=0; u<uydular.length; u++){
+      if (hedefBilgisi(uydular[u].govde) === bilgi){
+        araciTakipEt(uydular[u].govde, null, 1.7,
+          uydular[u].veri.kisa === "Hubble" ? "teleskopBtn" :
+          uydular[u].veri.kisa === "ISS"    ? "istasyonBtn" : null);
+        return;
+      }
+    }
+    var ad = bilgi.ad;
+    for (var i=0;i<gezegenler.length;i++){
+      if (gezegenler[i].veri.ad === ad){ gezegeneGit(i); break; }
+    }
+  }
+}
+cv.addEventListener("click", function(e){ if(!hareketEtti) secimDenemesi(e.clientX,e.clientY); });
+cv.addEventListener("touchend", function(e){
+  if(!hareketEtti && e.changedTouches.length===1){
+    secimDenemesi(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+  }
+});
+
+/* ---------- 5. ÜST BUTONLAR ---------- */
+
+var butonKutu = document.getElementById("gezButonlar");
+GEZEGENLER.forEach(function(v,i){
+  var b = document.createElement("button");
+  b.className = "gz"; b.textContent = v.ad; b.setAttribute("data-gez", i);
+  butonKutu.appendChild(b);
+});
+
+/* Kamera belirli bir nesneyi takip ediyorsa burada tutulur.
+   (kuyruklu yıldız, teleskop, uzay aracı, istasyon…) */
+var takipNesne = null;
+var aktifEk = null;
+
+function butonlariTazele(){
+  var hepsi = document.querySelectorAll("[data-gez]");
+  for (var i=0;i<hepsi.length;i++){
+    hepsi[i].classList.toggle("aktif",
+      !kuyrukTakip && !takipNesne &&
+      parseInt(hepsi[i].getAttribute("data-gez"),10) === takipEdilen);
+  }
+  document.getElementById("kuyrukBtn").classList.toggle("aktif", kuyrukTakip);
+  ["ayBtn","uydularBtn","teleskopBtn","aracBtn","istasyonBtn"].forEach(function(id){
+    document.getElementById(id).classList.toggle("aktif", aktifEk === id);
+  });
+  /* galaksi düğmesi yalnız galaksiye bakarken yanar; ona bakan kod
+     bu işaretlemeyi hemen sonrasında geri koyar */
+  var gb = document.getElementById("galaksiBtn");
+  gb.classList.remove("aktif");
+  gb.textContent = "🌌 Komşu galaksiler";
+  galaksiSira = -1;                     /* baştan Andromeda"dan başlasın */
+}
+
+/* Uydulardan birini kısa adıyla bul */
+function uyduBul(kisa){
+  for (var i=0;i<uydular.length;i++){
+    if (uydular[i].veri.kisa === kisa) return uydular[i];
+  }
+  return null;
+}
+
+/* Bir aracı takip etmeye başla */
+function araciTakipEt(nesne, bilgi, mesafe, dugme){
+  if (!nesne) return;
+  kuyrukTakip = false;
+  takipEdilen = -1;
+  takipNesne  = nesne;
+  aktifEk     = dugme || null;
+  hedefMesafe = mesafe;
+  hedefDikey  = 1.05;
+  if (bilgi) kartiGoster(bilgi);
+  butonlariTazele();
+}
+
+/* Kuyruklu yıldızı takip et */
+function kuyrukluyaGit(){
+  takipNesne  = null;
+  aktifEk     = null;
+  kuyrukTakip = true;
+  takipEdilen = -1;
+  hedefMesafe = 6;
+  hedefDikey  = 1.05;
+  kartiGoster(KUYRUK_BILGI);
+  butonlariTazele();
+}
+document.getElementById("kuyrukBtn").onclick = kuyrukluyaGit;
+
+/* Kamerayı Güneş Sistemi"nin dışına çekip komşu galaksilere nişan al.
+   Kamera hep merkeze baktığı için, bir galaksiyi kadraja almanın yolu
+   kamerayı onun TAM TERS yönüne koymaktır. Düğmeye her basışta sıradaki
+   galaksiye geçilir. */
+var galaksiSira = -1;
+
+function galaksiyeBak(i){
+  var G = galaksiler[i];
+  if (!G) return;
+  /* Kamerayı galaksinin yanına taşı ve GÜNEŞ tarafından bak: böylece
+     galaksi kadrajı doldurur, Güneş Sistemi arkamızda kalır. */
+  var y = G.konum.clone().normalize().negate();
+  hedefDikey = Math.max(0.12, Math.min(Math.PI-0.12, Math.acos(y.y)));
+  hedefYatay = Math.atan2(y.z, y.x);
+  /* mesafe galaksinin boyuyla orantılı: büyük küçük hepsi kadrajda
+     aynı büyüklükte görünsün */
+  araciTakipEt(G.hedef, G.hedef.userData.bilgi, G.veri.boy*2.2, null);
+  /* araciTakipEt kamera açısını da ayarlıyor; bizimkini geri koy */
+  hedefDikey = Math.max(0.12, Math.min(Math.PI-0.12, Math.acos(y.y)));
+  /* araciTakipEt → butonlariTazele düğmeyi sıfırlar; sırayı ve
+     yanan görünümü ondan SONRA geri koyuyoruz */
+  galaksiSira = i;
+  document.getElementById("galaksiBtn").classList.add("aktif");
+}
+
+document.getElementById("galaksiBtn").onclick = function(){
+  galaksiSira = (galaksiSira + 1) % galaksiler.length;
+  galaksiyeBak(galaksiSira);
+  this.textContent = "🌌 " + galaksiler[galaksiSira].veri.kisa +
+                     " (" + (galaksiSira+1) + "/" + galaksiler.length + ")";
+};
+
+/* Dünya çevresindeki uyduların tamamını gösteren görünüm */
+document.getElementById("uydularBtn").onclick = function(){
+  gezegeneGit(2);                       /* Dünya */
+  hedefMesafe = 8.5;
+  hedefDikey  = 1.02;
+  aktifEk = "uydularBtn";
+  document.getElementById("kart").classList.remove("acik");
+  butonlariTazele();
+};
+
+document.getElementById("teleskopBtn").onclick = function(){
+  var u = uyduBul("Hubble");
+  if (u) araciTakipEt(u.govde, hedefBilgisi(u.govde), 1.6, "teleskopBtn");
+};
+
+document.getElementById("istasyonBtn").onclick = function(){
+  var u = uyduBul("ISS");
+  if (u) araciTakipEt(u.govde, hedefBilgisi(u.govde), 1.8, "istasyonBtn");
+};
+
+document.getElementById("aracBtn").onclick = function(){
+  if (artemis) araciTakipEt(artemis.grup, ARTEMIS_BILGI, 1.9, "aracBtn");
+};
+
+document.getElementById("ayBtn").onclick = function(){
+  if (ayNesnesi) araciTakipEt(ayNesnesi, AY_BILGI, 1.55, "ayBtn");
+};
+
+/* Bir aracın görünmez tıklama küresindeki bilgi kartını bulur */
+function hedefBilgisi(grup){
+  for (var i=0;i<grup.children.length;i++){
+    if (grup.children[i].userData && grup.children[i].userData.bilgi){
+      return grup.children[i].userData.bilgi;
+    }
+  }
+  return null;
+}
+
+function gezegeneGit(i){
+  kuyrukTakip = false;
+  takipNesne  = null;
+  aktifEk     = null;
+  takipEdilen = i;
+  if (i < 0){
+    hedefMesafe = genelMesafe(); hedefDikey = 0.95;
+    kart.classList.remove("acik");
+  } else {
+    hedefMesafe = Math.max(7, GEZEGENLER[i].yaricap * 8 + 4);
+    /* Yeterince yukarıdan bakılmazsa Satürn"ün halkası kenardan görünüp
+       ince bir çizgiye dönüşüyor; bu yüzden takip açısı yükseltildi. */
+    hedefDikey  = 0.92;
+  }
+  butonlariTazele();
+}
+
+document.addEventListener("click", function(e){
+  var t = e.target;
+  if (t && t.hasAttribute && t.hasAttribute("data-gez")){
+    var i = parseInt(t.getAttribute("data-gez"),10);
+    gezegeneGit(i);
+    if (i >= 0) kartiGoster(GEZEGENLER[i]);
+  }
+});
+
+/* ---------- 6. ALT KONTROLLER ---------- */
+
+var oynuyor = true, hiz = 1.0;
+var oynatBtn = document.getElementById("oynatBtn");
+oynatBtn.onclick = function(){
+  oynuyor = !oynuyor;
+  oynatBtn.textContent = oynuyor ? "⏸ Durdur" : "▶ Başlat";
+};
+
+var hizKay = document.getElementById("hizKay"), hizYazi = document.getElementById("hizYazi");
+hizKay.oninput = function(){
+  hiz = hizKay.value/100;
+  hizYazi.textContent = hiz.toFixed(1)+"x";
+};
+
+var yorungeAcik = true;
+document.getElementById("yorungeBtn").onclick = function(){
+  yorungeAcik = !yorungeAcik;
+  yorungeCizgileri.forEach(function(l){ l.visible = yorungeAcik; });
+  this.textContent = "Yörüngeler: " + (yorungeAcik ? "Açık" : "Kapalı");
+};
+
+var isimAcik = true;
+document.getElementById("isimBtn").onclick = function(){
+  isimAcik = !isimAcik;
+  gezegenler.forEach(function(g){ g.etiket.visible = isimAcik; });
+  this.textContent = "İsimler: " + (isimAcik ? "Açık" : "Kapalı");
+};
+
+/* ---------- ASTRONOT İMLECİ ----------
+   Fare imlecini astronota çevirir. İmleç resmi burada, kodun içinde
+   çiziliyor; dışarıdan bir dosya gerekmiyor. Tarayıcılar imleç olarak
+   SVG kabul etmediği için tuvale çizip PNG"ye çeviriyoruz. */
+var astronotAcik = false;
+var astronotImleci = (function(){
+  var B = 52;
+  var c = document.createElement("canvas"); c.width = c.height = B;
+  var x = c.getContext("2d");
+  var m = B/2;
+
+  /* sırt ünitesi */
+  x.fillStyle = "#c9ced6";
+  x.beginPath(); x.roundRect ? x.roundRect(m-13, m-4, 26, 20, 6)
+                             : x.rect(m-13, m-4, 26, 20);
+  x.fill();
+  /* kollar */
+  x.strokeStyle = "#e8ecf2"; x.lineWidth = 7; x.lineCap = "round";
+  x.beginPath(); x.moveTo(m-11, m+2); x.lineTo(m-20, m+11); x.stroke();
+  x.beginPath(); x.moveTo(m+11, m+2); x.lineTo(m+20, m+10); x.stroke();
+  /* gövde */
+  x.fillStyle = "#eef1f6";
+  x.beginPath(); x.ellipse(m, m+7, 12, 13, 0, 0, Math.PI*2); x.fill();
+  /* bacaklar */
+  x.strokeStyle = "#e8ecf2"; x.lineWidth = 8;
+  x.beginPath(); x.moveTo(m-5, m+16); x.lineTo(m-8, m+24); x.stroke();
+  x.beginPath(); x.moveTo(m+5, m+16); x.lineTo(m+9, m+23); x.stroke();
+  /* kask */
+  x.fillStyle = "#f6f8fc";
+  x.beginPath(); x.arc(m, m-8, 13, 0, Math.PI*2); x.fill();
+  /* vizör */
+  var vg = x.createLinearGradient(m-9, m-16, m+9, m-1);
+  vg.addColorStop(0,   "#2a4a7a");
+  vg.addColorStop(0.45,"#15294b");
+  vg.addColorStop(1,   "#0b1730");
+  x.fillStyle = vg;
+  x.beginPath(); x.ellipse(m, m-8, 9.5, 8, 0, 0, Math.PI*2); x.fill();
+  /* vizördeki ışık yansıması */
+  x.fillStyle = "rgba(255,255,255,.55)";
+  x.beginPath(); x.ellipse(m-3.5, m-11, 3.4, 2.1, -0.5, 0, Math.PI*2); x.fill();
+  /* kask kenarı */
+  x.strokeStyle = "#aeb6c4"; x.lineWidth = 1.6;
+  x.beginPath(); x.arc(m, m-8, 13, 0, Math.PI*2); x.stroke();
+
+  return c.toDataURL("image/png");
+})();
+
+function astronotUygula(){
+  var deger = astronotAcik
+    ? "url(" + astronotImleci + ") 26 18, auto"
+    : "";
+  document.body.style.cursor = deger;
+  renderer.domElement.style.cursor = deger;
+  var b = document.getElementById("astronotBtn");
+  b.classList.toggle("aktif", astronotAcik);
+  b.textContent = astronotAcik ? "👨‍🚀 Astronot imleci: Açık"
+                               : "👨‍🚀 Astronot imleci";
+}
+document.getElementById("astronotBtn").onclick = function(){
+  astronotAcik = !astronotAcik;
+  astronotUygula();
+};
+
+document.getElementById("sifirlaBtn").onclick = function(){
+  gezegeneGit(-1);
+  hedefYatay = 0.6;
+};
+
+/* ---------- 7. ÇİZİM DÖNGÜSÜ ---------- */
+
+var saat = new THREE.Clock();
+var gecici = new THREE.Vector3();
+var etiketVec = new THREE.Vector3();
+
+/* ---------- ZAMAN ÖLÇEĞİ ----------
+   Gezegenlerin DOLANMA süreleri kendi aralarında gerçek orandadır
+   (Merkür 88 gün, Neptün 165 yıl) ve DÖNME süreleri de kendi aralarında
+   gerçek orandadır (Jüpiter 10 saat, Venüs 243 gün).
+
+   Ancak bu iki ölçek birbirinden farklıdır. Çünkü tek bir ölçek
+   kullanılsaydı: Dünya"nın bir yılı ekranda 1 dakika sürecek olsaydı,
+   bir günü 0,16 saniye sürerdi — gezegen dönmüyor, titriyor gibi
+   görünürdü. Bu yüzden dönme hareketi ayrı ve daha yavaş bir ölçekte
+   gösteriliyor.
+
+   1.0x hızda:  1 saniye = 5 gün (dolanma) · 1 saniye = 2,5 saat (dönme)
+   Yani Dünya Güneş çevresindeki turunu ~73 saniyede,
+   kendi çevresindeki turunu ~9,6 saniyede tamamlıyor.            */
+var GUN_SANIYE  = 5;     /* dolanma: saniyede kaç gün ilerlesin  */
+var SAAT_SANIYE = 2.5;   /* dönme:   saniyede kaç saat ilerlesin */
+
+/* Genel görünümde 8 gezegenin tamamı ekrana sığsın diye kamera
+   uzaklığını ekranın en-boy oranına göre hesaplıyoruz. Dar ve uzun
+   telefon ekranlarında kameranın daha geriye gitmesi gerekiyor. */
+function genelMesafe(){
+  var yariFov  = 25 * Math.PI/180;              /* kamera açısının yarısı */
+  var yatayTan = Math.tan(yariFov) * camera.aspect;
+  var dikeyTan = Math.tan(yariFov);
+  var R = 110;                                  /* Neptün yörüngesi + pay   */
+  /* Yörüngenin kameraya YAKIN kenarı, perspektif yüzünden uzak kenardan
+     daha büyük görünür. Bu yüzden basit bir oranla hesaplamak yetmiyor;
+     hepsi kadraja girene kadar kamerayı adım adım geriye çekiyoruz. */
+  var d = 110;
+  for (var k = 0; k < 60; k++){
+    var yatayUz = d * Math.sin(hedefDikey);     /* kameranın düzlemdeki uzaklığı */
+    var yukseklik = d * Math.cos(hedefDikey);
+    var yakinKenar = Math.sqrt((yatayUz-R)*(yatayUz-R) + yukseklik*yukseklik);
+    if (yakinKenar * yatayTan >= R && yakinKenar * dikeyTan >= R*0.55) break;
+    d *= 1.05;
+    if (d > 900) break;
+  }
+  return Math.max(120, Math.min(900, d));
+}
+
+function boyutla(){
+  var g = sahneDiv.clientWidth, y = sahneDiv.clientHeight;
+  camera.aspect = g/y;
+  camera.updateProjectionMatrix();
+  renderer.setSize(g, y);
+  if (takipEdilen < 0) hedefMesafe = genelMesafe();
+}
+window.addEventListener("resize", boyutla);
+
+function cizim(){
+  requestAnimationFrame(cizim);
+  var dt = saat.getDelta();
+  var h  = oynuyor ? dt*hiz : 0;
+
+  /* Güneş kendi ekseninde yaklaşık 25 günde (600 saatte) döner;
+     gezegenlerle aynı dönüş ölçeğini kullanıyoruz. */
+  gunes.rotation.y += h * (2*Math.PI / (600/SAAT_SANIYE));
+
+  /* --- Güneş"in canlılığı: nefes alan korona ve plazma patlamaları --- */
+  var zaman = saat.elapsedTime;
+  var nefes = 1 + Math.sin(zaman*0.9)*0.022 + Math.sin(zaman*2.3)*0.010;
+  gunesParilti.scale.set(34*nefes, 34*nefes, 1);
+  var nefes2 = 1 + Math.sin(zaman*0.42 + 1.1)*0.045;
+  gunesKorona.scale.set(44*nefes2, 44*nefes2, 1);
+  gunesKorona.material.rotation += h*0.05;
+
+  for (var pi=0; pi<patlamalar.length; pi++){
+    var pt = patlamalar[pi];
+    if (!pt.mesh.visible){
+      pt.bekle -= h;
+      if (pt.bekle <= 0) patlamaBaslat(pt);
+      continue;
+    }
+    pt.t += h;
+    var o = pt.t/pt.sure;                 /* 0 → 1 arası ömrü */
+    if (o >= 1){
+      pt.mesh.visible = false;
+      pt.bekle = 1.5 + Math.random()*9;
+      continue;
+    }
+    /* hızlı yüksel, yavaş sön */
+    var yuk = o < 0.30 ? (o/0.30) : 1 - (o-0.30)/0.70*0.35;
+    var s = pt.buyuk * yuk;
+    pt.mesh.scale.set(s, s, s);
+    pt.mesh.material.opacity = 0.58 * Math.sin(Math.PI*Math.min(1, o*1.15));
+  }
+  /* Asteroit Kuşağı Güneş çevresindeki turunu yaklaşık 4,5 yılda atar. */
+  asteroitGrubu.rotation.y += h * (2*Math.PI / (1650/GUN_SANIYE));
+
+  gezegenler.forEach(function(g){
+    /* Güneş çevresinde dolanma — gerçek dolanma sürelerine göre */
+    g.aci += h * (2*Math.PI / (g.veri.dolanmaGun/GUN_SANIYE));
+    g.pivot.rotation.y = g.aci;
+    /* Kendi ekseninde dönme — gerçek dönme sürelerine göre.
+       Eksi değer ters yönde dönmek demek (Venüs ve Uranüs). */
+    g.mesh.rotation.y += h * (2*Math.PI / (Math.abs(g.veri.donmeSaat)/SAAT_SANIYE)) *
+                         (g.veri.donmeSaat < 0 ? -1 : 1);
+    /* Ay, Dünya çevresindeki turunu 27,3 günde tamamlar. */
+    if (g.ayPivot) g.ayPivot.rotation.y += h * (2*Math.PI / (27.3/GUN_SANIYE));
+
+    /* İsim etiketi kameradan ne kadar uzakta olursa olsun
+       ekranda hep aynı büyüklükte kalsın. */
+    g.mesh.getWorldPosition(gecici);
+    var uzaklik = gecici.distanceTo(camera.position);
+    var olcek = Math.max(0.55, uzaklik * 0.030);
+    g.etiket.scale.set(olcek*4, olcek, 1);
+    g.etiket.position.y = g.veri.yaricap + olcek*0.85;
+  });
+
+  /* Ay etiketini ekranda sabit büyüklükte tut */
+  if (ayEtiket && ayNesnesi){
+    ayNesnesi.getWorldPosition(etiketVec);
+    var ayO = Math.max(0.10, etiketVec.distanceTo(camera.position) * 0.022);
+    ayEtiket.scale.set(ayO*4, ayO, 1);
+    ayEtiket.position.y = 0.34 + ayO*0.95;
+  }
+
+  /* --- Dünya"nın bulut örtüsü: yüzeyden biraz farklı hızda döner --- */
+  if (dunyaBulut){
+    dunyaBulut.rotation.y += h * (2*Math.PI / (23.9/SAAT_SANIYE)) * 1.12;
+  }
+
+  /* --- Dünya çevresindeki insan yapımı uydular --- */
+  for (var ui=0; ui<uydular.length; ui++){
+    uydular[ui].kol.rotation.y += h * (2*Math.PI/uydular[ui].sure);
+    /* Işıltı uzaktan uyduyu görünür kılmak için; yaklaşınca aracın
+       kendisini gizlememesi için küçülsün. */
+    uydular[ui].govde.getWorldPosition(etiketVec);
+    var uIs = Math.max(0.10, Math.min(1.7, etiketVec.distanceTo(camera.position)*0.055));
+    uydular[ui].isik.scale.set(uIs, uIs, 1);
+  }
+
+  /* --- Kuyruklu yıldız --- */
+  kuyrukM += h * (2*Math.PI/K_PERIYOT);
+  kuyrukKonum(kuyrukM, kY1);
+  kuyrukKonum(kuyrukM + 0.01, kY2);
+  kuyrukGovde.position.copy(kY1);
+
+  var kUzaklik = kY1.length();
+  kYon.copy(kY1).normalize();                    /* Güneş"ten dışa doğru */
+  kHiz.subVectors(kY2, kY1).normalize();         /* hareket yönü         */
+
+  /* Kuyruk, Güneş"e yaklaştıkça uzar; uzaklaşınca yok olur. */
+  var kBoy  = Math.max(1.2, Math.min(38, 6400/(kUzaklik*kUzaklik)));
+  var kGuc  = Math.min(1, 0.22 + kBoy/9);
+
+  iyonKuyruk.quaternion.setFromUnitVectors(kEksen, kYon);
+  iyonKuyruk.scale.set(1, kBoy, 1);
+  iyonKuyruk.material.opacity = 0.70*kGuc;
+
+  kTozYon.copy(kYon).addScaledVector(kHiz, -0.55).normalize();
+  tozKuyruk.quaternion.setFromUnitVectors(kEksen, kTozYon);
+  tozKuyruk.scale.set(1, kBoy*0.62, 1);
+  tozKuyruk.material.opacity = 0.40*kGuc;
+
+  /* Koma: nefes alıp titrer, hiçbir zaman donuk durmaz */
+  var titre = 1 + Math.sin(zaman*6.1)*0.045 + Math.sin(zaman*9.7)*0.030;
+  var kKoma = (0.9 + kBoy*0.13) * titre;
+  kuyrukKoma.scale.set(kKoma, kKoma, 1);
+
+  /* Çekirdek kendi ekseninde takla atarak döner (Halley yaklaşık
+     2,2 günde bir tur atar) */
+  kuyrukCekirdek.rotation.y += h*1.35;
+  kuyrukCekirdek.rotation.x += h*0.52;
+
+  /* Jetler Güneş"e doğru fışkırır: kYon Güneş"ten DIŞA baktığı için
+     jet yönü onun tersidir. */
+  jetGrup.quaternion.setFromUnitVectors(kEksen, kYon.clone().negate());
+  var jetGuc = Math.min(1, kBoy/16);
+  for (var ji=0; ji<jetler.length; ji++){
+    var dalga = 0.75 + Math.sin(zaman*(4.2 + ji*1.3) + ji)*0.25;
+    jetler[ji].scale.set(1, Math.max(0.01, kBoy*0.30*dalga), 1);
+    jetler[ji].material.opacity = 0.34 * jetGuc * dalga;
+  }
+
+  /* Halley etiketi de ekranda sabit büyüklükte kalsın */
+  if (kuyrukEtiket){
+    kuyrukGovde.getWorldPosition(etiketVec);
+    var kEtO = Math.max(0.5, etiketVec.distanceTo(camera.position) * 0.026);
+    kuyrukEtiket.scale.set(kEtO*4, kEtO, 1);
+    kuyrukEtiket.position.y = 0.30 + kEtO*0.9;
+  }
+
+  /* --- Artemis I: Dünya → Ay → Dünya --- */
+  if (artemis && artemisDunya){
+    artemis.t = (artemis.t + h/artemis.sure) % 1;
+    var ayK = ayiBul(artemisDunya);
+    artemisKonum(artemis.t, ayK, gecici);
+    artemis.grup.position.copy(gecici);
+
+    /* aracın burnu gittiği yöne dönsün */
+    if (!artemis.ilk && gecici.distanceToSquared(artemis.oncekiKonum) > 1e-8){
+      artemis.grup.lookAt(
+        gecici.x*2 - artemis.oncekiKonum.x,
+        gecici.y*2 - artemis.oncekiKonum.y,
+        gecici.z*2 - artemis.oncekiKonum.z);
+      artemis.grup.rotateY(Math.PI/2);
+    }
+    /* etiketi ekranda sabit büyüklükte tut */
+    artemis.grup.getWorldPosition(etiketVec);
+    var aEtO = Math.max(0.03, etiketVec.distanceTo(camera.position) * 0.026);
+    artemis.etiket.scale.set(aEtO*4, aEtO, 1);
+    artemis.etiket.position.y = 0.25 + aEtO*0.9;
+
+    /* motor yalnızca ayrılış ve dönüş ateşlemelerinde çalışır */
+    artemis.alev.visible = (artemis.t > 0.115 && artemis.t < 0.165) ||
+                           (artemis.t > 0.675 && artemis.t < 0.725);
+
+    /* geçtiği yolu ize ekle */
+    if (h > 0 && (artemis.ilk || gecici.distanceToSquared(artemis.oncekiKonum) > 0.0006)){
+      var dizi = artemis.izGeo.attributes.position.array;
+      if (artemis.izSayi >= artemis.izMax){
+        dizi.copyWithin(0, 3);
+        artemis.izSayi = artemis.izMax - 1;
+      }
+      dizi[artemis.izSayi*3]   = gecici.x;
+      dizi[artemis.izSayi*3+1] = gecici.y;
+      dizi[artemis.izSayi*3+2] = gecici.z;
+      artemis.izSayi++;
+      artemis.izGeo.setDrawRange(0, artemis.izSayi);
+      artemis.izGeo.attributes.position.needsUpdate = true;
+      artemis.oncekiKonum.copy(gecici);
+      artemis.ilk = false;
+    }
+  }
+
+  /* --- Kamera neyi takip ediyor? --- */
+  if (takipNesne){
+    takipNesne.getWorldPosition(kam.hedef);
+  } else if (kuyrukTakip){
+    kuyrukGovde.getWorldPosition(kam.hedef);
+  } else if (takipEdilen >= 0){
+    var t = gezegenler[takipEdilen];
+    t.mesh.getWorldPosition(kam.hedef);
+  } else {
+    kam.hedef.lerp(new THREE.Vector3(0,0,0), 0.1);
+  }
+
+  kamerayiYerlestir();
+
+  /* --- Komşu galaksiler: kamera uzaklaştıkça belirsinler --- */
+  galaksileriGuncelle();
+
+  renderer.render(scene, camera);
+}
+
+boyutla();
+cizim();
+document.getElementById("yukleme").style.display = "none";
+butonlariTazele();
+
+setTimeout(function(){
+  var ip = document.getElementById("ipucu");
+  ip.style.opacity = "0";
+}, 9000);
+
+/* ============================================================
+   8. SAĞ PANEL — YAPAY ZEKÂ İLE YAZIŞMA KAYDI
+   Bu bölüm, modeli hazırlarken yapay zekâya ne yazdığımın ve
+   çıkan modeli nasıl düzelttirdiğimin kaydıdır.
+   ============================================================ */
+
+var YAZISMA = [
+  {kim:"not", ad:"Bilgi", saat:"", metin:
+    "Aşağıdaki kayıt, bu modeli hazırlarken yapay zekâ ile yaptığım " +
+    "yazışmadır. Model tek seferde çıkmadı: önce sade bir simülasyon geldi, " +
+    "sonra ödevde istenen maddeleri tek tek ekletip düzelttirdim."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"1. mesaj", metin:
+    "Merhaba, bana bir güneş sistemi simülasyonu hazırlar mısın?"},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Merhaba! Elbette. Sana basit bir güneş sistemi simülasyonu hazırladım.\n\n" +
+    "Ortada sarı bir Güneş var, çevresinde renkli daireler hâlinde 8 gezegen " +
+    "dönüyor. Tek bir HTML dosyası, tarayıcıda açılıyor.\n\n" +
+    "İstersen üzerine ekleme yapabiliriz."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"2. mesaj", metin:
+    "Açtım, çalışıyor. Ama bu bir ödev ve öğretmenimin istediği " +
+    "belirli şeyler var. Sana bunları sırayla söyleyeceğim.\n\n" +
+    "Önce en önemlisi: çalışma 3 BOYUTLU olmalı. Senin yaptığında " +
+    "gezegenler düz daire görünüyor. Gezegenler küre şeklinde, gerçekten " +
+    "üç boyutlu görünsün."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Anladım. O zaman düz çizim yerine Three.js kütüphanesine geçiyorum. " +
+    "Her gezegeni SphereGeometry ile küre olarak oluşturdum ve yüzeylerine " +
+    "ışık düşecek şekilde malzeme verdim. Artık gezegenlerin aydınlık ve " +
+    "karanlık yüzleri var, yani gerçekten üç boyutlular."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"3. mesaj", metin:
+    "İkinci istek: gezegenler DOĞRU SIRADA olmalı. Sırayı söylüyorum: " +
+    "Merkür, Venüs, Dünya, Mars, Jüpiter, Satürn, Uranüs, Neptün. " +
+    "Güneş de tam merkezde olacak."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Sırayı bu şekilde düzelttim. Güneşi sahnenin tam merkezine koydum ve " +
+    "8 gezegeni verdiğin sırayla, içten dışa doğru yerleştirdim. Ayrıca " +
+    "ışık kaynağını da Güneşin içine aldım; böylece gezegenleri aydınlatan " +
+    "şey gerçekten Güneş oluyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"4. mesaj", metin:
+    "Üçüncü istek: gezegenlerin YÖRÜNGELERİ görünsün. Şu an nerede " +
+    "dolandıkları belli olmuyor."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Her gezegenin yörüngesini ince mavimsi bir çember olarak çizdim. " +
+    "Ayrıca alt tarafa bir düğme koydum: istersen yörünge çizgilerini " +
+    "kapatıp sadece gezegenleri de görebilirsin."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"5. mesaj", metin:
+    "Dördüncü istek: gezegenler Güneşin çevresinde HAREKET ETSİN.\n\n" +
+    "Ama dikkat: hepsi aynı hızda dönmesin. Gerçekte Merkür 88 günde " +
+    "dolanıyor, Neptün 165 yıl sürüyor. Hızlar buna göre olsun."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Haklısın, ilk yaptığımda hepsi aynı hızdaydı. Her gezegene NASA " +
+    "verisinden gelen gerçek dolanma süresini (gün cinsinden) ekledim ve " +
+    "dönme hızını bu süreye böldüm.\n\n" +
+    "Artık Merkür hızla dolanıyor, Neptün ise neredeyse kıpırdamıyor. " +
+    "Aradaki oran gerçek."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"6. mesaj", metin:
+    "Beşinci istek: gezegenler hakkında BİLGİ verilsin ve bilgiler " +
+    "TÜRKÇE olsun. Bir gezegene tıkladığımda adı, çapı, Güneşe uzaklığı, " +
+    "dolanma süresi ve uydu sayısı çıksın."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Tıklamayı Raycaster ile yaptım: tıkladığın noktadan sahneye görünmez " +
+    "bir ışın gönderiyor, hangi küreye çarptığını buluyor ve o gezegenin " +
+    "bilgi kartını açıyor.\n\n" +
+    "Kartta istediğin beş bilgiyle birlikte sıcaklık ve kendi ekseninde " +
+    "dönme süresini de verdim. Metinlerin tamamı Türkçe."},
+
+  {kim:"not", ad:"Not", saat:"", metin:
+    "Buraya kadar olanlar ödevde ZORUNLU olan maddelerdi. Bundan sonrası " +
+    "ek puan getiren geliştirmeler."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"7. mesaj", metin:
+    "Zorunlu kısımlar tamam. Şimdi ek puan getiren şeyleri isteyeceğim.\n\n" +
+    "Satürnün halkaları olsun.\n" +
+    "Dünyanın çevresinde dönen bir Ay olsun."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Satürne halka ekledim ve halkanın ortasına Cassini Boşluğunu da " +
+    "çizdim (halkayı ikiye ayıran ince karanlık şerit).\n\n" +
+    "Ayı, Dünyanın kendi eksenine bağladım. Böylece Ay hem Dünyanın " +
+    "çevresinde dönüyor hem de Dünyayla birlikte Güneşin çevresinde " +
+    "dolanıyor. Aya da tıklayıp bilgi kartını açabilirsin."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"8. mesaj", metin:
+    "Arka planda yıldızlar olsun.\n" +
+    "Bir de Asteroit Kuşağı ekle. Ama doğru yere koy: Asteroit Kuşağı " +
+    "Mars ile Jüpiterin arasındadır."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "6000 yıldızı sahnenin çevresine küre biçiminde dağıttım, " +
+    "parlaklıkları da rastgele olsun diye biraz değiştirdim.\n\n" +
+    "Asteroit Kuşağı için 2200 parçayı Mars ve Jüpiter yörüngelerinin tam " +
+    "arasına, hafif kalınlıkta bir halka olarak yerleştirdim ve çok yavaş " +
+    "döndürdüm."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"9. mesaj", metin:
+    "Modeli fareyle döndürebileyim ve yakınlaştırabileyim. Telefonda da " +
+    "çalışsın, parmakla döndüreyim.\n\n" +
+    "Bir de Başlat/Durdur düğmesi ve hızı değiştirme seçeneği olsun."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Döndürme ve yakınlaştırmayı hem fare hem dokunma için yazdım: " +
+    "tek parmakla döndürüyorsun, iki parmakla yakınlaştırıyorsun.\n\n" +
+    "Alt çubuğa Başlat/Durdur düğmesi ile bir hız çubuğu koydum. Hızı " +
+    "sıfıra çekince her şey donuyor, 5 kata kadar da çıkarabiliyorsun."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"10. mesaj", metin:
+    "Gezegenlerin isimleri de görünsün. Bir de üstte gezegen seçme " +
+    "düğmeleri olsun, tıklayınca kamera o gezegene gitsin."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Her gezegenin üstüne adını yazan bir etiket koydum. Etiketler " +
+    "kameradan uzaklaşınca küçülmesin diye, ekranda hep aynı büyüklükte " +
+    "kalacak şekilde ayarladım.\n\n" +
+    "Üst çubuğa da sekiz gezegenin düğmesini ekledim; birine basınca kamera " +
+    "yumuşak bir geçişle o gezegeni takip etmeye başlıyor ve bilgi kartı " +
+    "açılıyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"11. mesaj", metin:
+    "Şimdi de bilimsel bilgileri tekrar kontrol et ve yanlış olanları " +
+    "düzelt. Özellikle uydu sayılarına dikkat et, kitaptaki sayılar eski " +
+    "olabilir."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Bütün sayıları NASA gezegen bilgi föylerinden tek tek karşılaştırdım. " +
+    "Uydu sayıları son yıllarda değişmiş: Jüpiter 95, Satürn 274 " +
+    "doğrulanmış uyduya ulaşmış durumda.\n\n" +
+    "Bir de iki şeyi modele yansıttım: Venüs kendi ekseninde diğerlerinin " +
+    "TERS yönünde dönüyor, Uranüs ise 98 derece yatık. Artık ekranda da " +
+    "gerçekten yan yatmış görünüyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"12. mesaj", metin:
+    "Bir şey daha istiyorum ve bunu ben düşündüm: seninle yaptığım bu " +
+    "yazışma modelin sağ tarafında akan bir panelde görünsün.\n\n" +
+    "Öğretmenim ödevi açtığında sadece sonucu değil, sana ne yazdığımı ve " +
+    "neleri düzelttirdiğimi de görsün."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Bu güzel bir fikir, çünkü ödevde asıl değerlendirilen şey yapay " +
+    "zekâyı nasıl yönlendirdiğin.\n\n" +
+    "Sağdaki paneli ekledim: yazışma sırayla, kendiliğinden akıyor. " +
+    "Duraklatılabiliyor, baştan oynatılabiliyor veya tamamı bir anda " +
+    "gösterilebiliyor. Küçük ekranlarda panel gizlenip sağ üstteki " +
+    "düğmeyle açılıyor, böylece model ekranı daralmıyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"13. mesaj", metin:
+    "Son bir sorum var: bu model gerçek ölçekte mi? Değilse bunu da " +
+    "yazalım, yanlış bilgi vermek istemiyorum."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Değil, ve bunu sorman doğru. Gezegenlerin büyüklükleri ve Güneşe " +
+    "uzaklıkları ekrana sığsın diye küçültüldü.\n\n" +
+    "Gerçek oranla çizilseydi Dünya, Güneşin yanında bir noktadan küçük " +
+    "kalırdı; Neptün ise ekrandan yüzlerce metre uzakta olurdu.\n\n" +
+    "Buna karşılık bilgi kartlarındaki bütün sayılar ve gezegenlerin sırası " +
+    "gerçektir. Bu açıklamayı kodun en başına not olarak ekledim."},
+
+  {kim:"not", ad:"Not", saat:"", metin:
+    "Model teslim edilmeden önce birkaç şey daha ekletmek istedim."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"14. mesaj", metin:
+    "Gezegenler çok hızlı dönüyor. Hızlarını gerçeğine göre ayarlar mısın?"},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Yavaşlattım. Ama burada dürüst olmam gereken bir nokta var: dolanma " +
+    "ile dönme aynı ölçeğe sığmıyor.\n\n" +
+    "Dünya bir yılda Güneş"+"'"+"in çevresini dolanır, aynı sürede kendi " +
+    "ekseninde 365 kez döner. Bir yılı ekranda bir dakika yapsaydım, bir gün " +
+    "0,16 saniye sürerdi — gezegen dönüyor gibi değil, titriyor gibi " +
+    "görünürdü.\n\n" +
+    "Bu yüzden iki ayrı ölçek kullandım. Gezegenlerin dolanma süreleri kendi " +
+    "aralarında gerçek oranda, dönme süreleri de kendi aralarında gerçek " +
+    "oranda. Bunu kodun içine not olarak da yazdım."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"15. mesaj", metin:
+    "Bir tane kuyruklu yıldız ekleyelim."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Halley Kuyruklu Yıldızı"+"'"+"nı ekledim. Yörüngesi gezegenlerinki gibi " +
+    "çember değil, çok basık bir elips — ve Güneş elipsin ortasında değil, " +
+    "odaklarından birinde. Bu yüzden Güneş"+"'"+"e yaklaşınca hızlanıyor, " +
+    "uzaklaşınca yavaşlıyor. Bunu gerçekten hesaplattım.\n\n" +
+    "Kuyruğu da doğru çalışıyor: her zaman Güneş"+"'"+"in TERS yönüne bakıyor, " +
+    "arkasında sürüklenmiyor. Güneş"+"'"+"e yaklaştıkça uzuyor, uzaklaşınca " +
+    "kayboluyor. İki kuyruk var: mavi iyon kuyruğu ve sarımsı toz kuyruğu."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"16. mesaj", metin:
+    "Bir de uzay teleskobu olsun, gerçek yörüngesinde. Üzerine tıklayınca " +
+    "bilgilerini versin.\n\n" +
+    "Dünya"+"'"+"nın etrafında birkaç tane de uydu olsun — doğal uydu değil, " +
+    "bizim iletişim için kullandığımız uydulardan."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Dünya"+"'"+"nın çevresine beş tane insan yapımı araç koydum:\n\n" +
+    "• Uluslararası Uzay İstasyonu (ISS)\n" +
+    "• Hubble Uzay Teleskobu\n" +
+    "• GPS uydusu\n" +
+    "• TÜRKSAT 5B — haberleşme\n" +
+    "• TÜRKSAT 6A — Türkiye"+"'"+"nin ilk yerli iletişim uydusu\n\n" +
+    "Hepsine tıklayıp bilgilerini görebilirsin. Yükseklik sıraları gerçek: " +
+    "ISS en alçakta, TÜRKSAT"+"'"+"lar en yüksekte. Yörünge yükseldikçe uydu " +
+    "yavaşlıyor — buna Kepler"+"'"+"in üçüncü yasası deniyor ve ekranda " +
+    "gerçekten görünüyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"17. mesaj", metin:
+    "Yükseklikleri gerçek mi peki?"},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Hayır, büyüttüm — ve bunu bilgi kartlarına da yazdım. Gerçekte ISS " +
+    "Dünya yüzeyine o kadar yakın ki (408 km), gerçek ölçekte çizseydim " +
+    "gezegenin yüzeyine yapışık görünürdü ve hiç fark edilmezdi.\n\n" +
+    "Gerçek olan şeyler: uyduların birbirine göre SIRASI ve dolanma " +
+    "sürelerinin sırası."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"18. mesaj", metin:
+    "Bir tane de Dünya"+"'"+"dan Ay"+"'"+"a giden bir uzay aracı simüle eder misin? " +
+    "En son Ay"+"'"+"ın etrafından dönmüştü bir tane."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Kastettiğin Artemis I olmalı. 16 Kasım 2022"+"'"+"de fırlatıldı, Ay"+"'"+"ın " +
+    "çevresinde dolandı ve 11 Aralık 2022"+"'"+"de Dünya"+"'"+"ya döndü. " +
+    "Apollo 17"+"'"+"den beri Ay"+"'"+"ın çevresine giden ilk insan taşıyabilir " +
+    "araçtı — ama o uçuşta içinde insan yoktu.\n\n" +
+    "Yolculuğu dört bölüm hâlinde canlandırdım: Dünya çevresinden ayrılış, " +
+    "Ay"+"'"+"a gidiş, Ay çevresinde dolanma, Dünya"+"'"+"ya dönüş. Arkasında " +
+    "geçtiği yolu gösteren bir iz bırakıyor.\n\n" +
+    "Yolun düz değil kavisli olmasına dikkat et: uzay aracı sürekli motor " +
+    "çalıştırmaz, bir kez hızlanıp Dünya"+"'"+"nın ve Ay"+"'"+"ın çekimiyle gider."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"19. mesaj", metin:
+    "Güneş daha canlı olsun. Güneş patlamaları olsun, bir de uzaydaki " +
+    "hareketinden bahsedelim."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Güneş"+"'"+"in yüzeyini yeniden yaptım: artık kaynayan plazma taneleri " +
+    "(granülasyon) ve güneş lekeleri var. Lekeler çevrelerinden daha soğuk " +
+    "olduğu için koyu görünür.\n\n" +
+    "Yüzeyinden zaman zaman dev plazma kemerleri yükseliyor. Bunlar manyetik " +
+    "alan çizgilerini izledikleri için kavis çizerek çıkıp yine yüzeye " +
+    "iniyorlar.\n\n" +
+    "Uzaydaki hareketini de Güneş"+"'"+"in bilgi kartına yazdım: Güneş sabit " +
+    "durmuyor, Samanyolu"+"'"+"nun merkezi çevresinde saatte 828.000 km hızla " +
+    "gidiyor ve bir turu 230 milyon yılda tamamlıyor. Bütün gezegenleri de " +
+    "peşinden sürüklüyor."},
+
+  {kim:"ogr", ad:"Ayşe", saat:"20. mesaj", metin:
+    "Dünya"+"'"+"yı özellikle gerçeğine uygun yap; uzaydan görünüşü olsun, " +
+    "yaklaştıkça ayrıntılar belli olsun. Diğer gezegenleri de görsel olarak " +
+    "daha aslına uygun yap."},
+
+  {kim:"yz", ad:"Yapay zekâ", saat:"", metin:
+    "Dünya için gerçek uydu haritalarını kullandım: yüzey, kabartma, bulut " +
+    "ve gece ışıkları haritaları. Artık yaklaşınca kıtalar, çöller, dağ " +
+    "sıraları, buzullar ve karanlık tarafta şehir ışıkları seçiliyor. " +
+    "Bulutlar yüzeyden ayrı bir katmanda, biraz farklı hızda dönüyor. " +
+    "Çevresine de ince mavi bir atmosfer halesi ekledim.\n\n" +
+    "Diğer gezegenlerin yüzeylerini kodun içinde yeniden ürettim; her birini " +
+    "kendi gerçek görünümüne göre: Merkür"+"'"+"de koyu gri krater tarlaları, " +
+    "Venüs"+"'"+"te kalın krem rengi bulut örtüsü, Mars"+"'"+"ta pas rengi çöller " +
+    "ile koyu kayalık bölgeler ve kutup buzulları, Jüpiter"+"'"+"de kuşaklar ve " +
+    "Büyük Kırmızı Leke, Neptün"+"'"+"de Büyük Karanlık Leke."},
+
+  {kim:"not", ad:"Sonuç", saat:"", metin:
+    "İlk mesajımda gelen simülasyon iki boyutluydu, gezegenler aynı hızda " +
+    "dönüyordu, Satürn"+"'"+"ün halkası ve Ay yoktu. Ödevde istenen maddeleri " +
+    "tek tek söyleyip, sonra kendi merak ettiklerimi de ekleterek 20 mesajda " +
+    "bu hâle getirdim. Her adımda çalışmayı açıp denedim, gördüğüm eksiği " +
+    "söyledim."}
+];
+
+(function(){
+  var akis  = document.getElementById("chatAkis");
+  var durum = document.getElementById("chatDurum");
+  var sira = 0, zamanlayici = null, yaziZamanlayici = null, duraklatildi = false;
+
+  function temizle(){
+    clearTimeout(zamanlayici); clearInterval(yaziZamanlayici);
+    akis.innerHTML = ""; sira = 0;
+  }
+
+  function kutuYap(m){
+    var d = document.createElement("div");
+    d.className = "msj " + m.kim;
+    var etiket = m.saat ? "<span>"+m.saat+"</span>" : "<span></span>";
+    d.innerHTML = "<div class=\"kim\"><span>"+m.ad+"</span>"+etiket+"</div>" +
+                  "<div class=\"balon\"></div>";
+    akis.appendChild(d);
+    return d.querySelector(".balon");
+  }
+
+  function asagiKay(){ akis.scrollTop = akis.scrollHeight; }
+
+  function durumYaz(){ durum.textContent = sira + " / " + YAZISMA.length; }
+
+  function sonrakiMesaj(){
+    if (sira >= YAZISMA.length){ durumYaz(); return; }
+    var m = YAZISMA[sira];
+    var balon = kutuYap(m);
+    sira++; durumYaz(); asagiKay();
+
+    /* harf harf yaz */
+    var i = 0;
+    var adim = m.metin.length > 320 ? 4 : 2;
+    yaziZamanlayici = setInterval(function(){
+      if (duraklatildi) return;
+      i += adim;
+      balon.innerHTML = m.metin.slice(0,i).replace(/</g,"&lt;") +
+                        (i < m.metin.length ? "<span class=\"imlec\"></span>" : "");
+      asagiKay();
+      if (i >= m.metin.length){
+        clearInterval(yaziZamanlayici);
+        balon.textContent = m.metin;
+        zamanlayici = setTimeout(function(){
+          if (!duraklatildi) sonrakiMesaj();
+        }, m.kim === "not" ? 1600 : 1100);
+      }
+    }, 14);
+  }
+
+  function hepsiniGoster(){
+    temizle();
+    YAZISMA.forEach(function(m){ kutuYap(m).textContent = m.metin; });
+    sira = YAZISMA.length; durumYaz(); asagiKay();
+  }
+
+  function bastanBasla(){
+    temizle(); duraklatildi = false;
+    document.getElementById("chatDuraklat").textContent = "⏸";
+    durumYaz(); sonrakiMesaj();
+  }
+
+  document.getElementById("chatDuraklat").onclick = function(){
+    duraklatildi = !duraklatildi;
+    this.textContent = duraklatildi ? "▶" : "⏸";
+    if (!duraklatildi && sira < YAZISMA.length && !yaziZamanlayici) sonrakiMesaj();
+  };
+  document.getElementById("chatBastan").onclick = bastanBasla;
+  document.getElementById("chatHepsi").onclick  = hepsiniGoster;
+
+  document.getElementById("chatKapat").onclick = function(){
+    document.body.classList.add("chat-kapali"); boyutla();
+  };
+  document.getElementById("chatAc").onclick = function(){
+    document.body.classList.remove("chat-kapali"); boyutla();
+    if (sira === 0) bastanBasla();
+  };
+
+  /* panel açık başlasın (geniş ekranda) */
+  if (window.innerWidth > 900){
+    document.body.classList.remove("chat-kapali");
+    boyutla();
+    setTimeout(bastanBasla, 700);
+  } else {
+    durumYaz();
+  }
+})();
+</script>
+</body>
+</html>

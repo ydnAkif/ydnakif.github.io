@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Canlı Güneş Sistemi Ödevi</title>
+    <style>
+        /* Uzay Boşluğu ve Genel Ayarlar */
+        body {
+            margin: 0;
+            height: 100vh;
+            background: radial-gradient(circle, #0c102b 0%, #02040f 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            perspective: 1000px;
+        }
+
+        /* Başlık Üstte Dursun */
+        h1 {
+            position: absolute;
+            top: 20px;
+            font-size: 24px;
+            text-shadow: 0 0 10px #ffcc00;
+            margin: 0;
+            z-index: 10;
+        }
+
+        /* Güneş Sistemi Alanı */
+        .system {
+            position: relative;
+            width: 900px;
+            height: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: rotateX(70deg); /* 3D Yatay Eğik Görünüm */
+            transform-style: preserve-3d;
+        }
+
+        /* Ortak Yörünge Çizgileri Stili */
+        .orbit {
+            position: absolute;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            transform-style: preserve-3d;
+            animation: rotate-orbit linear infinite;
+        }
+
+        /* 3D Küre Efekti Veren Genel Gezegen Stili */
+        .planet-sphere {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-radius: 50%;
+            transform: translateX(-50%) rotateX(-70deg); /* Eğikliği düzeltip dik gösterir */
+            transform-style: preserve-3d;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.2); /* 3D Küresellik Gölgesi */
+        }
+
+        /* Canlı Renkte Güneş (Merkezde) */
+        .sun {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #ffea00 0%, #ff5500 70%, #cc0000 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ffaa00, inset -5px -5px 20px #990000;
+            transform: rotateX(-70deg);
+            z-index: 2;
+        }
+
+        /* Kuşaklar (Asteroit Kuşağı) */
+        .asteroid-belt {
+            position: absolute;
+            width: 490px;
+            height: 490px;
+            border: 6px dotted rgba(180, 150, 120, 0.4);
+            border-radius: 50%;
+            animation: rotate-orbit 80s linear infinite;
+        }
+
+        /* GEZEGEN YÖRÜNGELERİ VE DÖNÜŞ SÜRELERİ */
+        .mercury-orbit { width: 140px; height: 140px; animation-duration: 4s; }
+        .venus-orbit   { width: 200px; height: 200px; animation-duration: 7s; }
+        .earth-orbit   { width: 280px; height: 280px; animation-duration: 10s; }
+        .mars-orbit    { width: 370px; height: 370px; animation-duration: 14s; }
+        .jupiter-orbit { width: 580px; height: 580px; animation-duration: 25s; }
+        .saturn-orbit  { width: 700px; height: 700px; animation-duration: 35s; }
+        .uranus-orbit  { width: 800px; height: 800px; animation-duration: 45s; }
+        .neptune-orbit { width: 900px; height: 900px; animation-duration: 55s; }
+
+        /* GEZEGENLERİN BOYUTLARI VE CANLI RENKLERİ */
+        .mercury {
+            width: 12px; height: 12px;
+            background: radial-gradient(circle, #b5b5b5, #575757);
+        }
+        .venus {
+            width: 20px; height: 20px;
+            background: radial-gradient(circle, #ffcc66, #b35900);
+        }
+        .earth {
+            width: 22px; height: 22px;
+            background: radial-gradient(circle, #33ccff, #0033aa);
+            position: relative;
+        }
+        .mars {
+            width: 16px; height: 16px;
+            background: radial-gradient(circle, #ff6655, #991100);
+        }
+        .jupiter {
+            width: 45px; height: 45px;
+            background: radial-gradient(circle, #d4a373, #6b4423);
+        }
+        .saturn {
+            width: 38px; height: 38px;
+            background: radial-gradient(circle, #e6ccb2, #7f5539);
+        }
+        .uranus {
+            width: 28px; height: 28px;
+            background: radial-gradient(circle, #a8dadc, #1d3557);
+        }
+        .neptune {
+            width: 26px; height: 26px;
+            background: radial-gradient(circle, #457b9d, #000080);
+        }
+
+        /* AY (Dünya'nın Etrafında Dönen Uydu) */
+        .moon-orbit {
+            position: absolute;
+            top: -7px; left: -7px;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            animation: rotate-orbit 2s linear infinite;
+            transform-style: preserve-3d;
+        }
+        .moon {
+            position: absolute;
+            top: 0; left: 50%;
+            width: 5px; height: 5px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px #fff;
+            transform: translateX(-50%);
+        }
+
+        /* GEZEGENLERİN HALKALARI (Görünür Vaziyette) */
+        .ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) rotateX(75deg); /* Halka eğikliği */
+            pointer-events: none;
+        }
+        
+        /* Jüpiter İnce Halkası */
+        .jupiter .ring {
+            width: 70px; height: 70px;
+            border: 3px solid rgba(212, 163, 115, 0.4);
+        }
+        /* Satürn Belgin Büyük Halkası */
+        .saturn .ring {
+            width: 80px; height: 80px;
+            border: 12px double rgba(230, 204, 178, 0.7);
+        }
+        /* Uranüs Dik/Eğik Halkası */
+        .uranus .ring {
+            width: 50px; height: 50px;
+            border: 2px solid rgba(168, 218, 220, 0.6);
+            transform: translate(-50%, -50%) rotateY(40deg);
+        }
+        /* Neptün Halkası */
+        .neptune .ring {
+            width: 45px; height: 45px;
+            border: 2px solid rgba(69, 123, 157, 0.5);
+        }
+
+        /* Yörünge Dönüş Animasyonu */
+        @keyframes rotate-orbit {
+            0% { transform: rotateZ(0deg); }
+            100% { transform: rotateZ(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>3D Canlı Güneş Sistemi Modelim</h1>
+
+    <div class="system">
+        <!-- Güneş -->
+        <div class="sun"></div>
+
+        <!-- 1. Merkür -->
+        <div class="orbit mercury-orbit">
+            <div class="planet-sphere mercury"></div>
+        </div>
+
+        <!-- 2. Venüs -->
+        <div class="orbit venus-orbit">
+            <div class="planet-sphere venus"></div>
+        </div>
+
+        <!-- 3. Dünya ve Ay -->
+        <div class="orbit earth-orbit">
+            <div class="planet-sphere earth">
+                <!-- Ay Yörüngesi ve Ay -->
+                <div class="moon-orbit">
+                    <div class="moon"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Mars -->
+        <div class="orbit mars-orbit">
+            <div class="planet-sphere mars"></div>
+        </div>
+
+        <!-- Asteroit Kuşağı (İç ve Dış Gezegenler Arasında) -->
+        <div class="asteroid-belt"></div>
+
+        <!-- 5. Jüpiter (Halkalı) -->
+        <div class="orbit jupiter-orbit">
+            <div class="planet-sphere jupiter">
+                <div class="ring"></div>
+            </div>
+        </div>
+
+        <!-- 6. Satürn (Belgin Halkalı) -->
+        <div class="orbit saturn-orbit">
+            <div class="planet-sphere saturn">
+                <div class="ring"></div>
+            </div>
+        </div>
+
+        <!-- 7. Uranüs (Halkalı) -->
+        <div class="orbit uranus-orbit">
+            <div class="planet-sphere uranus">
+                <div class="ring"></div>
+            </div>
+        </div>
+
+        <!-- 8. Neptün (Halkalı) -->
+        <div class="orbit neptune-orbit">
+            <div class="planet-sphere neptune">
+                <div class="ring"></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
