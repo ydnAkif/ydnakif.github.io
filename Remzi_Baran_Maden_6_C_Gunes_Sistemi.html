@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi - Otomatik Gezegen Turu ve Sesli Anlatım</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #020208;
+            color: #fff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(2, 2, 8, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.6s ease;
+        }
+
+        .intro-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(15, 18, 36, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .intro-content h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            background: linear-gradient(135deg, #ffffff 30%, #4da6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .intro-content p {
+            font-size: 14px;
+            color: #a0a5b8;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        #start-btn {
+            background: linear-gradient(135deg, #4da6ff, #0066cc);
+            border: none;
+            color: #fff;
+            padding: 12px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(77, 166, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        #start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(77, 166, 255, 0.6);
+            background: linear-gradient(135deg, #61b1ff, #0077ee);
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 12, 24, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px 22px;
+            border-radius: 12px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            z-index: 100;
+        }
+
+        #ui h1 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+
+        #ui p {
+            margin: 0 0 12px 0;
+            font-size: 12px;
+            color: #8a8d9b;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+        }
+
+        .control-btn {
+            background: rgba(77, 166, 255, 0.15);
+            border: 1px solid rgba(77, 166, 255, 0.4);
+            color: #4da6ff;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(77, 166, 255, 0.3);
+            color: #fff;
+            border-color: rgba(77, 166, 255, 0.8);
+        }
+
+        /* Bilgi Kartı Paneli */
+        #info-card {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 320px;
+            background: rgba(12, 15, 28, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            z-index: 200;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #info-card h2 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        #info-card .subtitle {
+            font-size: 12px;
+            color: #4da6ff;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        #info-card p.desc {
+            font-size: 13px;
+            color: #c0c5d0;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 14px;
+        }
+
+        .stat-item span {
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #8a8d9b;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        #close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        #close-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* 3D Gezegen İsim Etiketleri */
+        .planet-label {
+            position: absolute;
+            color: #e0e6ed;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            padding: 3px 8px;
+            background: rgba(8, 10, 18, 0.7);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            pointer-events: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .planet-label::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+
+    <!-- Three.js ve OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <!-- Açılış ve Sesli Tanıtım Ekranı -->
+    <div id="intro-screen">
+        <div class="intro-content">
+            <h1>Güneş Sistemine Hoş Geldiniz</h1>
+            <p>Otomatik sesli tur başlatılarak Güneş'ten Neptün'e kadar tüm gezegenler sırayla tanıtılacaktır. İstediğiniz zaman tura müdahale edebilir veya gezegenlere tıklayabilirsiniz.</p>
+            <button id="start-btn">Keşfe ve Tura Başla</button>
+        </div>
+    </div>
+
+    <div id="ui">
+        <h1>GÜNEŞ SİSTEMİ</h1>
+        <p>Sesli Tur Devam Ediyor / Tıklayarak Odaklanın</p>
+        <div class="btn-group">
+            <button id="toggle-btn" class="control-btn">Durdur</button>
+            <button id="tour-btn" class="control-btn">Turu Tekrarla</button>
+        </div>
+    </div>
+
+    <!-- Bilgi Kartı Paneli -->
+    <div id="info-card">
+        <button id="close-btn">✕</button>
+        <h2 id="card-title">Gezegen Adı</h2>
+        <div id="card-subtitle" class="subtitle">Kategori</div>
+        <p id="card-desc" class="desc">Açıklama alanı...</p>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-label">Yarıçap</span>
+                <span id="card-radius" class="stat-value">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Güneş'e Uzaklık</span>
+                <span id="card-distance" class="stat-value">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="labels-container"></div>
+
+    <script>
+        // --- 1. SAHNE KURULUMU ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020208, 0.0012);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1500);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 75, 180);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 500;
+        controls.minDistance = 5;
+        controls.update();
+
+        const labelsContainer = document.getElementById('labels-container');
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const interactableObjects = [];
+
+        let isRunning = true;
+        let targetFocusObject = null;
+        const toggleBtn = document.getElementById('toggle-btn');
+        const tourBtn = document.getElementById('tour-btn');
+
+        toggleBtn.addEventListener('click', () => {
+            isRunning = !isRunning;
+            toggleBtn.textContent = isRunning ? "Durdur" : "Başlat";
+            toggleBtn.style.color = isRunning ? "#4da6ff" : "#2ecc71";
+            toggleBtn.style.borderColor = isRunning ? "rgba(77, 166, 255, 0.4)" : "rgba(46, 204, 113, 0.4)";
+            toggleBtn.style.background = isRunning ? "rgba(77, 166, 255, 0.15)" : "rgba(46, 204, 113, 0.15)";
+        });
+
+        // --- SESLİ OTOMATİK TUR SİSTEMİ ---
+        let tourObjects = [];
+        let currentTourIndex = 0;
+        let isTourActive = false;
+        let tourTimer = null;
+
+        function speakAndFocusNext() {
+            if (!isTourActive || currentTourIndex >= tourObjects.length) {
+                isTourActive = false;
+                return;
+            }
+
+            const currentObj = tourObjects[currentTourIndex];
+            targetFocusObject = currentObj.mesh;
+
+            // Bilgi kartını otomatik aç
+            cardTitle.textContent = currentObj.mesh.userData.name;
+            cardSubtitle.textContent = currentObj.mesh.userData.subtitle;
+            cardDesc.textContent = currentObj.mesh.userData.desc;
+            cardRadius.textContent = currentObj.mesh.userData.radius;
+            cardDistance.textContent = currentObj.mesh.userData.distance;
+            infoCard.style.display = 'block';
+
+            // Sesli Anlatım
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Önceki sesleri kes
+                const speechText = `${currentObj.mesh.userData.name}. ${currentObj.mesh.userData.desc}`;
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.lang = 'tr-TR';
+                utterance.rate = 1.0;
+                
+                utterance.onend = () => {
+                    if (isTourActive) {
+                        currentTourIndex++;
+                        tourTimer = setTimeout(speakAndFocusNext, 1500); // Sonraki gezegene geçmeden önce bekleme
+                    }
+                };
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        tourBtn.addEventListener('click', () => {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            clearTimeout(tourTimer);
+            currentTourIndex = 0;
+            isTourActive = true;
+            speakAndFocusNext();
+        });
+
+        const startBtn = document.getElementById('start-btn');
+        startBtn.addEventListener('click', () => {
+            const screen = document.getElementById('intro-screen');
+            screen.style.opacity = '0';
+            setTimeout(() => {
+                screen.style.display = 'none';
+            }, 600);
+
+            // Turu başlat
+            isTourActive = true;
+            speakAndFocusNext();
+        });
+
+        // --- 2. IŞIKLANDIRMA ---
+        const ambientLight = new THREE.AmbientLight(0x111122, 0.4);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.PointLight(0xfffaed, 2.5, 450, 0.5);
+        scene.add(sunLight);
+
+        // --- 3. DOKU OLUSTURUCULAR ---
+        function createNoiseTexture(type, baseColorHex, detailColorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = baseColorHex;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 3000; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const radius = Math.random() * (type === 'bands' ? 2 : 8) + 1;
+                
+                ctx.fillStyle = detailColorHex;
+                ctx.globalAlpha = Math.random() * 0.15;
+                ctx.beginPath();
+                if (type === 'bands') {
+                    ctx.ellipse(x, y, radius * 8, radius * 0.8, 0, 0, Math.PI * 2);
+                } else {
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.ClampToEdgeWrapping;
+            return texture;
+        }
+
+        // --- 4. YILDIZ UZAYI ---
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 6000;
+        const starPositions = new Float32Array(starsCount * 3);
+        const starColors = new Float32Array(starsCount * 3);
+
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            starPositions[i] = (Math.random() - 0.5) * 800;
+            starPositions[i + 1] = (Math.random() - 0.5) * 800;
+            starPositions[i + 2] = (Math.random() - 0.5) * 800;
+
+            const colorType = Math.random();
+            if (colorType > 0.8) {
+                starColors[i] = 0.7; starColors[i+1] = 0.8; starColors[i+2] = 1.0;
+            } else if (colorType > 0.6) {
+                starColors[i] = 1.0; starColors[i+1] = 0.9; starColors[i+2] = 0.7;
+            } else {
+                starColors[i] = 1.0; starColors[i+1] = 1.0; starColors[i+2] = 1.0;
+            }
+        }
+
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starsGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        
+        const starsMaterial = new THREE.PointsMaterial({ size: 0.7, vertexColors: true, transparent: true, opacity: 0.85 });
+        scene.add(new THREE.Points(starsGeometry, starsMaterial));
+
+        // --- 5. GÜNEŞ ---
+        const sunGeometry = new THREE.SphereGeometry(12, 64, 64);
+        const sunTexture = createNoiseTexture('noise', '#ff8800', '#ffee00');
+        const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture, color: 0xffaa00 });
+        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        scene.add(sun);
+
+        sun.userData = {
+            name: "Güneş",
+            subtitle: "Yıldız",
+            desc: "Güneş Sistemi'nin merkezinde yer alan devasa yıldızdır. Sistemin kütlesinin %99.8'ini oluşturur ve yaydığı enerji ile tüm sisteme hayat verir.",
+            radius: "696.340 km",
+            distance: "0 km",
+            focusDistance: 35
+        };
+        interactableObjects.push(sun);
+        tourObjects.push({ mesh: sun });
+
+        const glowGeometry = new THREE.SphereGeometry(13.8, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xff7700, transparent: true, opacity: 0.25, side: THREE.BackSide });
+        scene.add(new THREE.Mesh(glowGeometry, glowMaterial));
+
+        const sunLabel = document.createElement('div');
+        sunLabel.className = 'planet-label';
+        sunLabel.textContent = 'Güneş';
+        sunLabel.style.color = '#ffcc00';
+        labelsContainer.appendChild(sunLabel);
+
+        // --- 6. GEZEGENLER VE BİLGİLERİ ---
+        const planetData = [
+            { name: "Merkür", radius: 0.9, distance: 22, color1: "#6d6d6d", color2: "#383838", speed: 0.025, roughness: 0.9, sub: "Karasal Gezegen", desc: "Güneş'e en yakın gezegendir ve yüzeyi kraterlerle doludur. Atmosferi neredeyse hiç yoktur.", realRadius: "2.439 km", realDist: "57.9 milyon km", focusDist: 5 },
+            { name: "Venüs", radius: 1.6, distance: 32, color1: "#e3a857", color2: "#a86d2a", speed: 0.018, roughness: 0.4, sub: "Karasal Gezegen", desc: "Yoğun karbondioksit atmosferi nedeniyle sera etkisi yaşar ve Güneş sisteminin en sıcak gezegenidir.", realRadius: "6.051 km", realDist: "108.2 milyon km", focusDist: 7 },
+            { name: "Dünya", radius: 1.8, distance: 45, color1: "#1d58b5", color2: "#2d8a4e", speed: 0.014, roughness: 0.6, sub: "Karasal Gezegen", desc: "Üzerinde sıvı su barındıran ve yaşam olanakları sunan evimiz olan tek bilinen gezegendir.", realRadius: "6.371 km", realDist: "149.6 milyon km", hasMoon: true, focusDist: 8 },
+            { name: "Mars", radius: 1.2, distance: 58, color1: "#b8421d", color2: "#6e2108", speed: 0.010, roughness: 0.8, sub: "Karasal Gezegen", desc: "Demir oksit yani pas yapısından dolayı kızıl gezegen olarak tanınır. Gelecekte insan kolonisi kurulması planlanmaktadır.", realRadius: "3.389 km", realDist: "227.9 milyon km", focusDist: 6 },
+            { name: "Jüpiter", radius: 4.8, distance: 82, color1: "#bc987e", color2: "#6c4d38", speed: 0.006, roughness: 0.3, type: 'bands', sub: "Gaz Devi", desc: "Güneş sisteminin en büyük gezegenidir. Devasa fırtınalara ve Büyük Kırmızı Leke'ye ev sahipliği yapar.", realRadius: "69.911 km", realDist: "778.5 milyon km", focusDist: 16 },
+            { name: "Satürn", radius: 3.8, distance: 108, color1: "#e2c991", color2: "#ab8e56", speed: 0.004, roughness: 0.4, type: 'bands', ring: true, sub: "Gaz Devi", desc: "Buz ve kaya parçalarından oluşan muhteşem ve göz alıcı halka sistemine sahip olan dev gaz gezegenidir.", realRadius: "58.232 km", realDist: "1.43 milyar km", focusDist: 18 },
+            { name: "Uranüs", radius: 2.6, distance: 132, color1: "#60c5d2", color2: "#2b7b85", speed: 0.0025, roughness: 0.3, sub: "Buz Devi", desc: "Kendi yörüngesinde yan yatmış biçimde dönen ve top gibi yuvarlanarak hareket eden benzersiz bir buz devidir.", realRadius: "25.362 km", realDist: "2.87 milyar km", focusDist: 12, isUranus: true },
+            { name: "Neptün", radius: 2.5, distance: 152, color1: "#2b4bc9", color2: "#12236e", speed: 0.0018, roughness: 0.3, sub: "Buz Devi", desc: "Masmavi görünümü ve saatte binlerce kilometreyi bulan şiddetli rüzgarlarıyla Güneş'e en uzak gezegendir.", realRadius: "24.622 km", realDist: "4.50 milyar km", focusDist: 12 }
+        ];
+
+        const planets = [];
+        let moonMesh = null;
+        let moonLabel = null;
+        let moonAngle = 0;
+
+        planetData.forEach(data => {
+            const orbitGeometry = new THREE.RingGeometry(data.distance - 0.08, data.distance + 0.08, 128);
+            const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide });
+            const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+            orbit.rotation.x = Math.PI / 2;
+            scene.add(orbit);
+
+            const texture = createNoiseTexture(data.type || 'noise', data.color1, data.color2);
+            const planetGeometry = new THREE.SphereGeometry(data.radius, 48, 48);
+            const planetMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: data.roughness, metalness: 0.1 });
+
+            const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+            
+            if (data.isUranus) {
+                planetMesh.rotation.z = Math.PI / 2; 
+            }
+
+            planetMesh.userData = {
+                name: data.name,
+                subtitle: data.sub,
+                desc: data.desc,
+                radius: data.realRadius,
+                distance: data.realDist,
+                focusDistance: data.focusDist,
+                isUranus: data.isUranus
+            };
+            interactableObjects.push(planetMesh);
+            tourObjects.push({ mesh: planetMesh });
+
+            if (data.ring) {
+                const ringGeo = new THREE.RingGeometry(data.radius + 1.2, data.radius + 4.5, 64);
+                const canvas = document.createElement('canvas');
+                canvas.width = 256; canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, 256, 0);
+                grad.addColorStop(0, 'rgba(170, 140, 90, 0.8)');
+                grad.addColorStop(0.5, 'rgba(120, 95, 60, 0.3)');
+                grad.addColorStop(0.8, 'rgba(200, 170, 120, 0.9)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 256, 1);
+
+                const ringTex = new THREE.CanvasTexture(canvas);
+                const ringMat = new THREE.MeshStandardMaterial({ map: ringTex, side: THREE.DoubleSide, transparent: true, opacity: 0.85, roughness: 0.5 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2.3;
+                planetMesh.add(ring);
+            }
+
+            if (data.hasMoon) {
+                const moonGeo = new THREE.SphereGeometry(0.45, 32, 32);
+                const moonTex = createNoiseTexture('noise', '#888888', '#444444');
+                const moonMat = new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.9 });
+                moonMesh = new THREE.Mesh(moonGeo, moonMat);
+                moonMesh.userData = {
+                    name: "Ay",
+                    subtitle: "Dünya'nın Uydusu",
+                    desc: "Dünya'nın tek doğal uydusudur ve yüzeyinde kraterler ile deniz adı verilen bazalt ovalar bulunur.",
+                    radius: "1.737 km",
+                    distance: "384.400 km",
+                    focusDistance: 4
+                };
+                interactableObjects.push(moonMesh);
+                planetMesh.add(moonMesh);
+
+                moonLabel = document.createElement('div');
+                moonLabel.className = 'planet-label';
+                moonLabel.textContent = 'Ay';
+                labelsContainer.appendChild(moonLabel);
+            }
+
+            const label = document.createElement('div');
+            label.className = 'planet-label';
+            label.textContent = data.name;
+            labelsContainer.appendChild(label);
+
+            planets.push({
+                mesh: planetMesh,
+                radius: data.radius,
+                distance: data.distance,
+                speed: data.speed,
+                angle: Math.random() * Math.PI * 2,
+                labelElement: label,
+                isUranus: data.isUranus
+            });
+
+            scene.add(planetMesh);
+        });
+
+        // --- 7. ASTEROİT KUŞAĞI ---
+        const asteroidCount = 2500;
+        const asteroidGeometry = new THREE.BufferGeometry();
+        const asteroidPositions = new Float32Array(asteroidCount * 3);
+
+        for (let i = 0; i < asteroidCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 66 + Math.random() * 10;
+            const y = (Math.random() - 0.5) * 2.5;
+
+            asteroidPositions[i * 3] = Math.cos(angle) * radius;
+            asteroidPositions[i * 3 + 1] = y;
+            asteroidPositions[i * 3 + 2] = Math.sin(angle) * radius;
+        }
+
+        asteroidGeometry.setAttribute('position', new THREE.BufferAttribute(asteroidPositions, 3));
+        const asteroidMaterial = new THREE.PointsMaterial({ color: 0x8a8a9e, size: 0.35, transparent: true, opacity: 0.7 });
+        const asteroidBelt = new THREE.Points(asteroidGeometry, asteroidMaterial);
+        scene.add(asteroidBelt);
+
+        // --- 8. TIKLAMA, BİLGİ KARTI VE KAMERA ODAKLANMA ---
+        const infoCard = document.getElementById('info-card');
+        const cardTitle = document.getElementById('card-title');
+        const cardSubtitle = document.getElementById('card-subtitle');
+        const cardDesc = document.getElementById('card-desc');
+        const cardRadius = document.getElementById('card-radius');
+        const cardDistance = document.getElementById('card-distance');
+        const closeBtn = document.getElementById('close-btn');
+
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('#info-card') || event.target.closest('#ui') || event.target.closest('#intro-screen')) return;
+
+            // Kullanıcı tıkladığında otomatik turu durdur ki odağı bozulmasın
+            isTourActive = false;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            clearTimeout(tourTimer);
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactableObjects);
+
+            if (intersects.length > 0) {
+                const targetObj = intersects[0].object;
+                if (targetObj.userData && targetObj.userData.name) {
+                    cardTitle.textContent = targetObj.userData.name;
+                    cardSubtitle.textContent = targetObj.userData.subtitle;
+                    cardDesc.textContent = targetObj.userData.desc;
+                    cardRadius.textContent = targetObj.userData.radius;
+                    cardDistance.textContent = targetObj.userData.distance;
+                    infoCard.style.display = 'block';
+
+                    targetFocusObject = targetObj;
+                }
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            infoCard.style.display = 'none';
+            targetFocusObject = null;
+        });
+
+        // --- 9. ETİKET KONUMLANDIRMA ---
+        function updateLabelPosition(mesh, labelElement, offsetY = 0) {
+            const tempV = new THREE.Vector3();
+            mesh.getWorldPosition(tempV);
+            tempV.y += offsetY;
+
+            tempV.project(camera);
+
+            if (tempV.z > 1) {
+                labelElement.style.opacity = '0';
+                return;
+            }
+
+            const x = (tempV.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (tempV.y * -0.5 + 0.5) * window.innerHeight;
+
+            labelElement.style.left = `${x}px`;
+            labelElement.style.top = `${y}px`;
+
+            const dist = camera.position.distanceTo(mesh.position);
+            const opacity = Math.max(0.2, Math.min(1, 1 - (dist - 50) / 300));
+            labelElement.style.opacity = opacity;
+        }
+
+        // --- 10. ANİMASYON DÖNGÜSÜ ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isRunning) {
+                sun.rotation.y += 0.0015;
+
+                planets.forEach(planet => {
+                    planet.angle += planet.speed * 0.5;
+                    planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
+                    planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+                    
+                    if (planet.isUranus) {
+                        planet.mesh.rotation.x += 0.008; 
+                    } else {
+                        planet.mesh.rotation.y += 0.008; 
+                    }
+                });
+
+                if (moonMesh) {
+                    moonAngle += 0.04;
+                    moonMesh.position.x = Math.cos(moonAngle) * 3.5;
+                    moonMesh.position.z = Math.sin(moonAngle) * 3.5;
+                }
+
+                asteroidBelt.rotation.y += 0.0003;
+            }
+
+            if (targetFocusObject) {
+                const targetWorldPos = new THREE.Vector3();
+                targetFocusObject.getWorldPosition(targetWorldPos);
+
+                const offsetDist = targetFocusObject.userData.focusDistance || 10;
+                
+                const desiredCameraPos = new THREE.Vector3(
+                    targetWorldPos.x + offsetDist,
+                    targetWorldPos.y + offsetDist * 0.6,
+                    targetWorldPos.z + offsetDist
+                );
+
+                camera.position.lerp(desiredCameraPos, 0.05);
+                controls.target.lerp(targetWorldPos, 0.05);
+            }
+
+            planets.forEach(planet => {
+                updateLabelPosition(planet.mesh, planet.labelElement, planet.radius + 1.8);
+            });
+
+            if (moonMesh) {
+                updateLabelPosition(moonMesh, moonLabel, 0.8);
+            }
+
+            updateLabelPosition(sun, sunLabel, 13.5);
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

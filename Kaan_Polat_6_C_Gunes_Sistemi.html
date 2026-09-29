@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi ve Güneş'in Katmanları - Fen Bilimleri Projesi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        .title-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-button {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-button:hover {
+            background: rgba(51, 65, 85, 0.95);
+            border-color: rgba(129, 140, 248, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .glass-button.active {
+            background: rgba(79, 70, 229, 0.8);
+            border-color: rgba(165, 180, 252, 0.8);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.6);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.9);
+        }
+
+        @keyframes sunGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(245, 158, 11, 0.9); }
+        }
+        .sun-badge {
+            animation: sunGlow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulseBorder {
+            0%, 100% { border-color: rgba(245, 158, 11, 0.4); }
+            50% { border-color: rgba(245, 158, 11, 0.9); }
+        }
+        .layer-active-border {
+            animation: pulseBorder 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="w-full h-screen overflow-hidden bg-slate-950">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container" class="w-full h-full absolute inset-0 z-0 cursor-grab active:cursor-grabbing"></div>
+
+    <!-- Top Header Overlay -->
+    <header class="absolute top-4 left-4 right-4 z-10 flex flex-col lg:flex-row justify-between items-center pointer-events-none gap-3">
+        <div class="glass-panel px-5 py-2.5 rounded-2xl flex items-center gap-3.5 pointer-events-auto border-amber-500/30 sun-badge">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-orange-400 to-yellow-300 flex items-center justify-center text-slate-950 text-xl font-bold shadow-lg shadow-amber-500/50">
+                <i class="fa-solid fa-sun animate-spin" style="animation-duration: 15s;"></i>
+            </div>
+            <div>
+                <h1 class="title-font text-lg sm:text-xl font-bold bg-gradient-to-r from-yellow-200 via-amber-300 to-orange-400 bg-clip-text text-transparent">
+                    Güneş Sistemi & Katmanları
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">6. Sınıf Fen Bilimleri Etkileşimli Modeli</p>
+            </div>
+        </div>
+
+        <!-- Quick Focus Navigation Menu -->
+        <div class="glass-panel p-1.5 rounded-2xl flex flex-wrap justify-center gap-1 pointer-events-auto max-w-full overflow-x-auto">
+            <button onclick="focusOnBody('sun')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 transition flex items-center gap-1.5 border border-amber-500/40">
+                <i class="fa-solid fa-sun text-amber-400"></i> Güneş & Katmanlar
+            </button>
+            <div class="h-4 w-px bg-slate-700/80 self-center"></div>
+            <button onclick="focusOnBody('mercury')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-700/50 transition">Merkür</button>
+            <button onclick="focusOnBody('venus')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-amber-200 hover:bg-amber-900/30 transition">Venüs</button>
+            <button onclick="focusOnBody('earth')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-blue-300 hover:bg-blue-900/30 transition">Dünya</button>
+            
+            <!-- Quick Focus Moon Button -->
+            <button onclick="focusOnBody('moon')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-700/60 transition flex items-center gap-1 border border-slate-500/30 bg-slate-800/40">
+                <i class="fa-solid fa-moon text-slate-300"></i> Ay
+            </button>
+
+            <button onclick="focusOnBody('mars')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-red-300 hover:bg-red-900/30 transition">Mars</button>
+            
+            <!-- Asteroid Belt Focus Button -->
+            <button onclick="focusOnBody('asteroids')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-yellow-500/90 hover:bg-yellow-500/20 transition flex items-center gap-1 border border-yellow-500/30 bg-yellow-500/10">
+                <i class="fa-solid fa-meteor text-yellow-400"></i> Asteroit Kuşağı
+            </button>
+
+            <button onclick="focusOnBody('jupiter')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-orange-300 hover:bg-orange-900/30 transition">Jüpiter</button>
+            <button onclick="focusOnBody('saturn')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-yellow-300 hover:bg-yellow-900/30 transition">Satürn</button>
+            <button onclick="focusOnBody('uranus')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-cyan-300 hover:bg-cyan-900/30 transition">Uranüs</button>
+            <button onclick="focusOnBody('neptune')" class="px-2 py-1.5 rounded-xl text-xs font-medium text-blue-400 hover:bg-blue-900/30 transition">Neptün</button>
+        </div>
+    </header>
+
+    <!-- Bottom Controls & Settings HUD -->
+    <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 w-11/12 max-w-2xl pointer-events-none">
+        <div class="glass-panel p-3 sm:p-4 rounded-3xl flex items-center justify-between gap-3 sm:gap-5 pointer-events-auto border-indigo-500/20 shadow-2xl">
+            <!-- Play / Pause Button -->
+            <button id="btn-play-pause" onclick="toggleAnimation()" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center text-lg shadow-lg shadow-indigo-600/40 transition active:scale-95 shrink-0">
+                <i id="icon-play-pause" class="fa-solid fa-pause"></i>
+            </button>
+
+            <!-- Speed Control Slider -->
+            <div class="flex-1 flex flex-col gap-1 min-w-[110px]">
+                <div class="flex justify-between items-center text-xs text-slate-300 font-medium">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-gauge-high text-indigo-400"></i> Yörünge Hızı:</span>
+                    <span id="speed-label" class="text-indigo-300 font-bold">1.0x</span>
+                </div>
+                <input type="range" id="speed-slider" min="0" max="4" step="0.1" value="1" oninput="updateSpeed(this.value)" class="w-full h-2 bg-slate-700/80 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+            </div>
+
+            <!-- Sun Cutaway Layer Toggle Button -->
+            <button id="btn-sun-layers" onclick="toggleSunLayers()" class="px-3 py-2.5 rounded-2xl glass-button text-xs font-bold text-amber-300 hover:text-amber-200 flex items-center gap-2 border-amber-500/40 bg-amber-500/10">
+                <i class="fa-solid fa-layer-group text-amber-400 text-sm"></i>
+                <span id="sun-layer-btn-text" class="hidden sm:inline">Katmanları İncele</span>
+            </button>
+
+            <!-- Toggle Orbits Line -->
+            <button id="btn-toggle-orbits" onclick="toggleOrbits()" title="Yörünge Çizgilerini Aç/Kapat" class="px-3 py-2.5 rounded-2xl glass-button text-xs font-medium text-slate-200 flex items-center gap-2 active border-indigo-500/40">
+                <i class="fa-solid fa-circle-notch text-indigo-400"></i>
+                <span class="hidden sm:inline">Yörüngeler</span>
+            </button>
+
+            <!-- Reset View Camera -->
+            <button onclick="resetCamera()" title="Kamerayı Varsayılana Getir" class="px-3.5 py-2.5 rounded-2xl glass-button text-xs font-semibold text-slate-200 flex items-center gap-2 hover:text-white shrink-0">
+                <i class="fa-solid fa-arrows-to-eye text-indigo-400 text-sm"></i>
+                <span class="hidden sm:inline">Sıfırla</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sun Layers Bar (Appears when Sun cutaway mode is active) -->
+    <div id="sun-layers-bar" class="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-11/12 max-w-2xl pointer-events-none hidden transition-all duration-300">
+        <div class="glass-panel p-2.5 rounded-2xl flex items-center justify-around gap-1 pointer-events-auto border-amber-500/40 shadow-2xl bg-amber-950/40">
+            <button onclick="selectSunLayer('core')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-300 hover:bg-red-500/20 transition flex items-center gap-1 border border-red-500/30">
+                <i class="fa-solid fa-circle text-red-500 text-[10px]"></i> Çekirdek
+            </button>
+            <button onclick="selectSunLayer('radiative')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-orange-300 hover:bg-orange-500/20 transition flex items-center gap-1 border border-orange-500/30">
+                <i class="fa-solid fa-circle text-orange-400 text-[10px]"></i> Radyasyon
+            </button>
+            <button onclick="selectSunLayer('convective')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-yellow-300 hover:bg-yellow-500/20 transition flex items-center gap-1 border border-yellow-500/30">
+                <i class="fa-solid fa-circle text-yellow-400 text-[10px]"></i> Konveksiyon
+            </button>
+            <button onclick="selectSunLayer('photosphere')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-amber-200 hover:bg-amber-500/20 transition flex items-center gap-1 border border-amber-400/30">
+                <i class="fa-solid fa-sun text-amber-300 text-[10px]"></i> Fotosfer
+            </button>
+            <button onclick="selectSunLayer('chromosphere')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-500/20 transition flex items-center gap-1 border border-rose-500/30">
+                <i class="fa-solid fa-ring text-rose-400 text-[10px]"></i> Kromosfer
+            </button>
+            <button onclick="selectSunLayer('corona')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-200 hover:bg-slate-500/20 transition flex items-center gap-1 border border-slate-400/30">
+                <i class="fa-solid fa-bahai text-slate-300 text-[10px]"></i> Tac Katmanı
+            </button>
+        </div>
+    </div>
+
+    <!-- Interactive Info Card Panel -->
+    <div id="info-card" class="absolute top-20 right-4 sm:right-6 z-20 w-80 sm:w-96 glass-panel rounded-3xl p-5 border-slate-700/60 hidden transition-all duration-300 transform translate-y-3 opacity-0 shadow-2xl">
+        <div class="flex justify-between items-start mb-3 pb-2.5 border-b border-slate-700/60">
+            <div class="flex items-center gap-3">
+                <div id="info-icon" class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl font-bold shadow-md"></div>
+                <div>
+                    <h2 id="info-title" class="title-font text-2xl font-bold text-white leading-tight">Dünya</h2>
+                    <span id="info-type" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700">Karasal Gezegen</span>
+                </div>
+            </div>
+            <button onclick="closeInfoCard()" class="text-slate-400 hover:text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-800/80 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="space-y-3 text-sm max-h-[62vh] overflow-y-auto pr-1">
+            <!-- Metrics Grid -->
+            <div id="metrics-grid" class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-900/70 p-2.5 rounded-2xl border border-slate-800">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Çap / Boyut</p>
+                    <p id="info-diameter" class="text-sm font-bold text-slate-100">12,742 km</p>
+                </div>
+                <div class="bg-slate-900/70 p-2.5 rounded-2xl border border-slate-800">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Uzaklık / Sıcaklık</p>
+                    <p id="info-distance" class="text-sm font-bold text-slate-100">149.6 M km</p>
+                </div>
+                <div class="bg-slate-900/70 p-2.5 rounded-2xl border border-slate-800">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Dolanma Süresi</p>
+                    <p id="info-orbit" class="text-sm font-bold text-slate-100">365 Gün</p>
+                </div>
+                <div class="bg-slate-900/70 p-2.5 rounded-2xl border border-slate-800">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Uydu / Özellik</p>
+                    <p id="info-moons" class="text-sm font-bold text-slate-100">1</p>
+                </div>
+            </div>
+
+            <!-- Sun Layers Quick Button inside Info Card -->
+            <div id="sun-layer-card-btn" class="hidden">
+                <button onclick="toggleSunLayers(true)" class="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 transition transform active:scale-95">
+                    <i class="fa-solid fa-layer-group text-sm"></i> Güneş'in İç Katmanlarını Kesit Olarak İncele
+                </button>
+            </div>
+
+            <!-- Science Fun Fact -->
+            <div class="bg-indigo-950/50 p-3.5 rounded-2xl border border-indigo-500/30">
+                <h3 class="text-xs font-bold text-indigo-300 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Fen Bilgisi Notu:
+                </h3>
+                <p id="info-fact" class="text-xs text-slate-200 leading-relaxed font-normal">
+                    Güneş Sistemi bilgileri yükleniyor...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 6th Grade Science Astronomy & Sun Layers Data Dictionary
+        const astronomicalData = {
+            sun: {
+                name: "Güneş",
+                type: "Isı ve Işık Kaynağı Yıldız",
+                diameter: "1,392,700 km",
+                distance: "0 km (Sistemin Merkezi)",
+                orbit: "230 Milyon Yıl (Galaksi)",
+                moons: "8 Gezegen",
+                color: "#f59e0b",
+                fact: "Güneş Sistemimizin kalbidir! Kendi etrafında döner. Katmanlı bir yapıya sahiptir (İçten dışa: Çekirdek, Radyasyon Bölgesi, Konveksiyon Bölgesi, Fotosfer, Kromosfer ve Tac Katmanı). Aşağıdaki butona basarak katmanlarını 3 boyutlu inceleyebilirsiniz."
+            },
+            // SUN LAYERS DATA
+            core: {
+                name: "Çekirdek (Çekirdek Katmanı)",
+                type: "Güneş'in En İç Katmanı",
+                diameter: "Çapın %25'i (~350.000 km)",
+                distance: "~15 Milyon °C",
+                orbit: "Aşırı Yüksek Basınç",
+                moons: "Enerji Üretim Merkezi",
+                color: "#ef4444",
+                fact: "Güneş'in en sıcak ve en yoğun katmanıdır! Isı ve ışık enerjisi burada gerçekleşen nükleer reaksiyonlar (füzyon) sonucu üretilir. Üretilen enerji dış katmanlara doğru yayılır."
+            },
+            radiative: {
+                name: "Radyasyon (Işınım) Bölgesi",
+                type: "İç Katman",
+                diameter: "Çapın %45'i",
+                distance: "~2 - 7 Milyon °C",
+                orbit: "Işıma Yoluyla Aktarım",
+                moons: "Enerji Taşıma Katmanı",
+                color: "#f97316",
+                fact: "Çekirdekte üretilen devasa enerjinin dalgalar (radyasyon) şeklinde dışa aktarıldığı katmandır. Bir ışık parçacığının bu katmanı geçmesi yüz binlerce yıl sürebilir!"
+            },
+            convective: {
+                name: "Konveksiyon (Kaynama) Bölgesi",
+                type: "İç/Dış Geçiş Katmanı",
+                diameter: "Çapın %30'u",
+                distance: "~2 Milyon °C",
+                orbit: "Isı Akımı (Konveksiyon)",
+                moons: "Kaynayan Plazma",
+                color: "#eab308",
+                fact: "Sıcak gazların yükselip soğuyan gazların dibe çökmesiyle (akışkan döngüsü) enerjinin yüzeye taşındığı katmandır. Tıpkı kaynayan bir çorba tenceresi gibi sürekli devir daim yapar."
+            },
+            photosphere: {
+                name: "Fotosfer (Işık Yuvarı)",
+                type: "Güneş'in Görünür Yüzeyi",
+                diameter: "Kalınlık: ~500 km",
+                distance: "~5.500 °C",
+                orbit: "Görünen Katman",
+                moons: "Güneş Lekeleri Var",
+                color: "#fef08a",
+                fact: "Dünyamızdan baktığımızda gördüğümüz sarı renkli parlak Güneş yüzeyidir. Güneş lekeleri (soğuk bölgeler) bu katmanda yer alır. Bize ulaşan ısı ve ışık esas olarak buradan yayılır."
+            },
+            chromosphere: {
+                name: "Kromosfer (Renk Yuvarı)",
+                type: "Güneş Atmosferi Katmanı",
+                diameter: "Kalınlık: ~2.000 km",
+                distance: "~10.000 °C",
+                orbit: "Tam Güneş Tutulmasında",
+                moons: "Kırmızı Pembe Işık",
+                color: "#f43f5e",
+                fact: "Fotosferin hemen üzerindeki atmosfer katmanıdır. Kırmızımsı pembe renklidir. Tam Güneş tutulması esnasında Ay Güneş yüzeyini kapattığında kırmızı halka şeklinde belirginleşir."
+            },
+            corona: {
+                name: "Tac Katmanı (Korona)",
+                type: "Güneş'in En Dış Atmosferi",
+                diameter: "Milyonlarca km Uzanır",
+                distance: "~1 - 3 Milyon °C",
+                orbit: "Uzaya Yayılan Rüzgarlar",
+                moons: "Güneş Rüzgarları",
+                color: "#cbd5e1",
+                fact: "Güneş'in en dış atmosfer katmanıdır. Milyonlarca kilometre uzaya saçılır. Tam tutulmada beyaz bir taç şeklinde parlar. Güneş rüzgarları buradan uzay boşluğuna yayılır."
+            },
+            mercury: {
+                name: "Merkür",
+                type: "Karasal / İç Gezegen",
+                diameter: "4,879 km",
+                distance: "57.9 Milyon km",
+                orbit: "88 Gün",
+                moons: "0 (Yok)",
+                color: "#9ca3af",
+                fact: "Güneş'e en yakın ve sistemin en küçük gezegenidir. Atmosferi neredeyse hiç olmadığı için yüzeyi kraterlerle doludur. Gece ve gündüz sıcaklık farkı 500°C'yi bulur!"
+            },
+            venus: {
+                name: "Venüs",
+                type: "Karasal / İç Gezegen",
+                diameter: "12,104 km",
+                distance: "108.2 Milyon km",
+                orbit: "225 Gün",
+                moons: "0 (Yok)",
+                color: "#fde047",
+                fact: "Güneş Sistemi'nin EN SICAK gezegenidir (yaklaşık 460°C). Kalın karbondioksit atmosferi devasa bir sera etkisi yaratır. Diğer tüm gezegenlerin tersi yönünde döner. 'Çoban Yıldızı' da denir."
+            },
+            earth: {
+                name: "Dünya",
+                type: "Karasal / İç Gezegen",
+                diameter: "12,742 km",
+                distance: "149.6 Milyon km",
+                orbit: "365.25 Gün",
+                moons: "1 (Ay)",
+                color: "#38bdf8",
+                fact: "Üzerinde yaşam olduğu bilinen tek gök cismidir. Yüzeyinin %71'i sularla kaplı olduğu için 'Mavi Gezegen' olarak adlandırılır. Katmanlı bir atmosfere sahiptir."
+            },
+            moon: {
+                name: "Ay",
+                type: "Dünya'nın Doğal Uydusu",
+                diameter: "3,474 km",
+                distance: "384,400 km (Dünya'ya)",
+                orbit: "27.3 Gün",
+                moons: "-",
+                color: "#cbd5e1",
+                fact: "Dünya'mızın tek doğal uydusudur. Kendi etrafında dönme süresi ile Dünya etrafında dolanma süresi eşit (27.3 gün) olduğu için Dünya'dan bakıldığında her zaman aynı yüzü görünür."
+            },
+            mars: {
+                name: "Mars",
+                type: "Karasal / İç Gezegen",
+                diameter: "6,779 km",
+                distance: "227.9 Milyon km",
+                orbit: "687 Gün",
+                moons: "2 (Phobos, Deimos)",
+                color: "#ef4444",
+                fact: "Yüzeyindeki paslı demir oksit toprakları nedeniyle 'Kızıl Gezegen' olarak bilinir. İnce bir atmosferi vardır. Güneş Sistemi'nin en yüksek dağı olan dev Olimpos Dağı buradadır."
+            },
+            asteroids: {
+                name: "Asteroit Kuşağı",
+                type: "Kaya ve Metal Kümesi",
+                diameter: "Çeşitli (1m - 950km)",
+                distance: "Mars ile Jüpiter Arasında",
+                orbit: "3 - 6 Yıl",
+                moons: "-",
+                color: "#eab308",
+                fact: "Mars ile Jüpiter arasında bulunan, Güneş Sisteminin oluşumundan kalmış binlerce kayalık ve metalik gök cisminden oluşur. Karasal ve Gazsal gezegenleri birbirinden ayıran sınırdır!"
+            },
+            jupiter: {
+                name: "Jüpiter",
+                type: "Gazsal / Dış Gezegen",
+                diameter: "139,820 km",
+                distance: "778.5 Milyon km",
+                orbit: "12 Yıl",
+                moons: "95",
+                color: "#f97316",
+                fact: "Güneş Sistemi'nin EN BÜYÜK gezegenidir! Dev bir gaz kütlesidir. Yüzeyindeki ünlü 'Büyük Kırmızı Leke', Dünya'dan bile büyük olan yüzyıllardır süren devasa bir fırtınadır."
+            },
+            saturn: {
+                name: "Satürn",
+                type: "Gazsal / Dış Gezegen",
+                diameter: "116,460 km",
+                distance: "1.4 Milyar km",
+                orbit: "29.5 Yıl",
+                moons: "146",
+                color: "#fef08a",
+                fact: "Buz, kaya ve toz parçalarından oluşan muhteşem belirgin halkalarıyla tanınır. Yoğunluğu sudan az olan tek gezegendir. Dev bir okyanusa konsaydı yüzebilirdi!"
+            },
+            uranus: {
+                name: "Uranüs",
+                type: "Gazsal / Dış Gezegen",
+                diameter: "50,724 km",
+                distance: "2.9 Milyar km",
+                orbit: "84 Yıl",
+                moons: "28",
+                color: "#67e8f9",
+                fact: "Bir varil gibi yan yatmış eksen eğikliğiyle yörüngesinde yuvarlanarak döner. Çok soğuk bir gaz devidir. Açık mavi rengini atmosferindeki metan gazından alır."
+            },
+            neptune: {
+                name: "Neptün",
+                type: "Gazsal / Dış Gezegen",
+                diameter: "49,244 km",
+                distance: "4.5 Milyar km",
+                orbit: "165 Yıl",
+                moons: "16",
+                color: "#3b82f6",
+                fact: "Güneş Sistemimizin EN UZAK gezegenidir. Koyu lacivert renklidir. Atmosferinde hızı saatte 2000 km'yi bulabilen son derece şiddetli rüzgarlar eser."
+            }
+        };
+
+        let scene, camera, renderer, controls;
+        let sunGroup, fullSunMesh, sunGlowMesh, sunCutawayGroup;
+        let sunLayers3D = {};
+        let earthMesh, moonMesh, moonGroup;
+        let asteroidGroup, kuiperGroup;
+        let planets = {};
+        let orbitMeshes = [];
+        let isAnimating = true;
+        let showOrbits = true;
+        let animationSpeed = 1.0;
+        let focusedTarget = null;
+        let isSunCutawayActive = false;
+        let activeSunLayerId = null;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // High Quality Canvas Procedural Texture Generator
+        function generateProceduralTexture(type, baseHex, detailHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = baseHex;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (type === 'sun') {
+                for (let i = 0; i < 3000; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? '#fef08a' : '#f97316';
+                    ctx.globalAlpha = Math.random() * 0.4;
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 8 + 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (type === 'rock') {
+                for (let i = 0; i < 1500; i++) {
+                    ctx.fillStyle = detailHex;
+                    ctx.globalAlpha = Math.random() * 0.25;
+                    ctx.beginPath();
+                    const radius = Math.random() * 12 + 1;
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (type === 'gas') {
+                for (let i = 0; i < canvas.height; i += 4) {
+                    if (Math.random() > 0.3) {
+                        ctx.fillStyle = detailHex;
+                        ctx.globalAlpha = Math.random() * 0.45;
+                        ctx.fillRect(0, i, canvas.width, Math.random() * 12 + 2);
+                    }
+                }
+                if (baseHex === '#ea580c' || baseHex === '#f97316') {
+                    ctx.fillStyle = '#b91c1c';
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.ellipse(canvas.width * 0.6, canvas.height * 0.65, 50, 30, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (type === 'earth') {
+                ctx.fillStyle = '#15803d';
+                for (let i = 0; i < 40; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 90 + 30, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 0.4;
+                for (let i = 0; i < 60; i++) {
+                    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 120 + 40, Math.random() * 8 + 2);
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // 1. Scene Setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020617, 0.0008);
+
+            // 2. Camera Setup
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1500);
+            camera.position.set(0, 65, 120);
+
+            // 3. Renderer Setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            // 4. Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 450;
+            controls.minDistance = 2;
+
+            // 5. Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0x334155, 0.7);
+            scene.add(ambientLight);
+
+            // Sun Point Light
+            const sunLight = new THREE.PointLight(0xffffff, 2.5, 600);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.bias = -0.0001;
+            scene.add(sunLight);
+
+            // Build Scene Components
+            createSpaceBackground();
+            createSunAndLayers();
+            createPlanets();
+            createAsteroidBelt();
+            createKuiperBelt();
+
+            // Window Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onPointerClick);
+
+            // Start Animation Loop
+            animate();
+        }
+
+        function createSpaceBackground() {
+            const starsGeo = new THREE.BufferGeometry();
+            const count = 4500;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 800;
+                positions[i + 1] = (Math.random() - 0.5) * 800;
+                positions[i + 2] = (Math.random() - 0.5) * 800;
+
+                colors[i] = 0.8 + Math.random() * 0.2;
+                colors[i + 1] = 0.8 + Math.random() * 0.2;
+                colors[i + 2] = 0.9 + Math.random() * 0.1;
+            }
+
+            starsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starsGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const starsMat = new THREE.PointsMaterial({
+                size: 1.0,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            scene.add(new THREE.Points(starsGeo, starsMat));
+
+            // Nebula Dust
+            const nebulaGeo = new THREE.BufferGeometry();
+            const nPositions = new Float32Array(300 * 3);
+            for(let i = 0; i < 300 * 3; i += 3) {
+                nPositions[i] = (Math.random() - 0.5) * 600;
+                nPositions[i+1] = (Math.random() - 0.5) * 200;
+                nPositions[i+2] = (Math.random() - 0.5) * 600;
+            }
+            nebulaGeo.setAttribute('position', new THREE.BufferAttribute(nPositions, 3));
+            const nebulaMat = new THREE.PointsMaterial({
+                size: 8.0,
+                color: 0x4f46e5,
+                transparent: true,
+                opacity: 0.15
+            });
+            scene.add(new THREE.Points(nebulaGeo, nebulaMat));
+        }
+
+        // Create Sun with Full Model and 3D Interactive Cutaway Layer Group
+        function createSunAndLayers() {
+            sunGroup = new THREE.Group();
+            scene.add(sunGroup);
+
+            // 1. Solid Outer Sun Sphere
+            const sunTex = generateProceduralTexture('sun', '#f59e0b', '#dc2626');
+            const sunGeo = new THREE.SphereGeometry(7.5, 64, 64);
+            const sunMat = new THREE.MeshBasicMaterial({ map: sunTex });
+            fullSunMesh = new THREE.Mesh(sunGeo, sunMat);
+            fullSunMesh.userData = { id: 'sun' };
+            sunGroup.add(fullSunMesh);
+
+            // Sun Glow Outer Mesh
+            const glowGeo = new THREE.SphereGeometry(8.1, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0xf59e0b,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.BackSide
+            });
+            sunGlowMesh = new THREE.Mesh(glowGeo, glowMat);
+            sunGroup.add(sunGlowMesh);
+
+            // 2. 3D Sun Cutaway Layers Group (Initially Hidden)
+            sunCutawayGroup = new THREE.Group();
+            sunCutawayGroup.visible = false;
+            sunGroup.add(sunCutawayGroup);
+
+            // Define 3D Sun Layer Hemispheres (Internal Structure)
+            const layersData = [
+                { id: 'core', radius: 1.8, color: 0xef4444, opacity: 1.0 },
+                { id: 'radiative', radius: 3.4, color: 0xf97316, opacity: 0.9 },
+                { id: 'convective', radius: 5.2, color: 0xeab308, opacity: 0.85 },
+                { id: 'photosphere', radius: 7.2, color: 0xfef08a, opacity: 0.75 },
+                { id: 'chromosphere', radius: 7.7, color: 0xf43f5e, opacity: 0.5 },
+                { id: 'corona', radius: 8.6, color: 0xe2e8f0, opacity: 0.3 }
+            ];
+
+            layersData.reverse().forEach((layer) => {
+                // Hemisphere cutaway geometry to expose inner core layers
+                const layerGeo = new THREE.SphereGeometry(
+                    layer.radius, 32, 32, 
+                    0, Math.PI * 1.5, // 270 degree sweep opening a quarter cutaway
+                    0, Math.PI
+                );
+                const layerMat = new THREE.MeshStandardMaterial({
+                    color: layer.color,
+                    transparent: true,
+                    opacity: layer.opacity,
+                    roughness: 0.3,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide
+                });
+                const layerMesh = new THREE.Mesh(layerGeo, layerMat);
+                layerMesh.userData = { id: layer.id, isSunLayer: true };
+                sunLayers3D[layer.id] = layerMesh;
+                sunCutawayGroup.add(layerMesh);
+            });
+        }
+
+        // Create Solar System Planets and Orbits
+        function createPlanets() {
+            const planetConfigs = [
+                { id: 'mercury', radius: 0.8, distance: 13, speed: 0.035, type: 'rock', base: '#9ca3af', detail: '#4b5563' },
+                { id: 'venus', radius: 1.4, distance: 18, speed: 0.025, type: 'rock', base: '#fde047', detail: '#ca8a04' },
+                { id: 'earth', radius: 1.6, distance: 25, speed: 0.02, type: 'earth', base: '#0284c7', detail: '#15803d' },
+                { id: 'mars', radius: 1.1, distance: 33, speed: 0.016, type: 'rock', base: '#ef4444', detail: '#7f1d1d' },
+                { id: 'jupiter', radius: 3.8, distance: 48, speed: 0.009, type: 'gas', base: '#ea580c', detail: '#fed7aa', rings: false },
+                { id: 'saturn', radius: 3.0, distance: 62, speed: 0.007, type: 'gas', base: '#eab308', detail: '#fef08a', rings: true, ringInner: 3.8, ringOuter: 6.2, ringColor: 0xd97706 },
+                { id: 'uranus', radius: 2.2, distance: 75, speed: 0.005, type: 'gas', base: '#06b6d4', detail: '#cffaff', rings: true, ringInner: 2.7, ringOuter: 3.8, ringColor: 0x22d3ee },
+                { id: 'neptune', radius: 2.1, distance: 88, speed: 0.004, type: 'gas', base: '#2563eb', detail: '#93c5fd', rings: true, ringInner: 2.5, ringOuter: 3.4, ringColor: 0x60a5fa }
+            ];
+
+            planetConfigs.forEach((cfg) => {
+                const pivot = new THREE.Group();
+                scene.add(pivot);
+
+                const tex = generateProceduralTexture(cfg.type, cfg.base, cfg.detail);
+                const geo = new THREE.SphereGeometry(cfg.radius, 32, 32);
+                let mat;
+
+                if (cfg.type === 'earth') {
+                    mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.1 });
+                } else {
+                    mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0.1 });
+                }
+
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.x = cfg.distance;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.userData = { id: cfg.id };
+                pivot.add(mesh);
+
+                // Planet Rings if applicable
+                if (cfg.rings) {
+                    const ringGeo = new THREE.RingGeometry(cfg.ringInner, cfg.ringOuter, 64);
+                    const ringMat = new THREE.MeshStandardMaterial({
+                        color: cfg.ringColor,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.85
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    ringMesh.rotation.x = Math.PI / 2 + 0.2;
+                    mesh.add(ringMesh);
+                }
+
+                // Custom setup for Earth & Moon
+                if (cfg.id === 'earth') {
+                    earthMesh = mesh;
+                    moonGroup = new THREE.Group();
+                    mesh.add(moonGroup);
+
+                    const moonTex = generateProceduralTexture('rock', '#94a3b8', '#334155');
+                    const moonGeo = new THREE.SphereGeometry(0.45, 16, 16);
+                    const moonMat = new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.9 });
+                    moonMesh = new THREE.Mesh(moonGeo, moonMat);
+                    moonMesh.position.x = 3.2;
+                    moonMesh.castShadow = true;
+                    moonMesh.receiveShadow = true;
+                    moonMesh.userData = { id: 'moon' };
+                    moonGroup.add(moonMesh);
+                }
+
+                // Draw Orbit Circle
+                const orbitGeo = new THREE.BufferGeometry();
+                const points = [];
+                const segments = 128;
+                for (let i = 0; i <= segments; i++) {
+                    const theta = (i / segments) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta) * cfg.distance, 0, Math.sin(theta) * cfg.distance));
+                }
+                orbitGeo.setFromPoints(points);
+                const orbitMat = new THREE.LineBasicMaterial({
+                    color: 0x475569,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+                scene.add(orbitLine);
+                orbitMeshes.push(orbitLine);
+
+                planets[cfg.id] = {
+                    pivot: pivot,
+                    mesh: mesh,
+                    speed: cfg.speed,
+                    distance: cfg.distance,
+                    angle: Math.random() * Math.PI * 2
+                };
+            });
+        }
+
+        // Create Main Asteroid Belt between Mars & Jupiter
+        function createAsteroidBelt() {
+            asteroidGroup = new THREE.Group();
+            const count = 1200;
+            const geo = new THREE.DodecahedronGeometry(0.18, 1);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+            const instancedMesh = new THREE.InstancedMesh(geo, mat, count);
+
+            const dummy = new THREE.Object3D();
+            for (let i = 0; i < count; i++) {
+                const radius = 37 + Math.random() * 8;
+                const angle = Math.random() * Math.PI * 2;
+                const y = (Math.random() - 0.5) * 2.2;
+
+                dummy.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+                dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                const scale = 0.5 + Math.random() * 1.2;
+                dummy.scale.set(scale, scale, scale);
+                dummy.updateMatrix();
+
+                instancedMesh.setMatrixAt(i, dummy.matrix);
+            }
+
+            instancedMesh.userData = { id: 'asteroids' };
+            asteroidGroup.add(instancedMesh);
+            scene.add(asteroidGroup);
+        }
+
+        // Create Outer Kuiper Belt
+        function createKuiperBelt() {
+            kuiperGroup = new THREE.Group();
+            const count = 800;
+            const geo = new THREE.IcosahedronGeometry(0.2, 0);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.7 });
+            const instancedMesh = new THREE.InstancedMesh(geo, mat, count);
+
+            const dummy = new THREE.Object3D();
+            for (let i = 0; i < count; i++) {
+                const radius = 96 + Math.random() * 15;
+                const angle = Math.random() * Math.PI * 2;
+                const y = (Math.random() - 0.5) * 4;
+
+                dummy.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+                dummy.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                dummy.updateMatrix();
+
+                instancedMesh.setMatrixAt(i, dummy.matrix);
+            }
+
+            kuiperGroup.add(instancedMesh);
+            scene.add(kuiperGroup);
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isAnimating) {
+                // Rotate Sun (Saat yönünün tersine)
+                sunGroup.rotation.y += 0.002 * animationSpeed;
+
+                // Rotate Planets and Orbit Pivots
+                Object.keys(planets).forEach((key) => {
+                    const p = planets[key];
+                    
+                    // Güneş etrafında dolanma: SAAT YÖNÜNÜN TERSİ (Pozitif Y açısı)
+                    p.angle += p.speed * 0.2 * animationSpeed;
+                    p.pivot.rotation.y = p.angle;
+                    
+                    // Kendi etrafında dönme yönleri (Fen Bilimleri Müfredatı Özellikleri):
+                    if (key === 'venus') {
+                        // Venüs diğer gezegenlerin tersine (Saat yönünde) döner
+                        p.mesh.rotation.y -= 0.01 * animationSpeed;
+                    } else if (key === 'uranus') {
+                        // Uranüs eksen eğikliği nedeniyle ters/varil gibi döner
+                        p.mesh.rotation.y -= 0.01 * animationSpeed;
+                    } else {
+                        // Diğer tüm gezegenler saat yönünün tersine döner
+                        p.mesh.rotation.y += 0.01 * animationSpeed;
+                    }
+                });
+
+                // Ay'ın Dünya etrafındaki dolanması (Saat yönünün tersine)
+                if (moonGroup) {
+                    moonGroup.rotation.y += 0.03 * animationSpeed;
+                }
+
+                // Asteroit Kuşaklarının dönmesi (Saat yönünün tersine)
+                if (asteroidGroup) asteroidGroup.rotation.y += 0.0008 * animationSpeed;
+                if (kuiperGroup) kuiperGroup.rotation.y += 0.0004 * animationSpeed;
+            }
+
+            // Smooth Camera Focus Tracking
+            if (focusedTarget) {
+                const targetPos = new THREE.Vector3();
+                focusedTarget.getWorldPosition(targetPos);
+
+                controls.target.lerp(targetPos, 0.05);
+
+                // Maintain relative offset distance for smooth movement
+                if (focusedTarget.userData.id !== 'sun' && focusedTarget.userData.id !== 'asteroids') {
+                    const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+                    if (offset.length() > 25) {
+                        offset.setLength(18);
+                        camera.position.copy(targetPos).add(offset);
+                    }
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Camera Focus Navigation Manager
+        function focusOnBody(bodyId) {
+            // Disable Sun Cutaway Layer Mode if active when switching to planets
+            if (bodyId !== 'sun' && isSunCutawayActive) {
+                toggleSunLayers(false);
+            }
+
+            let targetMesh = null;
+            let targetCamDist = 20;
+
+            if (bodyId === 'sun') {
+                targetMesh = fullSunMesh;
+                targetCamDist = 28;
+            } else if (bodyId === 'moon') {
+                targetMesh = moonMesh;
+                targetCamDist = 6;
+            } else if (bodyId === 'asteroids') {
+                targetMesh = asteroidGroup;
+                targetCamDist = 75;
+            } else if (planets[bodyId]) {
+                targetMesh = planets[bodyId].mesh;
+                targetCamDist = planets[bodyId].mesh.geometry.parameters.radius * 5.5 + 4;
+            }
+
+            if (targetMesh) {
+                focusedTarget = targetMesh;
+                const worldPos = new THREE.Vector3();
+                targetMesh.getWorldPosition(worldPos);
+
+                const duration = 1200;
+                const startCamPos = camera.position.clone();
+                const endCamPos = worldPos.clone().add(new THREE.Vector3(0, targetCamDist * 0.4, targetCamDist));
+                const startTime = performance.now();
+
+                function animateCamera(now) {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const easeProgress = 0.5 - Math.cos(progress * Math.PI) / 2;
+
+                    camera.position.lerpVectors(startCamPos, endCamPos, easeProgress);
+                    controls.target.lerp(worldPos, easeProgress);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateCamera);
+                    }
+                }
+                requestAnimationFrame(animateCamera);
+
+                // Open Info Card
+                showInfoCard(bodyId);
+            }
+        }
+
+        // Toggle 3D Sun Layer Cutaway Mode
+        function toggleSunLayers(forceState) {
+            isSunCutawayActive = forceState !== undefined ? forceState : !isSunCutawayActive;
+
+            const sunBar = document.getElementById('sun-layers-bar');
+            const sunLayerBtn = document.getElementById('btn-sun-layers');
+            const btnText = document.getElementById('sun-layer-btn-text');
+
+            if (isSunCutawayActive) {
+                // Focus on Sun
+                focusOnBody('sun');
+
+                // Hide solid sun, show cutaway group
+                fullSunMesh.visible = false;
+                sunGlowMesh.visible = false;
+                sunCutawayGroup.visible = true;
+
+                sunBar.classList.remove('hidden');
+                sunLayerBtn.classList.add('active');
+                if (btnText) btnText.innerText = "Tam Güneş Modu";
+
+                // Select Core layer by default
+                selectSunLayer('core');
+            } else {
+                fullSunMesh.visible = true;
+                sunGlowMesh.visible = true;
+                sunCutawayGroup.visible = false;
+
+                sunBar.classList.add('hidden');
+                sunLayerBtn.classList.remove('active');
+                if (btnText) btnText.innerText = "Katmanları İncele";
+
+                // Reset layer opacities
+                Object.keys(sunLayers3D).forEach(id => {
+                    sunLayers3D[id].material.opacity = sunLayers3D[id].material.userData.originalOpacity || 0.8;
+                });
+            }
+        }
+
+        // Highlight Specific Sun Layer in 3D Cutaway
+        function selectSunLayer(layerId) {
+            activeSunLayerId = layerId;
+
+            // Highlight chosen 3D layer and fade others
+            Object.keys(sunLayers3D).forEach(id => {
+                const mesh = sunLayers3D[id];
+                if (id === layerId) {
+                    mesh.material.opacity = 1.0;
+                    mesh.material.wireframe = false;
+                } else {
+                    mesh.material.opacity = 0.2;
+                }
+            });
+
+            // Update Info Card with Layer Data
+            showInfoCard(layerId);
+        }
+
+        // Update Info Card HUD UI
+        function showInfoCard(id) {
+            const data = astronomicalData[id] || astronomicalData.earth;
+            const card = document.getElementById('info-card');
+            const iconContainer = document.getElementById('info-icon');
+            const sunLayerCardBtn = document.getElementById('sun-layer-card-btn');
+
+            document.getElementById('info-title').innerText = data.name;
+            document.getElementById('info-type').innerText = data.type;
+            document.getElementById('info-diameter').innerText = data.diameter;
+            document.getElementById('info-distance').innerText = data.distance;
+            document.getElementById('info-orbit').innerText = data.orbit;
+            document.getElementById('info-moons').innerText = data.moons;
+            document.getElementById('info-fact').innerText = data.fact;
+
+            iconContainer.style.backgroundColor = data.color + '33';
+            iconContainer.style.color = data.color;
+            iconContainer.innerHTML = id.includes('sun') || id === 'core' || id === 'photosphere' ?
+                '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-globe"></i>';
+
+            // Show 'Inspect Sun Layers' quick button inside info card if Sun is targeted
+            if (id === 'sun') {
+                sunLayerCardBtn.classList.remove('hidden');
+            } else {
+                sunLayerCardBtn.classList.add('hidden');
+            }
+
+            card.classList.remove('hidden');
+            setTimeout(() => {
+                card.classList.remove('opacity-0', 'translate-y-3');
+            }, 10);
+        }
+
+        function closeInfoCard() {
+            const card = document.getElementById('info-card');
+            card.classList.add('opacity-0', 'translate-y-3');
+            setTimeout(() => {
+                card.classList.add('hidden');
+            }, 300);
+        }
+
+        // Handle Canvas 3D Raycasting Clicking
+        function onPointerClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            let intersectObjects = [];
+            if (isSunCutawayActive) {
+                intersectObjects = Object.values(sunLayers3D);
+            } else {
+                intersectObjects = [fullSunMesh];
+                Object.keys(planets).forEach(k => intersectObjects.push(planets[k].mesh));
+                if (moonMesh) intersectObjects.push(moonMesh);
+            }
+
+            const intersects = raycaster.intersectObjects(intersectObjects);
+
+            if (intersects.length > 0) {
+                const hitObj = intersects[0].object;
+                if (hitObj.userData && hitObj.userData.id) {
+                    if (hitObj.userData.isSunLayer) {
+                        selectSunLayer(hitObj.userData.id);
+                    } else {
+                        focusOnBody(hitObj.userData.id);
+                    }
+                }
+            }
+        }
+
+        // Control UI Helpers
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            const icon = document.getElementById('icon-play-pause');
+            icon.className = isAnimating ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+        }
+
+        function updateSpeed(val) {
+            animationSpeed = parseFloat(val);
+            document.getElementById('speed-label').innerText = animationSpeed.toFixed(1) + 'x';
+        }
+
+        function toggleOrbits() {
+            showOrbits = !showOrbits;
+            orbitMeshes.forEach(line => line.visible = showOrbits);
+            document.getElementById('btn-toggle-orbits').classList.toggle('active', showOrbits);
+        }
+
+        function resetCamera() {
+            focusedTarget = null;
+            if (isSunCutawayActive) toggleSunLayers(false);
+
+            closeInfoCard();
+
+            const duration = 1000;
+            const startCamPos = camera.position.clone();
+            const endCamPos = new THREE.Vector3(0, 65, 120);
+            const startTarget = controls.target.clone();
+            const endTarget = new THREE.Vector3(0, 0, 0);
+            const startTime = performance.now();
+
+            function animateReset(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 0.5 - Math.cos(progress * Math.PI) / 2;
+
+                camera.position.lerpVectors(startCamPos, endCamPos, easeProgress);
+                controls.target.lerpVectors(startTarget, endTarget, easeProgress);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateReset);
+                }
+            }
+            requestAnimationFrame(animateReset);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Initialize Application on Page Load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

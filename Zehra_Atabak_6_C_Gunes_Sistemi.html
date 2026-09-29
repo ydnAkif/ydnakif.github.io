@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3B Etkileşimli Güneş Sistemi</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #01030b;
+    color: white;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+}
+
+canvas:active {
+    cursor: grabbing;
+}
+
+/* BAŞLIK */
+
+#title {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    width: 95%;
+}
+
+#title h1 {
+    margin: 0;
+    font-size: 27px;
+    text-shadow: 0 0 15px #648cff;
+}
+
+#title p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    opacity: .8;
+}
+
+/* BİLGİ PANELİ */
+
+#info {
+    display: none;
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    width: 290px;
+    background: rgba(5, 9, 25, .96);
+    border: 1px solid #53658f;
+    border-radius: 16px;
+    padding: 17px;
+    z-index: 30;
+    box-shadow: 0 0 25px rgba(40,80,180,.25);
+}
+
+#info.show {
+    display: block;
+}
+
+#info h2 {
+    margin: 0 0 12px;
+    color: #fff;
+}
+
+#close {
+    float: right;
+    background: transparent;
+    font-size: 22px;
+    padding: 0 6px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    font-size: 14px;
+}
+
+.info-row span {
+    color: #aeb9d6;
+}
+
+/* KONTROLLER */
+
+#controls {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+
+    background: rgba(6,10,25,.92);
+    border: 1px solid #34405f;
+    border-radius: 16px;
+    padding: 11px 14px;
+
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+button {
+    border: 0;
+    border-radius: 9px;
+    padding: 9px 13px;
+    background: #4059a5;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #5d75c1;
+}
+
+input[type="range"] {
+    width: 110px;
+}
+
+/* YARDIM */
+
+#help {
+    position: fixed;
+    left: 14px;
+    bottom: 20px;
+    background: rgba(5,8,20,.75);
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    opacity: .8;
+}
+
+/* MOBİL */
+
+@media(max-width:600px) {
+
+    #title h1 {
+        font-size: 19px;
+    }
+
+    #title p {
+        font-size: 11px;
+    }
+
+    #info {
+        width: calc(100% - 30px);
+        top: auto;
+        bottom: 105px;
+        right: 15px;
+    }
+
+    #help {
+        display: none;
+    }
+
+    #controls {
+        width: 94%;
+        bottom: 8px;
+    }
+
+    button {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="solarSystem"></canvas>
+
+<div id="title">
+    <h1>☀️ 3B Etkileşimli Güneş Sistemi</h1>
+    <p>Gezegenleri döndür, yakınlaştır ve bilgilerini keşfet!</p>
+</div>
+
+<div id="info">
+
+    <button id="close">×</button>
+
+    <h2 id="planetName"></h2>
+
+    <div class="info-row">
+        <span>Çapı</span>
+        <b id="diameter"></b>
+    </div>
+
+    <div class="info-row">
+        <span>Güneş'e uzaklığı</span>
+        <b id="distance"></b>
+    </div>
+
+    <div class="info-row">
+        <span>Dolanma süresi</span>
+        <b id="period"></b>
+    </div>
+
+    <div class="info-row">
+        <span>Uydu sayısı</span>
+        <b id="moons"></b>
+    </div>
+
+</div>
+
+<div id="controls">
+
+    <button id="startStop">⏸ Durdur</button>
+
+    <label>
+        ⚡ Hız
+        <input
+            id="speed"
+            type="range"
+            min="0"
+            max="5"
+            step="0.1"
+            value="1"
+        >
+    </label>
+
+    <button id="reset">🔄 Sıfırla</button>
+
+</div>
+
+<div id="help">
+    🖱️ Sürükle: döndür |
+    🔍 Tekerlek: yakınlaştır |
+    👆 Gezegenlere tıkla
+</div>
+
+<script>
+
+const canvas = document.getElementById("solarSystem");
+const ctx = canvas.getContext("2d");
+
+let width;
+let height;
+let dpr;
+
+function resizeCanvas() {
+
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    width = window.innerWidth;
+    height = window.innerHeight;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+resizeCanvas();
+
+window.addEventListener("resize", resizeCanvas);
+
+
+/* =====================================================
+   GEZEGENLER
+===================================================== */
+
+const planets = [
+
+    {
+        name: "Merkür",
+        radius: 5,
+        orbit: 65,
+        color: "#9d9d9d",
+        orbitSpeed: .040,
+        rotationSpeed: .018,
+        angle: 0,
+        rotation: 0,
+        diameter: "4.879 km",
+        distance: "57,9 milyon km",
+        period: "88 gün",
+        moons: "0"
+    },
+
+    {
+        name: "Venüs",
+        radius: 8,
+        orbit: 95,
+        color: "#d8b477",
+        orbitSpeed: .030,
+        rotationSpeed: -.010,
+        angle: 1,
+        rotation: 0,
+        diameter: "12.104 km",
+        distance: "108,2 milyon km",
+        period: "224,7 gün",
+        moons: "0"
+    },
+
+    {
+        name: "Dünya",
+        radius: 9,
+        orbit: 130,
+        color: "#347fe5",
+        orbitSpeed: .024,
+        rotationSpeed: .090,
+        angle: 2,
+        rotation: 0,
+        diameter: "12.742 km",
+        distance: "149,6 milyon km",
+        period: "365,25 gün",
+        moons: "1",
+        earth: true
+    },
+
+    {
+        name: "Mars",
+        radius: 7,
+        orbit: 165,
+        color: "#c65335",
+        orbitSpeed: .020,
+        rotationSpeed: .082,
+        angle: 3,
+        rotation: 0,
+        diameter: "6.779 km",
+        distance: "228 milyon km",
+        period: "687 gün",
+        moons: "2"
+    },
+
+    {
+        name: "Jüpiter",
+        radius: 18,
+        orbit: 215,
+        color: "#c9a079",
+        orbitSpeed: .013,
+        rotationSpeed: .13,
+        angle: 4,
+        rotation: 0,
+        diameter: "139.820 km",
+        distance: "778,5 milyon km",
+        period: "11,86 yıl",
+        moons: "95"
+    },
+
+    {
+        name: "Satürn",
+        radius: 16,
+        orbit: 270,
+        color: "#d6b67e",
+        orbitSpeed: .010,
+        rotationSpeed: .11,
+        angle: 5,
+        rotation: 0,
+        diameter: "116.460 km",
+        distance: "1,43 milyar km",
+        period: "29,45 yıl",
+        moons: "274",
+        saturn: true
+    },
+
+    {
+        name: "Uranüs",
+        radius: 12,
+        orbit: 330,
+        color: "#7ed8dc",
+        orbitSpeed: .007,
+        rotationSpeed: .09,
+        angle: 6,
+        rotation: 0,
+        diameter: "50.724 km",
+        distance: "2,87 milyar km",
+        period: "84 yıl",
+        moons: "28"
+    },
+
+    {
+        name: "Neptün",
+        radius: 12,
+        orbit: 390,
+        color: "#4169e1",
+        orbitSpeed: .005,
+        rotationSpeed: .085,
+        angle: 7,
+        rotation: 0,
+        diameter: "49.244 km",
+        distance: "4,50 milyar km",
+        period: "164,8 yıl",
+        moons: "16"
+    }
+
+];
+
+
+/* =====================================================
+   YILDIZLAR
+===================================================== */
+
+const stars = [];
+
+for(let i = 0; i < 550; i++) {
+
+    stars.push({
+
+        x: Math.random(),
+        y: Math.random(),
+
+        size: Math.random() * 1.5 + .2,
+
+        opacity: Math.random() * .7 + .3
+    });
+}
+
+
+/* =====================================================
+   ASTEROİT KUŞAĞI
+===================================================== */
+
+const asteroids = [];
+
+for(let i = 0; i < 350; i++) {
+
+    asteroids.push({
+
+        angle: Math.random() * Math.PI * 2,
+
+        radius: 180 + Math.random() * 35,
+
+        height: (Math.random() - .5) * 9,
+
+        size: Math.random() * 1.4 + .4
+    });
+}
+
+
+/* =====================================================
+   3B GÖRÜNÜM
+===================================================== */
+
+let rotateX = .65;
+let rotateY = -.4;
+
+let zoom = 1;
+
+
+/* =====================================================
+   PROJEKSİYON
+===================================================== */
+
+function project(x, y, z) {
+
+    const x1 =
+        x * Math.cos(rotateY)
+        -
+        z * Math.sin(rotateY);
+
+    const z1 =
+        x * Math.sin(rotateY)
+        +
+        z * Math.cos(rotateY);
+
+    const y1 =
+        y * Math.cos(rotateX)
+        -
+        z1 * Math.sin(rotateX);
+
+    const z2 =
+        y * Math.sin(rotateX)
+        +
+        z1 * Math.cos(rotateX);
+
+    const camera = 850;
+
+    const scale =
+        camera /
+        (camera + z2);
+
+    return {
+
+        x: width / 2 + x1 * scale * zoom,
+
+        y: height / 2 + y1 * scale * zoom,
+
+        scale,
+
+        z: z2
+    };
+}
+
+
+/* =====================================================
+   YILDIZLAR
+===================================================== */
+
+function drawStars() {
+
+    for(const star of stars) {
+
+        ctx.globalAlpha = star.opacity;
+
+        ctx.fillStyle = "white";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            star.x * width,
+            star.y * height,
+            star.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+
+/* =====================================================
+   YÖRÜNGELER
+===================================================== */
+
+function drawOrbit(radius) {
+
+    ctx.beginPath();
+
+    for(let i = 0; i <= 180; i++) {
+
+        const angle =
+            i / 180 * Math.PI * 2;
+
+        const x =
+            Math.cos(angle) * radius;
+
+        const z =
+            Math.sin(angle) * radius;
+
+        const p =
+            project(x, 0, z);
+
+        if(i === 0)
+            ctx.moveTo(p.x, p.y);
+        else
+            ctx.lineTo(p.x, p.y);
+    }
+
+    ctx.strokeStyle =
+        "rgba(120,160,255,.25)";
+
+    ctx.lineWidth = 1;
+
+    ctx.stroke();
+}
+
+
+/* =====================================================
+   ASTEROİTLER
+===================================================== */
+
+function drawAsteroids() {
+
+    for(const asteroid of asteroids) {
+
+        const x =
+            Math.cos(asteroid.angle)
+            *
+            asteroid.radius;
+
+        const z =
+            Math.sin(asteroid.angle)
+            *
+            asteroid.radius;
+
+        const p =
+            project(
+                x,
+                asteroid.height,
+                z
+            );
+
+        ctx.globalAlpha = .75;
+
+        ctx.fillStyle = "#aaa08b";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            asteroid.size * p.scale,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+
+/* =====================================================
+   GEZEGEN
+===================================================== */
+
+function drawPlanet(planet, x, y, z) {
+
+    const p =
+        project(x, y, z);
+
+    const R =
+        planet.radius *
+        p.scale *
+        zoom;
+
+    const lightX =
+        p.x - R * .38;
+
+    const lightY =
+        p.y - R * .45;
+
+    const gradient =
+        ctx.createRadialGradient(
+            lightX,
+            lightY,
+            R * .05,
+            p.x,
+            p.y,
+            R
+        );
+
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(.16, planet.color);
+    gradient.addColorStop(.70, planet.color);
+    gradient.addColorStop(1, "#030305");
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.fill();
+
+
+    /* KENDİ EKSENİNDE DÖNÜŞ */
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.clip();
+
+    for(let i = -3; i <= 3; i++) {
+
+        const wave =
+            Math.sin(
+                planet.rotation + i * .9
+            );
+
+        const lineX =
+            p.x + wave * R * .55;
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            lineX,
+            p.y,
+            Math.max(1, R * .13),
+            R * .9,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,.13)";
+
+        ctx.lineWidth =
+            Math.max(1, R * .08);
+
+        ctx.stroke();
+    }
+
+
+    /* JÜPİTER VE SATÜRN BULUTLARI */
+
+    if(
+        planet.name === "Jüpiter" ||
+        planet.name === "Satürn"
+    ) {
+
+        for(let i = -2; i <= 2; i++) {
+
+            ctx.beginPath();
+
+            ctx.ellipse(
+                p.x,
+                p.y + i * R * .25,
+                R * .8,
+                R * .08,
+                0,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.strokeStyle =
+                "rgba(90,60,30,.35)";
+
+            ctx.lineWidth =
+                Math.max(1, R * .06);
+
+            ctx.stroke();
+        }
+    }
+
+    ctx.restore();
+
+
+    /* DIŞ KENAR */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,.15)";
+
+    ctx.lineWidth = 1;
+
+    ctx.stroke();
+
+    return {
+
+        x: p.x,
+
+        y: p.y,
+
+        radius: R,
+
+        z: p.z
+    };
+}
+
+
+/* =====================================================
+   GÜNEŞ
+===================================================== */
+
+let sunRotation = 0;
+
+function drawSun() {
+
+    const p =
+        project(0, 0, 0);
+
+    const R =
+        35 * p.scale * zoom;
+
+
+    /* GÜNEŞ IŞIĞI */
+
+    const glow =
+        ctx.createRadialGradient(
+            p.x,
+            p.y,
+            0,
+            p.x,
+            p.y,
+            R * 3
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(255,230,80,.65)"
+    );
+
+    glow.addColorStop(
+        .35,
+        "rgba(255,170,30,.2)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,100,0,0)"
+    );
+
+    ctx.fillStyle = glow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R * 3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* GÜNEŞ KÜRESİ */
+
+    const gradient =
+        ctx.createRadialGradient(
+            p.x - R * .35,
+            p.y - R * .4,
+            2,
+            p.x,
+            p.y,
+            R
+        );
+
+    gradient.addColorStop(0, "#fffbd0");
+    gradient.addColorStop(.3, "#ffd83d");
+    gradient.addColorStop(.7, "#ff9415");
+    gradient.addColorStop(1, "#b94400");
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.fill();
+
+
+    /* GÜNEŞ HAREKETİ */
+
+    ctx.save();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        R,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.clip();
+
+    for(let i = -2; i <= 2; i++) {
+
+        const x =
+            p.x +
+            Math.sin(
+                sunRotation + i
+            ) * R * .6;
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            x,
+            p.y,
+            R * .12,
+            R * .9,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle =
+            "rgba(255,255,150,.15)";
+
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+
+/* =====================================================
+   SATÜRN HALKASI
+===================================================== */
+
+function drawSaturnRing(
+    x,
+    y,
+    z,
+    radius
+) {
+
+    const p =
+        project(x, y, z);
+
+    ctx.save();
+
+    ctx.translate(
+        p.x,
+        p.y
+    );
+
+    ctx.rotate(-.25);
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        0,
+        radius * 1.8 * p.scale * zoom,
+        radius * .55 * p.scale * zoom,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+        "rgba(230,210,160,.9)";
+
+    ctx.lineWidth =
+        Math.max(2, radius * .15);
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        0,
+        radius * 1.35 * p.scale * zoom,
+        radius * .4 * p.scale * zoom,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+        "rgba(130,110,75,.8)";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+
+/* =====================================================
+   AY
+===================================================== */
+
+let moonAngle = 0;
+
+function drawMoon(
+    earthX,
+    earthY,
+    earthZ
+) {
+
+    const moonDistance = 17;
+
+    const x =
+        earthX +
+        Math.cos(moonAngle)
+        *
+        moonDistance;
+
+    const z =
+        earthZ +
+        Math.sin(moonAngle)
+        *
+        moonDistance;
+
+    const y =
+        earthY +
+        Math.sin(moonAngle * 2) * 2;
+
+    const p =
+        project(x, y, z);
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x,
+        p.y,
+        3 * p.scale * zoom,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle =
+        "#d4d4d4";
+
+    ctx.fill();
+}
+
+
+/* =====================================================
+   DOKUNMATİK / FARE
+===================================================== */
+
+let dragging = false;
+
+let lastX = 0;
+let lastY = 0;
+
+let downX = 0;
+let downY = 0;
+
+let moved = false;
+
+canvas.addEventListener(
+    "pointerdown",
+    event => {
+
+        dragging = true;
+
+        moved = false;
+
+        lastX =
+            downX =
+            event.clientX;
+
+        lastY =
+            downY =
+            event.clientY;
+
+        canvas.setPointerCapture(
+            event.pointerId
+        );
+    }
+);
+
+
+canvas.addEventListener(
+    "pointermove",
+    event => {
+
+        if(!dragging)
+            return;
+
+        const dx =
+            event.clientX - lastX;
+
+        const dy =
+            event.clientY - lastY;
+
+        if(
+            Math.abs(event.clientX - downX)
+            +
+            Math.abs(event.clientY - downY)
+            > 5
+        ) {
+
+            moved = true;
+        }
+
+        rotateY += dx * .008;
+
+        rotateX += dy * .008;
+
+        rotateX =
+            Math.max(
+                -1.4,
+                Math.min(
+                    1.4,
+                    rotateX
+                )
+            );
+
+        lastX =
+            event.clientX;
+
+        lastY =
+            event.clientY;
+    }
+);
+
+
+canvas.addEventListener(
+    "pointerup",
+    event => {
+
+        dragging = false;
+
+        if(!moved) {
+
+            let selected = null;
+
+            let closest = Infinity;
+
+            for(
+                const planet of planets
+            ) {
+
+                if(!planet.screen)
+                    continue;
+
+                const distance =
+                    Math.hypot(
+                        event.clientX -
+                        planet.screen.x,
+
+                        event.clientY -
+                        planet.screen.y
+                    );
+
+                if(
+                    distance <
+                    planet.screen.radius + 14
+                    &&
+                    distance < closest
+                ) {
+
+                    closest =
+                        distance;
+
+                    selected =
+                        planet;
+                }
+            }
+
+            if(selected)
+                showPlanetInfo(selected);
+        }
+    }
+);
+
+
+/* =====================================================
+   YAKINLAŞTIRMA
+===================================================== */
+
+canvas.addEventListener(
+    "wheel",
+    event => {
+
+        event.preventDefault();
+
+        if(event.deltaY < 0)
+            zoom *= 1.1;
+        else
+            zoom *= .9;
+
+        zoom =
+            Math.max(
+                .45,
+                Math.min(
+                    2.5,
+                    zoom
+                )
+            );
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+/* =====================================================
+   BİLGİ PANELİ
+===================================================== */
+
+function showPlanetInfo(planet) {
+
+    document.getElementById(
+        "planetName"
+    ).textContent =
+        planet.name;
+
+    document.getElementById(
+        "diameter"
+    ).textContent =
+        planet.diameter;
+
+    document.getElementById(
+        "distance"
+    ).textContent =
+        planet.distance;
+
+    document.getElementById(
+        "period"
+    ).textContent =
+        planet.period;
+
+    document.getElementById(
+        "moons"
+    ).textContent =
+        planet.moons;
+
+    document.getElementById(
+        "info"
+    ).classList.add("show");
+}
+
+
+document.getElementById(
+    "close"
+).addEventListener(
+    "click",
+    () => {
+
+        document.getElementById(
+            "info"
+        ).classList.remove("show");
+    }
+);
+
+
+/* =====================================================
+   BAŞLAT / DURDUR
+===================================================== */
+
+let running = true;
+
+document.getElementById(
+    "startStop"
+).addEventListener(
+    "click",
+    () => {
+
+        running =
+            !running;
+
+        document.getElementById(
+            "startStop"
+        ).textContent =
+            running
+            ? "⏸ Durdur"
+            : "▶ Başlat";
+    }
+);
+
+
+/* =====================================================
+   HIZ
+===================================================== */
+
+const speedSlider =
+    document.getElementById("speed");
+
+let speed = 1;
+
+speedSlider.addEventListener(
+    "input",
+    () => {
+
+        speed =
+            Number(
+                speedSlider.value
+            );
+    }
+);
+
+
+/* =====================================================
+   SIFIRLA
+===================================================== */
+
+document.getElementById(
+    "reset"
+).addEventListener(
+    "click",
+    () => {
+
+        rotateX = .65;
+
+        rotateY = -.4;
+
+        zoom = 1;
+
+        planets.forEach(
+            (planet, index) => {
+
+                planet.angle = index;
+
+                planet.rotation = 0;
+            }
+        );
+    }
+);
+
+
+/* =====================================================
+   ANİMASYON
+===================================================== */
+
+function animate() {
+
+    /* ARKA PLAN */
+
+    ctx.fillStyle =
+        "#01030b";
+
+    ctx.fillRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+    drawStars();
+
+
+    /* YÖRÜNGELER */
+
+    for(
+        const planet of planets
+    ) {
+
+        drawOrbit(
+            planet.orbit
+        );
+    }
+
+
+    /* ASTEROİT KUŞAĞI */
+
+    drawAsteroids();
+
+
+    /* HAREKET */
+
+    if(running) {
+
+        for(
+            const planet of planets
+        ) {
+
+            planet.angle +=
+                planet.orbitSpeed * speed;
+
+            planet.rotation +=
+                planet.rotationSpeed * speed;
+        }
+
+        sunRotation +=
+            .025 * speed;
+
+        moonAngle +=
+            .08 * speed;
+
+        for(
+            const asteroid of asteroids
+        ) {
+
+            asteroid.angle +=
+                .0015 * speed;
+        }
+    }
+
+
+    /* GÜNEŞ */
+
+    drawSun();
+
+
+    /* GEZEGENLER */
+
+    const objects =
+        planets.map(
+            planet => {
+
+                const x =
+                    Math.cos(
+                        planet.angle
+                    )
+                    *
+                    planet.orbit;
+
+                const z =
+                    Math.sin(
+                        planet.angle
+                    )
+                    *
+                    planet.orbit;
+
+                const y =
+                    Math.sin(
+                        planet.angle * .7
+                    )
+                    *
+                    planet.orbit
+                    *
+                    .07;
+
+                return {
+                    planet,
+                    x,
+                    y,
+                    z
+                };
+            }
+        );
+
+
+    /* 3B DERİNLİK */
+
+    objects.sort(
+        (a,b) =>
+            a.z - b.z
+    );
+
+
+    for(
+        const object of objects
+    ) {
+
+        const planet =
+            object.planet;
+
+
+        if(planet.saturn) {
+
+            drawSaturnRing(
+                object.x,
+                object.y,
+                object.z,
+                planet.radius
+            );
+        }
+
+
+        planet.screen =
+            drawPlanet(
+                planet,
+                object.x,
+                object.y,
+                object.z
+            );
+
+
+        if(planet.earth) {
+
+            drawMoon(
+                object.x,
+                object.y,
+                object.z
+            );
+        }
+
+
+        /* GEZEGEN ADI */
+
+        const s =
+            planet.screen;
+
+        ctx.textAlign =
+            "center";
+
+        ctx.font =
+            "12px Arial";
+
+        ctx.fillStyle =
+            "rgba(255,255,255,.9)";
+
+        ctx.fillText(
+            planet.name,
+            s.x,
+            s.y + s.radius + 15
+        );
+    }
+
+
+    requestAnimationFrame(
+        animate
+    );
+}
+
+animate();
+
+</script>
+ 
+</body>
+</html>

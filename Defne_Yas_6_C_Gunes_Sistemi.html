@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3 Boyutlu Etkileşimli Güneş Sistemi - 6. Sınıf Fen Bilimleri</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        /* Üst Menü - Gezegen Butonları */
+        #top-menu {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 95%;
+        }
+
+        .planet-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 6px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .planet-btn:hover {
+            background: #ffcc00;
+            color: #000;
+            border-color: #ffcc00;
+        }
+
+        /* Alt Kontrol Paneli */
+        #bottom-control {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .ctrl-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .ctrl-btn:hover {
+            background: #388E3C;
+        }
+
+        .stop-btn {
+            background: #f44336 !important;
+        }
+        .stop-btn:hover {
+            background: #d32f2f !important;
+        }
+
+        .layer-btn {
+            background: #ff9800 !important;
+        }
+        .layer-btn:hover {
+            background: #f57c00 !important;
+        }
+
+        /* Bilgi Kutusu */
+        #info-box {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(10, 15, 30, 0.92);
+            border: 1px solid #00bcd4;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            width: 290px;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            display: none;
+            box-shadow: 0 0 15px rgba(0, 188, 212, 0.4);
+        }
+
+        #info-box h2 {
+            margin-top: 0;
+            color: #00bcd4;
+            font-size: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        #info-box p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Üst Gezegen Menüsü -->
+    <div id="top-menu">
+        <button class="planet-btn" onclick="selectPlanet('Sun')">Güneş</button>
+        <button class="planet-btn" onclick="selectPlanet('Mercury')">Merkür</button>
+        <button class="planet-btn" onclick="selectPlanet('Venus')">Venüs</button>
+        <button class="planet-btn" onclick="selectPlanet('Earth')">Dünya</button>
+        <button class="planet-btn" onclick="selectPlanet('Mars')">Mars</button>
+        <button class="planet-btn" onclick="selectPlanet('Jupiter')">Jüpiter</button>
+        <button class="planet-btn" onclick="selectPlanet('Saturn')">Satürn</button>
+        <button class="planet-btn" onclick="selectPlanet('Uranus')">Uranüs</button>
+        <button class="planet-btn" onclick="selectPlanet('Neptune')">Neptün</button>
+    </div>
+
+    <!-- Bilgi Paneli -->
+    <div id="info-box">
+        <h2 id="info-title">Gezegen Adı</h2>
+        <p><strong>Çap:</strong> <span id="info-dia">-</span></p>
+        <p><strong>Güneş'e Uzaklık:</strong> <span id="info-dist">-</span></p>
+        <p><strong>Dolanma Süresi:</strong> <span id="info-orbit">-</span></p>
+        <p><strong>Uydu Sayısı:</strong> <span id="info-moons">-</span></p>
+        <p id="info-layers" style="margin-top: 10px; color: #ffeb3b; font-style: italic; display:none;"></p>
+    </div>
+
+    <!-- Alt Kontroller (Başla, Dur, Hız, Katmanlar) -->
+    <div id="bottom-control">
+        <button class="ctrl-btn" onclick="startMotion()">Başla</button>
+        <button class="ctrl-btn stop-btn" onclick="stopMotion()">Dur</button>
+        <div>
+            <label for="speed-range">Hız: </label>
+            <input type="range" id="speed-range" min="0.1" max="3" step="0.1" value="1" oninput="changeSpeed(this.value)">
+        </div>
+        <button class="ctrl-btn layer-btn" onclick="toggleLayers()">Katmanları Gör</button>
+    </div>
+
+    <!-- Three.js Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Türkçe Gezegen Bilgileri ve Katmanları
+        const planetData = {
+            'Sun': { name: 'Güneş', dia: '1.392.700 km', dist: '0 km (Merkez)', orbit: '-', moons: '-', layers: 'İç Katmanlar: Çekirdek, Işınetkin Katman, Taşınım Katmanı, Fotosfer.' },
+            'Mercury': { name: 'Merkür', dia: '4.879 km', dist: '57.9 Milyon km', orbit: '88 Gün', moons: '0', layers: 'İç Katmanlar: Metalik Çekirdek, Kayalık Manto, İnce Kabuk.' },
+            'Venus': { name: 'Venüs', dia: '12.104 km', dist: '108.2 Milyon km', orbit: '225 Gün', moons: '0', layers: 'İç Katmanlar: Demir Çekirdek, Kayalık Manto, Yoğun Kayalık Kabuk.' },
+            'Earth': { name: 'Dünya', dia: '12.742 km', dist: '149.6 Milyon km', orbit: '365 Gün 6 Saat', moons: '1 (Ay)', layers: 'İç Katmanlar: İç Çekirdek, Dış Çekirdek, Manto (Magma), Yer Kabuğu.' },
+            'Mars': { name: 'Mars', dia: '6.779 km', dist: '227.9 Milyon km', orbit: '687 Gün', moons: '2 (Phobos ve Deimos)', layers: 'İç Katmanlar: Demir Çekirdek, Kayalık Manto, Tozlu Kabuk.' },
+            'Jupiter': { name: 'Jüpiter', dia: '139.820 km', dist: '778.5 Milyon km', orbit: '12 Yıl', moons: '95+', layers: 'İç Katmanlar: Kayalık Çekirdek, Sıvı Metalik Hidrojen, Sıvı Hidrojen.' },
+            'Saturn': { name: 'Satürn', dia: '116.460 km', dist: '1.43 Milyar km', orbit: '29.5 Yıl', moons: '146+', layers: 'İç Katmanlar: Küçük Çekirdek, Sıvı Hidrojen Katmanı, Buz Halkalar.' },
+            'Uranus': { name: 'Uranüs', dia: '50.724 km', dist: '2.87 Milyar km', orbit: '84 Yıl', moons: '28', layers: 'İç Katmanlar: Kayalık Çekirdek, Su-Amonyak-Metan Buzlu Manto.' },
+            'Neptune': { name: 'Neptün', dia: '49.244 km', dist: '4.50 Milyar km', orbit: '165 Yıl', moons: '16', layers: 'İç Katmanlar: Kayalık Çekirdek, Su-Amonyak Manto, Buz ve Gaz Atmosfer.' }
+        };
+
+        let scene, camera, renderer, controls;
+        let planets = {};
+        let moonMesh;
+        let isRunning = false; // Başlangıçta duruyor
+        let globalSpeed = 1;
+        let selectedKey = null;
+        let showLayerMode = false;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+            camera.position.set(0, 150, 300);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Işıklar
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.PointLight(0xffffff, 2, 2000);
+            scene.add(sunLight);
+
+            // Yıldızlı Arka Plan
+            createStars();
+
+            // Güneş (Merkezde)
+            const sunGeo = new THREE.SphereGeometry(18, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+            const sun = new THREE.Mesh(sunGeo, sunMat);
+            sun.userData = { key: 'Sun' };
+            scene.add(sun);
+            planets['Sun'] = { mesh: sun, distance: 0, speed: 0 };
+
+            // Doğru Sırada Gezegenler
+            const planetConfigs = [
+                { key: 'Mercury', color: 0xaaaaaa, size: 2.2, dist: 35, speed: 0.04 },
+                { key: 'Venus', color: 0xe3bb76, size: 3.5, dist: 50, speed: 0.015 },
+                { key: 'Earth', color: 0x2233ff, size: 4.0, dist: 70, speed: 0.01 },
+                { key: 'Mars', color: 0xc1440e, size: 2.8, dist: 95, speed: 0.008 },
+                { key: 'Jupiter', color: 0xd4a373, size: 9.0, dist: 135, speed: 0.004 },
+                { key: 'Saturn', color: 0xf4e2bb, size: 7.5, dist: 175, speed: 0.002 },
+                { key: 'Uranus', color: 0x73d2de, size: 5.0, dist: 215, speed: 0.001 },
+                { key: 'Neptune', color: 0x274690, size: 4.8, dist: 250, speed: 0.0008 }
+            ];
+
+            planetConfigs.forEach(cfg => {
+                const pivot = new THREE.Object3D();
+                scene.add(pivot);
+
+                // Yörünge Çizgisi
+                const orbitGeo = new THREE.RingGeometry(cfg.dist - 0.2, cfg.dist + 0.2, 64);
+                const orbitMat = new THREE.MeshBasicMaterial({ color: 0x444444, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
+                const orbitLine = new THREE.Mesh(orbitGeo, orbitMat);
+                orbitLine.rotation.x = Math.PI / 2;
+                scene.add(orbitLine);
+
+                // Gezegen Küresi
+                const pGeo = new THREE.SphereGeometry(cfg.size, 32, 32);
+                const pMat = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.7 });
+                const pMesh = new THREE.Mesh(pGeo, pMat);
+                pMesh.position.x = cfg.dist;
+                pMesh.userData = { key: cfg.key };
+                pivot.add(pMesh);
+
+                // Satürn Halkası
+                if (cfg.key === 'Saturn') {
+                    const ringGeo = new THREE.RingGeometry(9, 14, 32);
+                    const ringMat = new THREE.MeshBasicMaterial({ color: 0xa99d82, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.rotation.x = Math.PI / 2;
+                    pMesh.add(ring);
+                }
+
+                // Dünya'nın Ay'ı
+                if (cfg.key === 'Earth') {
+                    const moonGeo = new THREE.SphereGeometry(0.8, 16, 16);
+                    const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+                    moonMesh = new THREE.Mesh(moonGeo, moonMat);
+                    pMesh.add(moonMesh);
+                }
+
+                planets[cfg.key] = {
+                    mesh: pMesh,
+                    pivot: pivot,
+                    speed: cfg.speed,
+                    distance: cfg.dist
+                };
+            });
+
+            // Asteroit Kuşağı
+            createAsteroidBelt();
+
+            window.addEventListener('click', onDocumentClick);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createStars() {
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const starPositions = new Float32Array(starCount * 3);
+
+            for(let i = 0; i < starCount * 3; i += 3) {
+                starPositions[i] = (Math.random() - 0.5) * 2000;
+                starPositions[i+1] = (Math.random() - 0.5) * 2000;
+                starPositions[i+2] = (Math.random() - 0.5) * 2000;
+            }
+
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starMat = new THREE.PointsMaterial({color: 0xffffff, size: 1.2});
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+        }
+
+        function createAsteroidBelt() {
+            const asteroidGeo = new THREE.BufferGeometry();
+            const count = 500;
+            const positions = new Float32Array(count * 3);
+
+            for (let i = 0; i < count * 3; i += 3) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = 110 + Math.random() * 15;
+                positions[i] = Math.cos(angle) * r;
+                positions[i+1] = (Math.random() - 0.5) * 4;
+                positions[i+2] = Math.sin(angle) * r;
+            }
+
+            asteroidGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const asteroidMat = new THREE.PointsMaterial({color: 0x888888, size: 0.6});
+            const asteroidBelt = new THREE.Points(asteroidGeo, asteroidMat);
+            scene.add(asteroidBelt);
+        }
+
+        // Animasyon (Sadece isRunning true olduğunda saat yönünün tersine hareket eder)
+        let moonAngle = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isRunning) {
+                for (let key in planets) {
+                    if (key !== 'Sun') {
+                        let p = planets[key];
+                        p.pivot.rotation.y -= p.speed * globalSpeed * 0.5; // Saat yönünün tersi dolanım
+                        p.mesh.rotation.y += 0.02 * globalSpeed; // Kendi ekseninde dönme
+                    }
+                }
+
+                // Ay'ın Dünya Çevresinde Dönüşü
+                if (moonMesh) {
+                    moonAngle += 0.05 * globalSpeed;
+                    moonMesh.position.x = planets['Earth'].mesh.position.x + Math.cos(moonAngle) * 8;
+                    moonMesh.position.z = planets['Earth'].mesh.position.z + Math.sin(moonAngle) * 8;
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Gezegen Seçme ve Bilgi Gösterme
+        function selectPlanet(key) {
+            selectedKey = key;
+            const data = planetData[key];
+            if (!data) return;
+
+            document.getElementById('info-box').style.display = 'block';
+            document.getElementById('info-title').innerText = data.name;
+            document.getElementById('info-dia').innerText = data.dia;
+            document.getElementById('info-dist').innerText = data.dist;
+            document.getElementById('info-orbit').innerText = data.orbit;
+            document.getElementById('info-moons').innerText = data.moons;
+            
+            const layerP = document.getElementById('info-layers');
+            if (showLayerMode) {
+                layerP.style.display = 'block';
+                layerP.innerText = data.layers;
+            } else {
+                layerP.style.display = 'none';
+            }
+
+            const pObj = planets[key];
+            if (pObj) {
+                const targetPos = pObj.mesh.getWorldPosition(new THREE.Vector3());
+                controls.target.copy(targetPos);
+                camera.position.set(targetPos.x, targetPos.y + 25, targetPos.z + 40);
+            }
+        }
+
+        // Tıklama Algılama
+        function onDocumentClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const meshes = Object.values(planets).map(p => p.mesh);
+            const intersects = raycaster.intersectObjects(meshes);
+
+            if (intersects.length > 0) {
+                const clickedMesh = intersects[0].object;
+                if (clickedMesh.userData && clickedMesh.userData.key) {
+                    selectPlanet(clickedMesh.userData.key);
+                }
+            }
+        }
+
+        // Başla Düğmesi
+        function startMotion() {
+            isRunning = true;
+        }
+
+        // Dur Düğmesi
+        function stopMotion() {
+            isRunning = false;
+        }
+
+        // Hız Ayarı
+        function changeSpeed(val) {
+            globalSpeed = parseFloat(val);
+        }
+
+        // Katmanları Göster/Gizle Düğmesi
+        function toggleLayers() {
+            showLayerMode = !showLayerMode;
+            const layerP = document.getElementById('info-layers');
+            if (showLayerMode) {
+                layerP.style.display = 'block';
+                if (selectedKey) {
+                    layerP.innerText = planetData[selectedKey].layers;
+                } else {
+                    layerP.innerText = "Lütfen önce bir gezegen seçin.";
+                }
+            } else {
+                layerP.style.display = 'none';
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>

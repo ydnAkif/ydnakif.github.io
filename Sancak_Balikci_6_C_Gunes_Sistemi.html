@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3B Güneş Sistemi Modeli</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        /* Kontrol Paneli */
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        input[type=range] {
+            cursor: pointer;
+        }
+        /* Bilgi Kartı */
+        #info-card {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            width: 280px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            display: none;
+            z-index: 100;
+        }
+        #info-card h2 {
+            margin-top: 0;
+            color: #38bdf8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 8px;
+        }
+        #info-card p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        #close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            color: #aaa;
+            font-size: 16px;
+            padding: 2px 6px;
+        }
+        #close-btn:hover {
+            color: #fff;
+            background: transparent;
+        }
+        /* Gezegen Altındaki Takip Eden İsim Etiketleri */
+        .planet-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+            text-shadow: 0 0 4px #000, 0 0 8px #000;
+            background: rgba(15, 23, 42, 0.75);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: opacity 0.2s;
+            z-index: 10;
+            will-change: transform;
+        }
+    </style>
+    <!-- Three.js ve OrbitControls Kütüphaneleri -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <!-- Başlat / Durdur & Hız Kontrolü -->
+    <div id="controls">
+        <div class="control-group">
+            <button id="toggle-btn">Durdur</button>
+        </div>
+        <div class="control-group">
+            <label for="speed-slider" style="font-size: 12px;">Hız:</label>
+            <input type="range" id="speed-slider" min="0" max="5" step="0.1" value="1">
+        </div>
+    </div>
+
+    <!-- Tıklanınca Açılan Detaylı Bilgi Kartı -->
+    <div id="info-card">
+        <button id="close-btn">✕</button>
+        <h2 id="card-title">Gezegen Adı</h2>
+        <p><strong>Çap:</strong> <span id="card-diameter"></span></p>
+        <p><strong>Güneş'e Uzaklık:</strong> <span id="card-distance"></span></p>
+        <p><strong>Dolanma Süresi:</strong> <span id="card-period"></span></p>
+        <p><strong>Uydu Sayısı:</strong> <span id="card-moons"></span></p>
+        <p id="card-desc" style="margin-top: 12px; color: #cbd5e1;"></p>
+    </div>
+
+    <!-- Etiketler Konteyneri -->
+    <div id="labels-container"></div>
+
+    <script>
+        // --- PROSEDÜREL TEKSTÜR ÜRETİCİ (Dış Bağlantı Gerektirmez, Hata Vermez) ---
+        function generateProceduralTexture(type, baseColorHex, detailColorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = baseColorHex;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (type === 'sun') {
+                for (let i = 0; i < 400; i++) {
+                    ctx.fillStyle = Math.random() > 0.5 ? '#ffea00' : '#ff3300';
+                    ctx.beginPath();
+                    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*8, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            } else if (type === 'bands') { // Jüpiter / Satürn Çizgileri
+                for (let y = 0; y < canvas.height; y += 8) {
+                    if (Math.random() > 0.4) {
+                        ctx.fillStyle = detailColorHex;
+                        ctx.fillRect(0, y, canvas.width, 4 + Math.random()*6);
+                    }
+                }
+            } else if (type === 'spots') { // Merkür / Mars Kraterleri
+                ctx.fillStyle = detailColorHex;
+                for (let i = 0; i < 300; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, Math.random()*5, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            } else if (type === 'earth') { // Kıtalar Görünümü
+                ctx.fillStyle = detailColorHex;
+                for (let i = 0; i < 20; i++) {
+                    ctx.beginPath();
+                    ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 20 + Math.random()*40, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- 1. SAHNE VE KAMERA ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 150, 300);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // --- 2. IŞIKLAR ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.PointLight(0xffffff, 2, 1000);
+        scene.add(sunLight);
+
+        // --- 3. YILDIZLI ARKA PLAN ---
+        function createStars() {
+            const starsGeometry = new THREE.BufferGeometry();
+            const count = 3000;
+            const positions = new Float32Array(count * 3);
+
+            for(let i = 0; i < count * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 1200;
+            }
+
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8 });
+            const starField = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(starField);
+        }
+        createStars();
+
+        // --- 4. GÜNEŞ ---
+        const sunGeo = new THREE.SphereGeometry(12, 32, 32);
+        const sunTexture = generateProceduralTexture('sun', '#ffcc00', '#ff3300');
+        const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture });
+        const sun = new THREE.Mesh(sunGeo, sunMat);
+        scene.add(sun);
+
+        // --- 5. ASTEROİT KUŞAĞI ---
+        function createAsteroidBelt() {
+            const asteroidCount = 1200;
+            const beltGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(asteroidCount * 3);
+
+            for (let i = 0; i < asteroidCount; i++) {
+                const radius = 95 + Math.random() * 15;
+                const angle = Math.random() * Math.PI * 2;
+                const y = (Math.random() - 0.5) * 4;
+
+                positions[i * 3] = Math.cos(angle) * radius;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = Math.sin(angle) * radius;
+            }
+
+            beltGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const beltMaterial = new THREE.PointsMaterial({ color: 0x888888, size: 0.6 });
+            const asteroidBelt = new THREE.Points(beltGeometry, beltMaterial);
+            scene.add(asteroidBelt);
+        }
+        createAsteroidBelt();
+
+        // --- 6. GEZEGENLER VE UYDULAR ---
+        const planetData = [
+            { name: "Merkür", texType: 'spots', baseColor: '#8a8a8a', detailColor: '#555555', size: 1.5, distance: 22, speed: 0.04, diameter: "4,879 km", sunDist: "57.9 milyon km", period: "88 gün", moons: "0", desc: "Güneş'e en yakın ve en küçük gezegendir." },
+            { name: "Venüs", texType: 'bands', baseColor: '#e3bb76', detailColor: '#c29b53', size: 2.2, distance: 32, speed: 0.025, diameter: "12,104 km", sunDist: "108.2 milyon km", period: "225 gün", moons: "0", desc: "Güneş Sistemindeki en sıcak gezegendir." },
+            { name: "Dünya", texType: 'earth', baseColor: '#1d609b', detailColor: '#2d8a4e', size: 2.5, distance: 45, speed: 0.018, diameter: "12,742 km", sunDist: "149.6 milyon km", period: "365 gün", moons: "1 (Ay)", desc: "Üzerinde yaşam olduğu bilinen tek gezegendir.", hasMoon: true },
+            { name: "Mars", texType: 'spots', baseColor: '#c84b31', detailColor: '#802612', size: 1.8, distance: 60, speed: 0.012, diameter: "6,779 km", sunDist: "227.9 milyon km", period: "687 gün", moons: "2 (Phobos, Deimos)", desc: "Kızıl Gezegen olarak da bilinir.", hasMoons: true },
+            { name: "Jüpiter", texType: 'bands', baseColor: '#d4a373', detailColor: '#a3683f', size: 6.0, distance: 130, speed: 0.007, diameter: "139,820 km", sunDist: "778.5 milyon km", period: "12 yıl", moons: "95", desc: "Güneş Sisteminin en büyük gezegenidir.", hasMoons: true },
+            { name: "Satürn", texType: 'bands', baseColor: '#e4d191', detailColor: '#b5a165', size: 4.8, distance: 170, speed: 0.005, diameter: "116,460 km", sunDist: "1.4 milyar km", period: "29 yıl", moons: "146", desc: "Görkemli halkalarıyla tanınır.", hasRings: true, hasMoons: true },
+            { name: "Uranüs", texType: 'bands', baseColor: '#72c8c8', detailColor: '#4ba1a1', size: 3.5, distance: 210, speed: 0.003, diameter: "50,724 km", sunDist: "2.9 milyar km", period: "84 yıl", moons: "28", desc: "Yörüngesinde yan yatmış gibi döner." },
+            { name: "Neptün", texType: 'bands', baseColor: '#3355ff', detailColor: '#1a33aa', size: 3.4, distance: 245, speed: 0.002, diameter: "49,244 km", sunDist: "4.5 milyar km", period: "165 yıl", moons: "16", desc: "Güneş'e en uzak gezegendir, son derece soğuktur." }
+        ];
+
+        const planets = [];
+        const clickableObjects = [];
+        const labelsContainer = document.getElementById('labels-container');
+
+        planetData.forEach((data) => {
+            // Yörünge Çizgisi
+            const orbitGeo = new THREE.BufferGeometry();
+            const points = [];
+            for (let i = 0; i <= 128; i++) {
+                const theta = (i / 128) * Math.PI * 2;
+                points.push(new THREE.Vector3(Math.cos(theta) * data.distance, 0, Math.sin(theta) * data.distance));
+            }
+            orbitGeo.setFromPoints(points);
+            const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+            const orbit = new THREE.Line(orbitGeo, orbitMat);
+            scene.add(orbit);
+
+            // Tıklamayı kolaylaştırıcı gizli kapsama küresi
+            const hitGeo = new THREE.SphereGeometry(data.size * 1.8, 16, 16);
+            const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+            const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+
+            // Gezegen Gövdesi ve Doku Üretimi
+            const pGeo = new THREE.SphereGeometry(data.size, 32, 32);
+            const pTexture = generateProceduralTexture(data.texType, data.baseColor, data.detailColor);
+            const pMat = new THREE.MeshStandardMaterial({ map: pTexture, roughness: 0.7 });
+            const mesh = new THREE.Mesh(pGeo, pMat);
+            hitMesh.add(mesh);
+
+            // Satürn Halkaları
+            if (data.hasRings) {
+                const ringGeo = new THREE.RingGeometry(data.size + 1.5, data.size + 5, 32);
+                const ringTexture = generateProceduralTexture('bands', '#c2b280', '#8a7b52');
+                const ringMat = new THREE.MeshStandardMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                hitMesh.add(ring);
+            }
+
+            // Uydular
+            let moonMesh = null;
+            if (data.hasMoon || data.hasMoons) {
+                const mGeo = new THREE.SphereGeometry(0.4, 16, 16);
+                const moonTexture = generateProceduralTexture('spots', '#aaaaaa', '#666666');
+                const mMat = new THREE.MeshStandardMaterial({ map: moonTexture });
+                moonMesh = new THREE.Mesh(mGeo, mMat);
+                hitMesh.add(moonMesh);
+            }
+
+            // Gezegen Altındaki İsim Etiketi
+            const label = document.createElement('div');
+            label.className = 'planet-label';
+            label.innerText = data.name;
+            labelsContainer.appendChild(label);
+
+            hitMesh.userData = { ...data, angle: Math.random() * Math.PI * 2, moonMesh: moonMesh, labelElement: label };
+            planets.push(hitMesh);
+            clickableObjects.push(hitMesh);
+            scene.add(hitMesh);
+        });
+
+        // --- 7. TIKLAMA TESPİTİ (RAYCASTING) ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const infoCard = document.getElementById('info-card');
+
+        let pointerDownX = 0;
+        let pointerDownY = 0;
+
+        window.addEventListener('pointerdown', (e) => {
+            pointerDownX = e.clientX;
+            pointerDownY = e.clientY;
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            const diffX = Math.abs(e.clientX - pointerDownX);
+            const diffY = Math.abs(e.clientY - pointerDownY);
+            if (diffX > 5 || diffY > 5) return;
+
+            if (e.target.closest('#controls') || e.target.closest('#info-card')) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickableObjects, true);
+
+            if (intersects.length > 0) {
+                let hitObject = intersects[0].object;
+                while (hitObject.parent && !hitObject.userData.name) {
+                    hitObject = hitObject.parent;
+                }
+                const p = hitObject.userData;
+                if (p && p.name) {
+                    document.getElementById('card-title').innerText = p.name;
+                    document.getElementById('card-diameter').innerText = p.diameter;
+                    document.getElementById('card-distance').innerText = p.sunDist;
+                    document.getElementById('card-period').innerText = p.period;
+                    document.getElementById('card-moons').innerText = p.moons;
+                    document.getElementById('card-desc').innerText = p.desc;
+                    infoCard.style.display = 'block';
+                }
+            }
+        });
+
+        document.getElementById('close-btn').addEventListener('click', () => {
+            infoCard.style.display = 'none';
+        });
+
+        // --- 8. ANİMASYON VE TAKİP DÖNGÜSÜ ---
+        let isRunning = true;
+        let speedMultiplier = 1;
+
+        document.getElementById('toggle-btn').addEventListener('click', (e) => {
+            isRunning = !isRunning;
+            e.target.innerText = isRunning ? "Durdur" : "Başlat";
+        });
+
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            speedMultiplier = parseFloat(e.target.value);
+        });
+
+        const tempV = new THREE.Vector3();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            sun.rotation.y += 0.002;
+
+            planets.forEach(p => {
+                if (isRunning) {
+                    // SAAT YÖNÜNÜN TERSİNE DOLANMA
+                    p.userData.angle += p.userData.speed * 0.5 * speedMultiplier;
+                    p.rotation.y += 0.01;
+
+                    // Konum Güncelleme
+                    p.position.x = Math.cos(p.userData.angle) * p.userData.distance;
+                    p.position.z = Math.sin(p.userData.angle) * p.userData.distance;
+
+                    // Uyduların Gezegen Etrafında Dönmesi
+                    if (p.userData.moonMesh) {
+                        const moonSpeed = Date.now() * 0.003;
+                        const moonDist = p.userData.size + 2.5;
+                        p.userData.moonMesh.position.x = Math.cos(moonSpeed) * moonDist;
+                        p.userData.moonMesh.position.z = Math.sin(moonSpeed) * moonDist;
+                    }
+                }
+
+                // ETIKETLERIN GEZEGENI TAM ALTINDAN HAREKETLI TAKIP ETMESI
+                p.getWorldPosition(tempV);
+                tempV.y -= (p.userData.size + 1.8); // Tam gezegenin altına hizalar
+                tempV.project(camera);
+
+                if (tempV.z > 1) {
+                    p.userData.labelElement.style.opacity = '0';
+                } else {
+                    const x = (tempV.x * .5 + .5) * window.innerWidth;
+                    const y = (tempV.y * -.5 + .5) * window.innerHeight;
+                    p.userData.labelElement.style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
+                    p.userData.labelElement.style.opacity = '1';
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
