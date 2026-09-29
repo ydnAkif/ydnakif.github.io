@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Gezegenler Âlemi</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#02030d;color:#fff}
+*{box-sizing:border-box}
+#app{height:100%;display:flex;flex-direction:column}
+header{height:62px;flex:none;text-align:center;padding:8px;background:#10183d;border-bottom:2px solid #303d83}
+h1{font-size:24px;margin:0} header small{opacity:.8}
+#space{position:relative;flex:1;overflow:hidden;background:
+radial-gradient(circle at 50% 50%,rgba(50,60,130,.25),transparent 35%),
+radial-gradient(circle at 20% 20%,#121a42 0,transparent 25%),#02030d}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%}
+#scene{position:absolute;left:50%;top:50%;width:0;height:0}
+.sun{position:absolute;left:-43px;top:-43px;width:86px;height:86px;border-radius:50%;
+background:radial-gradient(circle at 35% 30%,#fffbd0 0 10%,#ffd34d 25%,#ff8c00 65%,#e84900 100%);
+box-shadow:0 0 30px 12px rgba(255,170,0,.45);z-index:5;cursor:pointer}
+.orbit{position:absolute;left:0;top:0;border:1px solid rgba(160,180,255,.25);border-radius:50%;
+transform:translate(-50%,-50%);animation:orbit linear infinite}
+@keyframes orbit{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+.planet{position:absolute;left:100%;top:50%;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;box-shadow:inset -7px -6px 12px rgba(0,0,0,.45),0 0 8px rgba(255,255,255,.15)}
+.mercury{background:radial-gradient(circle at 30% 25%,#d9d0c5,#77716c 55%,#3c3937)}
+.venus{background:radial-gradient(circle at 30% 25%,#ffe0a0,#d38b35 55%,#7d3f13)}
+.earth{background:radial-gradient(circle at 35% 30%,#7bd5ff 0 18%,#2671d9 35%,#17653d 55%,#0b315e 100%)}
+.mars{background:radial-gradient(circle at 30% 25%,#ff9a70,#c94e36 55%,#6d201c)}
+.jupiter{background:repeating-linear-gradient(0deg,#a87850 0 8px,#e1c09a 8px 16px,#8f6045 16px 22px)}
+.saturn{background:repeating-linear-gradient(0deg,#ead29c 0 9px,#b99867 9px 15px)}
+.uranus{background:radial-gradient(circle at 35% 25%,#bafaff,#55c6cf 60%,#267c89)}
+.neptune{background:radial-gradient(circle at 35% 25%,#83aaff,#3153d8 60%,#16246e)}
+.moon{position:absolute;left:100%;top:50%;width:15px;height:15px;border-radius:50%;background:#bdbdbd;box-shadow:inset -3px -2px 4px #555}
+#panel{position:absolute;z-index:20;left:10px;right:10px;bottom:10px;max-height:42%;
+overflow:auto;background:rgba(8,11,35,.96);border:2px solid #5264c7;border-radius:18px;padding:14px;display:none}
+#panel h2{margin:0 0 8px;font-size:22px}.info{line-height:1.55;font-size:14px}
+button{background:#263477;color:#fff;border:0;border-radius:11px;padding:9px 12px;margin:3px;font-weight:bold}
+button:active{transform:scale(.96)}.close{float:right;background:#8c3042}
+#bottom{height:66px;flex:none;background:#0d1230;text-align:center;padding:5px;overflow:auto}
+#hint{font-size:11px;opacity:.75}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>🌌 Gezegenler Âlemi</h1><small>Dokun • keşfet • hızını değiştir</small></header>
+<div id="space"><div id="scene"><div class="sun" onclick="showInfo('Güneş')"></div></div><div id="panel"></div></div>
+<div id="bottom"><button onclick="setSpeed(.45)">🐢 Yavaş</button><button onclick="setSpeed(1)">▶ Normal</button><button onclick="setSpeed(2)">🚀 Hızlı</button><button onclick="setSpeed(0)">⏸ Durdur</button><button onclick="showInfo('Ay')">🌙 Ay</button><div id="hint">Gezegenlere dokunarak bilgi kartını aç.</div></div>
+</div>
+<script>
+const D={
+Merkür:["mercury","88 gün","58,6 gün","47,4 km/sn","57,9 milyon km","Güneş'e en yakın gezegen."],
+Venüs:["venus","225 gün","243 gün","35,0 km/sn","108,2 milyon km","Kalın atmosferiyle çok sıcaktır."],
+Dünya:["earth","365,25 gün","23 sa 56 dk","29,8 km/sn","149,6 milyon km","Üzerinde yaşam olduğu bilinen gezegendir."],
+Mars:["mars","687 gün","24 sa 37 dk","24,1 km/sn","227,9 milyon km","Kızıl Gezegen olarak bilinir."],
+Jüpiter:["jupiter","11,86 yıl","9 sa 56 dk","13,1 km/sn","778,5 milyon km","Güneş Sistemi'nin en büyük gezegenidir."],
+Satürn:["saturn","29,45 yıl","10,7 saat","9,7 km/sn","1,43 milyar km","Belirgin halkaları vardır."],
+Uranüs:["uranus","84 yıl","17,2 saat","6,8 km/sn","2,87 milyar km","Ekseninin eğikliği çok fazladır."],
+Neptün:["neptune","164,8 yıl","16,1 saat","5,4 km/sn","4,50 milyar km","Güneş Sistemi'nin en uzak gezegenidir."],
+Ay:["moon","27,3 gün*","27,3 gün*","1,02 km/sn*","384.400 km","Dünya'nın doğal uydusudur."],
+Güneş:["sun","—","—","—","—","Güneş Sistemi'nin merkezindeki yıldızdır."]
+};
+const names=Object.keys(D).filter(n=>!["Ay","Güneş"].includes(n));
+const sizes=[115,155,195,235,275,315,355,395];
+const scene=document.getElementById("scene");
+names.forEach((n,i)=>{
+ const o=document.createElement("div");o.className="orbit";o.style.width=sizes[i]+"px";o.style.height=sizes[i]+"px";
+ o.style.animationDuration=(18+i*5)+"s";o.dataset.base=18+i*5;
+ const q=document.createElement("div");q.className="planet "+D[n][0];q.style.width=(i<4?16: i<6?24:30)+"px";q.style.height=q.style.width;
+ q.title=n;q.onclick=e=>{e.stopPropagation();showInfo(n)};o.appendChild(q);
+ scene.appendChild(o);
+});
+for(let i=0;i<90;i++){let s=document.createElement("div");s.className="star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*100+"%";s.style.opacity=.25+Math.random()*.75;document.getElementById("space").appendChild(s)}
+function setSpeed(x){document.querySelectorAll(".orbit").forEach(o=>{if(x===0)o.style.animationPlayState="paused";else{o.style.animationPlayState="running";o.style.animationDuration=(+o.dataset.base/x)+"s"}})}
+function showInfo(n){
+ const d=D[n], p=document.getElementById("panel");p.style.display="block";
+ p.innerHTML=`<button class="close" onclick="document.getElementById('panel').style.display='none'">Kapat</button><h2>${n==="Güneş"?"☀️":"🪐"} ${n}</h2>
+ <div class="info"><b>Bir yılı / dolanma süresi:</b> ${d[1]}<br>
+ <b>Kendi ekseni etrafında dönüş:</b> ${d[2]}<br><b>Yörünge hızı:</b> ${d[3]}<br>
+ <b>Güneş'e uzaklığı:</b> ${d[4]}<br><b>Bilgi:</b> ${d[5]}
+ ${n==="Ay"?"<br><small>*Ay için Dünya çevresindeki hareket bilgileri kullanılmıştır.</small>":""}</div>`;
+}
+</script>
+</body>
+</html>
