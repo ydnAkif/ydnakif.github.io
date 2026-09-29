@@ -1983,7 +1983,7 @@
                 else child.rotation.y += u.currentRotSpeed;
 
                 if (d.dist > 0 && !u.parentPlanet) {
-                    u.angle += d.orbSpeed;
+                    u.angle -= d.orbSpeed;
                     child.position.x = Math.cos(u.angle) * d.dist;
                     child.position.z = Math.sin(u.angle) * d.dist;
                 }

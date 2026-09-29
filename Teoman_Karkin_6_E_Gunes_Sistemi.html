@@ -832,7 +832,7 @@
             solarSystemData.forEach(data => {
                 if (data.distance > 0 && planetMeshes[data.id]) {
                     const group = planetMeshes[data.id];
-                    group.userData.angle += data.speed * 0.1 * delta;
+                    group.userData.angle -= data.speed * 0.1 * delta;
                     group.position.x = Math.cos(group.userData.angle) * data.distance;
                     group.position.z = Math.sin(group.userData.angle) * data.distance;
 

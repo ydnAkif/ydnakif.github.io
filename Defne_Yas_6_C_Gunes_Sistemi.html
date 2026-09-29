@@ -335,7 +335,7 @@
                 for (let key in planets) {
                     if (key !== 'Sun') {
                         let p = planets[key];
-                        p.pivot.rotation.y -= p.speed * globalSpeed * 0.5; // Saat yönünün tersi dolanım
+                        p.pivot.rotation.y += p.speed * globalSpeed * 0.5; // Saat yönünün tersi dolanım
                         p.mesh.rotation.y += 0.02 * globalSpeed; // Kendi ekseninde dönme
                     }
                 }

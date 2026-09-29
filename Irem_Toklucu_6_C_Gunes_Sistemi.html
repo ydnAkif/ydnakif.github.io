@@ -909,7 +909,7 @@
             // Orbit & Self-Rotate Planets
             planetObjects.forEach(planet => {
                 // Orbital movement
-                planet.userData.angle += planet.userData.speed * animationSpeedMultiplier * 0.5;
+                planet.userData.angle -= planet.userData.speed * animationSpeedMultiplier * 0.5;
                 planet.position.x = Math.cos(planet.userData.angle) * planet.userData.distance;
                 planet.position.z = Math.sin(planet.userData.angle) * planet.userData.distance;
 

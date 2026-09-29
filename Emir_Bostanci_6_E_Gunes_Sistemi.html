@@ -652,7 +652,7 @@
 
             if (!isPaused) {
                 planets.forEach(p => {
-                    p.userData.angle += p.userData.speed * delta * 0.15 * speedMultiplier;
+                    p.userData.angle -= p.userData.speed * delta * 0.15 * speedMultiplier;
                     p.position.x = Math.cos(p.userData.angle) * p.userData.dist;
                     p.position.z = Math.sin(p.userData.angle) * p.userData.dist;
                     p.rotation.y += 0.01;

@@ -595,7 +595,7 @@ WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
             
             if (data.distance > 0) {
                 if (isPlaying) {
-                    obj.angle += data.orbitSpeed * 0.08 * speed * dt;
+                    obj.angle -= data.orbitSpeed * 0.08 * speed * dt;
                 }
                 obj.container.position.x = Math.cos(obj.angle) * data.distance;
                 obj.container.position.z = Math.sin(obj.angle) * data.distance;

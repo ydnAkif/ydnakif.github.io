@@ -154,7 +154,7 @@ function render(){
  });
  requestAnimationFrame(render);
 }
-function tick(){ if(running) angle+=0.8*speed; }
+function tick(){ if(running) angle-=0.8*speed; }
 setInterval(tick,16); render();
 
 document.getElementById("toggle").onclick=()=>{

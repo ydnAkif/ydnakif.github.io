@@ -404,7 +404,7 @@
 
         // Yörüngede dönme
         if (!isPaused && data.distance > 0) {
-          obj.userData.angle += data.speed * 0.3 * simSpeed;
+          obj.userData.angle -= data.speed * 0.3 * simSpeed;
           obj.position.x = Math.cos(obj.userData.angle) * data.distance;
           obj.position.z = Math.sin(obj.userData.angle) * data.distance;
         }

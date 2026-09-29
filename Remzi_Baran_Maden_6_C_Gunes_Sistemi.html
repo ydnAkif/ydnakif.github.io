@@ -700,7 +700,7 @@
                 sun.rotation.y += 0.0015;
 
                 planets.forEach(planet => {
-                    planet.angle += planet.speed * 0.5;
+                    planet.angle -= planet.speed * 0.5;
                     planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
                     planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
                     

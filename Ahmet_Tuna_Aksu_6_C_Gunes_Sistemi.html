@@ -580,7 +580,7 @@
 
                     // Yörüngede dönme
                     if (key !== "Güneş") {
-                        planetAngles[key] += data.speed * 0.5 * simSpeed;
+                        planetAngles[key] -= data.speed * 0.5 * simSpeed;
                         meshGroup.position.x = Math.cos(planetAngles[key]) * data.orbitRadius;
                         meshGroup.position.z = Math.sin(planetAngles[key]) * data.orbitRadius;
                     }

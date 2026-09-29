@@ -405,7 +405,7 @@
             planets.forEach(p => {
                 if (isRunning) {
                     // SAAT YÖNÜNÜN TERSİNE DOLANMA
-                    p.userData.angle += p.userData.speed * 0.5 * speedMultiplier;
+                    p.userData.angle -= p.userData.speed * 0.5 * speedMultiplier;
                     p.rotation.y += 0.01;
 
                     // Konum Güncelleme
