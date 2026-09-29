@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3 Boyutlu Güneş Sistemi Modeli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #000;
+            color: #fff;
+            touch-action: none;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Üst kontrol paneli */
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 20, 40, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 10px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(100, 180, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 95vw;
+        }
+        button {
+            background: linear-gradient(135deg, #1a6bff, #0a4ccc);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 42px;
+            min-width: 42px;
+            touch-action: manipulation;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        button.active {
+            background: linear-gradient(135deg, #ff4444, #cc2222);
+        }
+        #speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #aaddff;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        input[type="range"] {
+            width: 90px;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #334;
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4af;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Bilgi paneli */
+        #info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(0, 15, 35, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(80, 160, 255, 0.4);
+            border-radius: 16px;
+            padding: 16px 20px;
+            max-width: 92vw;
+            width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        #info-panel h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #6cf;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #info-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 8px;
+            min-width: auto;
+            min-height: auto;
+        }
+        #info-content {
+            font-size: 14px;
+            line-height: 1.55;
+            color: #ddeeff;
+        }
+        #info-content p {
+            margin: 4px 0;
+        }
+        #info-content .label {
+            color: #8cf;
+            font-weight: 600;
+        }
+
+        /* Yardım / İpuçları */
+        #help {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            z-index: 90;
+            background: rgba(0,20,40,0.7);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #9cf;
+            max-width: 160px;
+            text-align: center;
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        /* Yükleniyor */
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            color: #6cf;
+            font-size: 18px;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #234;
+            border-top-color: #4af;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobil uyum */
+        @media (max-width: 600px) {
+            #controls {
+                top: 6px;
+                padding: 8px 10px;
+                gap: 6px;
+            }
+            button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            #speed-control {
+                font-size: 12px;
+            }
+            input[type="range"] {
+                width: 70px;
+            }
+            #info-panel {
+                width: 94vw;
+                padding: 14px 16px;
+                bottom: 12px;
+            }
+            #help {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>Güneş Sistemi yükleniyor...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="controls">
+        <button id="btn-play" class="active">⏸ Durdur</button>
+        <div id="speed-control">
+            <span>Hız:</span>
+            <input type="range" id="speed" min="0.1" max="5" step="0.1" value="1">
+            <span id="speed-val">1x</span>
+        </div>
+        <button id="btn-reset">🔄 Sıfırla</button>
+    </div>
+
+    <div id="info-panel">
+        <button class="close-btn" id="close-info">×</button>
+        <h2 id="info-title">Güneş</h2>
+        <div id="info-content"></div>
+    </div>
+
+    <div id="help">
+        🖱️ Sürükle: Döndür<br>
+        🔍 Kaydır: Yakınlaştır<br>
+        👆 Tıkla: Bilgi al
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // ==================== VERİLER ====================
+        const PLANET_DATA = {
+            sun: {
+                name: "Güneş",
+                radius: 15,
+                color: 0xffaa00,
+                emissive: 0xff6600,
+                distance: 0,
+                speed: 0,
+                rotationSpeed: 0.002,
+                info: {
+                    çap: "1.392.700 km",
+                    uzaklık: "— (merkez)",
+                    süre: "—",
+                    uydu: "—",
+                    tip: "Sarı cüce yıldız (G2V)",
+                    sıcaklık: "Yüzey: ~5.500 °C",
+                    açıklama: "Güneş Sistemi'nin merkezi yıldızı. Kütlesi tüm sistemin %99,8'ini oluşturur. Nükleer füzyon ile enerji üretir."
+                }
+            },
+            mercury: {
+                name: "Merkür",
+                radius: 0.8,
+                color: 0xb5b5b5,
+                distance: 28,
+                speed: 0.04,
+                rotationSpeed: 0.004,
+                info: {
+                    çap: "4.879 km",
+                    uzaklık: "57,9 milyon km",
+                    süre: "88 Dünya günü",
+                    uydu: "0",
+                    tip: "Kayalık gezegen",
+                    sıcaklık: "-173 °C ile 427 °C",
+                    açıklama: "Güneş'e en yakın gezegen. Atmosferi yok denecek kadar ince. Gündüzleri aşırı sıcak, geceleri aşırı soğuk."
+                }
+            },
+            venus: {
+                name: "Venüs",
+                radius: 1.4,
+                color: 0xe6c35c,
+                distance: 40,
+                speed: 0.015,
+                rotationSpeed: 0.002,
+                info: {
+                    çap: "12.104 km",
+                    uzaklık: "108,2 milyon km",
+                    süre: "225 Dünya günü",
+                    uydu: "0",
+                    tip: "Kayalık gezegen",
+                    sıcaklık: "Ortalama 465 °C",
+                    açıklama: "Güneş Sistemi'nin en sıcak gezegeni. Yoğun karbondioksit atmosferi sera etkisi yaratır. Ters yönde döner."
+                }
+            },
+            earth: {
+                name: "Dünya",
+                radius: 1.5,
+                color: 0x2266ff,
+                distance: 55,
+                speed: 0.01,
+                rotationSpeed: 0.02,
+                info: {
+                    çap: "12.742 km",
+                    uzaklık: "149,6 milyon km",
+                    süre: "365,25 gün",
+                    uydu: "1 (Ay)",
+                    tip: "Kayalık gezegen",
+                    sıcaklık: "Ortalama 15 °C",
+                    açıklama: "Şimdiye kadar bilinen tek yaşam barındıran gezegen. Atmosferi %78 azot, %21 oksijen içerir. Yüzeyinin %71'i su ile kaplıdır."
+                }
+            },
+            mars: {
+                name: "Mars",
+                radius: 1.1,
+                color: 0xcc4422,
+                distance: 72,
+                speed: 0.008,
+                rotationSpeed: 0.018,
+                info: {
+                    çap: "6.779 km",
+                    uzaklık: "227,9 milyon km",
+                    süre: "687 Dünya günü",
+                    uydu: "2 (Phobos, Deimos)",
+                    tip: "Kayalık gezegen",
+                    sıcaklık: "-125 °C ile 20 °C",
+                    açıklama: "Kızıl Gezegen olarak bilinir. Demir oksit nedeniyle kırmızımsı renktedir. Geçmişte suyun varlığına dair güçlü kanıtlar bulunur."
+                }
+            },
+            jupiter: {
+                name: "Jüpiter",
+                radius: 5.5,
+                color: 0xd4a76a,
+                distance: 110,
+                speed: 0.004,
+                rotationSpeed: 0.04,
+                info: {
+                    çap: "139.820 km",
+                    uzaklık: "778,5 milyon km",
+                    süre: "11,86 yıl",
+                    uydu: "95+",
+                    tip: "Gaz devi",
+                    sıcaklık: "Bulut tepesi ~-110 °C",
+                    açıklama: "Güneş Sistemi'nin en büyük gezegeni. Büyük Kırmızı Leke adlı dev fırtınası yüzyıllardır sürmektedir. 4 büyük Galilei uydusu vardır."
+                }
+            },
+            saturn: {
+                name: "Satürn",
+                radius: 4.5,
+                color: 0xf0d9a0,
+                distance: 150,
+                speed: 0.0025,
+                rotationSpeed: 0.038,
+                info: {
+                    çap: "116.460 km",
+                    uzaklık: "1,43 milyar km",
+                    süre: "29,46 yıl",
+                    uydu: "146+",
+                    tip: "Gaz devi",
+                    sıcaklık: "Bulut tepesi ~-140 °C",
+                    açıklama: "Muhteşem halka sistemiyle ünlüdür. Halkalar çoğunlukla buz ve kaya parçalarından oluşur. Yoğunluğu sudan düşüktür."
+                }
+            },
+            uranus: {
+                name: "Uranüs",
+                radius: 2.8,
+                color: 0x7de3e3,
+                distance: 190,
+                speed: 0.0015,
+                rotationSpeed: 0.03,
+                info: {
+                    çap: "50.724 km",
+                    uzaklık: "2,87 milyar km",
+                    süre: "84,01 yıl",
+                    uydu: "28",
+                    tip: "Buz devi",
+                    sıcaklık: "Ortalama -195 °C",
+                    açıklama: "Eksen eğikliği 98° olduğu için yan yatarak döner. Metan gazı nedeniyle mavi-yeşil renkte görünür."
+                }
+            },
+            neptune: {
+                name: "Neptün",
+                radius: 2.7,
+                color: 0x3a5fff,
+                distance: 230,
+                speed: 0.001,
+                rotationSpeed: 0.032,
+                info: {
+                    çap: "49.244 km",
+                    uzaklık: "4,50 milyar km",
+                    süre: "164,8 yıl",
+                    uydu: "16",
+                    tip: "Buz devi",
+                    sıcaklık: "Ortalama -200 °C",
+                    açıklama: "Güneş Sistemi'nin en dış gezegeni. En güçlü rüzgarlara sahiptir (2.100 km/s). Büyük Koyu Leke adlı fırtınası vardır."
+                }
+            }
+        };
+
+        // Uydular
+        const MOON_DATA = {
+            earth: [
+                { name: "Ay", radius: 0.4, distance: 4.5, speed: 0.05, color: 0xcccccc,
+                  info: { çap: "3.474 km", uzaklık: "384.400 km", süre: "27,3 gün", tip: "Doğal uydu", açıklama: "Dünya'nın tek doğal uydusu. Gelgit olaylarına neden olur. İnsanoğlunun ayak bastığı tek gök cismidir (Apollo programı)." } }
+            ],
+            mars: [
+                { name: "Phobos", radius: 0.15, distance: 2.2, speed: 0.08, color: 0x999999,
+                  info: { çap: "22 km", uzaklık: "9.376 km", süre: "7,6 saat", tip: "Doğal uydu", açıklama: "Mars'ın büyük uydusu. Düzensiz şekillidir. Yavaşça Mars'a yaklaşmaktadır." } },
+                { name: "Deimos", radius: 0.1, distance: 3.2, speed: 0.04, color: 0x888888,
+                  info: { çap: "12 km", uzaklık: "23.460 km", süre: "30,3 saat", tip: "Doğal uydu", açıklama: "Mars'ın küçük uydusu. Çok düzensiz şekillidir." } }
+            ],
+            jupiter: [
+                { name: "Io", radius: 0.35, distance: 8, speed: 0.06, color: 0xffcc44,
+                  info: { çap: "3.643 km", uzaklık: "421.700 km", süre: "1,77 gün", tip: "Galilei uydusu", açıklama: "Güneş Sistemi'nin en volkanik cismidir. Sürekli volkanik aktivite gösterir." } },
+                { name: "Europa", radius: 0.3, distance: 10, speed: 0.04, color: 0xaaccff,
+                  info: { çap: "3.122 km", uzaklık: "671.100 km", süre: "3,55 gün", tip: "Galilei uydusu", açıklama: "Buzlu yüzeyinin altında okyanus olduğu düşünülür. Yaşam ihtimali yüksektir." } },
+                { name: "Ganymede", radius: 0.45, distance: 12.5, speed: 0.025, color: 0xbb9977,
+                  info: { çap: "5.268 km", uzaklık: "1.070.400 km", süre: "7,15 gün", tip: "Galilei uydusu", açıklama: "Güneş Sistemi'nin en büyük uydusu. Merkür'den bile büyüktür. Kendi manyetik alanı vardır." } },
+                { name: "Callisto", radius: 0.4, distance: 15, speed: 0.015, color: 0x887766,
+                  info: { çap: "4.821 km", uzaklık: "1.882.700 km", süre: "16,7 gün", tip: "Galilei uydusu", açıklama: "En çok kraterli gök cisimlerinden biridir. Eski bir yüzeye sahiptir." } }
+            ],
+            saturn: [
+                { name: "Titan", radius: 0.4, distance: 10, speed: 0.02, color: 0xddaa66,
+                  info: { çap: "5.149 km", uzaklık: "1.221.870 km", süre: "15,9 gün", tip: "Doğal uydu", açıklama: "Kalın atmosfere sahip tek uydu. Yüzeyinde metan gölleri vardır. Cassini-Huygens tarafından incelendi." } },
+                { name: "Enceladus", radius: 0.2, distance: 7, speed: 0.035, color: 0xeeffff,
+                  info: { çap: "504 km", uzaklık: "238.000 km", süre: "1,37 gün", tip: "Doğal uydu", açıklama: "Buzlu yüzeyinden su buharı fışkırtır. Yeraltı okyanusu yaşam ihtimali taşır." } }
+            ],
+            uranus: [
+                { name: "Titania", radius: 0.25, distance: 5.5, speed: 0.03, color: 0xaabbcc,
+                  info: { çap: "1.578 km", uzaklık: "435.800 km", süre: "8,7 gün", tip: "Doğal uydu", açıklama: "Uranüs'ün en büyük uydusudur." } },
+                { name: "Oberon", radius: 0.22, distance: 6.8, speed: 0.02, color: 0x99aabb,
+                  info: { çap: "1.523 km", uzaklık: "582.600 km", süre: "13,5 gün", tip: "Doğal uydu", açıklama: "Uranüs'ün ikinci büyük uydusudur." } }
+            ],
+            neptune: [
+                { name: "Triton", radius: 0.3, distance: 6, speed: 0.025, color: 0x99ccff,
+                  info: { çap: "2.707 km", uzaklık: "354.800 km", süre: "5,88 gün (ters)", tip: "Doğal uydu", açıklama: "Neptün'ün en büyük uydusu. Ters yönde yörüngede döner. Muhtemelen yakalanmış bir Kuiper Kuşağı cismidir." } }
+            ]
+        };
+
+        // NASA araçları
+        const NASA_CRAFT = [
+            { name: "Voyager 1", distance: 280, angle: 0.3, color: 0xffaa00, size: 0.6,
+              info: { tip: "NASA Uzay Aracı", fırlatma: "5 Eylül 1977", açıklama: "Güneş Sistemi'nden çıkan ilk insan yapımı nesnedir. Hâlâ Dünya'ya veri göndermektedir. Yıldızlararası uzaya ulaşmıştır." } },
+            { name: "Voyager 2", distance: 270, angle: 1.2, color: 0xff8800, size: 0.6,
+              info: { tip: "NASA Uzay Aracı", fırlatma: "20 Ağustos 1977", açıklama: "Uranüs ve Neptün'ü ziyaret eden tek uzay aracıdır. Hâlâ aktif durumdadır." } },
+            { name: "New Horizons", distance: 260, angle: 2.5, color: 0x44ffaa, size: 0.5,
+              info: { tip: "NASA Uzay Aracı", fırlatma: "19 Ocak 2006", açıklama: "Plüton'u yakından inceleyen ilk uzay aracıdır. Daha sonra Arrokoth'u da ziyaret etmiştir." } },
+            { name: "James Webb", distance: 58, angle: 4.0, color: 0xaaffff, size: 0.7,
+              info: { tip: "NASA / ESA / CSA Teleskop", fırlatma: "25 Aralık 2021", açıklama: "Şimdiye kadarki en güçlü uzay teleskobudur. Kızılötesi gözlemleriyle evrenin en uzak galaksilerini inceler. L2 noktasında yörüngededir." } },
+            { name: "Parker Solar Probe", distance: 22, angle: 5.5, color: 0xff4444, size: 0.45,
+              info: { tip: "NASA Uzay Aracı", fırlatma: "12 Ağustos 2018", açıklama: "Güneş'e en yakın geçen insan yapımı nesnedir. Güneş'in koronasına girmiştir." } }
+        ];
+
+        // ==================== THREE.JS KURULUMU ====================
+        let scene, camera, renderer, controls;
+        let sunMesh, planets = {}, moons = {}, orbits = [], nasaObjects = [];
+        let asteroidBelt, blackHole, starField;
+        let isPlaying = true;
+        let speedMultiplier = 1;
+        let clock = new THREE.Clock();
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let clickableObjects = [];
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            // Sahne
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000008);
+            scene.fog = new THREE.FogExp2(0x000010, 0.0008);
+
+            // Kamera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(80, 60, 120);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = false;
+            container.appendChild(renderer.domElement);
+
+            // Kontroller (mobil dokunmatik destekli)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.minDistance = 20;
+            controls.maxDistance = 600;
+            controls.enablePan = true;
+            controls.touches = {
+                ONE: THREE.TOUCH.ROTATE,
+                TWO: THREE.TOUCH.DOLLY_PAN
+            };
+
+            // Işıklar
+            const ambient = new THREE.AmbientLight(0x222233, 0.6);
+            scene.add(ambient);
+
+            const sunLight = new THREE.PointLight(0xfff0dd, 2.5, 800);
+            sunLight.position.set(0, 0, 0);
+            scene.add(sunLight);
+
+            // Yıldız alanı
+            createStarField();
+
+            // Güneş
+            createSun();
+
+            // Gezegenler
+            createPlanets();
+
+            // Asteroit Kuşağı
+            createAsteroidBelt();
+
+            // NASA araçları
+            createNASACrafts();
+
+            // Kara Delik (Samanyolu merkezi temsili - uzak)
+            createBlackHole();
+
+            // Olay dinleyicileri
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onClick);
+            renderer.domElement.addEventListener('touchend', onTouchEnd, { passive: false });
+
+            // UI
+            setupUI();
+
+            // Yükleme ekranını kapat
+            document.getElementById('loading').style.display = 'none';
+
+            // Animasyon başlat
+            animate();
+        }
+
+        function createStarField() {
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 4000;
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount; i++) {
+                const r = 400 + Math.random() * 600;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                const c = 0.6 + Math.random() * 0.4;
+                colors[i * 3] = c;
+                colors[i * 3 + 1] = c * (0.9 + Math.random() * 0.1);
+                colors[i * 3 + 2] = c * (0.8 + Math.random() * 0.2);
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const starMat = new THREE.PointsMaterial({
+                size: 1.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.9,
+                sizeAttenuation: true
+            });
+            starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+        }
+
+        function createSun() {
+            const data = PLANET_DATA.sun;
+            const geo = new THREE.SphereGeometry(data.radius, 64, 64);
+            const mat = new THREE.MeshBasicMaterial({
+                color: data.color,
+                transparent: true
+            });
+            sunMesh = new THREE.Mesh(geo, mat);
+            sunMesh.userData = { type: 'sun', key: 'sun', data: data };
+            scene.add(sunMesh);
+            clickableObjects.push(sunMesh);
+
+            // Güneş parıltısı
+            const glowGeo = new THREE.SphereGeometry(data.radius * 1.4, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0xff6600,
+                transparent: true,
+                opacity: 0.25,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            sunMesh.add(glow);
+
+            // Daha büyük dış parıltı
+            const outerGlow = new THREE.Mesh(
+                new THREE.SphereGeometry(data.radius * 2.2, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xff4400,
+                    transparent: true,
+                    opacity: 0.08,
+                    side: THREE.BackSide
+                })
+            );
+            sunMesh.add(outerGlow);
+        }
+
+        function createPlanets() {
+            const keys = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+
+            keys.forEach(key => {
+                const data = PLANET_DATA[key];
+
+                // Gezegen grubu (yörünge için)
+                const group = new THREE.Object3D();
+                scene.add(group);
+
+                // Gezegen mesh
+                const geo = new THREE.SphereGeometry(data.radius, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: data.color,
+                    roughness: 0.7,
+                    metalness: 0.1
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.x = data.distance;
+                mesh.userData = { type: 'planet', key: key, data: data };
+                group.add(mesh);
+                clickableObjects.push(mesh);
+
+                // Yörünge çizgisi
+                const orbitGeo = new THREE.RingGeometry(data.distance - 0.15, data.distance + 0.15, 128);
+                const orbitMat = new THREE.MeshBasicMaterial({
+                    color: 0x446688,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+                orbit.rotation.x = Math.PI / 2;
+                scene.add(orbit);
+                orbits.push(orbit);
+
+                // Satürn halkaları
+                if (key === 'saturn') {
+                    const ringGeo = new THREE.RingGeometry(data.radius * 1.4, data.radius * 2.4, 64);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: 0xc9b88a,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.75
+                    });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.rotation.x = Math.PI / 2.3;
+                    mesh.add(ring);
+                }
+
+                // Uranüs halkaları (ince)
+                if (key === 'uranus') {
+                    const ringGeo = new THREE.RingGeometry(data.radius * 1.5, data.radius * 1.9, 64);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: 0x99dddd,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.rotation.x = Math.PI / 2;
+                    mesh.add(ring);
+                }
+
+                planets[key] = { group, mesh, data, angle: Math.random() * Math.PI * 2 };
+
+                // Uydular
+                if (MOON_DATA[key]) {
+                    moons[key] = [];
+                    MOON_DATA[key].forEach(mData => {
+                        const mGroup = new THREE.Object3D();
+                        mesh.add(mGroup);
+
+                        const mGeo = new THREE.SphereGeometry(mData.radius, 16, 16);
+                        const mMat = new THREE.MeshStandardMaterial({ color: mData.color, roughness: 0.8 });
+                        const mMesh = new THREE.Mesh(mGeo, mMat);
+                        mMesh.position.x = mData.distance;
+                        mMesh.userData = { type: 'moon', name: mData.name, data: mData, parent: key };
+                        mGroup.add(mMesh);
+                        clickableObjects.push(mMesh);
+
+                        moons[key].push({ group: mGroup, mesh: mMesh, data: mData, angle: Math.random() * Math.PI * 2 });
+                    });
+                }
+            });
+        }
+
+        function createAsteroidBelt() {
+            const beltGroup = new THREE.Group();
+            const count = 1200;
+            const geo = new THREE.SphereGeometry(0.15, 4, 4);
+
+            for (let i = 0; i < count; i++) {
+                const mat = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(0.08, 0.3, 0.3 + Math.random() * 0.3)
+                });
+                const asteroid = new THREE.Mesh(geo, mat);
+                const dist = 85 + Math.random() * 20;
+                const angle = Math.random() * Math.PI * 2;
+                const y = (Math.random() - 0.5) * 4;
+                asteroid.position.set(
+                    Math.cos(angle) * dist,
+                    y,
+                    Math.sin(angle) * dist
+                );
+                asteroid.scale.setScalar(0.3 + Math.random() * 1.5);
+                beltGroup.add(asteroid);
+            }
+            scene.add(beltGroup);
+            asteroidBelt = beltGroup;
+
+            // Asteroit kuşağı bilgi objesi (görünmez tıklanabilir alan)
+            const beltInfo = new THREE.Mesh(
+                new THREE.TorusGeometry(95, 12, 8, 48),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            beltInfo.rotation.x = Math.PI / 2;
+            beltInfo.userData = {
+                type: 'asteroid',
+                name: "Asteroit Kuşağı",
+                data: {
+                    info: {
+                        tip: "Asteroit Kuşağı",
+                        konum: "Mars ile Jüpiter arasında",
+                        açıklama: "Güneş Sistemi'nde Mars ve Jüpiter arasında bulunan, milyonlarca kayalık cisimden oluşan bölge. En büyük üyesi Ceres cüce gezegenidir. Toplam kütlesi Ay'ın kütlesinden daha azdır."
+                    }
+                }
+            };
+            scene.add(beltInfo);
+            clickableObjects.push(beltInfo);
+        }
+
+        function createNASACrafts() {
+            NASA_CRAFT.forEach(craft => {
+                const group = new THREE.Object3D();
+                scene.add(group);
+
+                // Basit uzay aracı şekli
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(craft.size * 1.5, craft.size * 0.4, craft.size * 0.8),
+                    new THREE.MeshBasicMaterial({ color: craft.color })
+                );
+                group.add(body);
+
+                // Anten
+                const dish = new THREE.Mesh(
+                    new THREE.CircleGeometry(craft.size * 0.6, 16),
+                    new THREE.MeshBasicMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide })
+                );
+                dish.position.set(0, craft.size * 0.5, 0);
+                dish.rotation.x = -Math.PI / 3;
+                group.add(dish);
+
+                group.position.set(
+                    Math.cos(craft.angle) * craft.distance,
+                    (Math.random() - 0.5) * 10,
+                    Math.sin(craft.angle) * craft.distance
+                );
+
+                group.userData = { type: 'nasa', name: craft.name, data: craft };
+                // Tıklanabilirlik için body'ye ata
+                body.userData = group.userData;
+                dish.userData = group.userData;
+                clickableObjects.push(body);
+                clickableObjects.push(dish);
+
+                nasaObjects.push({ group, data: craft, angle: craft.angle });
+            });
+        }
+
+        function createBlackHole() {
+            const group = new THREE.Object3D();
+            group.position.set(-350, 40, -280);
+            scene.add(group);
+
+            // Kara delik (siyah küre)
+            const bh = new THREE.Mesh(
+                new THREE.SphereGeometry(8, 32, 32),
+                new THREE.MeshBasicMaterial({ color: 0x000000 })
+            );
+            group.add(bh);
+
+            // Olay ufku parıltısı
+            const disk = new THREE.Mesh(
+                new THREE.RingGeometry(9, 22, 64),
+                new THREE.MeshBasicMaterial({
+                    color: 0xff6600,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.7
+                })
+            );
+            disk.rotation.x = Math.PI / 2.5;
+            group.add(disk);
+
+            // İkinci halka
+            const disk2 = new THREE.Mesh(
+                new THREE.RingGeometry(12, 28, 64),
+                new THREE.MeshBasicMaterial({
+                    color: 0xff2200,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.35
+                })
+            );
+            disk2.rotation.x = Math.PI / 2.8;
+            group.add(disk2);
+
+            bh.userData = {
+                type: 'blackhole',
+                name: "Kara Delik (Temsili)",
+                data: {
+                    info: {
+                        tip: "Kara Delik",
+                        konum: "Samanyolu Galaksisi merkezi (temsili konum)",
+                        açıklama: "Kara delikler, ışığın bile kaçamayacağı kadar güçlü yerçekimine sahip gök cisimleridir. Samanyolu'nun merkezinde Sagittarius A* adlı süper kütleli kara delik bulunur. Bu modelde temsili olarak gösterilmiştir. Gerçek kara delikler Güneş Sistemi'nde yoktur."
+                    }
+                }
+            };
+            clickableObjects.push(bh);
+            blackHole = group;
+        }
+
+        // ==================== ETKİLEŞİM ====================
+        function onClick(event) {
+            event.preventDefault();
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            checkIntersection();
+        }
+
+        function onTouchEnd(event) {
+            if (event.changedTouches.length === 1) {
+                const touch = event.changedTouches[0];
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+                checkIntersection();
+            }
+        }
+
+        function checkIntersection() {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickableObjects, true);
+
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
+                // Parent'a bak
+                while (obj && !obj.userData.type && obj.parent) {
+                    obj = obj.parent;
+                }
+                if (obj && obj.userData && obj.userData.type) {
+                    showInfo(obj.userData);
+                }
+            }
+        }
+
+        function showInfo(userData) {
+            const panel = document.getElementById('info-panel');
+            const title = document.getElementById('info-title');
+            const content = document.getElementById('info-content');
+
+            let name = userData.name || (userData.data && userData.data.name) || 'Bilinmeyen';
+            let info = userData.data ? userData.data.info : null;
+
+            if (userData.type === 'planet' || userData.type === 'sun') {
+                name = userData.data.name;
+                info = userData.data.info;
+            } else if (userData.type === 'moon') {
+                name = userData.name;
+                info = userData.data.info;
+            } else if (userData.type === 'nasa') {
+                name = userData.name;
+                info = userData.data.info;
+            } else if (userData.type === 'asteroid' || userData.type === 'blackhole') {
+                name = userData.name;
+                info = userData.data.info;
+            }
+
+            title.textContent = name;
+
+            let html = '';
+            if (info) {
+                if (info.çap) html += `<p><span class="label">Çap:</span> ${info.çap}</p>`;
+                if (info.uzaklık) html += `<p><span class="label">Güneş'e uzaklık:</span> ${info.uzaklık}</p>`;
+                if (info.süre) html += `<p><span class="label">Dolanma süresi:</span> ${info.süre}</p>`;
+                if (info.uydu) html += `<p><span class="label">Uydu sayısı:</span> ${info.uydu}</p>`;
+                if (info.tip) html += `<p><span class="label">Tip:</span> ${info.tip}</p>`;
+                if (info.sıcaklık) html += `<p><span class="label">Sıcaklık:</span> ${info.sıcaklık}</p>`;
+                if (info.fırlatma) html += `<p><span class="label">Fırlatma:</span> ${info.fırlatma}</p>`;
+                if (info.konum) html += `<p><span class="label">Konum:</span> ${info.konum}</p>`;
+                if (info.açıklama) html += `<p style="margin-top:10px;">${info.açıklama}</p>`;
+            }
+
+            content.innerHTML = html || '<p>Bilgi bulunamadı.</p>';
+            panel.style.display = 'block';
+        }
+
+        function setupUI() {
+            const btnPlay = document.getElementById('btn-play');
+            const speedInput = document.getElementById('speed');
+            const speedVal = document.getElementById('speed-val');
+            const btnReset = document.getElementById('btn-reset');
+            const closeInfo = document.getElementById('close-info');
+
+            btnPlay.addEventListener('click', () => {
+                isPlaying = !isPlaying;
+                btnPlay.textContent = isPlaying ? '⏸ Durdur' : '▶ Başlat';
+                btnPlay.classList.toggle('active', isPlaying);
+            });
+
+            speedInput.addEventListener('input', () => {
+                speedMultiplier = parseFloat(speedInput.value);
+                speedVal.textContent = speedMultiplier.toFixed(1) + 'x';
+            });
+
+            btnReset.addEventListener('click', () => {
+                camera.position.set(80, 60, 120);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+
+            closeInfo.addEventListener('click', () => {
+                document.getElementById('info-panel').style.display = 'none';
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ==================== ANİMASYON ====================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            if (isPlaying) {
+                // Gezegenler
+                Object.keys(planets).forEach(key => {
+                    const p = planets[key];
+                    p.angle += p.data.speed * speedMultiplier * delta * 60;
+                    p.group.rotation.y = p.angle;
+                    p.mesh.rotation.y += p.data.rotationSpeed * speedMultiplier;
+                });
+
+                // Uydular
+                Object.keys(moons).forEach(key => {
+                    moons[key].forEach(m => {
+                        m.angle += m.data.speed * speedMultiplier * delta * 60;
+                        m.group.rotation.y = m.angle;
+                    });
+                });
+
+                // Güneş dönüşü
+                if (sunMesh) sunMesh.rotation.y += 0.002 * speedMultiplier;
+
+                // Asteroit kuşağı yavaş dönüş
+                if (asteroidBelt) asteroidBelt.rotation.y += 0.0003 * speedMultiplier;
+
+                // Kara delik halkaları
+                if (blackHole) {
+                    blackHole.children[1].rotation.z += 0.01 * speedMultiplier;
+                    blackHole.children[2].rotation.z -= 0.007 * speedMultiplier;
+                }
+
+                // NASA araçları yavaş hareket
+                nasaObjects.forEach(n => {
+                    n.angle += 0.0005 * speedMultiplier * delta * 60;
+                    const d = n.data.distance;
+                    n.group.position.x = Math.cos(n.angle) * d;
+                    n.group.position.z = Math.sin(n.angle) * d;
+                });
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Başlat
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
