@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi & Gezegen Ansiklopedisi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #020617;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(14, 165, 233, 0.6);
+            border-radius: 4px;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+        }
+        .glass-button {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-button:hover {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(56, 189, 248, 0.6);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+            transform: translateY(-1.5px);
+        }
+        .tab-btn.active {
+            background: rgba(14, 165, 233, 0.25);
+            border-color: rgba(56, 189, 248, 0.8);
+            color: #38bdf8;
+            font-weight: 800;
+        }
+        .neon-glow-blue {
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+
+    <div id="ui-container" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 md:p-5 z-10">
+        
+        <!-- Header Controls -->
+        <header class="flex flex-wrap justify-between items-start gap-3 pointer-events-auto">
+            <div class="glass-panel px-4 py-3 rounded-2xl flex items-center space-x-3 border-cyan-500/30">
+                <div class="relative flex items-center justify-center">
+                    <div class="w-3.5 h-3.5 rounded-full bg-cyan-400 animate-ping absolute opacity-75"></div>
+                    <div class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black bg-gradient-to-r from-amber-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent tracking-wide">
+                        GÜNEŞ SİSTEMİ & GEZEGEN ANSİKLOPEDİSİ
+                    </h1>
+                    <p class="text-[11px] text-slate-300 font-medium">Interaktif 3D Uzay & Detaylı Bilimsel Veri Bankası</p>
+                </div>
+            </div>
+
+            <!-- Simulation Controls & Encyclopedia Toggle -->
+            <div class="glass-panel p-2 rounded-2xl flex flex-wrap items-center gap-2">
+                <button id="btn-play-pause" class="glass-button text-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer hover:text-cyan-300">
+                    <span id="play-pause-icon">⏸️</span>
+                    <span id="play-pause-text" class="hidden sm:inline">Durdur</span>
+                </button>
+
+                <div class="flex items-center space-x-1 bg-slate-900/90 px-2.5 py-1 rounded-xl border border-slate-700/80">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase mr-1">Hız:</span>
+                    <button class="btn-speed text-xs px-2 py-0.5 rounded text-slate-300 hover:bg-slate-800 cursor-pointer" data-speed="0.2">0.2x</button>
+                    <button class="btn-speed text-xs px-2 py-0.5 rounded text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-500/40 cursor-pointer" data-speed="1">1x</button>
+                    <button class="btn-speed text-xs px-2 py-0.5 rounded text-slate-300 hover:bg-slate-800 cursor-pointer" data-speed="3">3x</button>
+                    <button class="btn-speed text-xs px-2 py-0.5 rounded text-slate-300 hover:bg-slate-800 cursor-pointer" data-speed="8">8x</button>
+                </div>
+
+                <button id="btn-toggle-orbits" class="glass-button text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer hover:text-cyan-300">
+                    🎨 Yörüngeler
+                </button>
+
+                <button id="btn-audio" class="glass-button text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer">
+                    <span id="audio-icon">🔇</span>
+                </button>
+
+                <button id="btn-tour" class="glass-button bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 text-purple-200 px-3.5 py-1.5 rounded-xl text-xs font-black border-purple-500/40 cursor-pointer flex items-center space-x-1">
+                    <span>🚀</span>
+                    <span>Keşif Turu</span>
+                </button>
+
+                <button id="btn-reset-view" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-lg shadow-cyan-500/20 cursor-pointer">
+                    Genel Görünüm
+                </button>
+            </div>
+        </header>
+
+        <div class="pointer-events-auto my-auto self-center hidden lg:flex items-center space-x-1 glass-panel p-1.5 rounded-full shadow-2xl border-cyan-500/30">
+            <button data-target="Sun" class="quick-nav-btn text-xs px-3 py-1.5 rounded-full text-amber-300 font-bold hover:bg-amber-500/20 transition cursor-pointer">☀️ Güneş</button>
+            <button data-target="Merkür" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-slate-300 hover:bg-slate-700/60 transition cursor-pointer">Merkür</button>
+            <button data-target="Venüs" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-amber-200 hover:bg-amber-700/40 transition cursor-pointer">Venüs</button>
+            <button data-target="Dünya" class="quick-nav-btn text-xs px-3 py-1.5 rounded-full text-blue-300 font-bold hover:bg-blue-500/30 transition cursor-pointer">🌍 Dünya</button>
+            <button data-target="Mars" class="quick-nav-btn text-xs px-3 py-1.5 rounded-full text-red-300 font-bold hover:bg-red-500/30 transition cursor-pointer">Mars</button>
+            <button data-target="Asteroids" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-amber-400/90 hover:bg-amber-900/40 transition cursor-pointer">☄️ Asteroitler</button>
+            <button data-target="Jüpiter" class="quick-nav-btn text-xs px-3 py-1.5 rounded-full text-orange-300 font-bold hover:bg-orange-500/30 transition cursor-pointer">Jüpiter</button>
+            <button data-target="Satürn" class="quick-nav-btn text-xs px-3 py-1.5 rounded-full text-yellow-200 font-bold hover:bg-yellow-500/30 transition cursor-pointer">🪐 Satürn</button>
+            <button data-target="Uranüs" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-cyan-300 font-bold hover:bg-cyan-500/30 transition cursor-pointer">Uranüs</button>
+            <button data-target="Neptün" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-blue-400 font-bold hover:bg-blue-600/30 transition cursor-pointer">Neptün</button>
+            <button data-target="Plüton" class="quick-nav-btn text-xs px-2.5 py-1.5 rounded-full text-slate-400 hover:bg-slate-700/50 transition cursor-pointer">Plüton</button>
+        </div>
+
+        <!-- Guided Tour Subtitle Banner -->
+        <div id="tour-banner" class="pointer-events-auto self-center glass-panel px-6 py-3 rounded-2xl shadow-2xl border-purple-500/50 hidden max-w-xl text-center">
+            <span id="tour-step" class="text-[10px] font-black uppercase tracking-widest text-purple-400 block mb-0.5">REHBERLİ KEŞİF TURU</span>
+            <p id="tour-text" class="text-xs md:text-sm text-slate-100 font-medium leading-relaxed">Tur başlatılıyor...</p>
+        </div>
+
+        <!-- Footer Bar -->
+        <footer class="flex justify-between items-end pointer-events-auto">
+            <div class="glass-panel px-4 py-2 rounded-xl text-xs text-slate-300 flex items-center space-x-4 border-cyan-500/30">
+                <div>Odak: <span id="status-focus" class="text-cyan-300 font-extrabold neon-glow-blue">Güneş Sistemi</span></div>
+                <div class="border-l border-slate-700/80 pl-4 hidden sm:block">Simülasyon Süresi: <span id="status-time" class="text-amber-300 font-mono font-bold">0 Yıl 0 Gün</span></div>
+            </div>
+
+            <div class="glass-panel px-4 py-2 rounded-xl text-xs text-slate-300 hidden sm:block">
+                <span>💡 Bilgi İçin: <strong class="text-amber-300">Gezegenlerin Üzerine Tıklayın</strong> veya Navigasyonu Kullanın</span>
+            </div>
+        </footer>
+    </div>
+
+    <div id="planet-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-6 opacity-0 pointer-events-none transition-all duration-300">
+        <div id="modal-card" class="glass-panel border border-cyan-500/40 w-full max-w-4xl rounded-3xl p-5 md:p-7 shadow-[0_0_60px_rgba(6,182,212,0.2)] transform scale-95 transition-all duration-300 relative overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- Header Section -->
+            <div class="flex justify-between items-start border-b border-slate-800 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-icon-badge" class="w-12 h-12 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-2xl shadow-inner">
+                        🪐
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span id="modal-category" class="text-[11px] font-black uppercase tracking-widest text-cyan-400">Karasal Gezegen</span>
+                            <span id="modal-latin" class="text-[10px] text-slate-400 italic">Planeta</span>
+                        </div>
+                        <h2 id="modal-title" class="text-2xl md:text-3xl font-black text-white">Gezegen Adı</h2>
+                    </div>
+                </div>
+                <button id="modal-close" class="glass-button text-slate-400 hover:text-white p-2 rounded-full cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Encyclopedia Navigation Tabs -->
+            <div class="flex space-x-2 my-4 border-b border-slate-800/80 pb-2 overflow-x-auto text-xs font-semibold">
+                <button class="tab-btn active px-3.5 py-1.5 rounded-xl border border-transparent transition cursor-pointer" data-tab="tab-overview">📌 Genel Bakış</button>
+                <button class="tab-btn px-3.5 py-1.5 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 transition cursor-pointer" data-tab="tab-physics">📊 Fiziksel & Yörünge</button>
+                <button class="tab-btn px-3.5 py-1.5 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 transition cursor-pointer" data-tab="tab-atmosphere">🌌 Atmosfer & Yapı</button>
+                <button class="tab-btn px-3.5 py-1.5 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 transition cursor-pointer" data-tab="tab-missions">🚀 Uzay Görevleri</button>
+                <button class="tab-btn px-3.5 py-1.5 rounded-xl border border-transparent text-slate-400 hover:text-slate-200 transition cursor-pointer" data-tab="tab-compare">⚖️ Dünya ile Karşılaştır</button>
+            </div>
+
+            <!-- Tab Content Area -->
+            <div class="flex-1 overflow-y-auto pr-2 space-y-4 text-xs md:text-sm text-slate-200">
+                
+                <!-- Tab 1: Overview -->
+                <div id="tab-overview" class="tab-content space-y-3">
+                    <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-800/80 leading-relaxed text-slate-200">
+                        <p id="modal-desc-full">Açıklama yükleniyor...</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Güneş'e Uzaklık</span>
+                            <span id="modal-dist-au" class="font-extrabold text-white text-sm">0 AU</span>
+                            <span id="modal-dist-km" class="text-[10px] text-slate-400 block">0 Milyon km</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Yörünge Süresi (Yıl)</span>
+                            <span id="modal-orbit-period" class="font-extrabold text-cyan-300 text-sm">0 Gün</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Gün Süresi (Kendi)</span>
+                            <span id="modal-day-length" class="font-extrabold text-amber-300 text-sm">0 Saat</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Bilinen Uydular</span>
+                            <span id="modal-moons-count" class="font-extrabold text-purple-300 text-sm">0 Uydu</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-cyan-950/40 border border-cyan-800/50 p-4 rounded-2xl">
+                        <span class="text-xs text-cyan-300 font-black uppercase block mb-1">💡 İlgi Çekici Bilimsel Detay</span>
+                        <p id="modal-fact-text" class="text-slate-200 text-xs leading-relaxed">Bilgi yükleniyor...</p>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Physics & Orbit -->
+                <div id="tab-physics" class="tab-content hidden space-y-3">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Ekvator Çapı</span>
+                            <span id="modal-diameter" class="text-sm font-black text-white">0 km</span>
+                        </div>
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Kütle</span>
+                            <span id="modal-mass" class="text-sm font-black text-white">0 kg</span>
+                        </div>
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Yüzey Yerçekimi</span>
+                            <span id="modal-gravity" class="text-sm font-black text-cyan-300">0 m/s²</span>
+                        </div>
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Sıcaklık Aralığı</span>
+                            <span id="modal-temp-range" class="text-sm font-black text-amber-300">0 °C</span>
+                        </div>
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Kaçış Hızı</span>
+                            <span id="modal-escape-vel" class="text-sm font-black text-white">0 km/s</span>
+                        </div>
+                        <div class="bg-slate-900/70 p-3.5 rounded-2xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 font-bold block">Eksen Eğikliği</span>
+                            <span id="modal-axial-tilt" class="text-sm font-black text-purple-300">0°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Atmosphere & Composition -->
+                <div id="tab-atmosphere" class="tab-content hidden space-y-3">
+                    <div class="bg-slate-900/70 p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <h4 class="text-xs font-bold text-cyan-300 uppercase tracking-wider">Atmosfer Gaz Bileşenleri</h4>
+                        <div id="modal-atmosphere-list" class="space-y-1.5">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/70 p-4 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-1">Jeolojik ve İç Yapısı</h4>
+                        <p id="modal-interior-text" class="text-xs text-slate-300 leading-relaxed">İç yapı bilgisi...</p>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Space Missions -->
+                <div id="tab-missions" class="tab-content hidden space-y-3">
+                    <div class="bg-slate-900/70 p-4 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2">Önemli Keşif Görevleri & Tarihçe</h4>
+                        <ul id="modal-missions-list" class="space-y-2 text-xs text-slate-300 list-disc list-inside">
+                            <!-- Injected dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Comparison -->
+                <div id="tab-compare" class="tab-content hidden space-y-3">
+                    <div class="bg-slate-900/70 p-4 rounded-2xl border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-bold text-cyan-300 uppercase tracking-wider">Dünya ile Karşılaştırmalı İstatistikler</h4>
+                        <div id="modal-compare-bars" class="space-y-3">
+                            <!-- Visual comparison bars injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="mt-4 flex justify-end space-x-3 border-t border-slate-800 pt-3">
+                <button id="modal-btn-focus" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-extrabold px-5 py-2 rounded-xl text-xs shadow-lg shadow-cyan-600/20 cursor-pointer">
+                    🎯 Kamerayı Bu Gezegene Odakla
+                </button>
+                <button id="modal-btn-close" class="glass-button text-slate-300 hover:text-white font-semibold px-4 py-2 rounded-xl text-xs cursor-pointer">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const planetsData = [
+            {
+                name: "Merkür",
+                category: "Karasal Gezegen",
+                icon: "🌑",
+                radius: 1.9, distance: 20, speed: 0.035, selfRotationSpeed: 0.005,
+                color: '#94a3b8', orbitColor: 0x64748b,
+                desc: "Güneş Sisteminin en küçük ve Güneş'e en yakın gezegenidir. İncecik atmosferi (ekzosfer) sebebiyle ısıyı tutamaz; gece ile gündüz arasında 600 dereceye varan sıcaklık farkları yaşanır.",
+                distanceAU: "0.39 AU", distanceKM: "57.9 Milyon km", orbitDays: "88 Gün", dayLength: "58.6 Gün",
+                diameter: "4,879 km", mass: "3.30 × 10²³ kg", gravity: "3.70 m/s²", tempRange: "-180 °C / +430 °C",
+                escapeVel: "4.25 km/s", axialTilt: "0.03°", moonsCount: 0,
+                atmosphere: [
+                    { name: "Oksijen (%42)", pct: 42 },
+                    { name: "Sodyum (%29)", pct: 29 },
+                    { name: "Hidrojen (%22)", pct: 22 },
+                    { name: "Helyum (%6)", pct: 6 }
+                ],
+                interior: "Merkür'ün hacminin %85'ini kaplayan devasa bir demir-nikel çekirdeği vardır. Yüzeyi Ay'a çok benzeyen kraterlerle doludur.",
+                missions: [
+                    "Mariner 10 (1974): Merkür'e yaklaşan ilk uzay aracı.",
+                    "MESSENGER (2011-2015): Yörüngeye girerek yüzey haritasını çıkardı ve kutuplarda su buzu keşfetti.",
+                    "BepiColombo (ESA/JAXA): Şu an Merkür'e doğru ilerliyor."
+                ],
+                fact: "Güneş'e en yakın gezegen olmasına rağmen Güneş Sisteminin en sıcak gezegeni değildir; çünkü atmosferi yoktur."
+            },
+            {
+                name: "Venüs",
+                category: "Karasal Gezegen",
+                icon: "🌕",
+                radius: 2.6, distance: 30, speed: 0.025, selfRotationSpeed: 0.002,
+                color: '#fbe047', orbitColor: 0xeab308,
+                hasAtmosphere: true, atmosphereColor: 0xfacc15,
+                desc: "Dünya'nın 'İkiz Kardeşi' olarak anılır ancak yoğun karbondioksit atmosferi ve sülfürik asit bulutlarıyla adeta cehennemi andırır. Kontrolden çıkmış sera etkisi nedeniyle Güneş Sisteminin en sıcak gezegenidir.",
+                distanceAU: "0.72 AU", distanceKM: "108.2 Milyon km", orbitDays: "224.7 Gün", dayLength: "243 Gün",
+                diameter: "12,104 km", mass: "4.87 × 10²⁴ kg", gravity: "8.87 m/s²", tempRange: "464 °C (Sabit)",
+                escapeVel: "10.36 km/s", axialTilt: "177.3°", moonsCount: 0,
+                atmosphere: [
+                    { name: "Karbondioksit (%96.5)", pct: 96.5 },
+                    { name: "Azot (%3.5)", pct: 3.5 },
+                    { name: "Sülfürik Asit (Bulutlar)", pct: 1 }
+                ],
+                interior: "Dünya'ya benzeyen kayalık bir kabuk, manto ve erimiş demir-nikel çekirdeğe sahiptir.",
+                missions: [
+                    "Venera Programı (SSCB): Venüs yüzeyine başarıyla inip ilk fotoğrafları çeken efsanevi görevler.",
+                    "Magellan (NASA, 1990): Radar ile yüzeydeki volkanları haritaladı.",
+                    "Akatsuki (JAXA): Atmosferik fırtınaları incelemeye devam ediyor."
+                ],
+                fact: "Venüs kendi etrafında o kadar yavaş döner ki, bir Venüs günü (243 Dünya günü), bir Venüs yılından (225 Dünya günü) daha uzundur!"
+            },
+            {
+                name: "Dünya",
+                category: "Karasal Gezegen",
+                icon: "🌍",
+                radius: 2.8, distance: 44, speed: 0.018, selfRotationSpeed: 0.015,
+                color: '#38bdf8', orbitColor: 0x38bdf8,
+                hasAtmosphere: true, atmosphereColor: 0x38bdf8,
+                moons: [{ name: "Ay", radius: 0.75, distance: 5.0, speed: 0.08, color: 0xe2e8f0 }],
+                desc: "Evrende bilinen tek yaşam barındıran gök cismidir. Yüzeyinin %71'i sıvı su okyanuslarıyla kaplıdır ve koruyucu bir manyetik alana sahiptir.",
+                distanceAU: "1.00 AU", distanceKM: "149.6 Milyon km", orbitDays: "365.25 Gün", dayLength: "24 Saat",
+                diameter: "12,742 km", mass: "5.97 × 10²⁴ kg", gravity: "9.81 m/s²", tempRange: "-89 °C / +58 °C",
+                escapeVel: "11.18 km/s", axialTilt: "23.44°", moonsCount: 1,
+                atmosphere: [
+                    { name: "Azot (%78)", pct: 78 },
+                    { name: "Oksijen (%21)", pct: 21 },
+                    { name: "Argon & Karbondioksit (%1)", pct: 1 }
+                ],
+                interior: "Aktif levha tektoniğine sahiptir. Demir-nikel iç çekirdek, erimiş dış çekirdek, silikat manto ve ince bir kabuktan oluşur.",
+                missions: [
+                    "Binlerce yerleşik uydular, ISS (Uluslararası Uzay İstasyonu) ve iklim gözlem uyduları."
+                ],
+                fact: "Dünya'nın çekirdeği Güneş'in yüzeyi kadar sıcaktır (yaklaşık 5.500 °C)."
+            },
+            {
+                name: "Mars",
+                category: "Karasal Gezegen",
+                icon: "🔴",
+                radius: 2.2, distance: 58, speed: 0.014, selfRotationSpeed: 0.014,
+                color: '#ef4444', orbitColor: 0xef4444,
+                hasAtmosphere: true, atmosphereColor: 0xf87171,
+                moons: [
+                    { name: "Phobos", radius: 0.35, distance: 3.5, speed: 0.12, color: 0x94a3b8 },
+                    { name: "Deimos", radius: 0.28, distance: 4.6, speed: 0.08, color: 0x64748b }
+                ],
+                desc: "Yüzeyindeki demir oksit (pas) nedeniyle Kızıl Gezegen adını almıştır. Geçmişte nehirler ve okyanuslar barındırdığına dair güçlü kanıtlar vardır.",
+                distanceAU: "1.52 AU", distanceKM: "227.9 Milyon km", orbitDays: "687 Gün", dayLength: "24 Saat 37 Dk",
+                diameter: "6,779 km", mass: "6.42 × 10²³ kg", gravity: "3.72 m/s²", tempRange: "-125 °C / +20 °C",
+                escapeVel: "5.03 km/s", axialTilt: "25.19°", moonsCount: 2,
+                atmosphere: [
+                    { name: "Karbondioksit (%95.3)", pct: 95.3 },
+                    { name: "Azot (%2.6)", pct: 2.6 },
+                    { name: "Argon (%1.9)", pct: 1.9 }
+                ],
+                interior: "Kalın bir kaya katmanı ve merkezinde katılaşmış demir-sülfür çekirdek bulunur.",
+                missions: [
+                    "Viking 1 & 2 (1976): Yüzeye basan ilk başarılı robotik araçlar.",
+                    "Curiosity & Perseverance (NASA): Geçmiş yaşam izlerini ve su yataklarını araştırıyor.",
+                    "Ingenuity Helikopteri: Başka bir gezegende uçan ilk insan yapımı araç."
+                ],
+                fact: "Mars, Everest Dağı'nın 3 katı yüksekliğinde olan Olympus Mons adında Güneş Sisteminin en büyük dağ/volkanına sahiptir."
+            },
+            {
+                name: "Jüpiter",
+                category: "Gaz Devi",
+                icon: "🟠",
+                radius: 5.8, distance: 84, speed: 0.009, selfRotationSpeed: 0.025,
+                color: '#f97316', orbitColor: 0xf97316,
+                moons: [
+                    { name: "Europa", radius: 0.55, distance: 8.5, speed: 0.06, color: 0x0ea5e9 },
+                    { name: "Ganymede", radius: 0.85, distance: 11.2, speed: 0.04, color: 0xc084fc }
+                ],
+                desc: "Güneş Sisteminin en devasa gezegenidir. Kütlesi diğer tüm gezegenlerin toplamının 2.5 katıdır. İçine 1.300'den fazla Dünya sığabilir.",
+                distanceAU: "5.20 AU", distanceKM: "778.5 Milyon km", orbitDays: "11.86 Yıl", dayLength: "9 Saat 55 Dk",
+                diameter: "139,820 km", mass: "1.90 × 10²⁷ kg", gravity: "24.79 m/s²", tempRange: "-110 °C",
+                escapeVel: "59.5 km/s", axialTilt: "3.13°", moonsCount: 95,
+                atmosphere: [
+                    { name: "Hidrojen (%89)", pct: 89 },
+                    { name: "Helyum (%10)", pct: 10 },
+                    { name: "Metan & Amonyak (%1)", pct: 1 }
+                ],
+                interior: "Katı bir yüzeyi yoktur. Yüksek basınç altında sıvı metalik hidrojenden oluşan devasa bir okyanus ve yoğun çekirdeğe sahiptir.",
+                missions: [
+                    "Voyager 1 & 2: Detaylı halka ve uydu fotoğrafları.",
+                    "Galileo (1995-2003): Yörüngeye giren ilk araç.",
+                    "Juno (NASA): Radyasyon kuşaklarını ve fırtınaları inceliyor."
+                ],
+                fact: "Üzerindeki ünlü 'Büyük Kırmızı Leke', en az 350 yıldır aralıksız esen ve içine Dünya'nın rahatlıkla sığabileceği devasa bir fırtınadır."
+            },
+            {
+                name: "Satürn",
+                category: "Gaz Devi",
+                icon: "🪐",
+                radius: 4.8, distance: 112, speed: 0.007, selfRotationSpeed: 0.022,
+                color: '#fef08a', orbitColor: 0xeab308,
+                hasRings: true,
+                moons: [{ name: "Titan", radius: 0.75, distance: 10.2, speed: 0.05, color: 0xf59e0b }],
+                desc: "Buz parçacıkları, toz ve kaya kayalıklarından oluşan muazzam halka sistemiyle Güneş Sisteminin en estetik gezegenidir.",
+                distanceAU: "9.58 AU", distanceKM: "1.43 Milyar km", orbitDays: "29.45 Yıl", dayLength: "10 Saat 33 Dk",
+                diameter: "116,460 km", mass: "5.68 × 10²⁶ kg", gravity: "10.44 m/s²", tempRange: "-140 °C",
+                escapeVel: "35.5 km/s", axialTilt: "26.73°", moonsCount: 146,
+                atmosphere: [
+                    { name: "Hidrojen (%96)", pct: 96 },
+                    { name: "Helyum (%3)", pct: 3 },
+                    { name: "Metan (%1)", pct: 1 }
+                ],
+                interior: "Jüpiter gibi sıvı hidrojen ve helyum katmanlarına sahiptir. Yoğunluğu sudan az olan tek gezegendir.",
+                missions: [
+                    "Pioneer 11 & Voyager: İlk yakın geçişler.",
+                    "Cassini-Huygens (2004-2017): 13 yıl boyunca Satürn ve uydusu Titan'ı inceleyen muazzam görev."
+                ],
+                fact: "Satürn'ün ortalama yoğunluğu sudan daha düşüktür (0.69 g/cm³). Yeterince büyük bir okyanus bulunsaydı su üstünde yüzerdi!"
+            },
+            {
+                name: "Uranüs",
+                category: "Buz Devi",
+                icon: "💎",
+                radius: 3.7, distance: 138, speed: 0.005, selfRotationSpeed: 0.018,
+                color: '#22d3ee', orbitColor: 0x06b6d4,
+                hasAtmosphere: true, atmosphereColor: 0x22d3ee,
+                desc: "Metan gazının kırmızı ışığı emmesi nedeniyle büyüleyici bir turkuaz renge sahiptir. Yörünge düzlemine 98 derece yatık dönmesiyle benzersizdir.",
+                distanceAU: "19.2 AU", distanceKM: "2.87 Milyar km", orbitDays: "84 Yıl", dayLength: "17 Saat 14 Dk",
+                diameter: "50,724 km", mass: "8.68 × 10²⁵ kg", gravity: "8.69 m/s²", tempRange: "-224 °C",
+                escapeVel: "21.3 km/s", axialTilt: "97.77°", moonsCount: 28,
+                atmosphere: [
+                    { name: "Hidrojen (%83)", pct: 83 },
+                    { name: "Helyum (%15)", pct: 15 },
+                    { name: "Metan (%2)", pct: 2 }
+                ],
+                interior: "Su, amonyak ve metan buzlarından oluşan sıcak ve yoğun bir 'buzlu manto' barındırır.",
+                missions: [
+                    "Voyager 2 (1986): Uranüs'ü ziyaret eden tek uzay aracı."
+                ],
+                fact: "Uranüs yan yatmış bir varil gibi yuvarlanarak döner. Bu yüzden bir kutbu 42 yıl boyunca aralıksız güneş alırken diğer kutbu karanlıkta kalır."
+            },
+            {
+                name: "Neptün",
+                category: "Buz Devi",
+                icon: "🔵",
+                radius: 3.6, distance: 162, speed: 0.0038, selfRotationSpeed: 0.019,
+                color: '#3b82f6', orbitColor: 0x2563eb,
+                hasAtmosphere: true, atmosphereColor: 0x3b82f6,
+                desc: "Güneş Sisteminin en dıştaki ana gezegenidir. Derin kraliyet mavisi rengi ve saatte 2.100 km hıza ulaşan süpersonik rüzgarlarıyla bilinir.",
+                distanceAU: "30.0 AU", distanceKM: "4.50 Milyar km", orbitDays: "164.8 Yıl", dayLength: "16 Saat 6 Dk",
+                diameter: "49,244 km", mass: "1.02 × 10²⁶ kg", gravity: "11.15 m/s²", tempRange: "-218 °C",
+                escapeVel: "23.5 km/s", axialTilt: "28.32°", moonsCount: 16,
+                atmosphere: [
+                    { name: "Hidrojen (%80)", pct: 80 },
+                    { name: "Helyum (%19)", pct: 19 },
+                    { name: "Metan (%1)", pct: 1 }
+                ],
+                interior: "Su, amonyak ve metan sıvısı karışımından oluşan mantoya ve küçük kaya çekirdeğine sahiptir.",
+                missions: [
+                    "Voyager 2 (1989): Neptün ve gayzerleriyle ünlü uydusu Triton'u fotoğrafladı."
+                ],
+                fact: "Neptün'deki rüzgarlar ses hızını (saatte 1.200 km) aşarak 2.100 km/s basınca ulaşır!"
+            },
+            {
+                name: "Plüton",
+                category: "Cüce Gezegen",
+                icon: "❄️",
+                radius: 1.4, distance: 185, speed: 0.0028, selfRotationSpeed: 0.008,
+                color: '#94a3b8', orbitColor: 0x475569,
+                desc: "Kuiper Kuşağı'nda yer alan en ünlü cüce gezegendir. Yüzeyinde azot buzuyla kaplı kalp şeklinde devasa bir ova (Sputnik Planitia) yer alır.",
+                distanceAU: "39.5 AU", distanceKM: "5.91 Milyar km", orbitDays: "248 Yıl", dayLength: "6.39 Gün",
+                diameter: "2,376 km", mass: "1.30 × 10²² kg", gravity: "0.62 m/s²", tempRange: "-230 °C",
+                escapeVel: "1.23 km/s", axialTilt: "122.5°", moonsCount: 5,
+                atmosphere: [
+                    { name: "Azot (%99)", pct: 99 },
+                    { name: "Metan & Karbonmonoksit (%1)", pct: 1 }
+                ],
+                interior: "Buzlu bir dış kabuk ve altındaki kayalık çekirdekten oluşur.",
+                missions: [
+                    "New Horizons (2015): Plüton'un yanından geçerek büyüleyici yüksek çözünürlüklü fotoğraflarını Dünya'ya aktardı."
+                ],
+                fact: "2006 yılında Uluslararası Astronomi Birliği (IAU) tarafından gezegen sınıfından çıkarılıp Cüce Gezegen ilan edilmiştir."
+            }
+        ];
+
+        class CosmicAudioEngine {
+            constructor() { this.ctx = null; this.isMuted = true; }
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.osc1 = this.ctx.createOscillator();
+                this.osc2 = this.ctx.createOscillator();
+                this.gain = this.ctx.createGain();
+                this.filter = this.ctx.createBiquadFilter();
+
+                this.osc1.type = 'sine'; this.osc1.frequency.value = 55;
+                this.osc2.type = 'triangle'; this.osc2.frequency.value = 110.5;
+                this.filter.type = 'lowpass'; this.filter.frequency.value = 200;
+                this.gain.gain.value = 0.05;
+
+                this.osc1.connect(this.filter); this.osc2.connect(this.filter);
+                this.filter.connect(this.gain); this.gain.connect(this.ctx.destination);
+                this.osc1.start(); this.osc2.start();
+            }
+            toggle() {
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') { this.ctx.resume(); this.isMuted = false; }
+                else if (this.ctx.state === 'running') { this.ctx.suspend(); this.isMuted = true; }
+                return !this.isMuted;
+            }
+            playClick() {
+                if (!this.ctx || this.isMuted || this.ctx.state !== 'running') return;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.05);
+                g.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+                osc.connect(g); g.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            }
+        }
+        const audioEngine = new CosmicAudioEngine();
+
+        function createSunTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 512);
+            grad.addColorStop(0, '#ffcc00'); grad.addColorStop(0.3, '#ff6600'); 
+            grad.addColorStop(0.7, '#ff2200'); grad.addColorStop(1, '#ff9900');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,1024,512);
+            for (let i = 0; i < 3000; i++) {
+                ctx.fillStyle = `rgba(255, ${Math.floor(180 + Math.random()*75)}, 50, ${Math.random()*0.35})`;
+                ctx.beginPath(); ctx.arc(Math.random()*1024, Math.random()*512, Math.random()*12 + 2, 0, Math.PI*2); ctx.fill();
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createEarthTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0284c7'; ctx.fillRect(0,0,1024,512);
+            const landColors = ['#16a34a', '#15803d', '#ca8a04', '#166534'];
+            for (let i = 0; i < 450; i++) {
+                ctx.fillStyle = landColors[Math.floor(Math.random() * landColors.length)];
+                ctx.beginPath(); ctx.arc(Math.random()*1024, Math.random()*512, Math.random()*45 + 10, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 1024, 45); ctx.fillRect(0, 467, 1024, 45);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            for (let i = 0; i < 300; i++) {
+                ctx.beginPath(); ctx.arc(Math.random()*1024, Math.random()*512, Math.random()*25 + 5, 0, Math.PI*2); ctx.fill();
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createJupiterTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const colors = ['#f59e0b', '#d97706', '#fef3c7', '#92400e', '#78350f', '#ea580c'];
+            for (let y = 0; y < 512; y += 6) {
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                ctx.fillRect(0, y, 1024, 6 + Math.random()*6);
+            }
+            ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.ellipse(650, 330, 85, 50, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 5; ctx.stroke();
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createSaturnRingTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            for(let x = 0; x < 1024; x++) {
+                if (x < 100 || x > 950 || (x > 550 && x < 610)) ctx.fillStyle = 'rgba(0,0,0,0)';
+                else {
+                    const alpha = Math.sin(x * 0.05) * 0.35 + 0.65;
+                    ctx.fillStyle = `rgba(${Math.floor(220 + Math.sin(x*0.02)*30)}, ${Math.floor(180 + Math.sin(x*0.01)*40)}, 110, ${alpha})`;
+                }
+                ctx.fillRect(x, 0, 1, 1);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createGenericPlanetTexture(baseHex, accentHex) {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = baseHex; ctx.fillRect(0,0,512,256);
+            ctx.fillStyle = accentHex;
+            for(let i=0; i<200; i++) {
+                ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*256, Math.random()*20+3, 0, Math.PI*2); ctx.fill();
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        let scene, camera, renderer;
+        let planetObjects = [];
+        let asteroidGroup, cometGroup, orbitLinesGroup, sunMesh;
+        let isPaused = false, simSpeed = 1.0, showOrbits = true, focusedTarget = null, simDaysElapsed = 0;
+
+        let cameraLookAtTarget = new THREE.Vector3(0, 0, 0);
+        let sphericalCamera = { radius: 180, theta: Math.PI / 4, phi: Math.PI / 3 };
+        let isDragging = false, previousMousePosition = { x: 0, y: 0 }, pointerDownPos = { x: 0, y: 0 }, hasMoved = false;
+
+        let isTourActive = false, tourStepIndex = 0, tourTimer = 0;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020617, 0.0005);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+            updateCameraPosition();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.25;
+            document.body.appendChild(renderer.domElement);
+
+            scene.add(new THREE.AmbientLight(0x475569, 1.6));
+            scene.add(new THREE.PointLight(0xffffff, 5.0, 1500, 0.15));
+
+            createStarfield();
+            createSun();
+            createPlanetsAndMoons();
+            createAsteroidBelt();
+            createComet();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('pointerdown', onPointerDown);
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+            window.addEventListener('wheel', onMouseWheel, { passive: true });
+
+            setupUIControls();
+            setupTabControls();
+            animate();
+        }
+
+        function createStarfield() {
+            const starsGeo = new THREE.BufferGeometry();
+            const count = 7500;
+            const pos = new Float32Array(count * 3);
+            const cols = new Float32Array(count * 3);
+            const palette = [[1.0, 1.0, 1.0], [0.4, 0.8, 1.0], [1.0, 0.9, 0.5], [1.0, 0.5, 0.4]];
+
+            for (let i = 0; i < count * 3; i += 3) {
+                pos[i] = (Math.random() - 0.5) * 2600;
+                pos[i + 1] = (Math.random() - 0.5) * 2600;
+                pos[i + 2] = (Math.random() - 0.5) * 2600;
+                const c = palette[Math.floor(Math.random() * palette.length)];
+                cols[i] = c[0]; cols[i + 1] = c[1]; cols[i + 2] = c[2];
+            }
+            starsGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            starsGeo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+            scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ size: 1.6, vertexColors: true, transparent: true, opacity: 0.95 })));
+        }
+
+        function createSun() {
+            const sunGeo = new THREE.SphereGeometry(10.5, 64, 64);
+            sunMesh = new THREE.Mesh(sunGeo, new THREE.MeshBasicMaterial({ map: createSunTexture() }));
+            scene.add(sunMesh);
+
+            const corona1 = new THREE.Mesh(new THREE.SphereGeometry(13.2, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.35, side: THREE.BackSide, blending: THREE.AdditiveBlending }));
+            sunMesh.add(corona1);
+            const corona2 = new THREE.Mesh(new THREE.SphereGeometry(16.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.18, side: THREE.BackSide, blending: THREE.AdditiveBlending }));
+            sunMesh.add(corona2);
+        }
+
+        function createPlanetsAndMoons() {
+            orbitLinesGroup = new THREE.Group();
+            scene.add(orbitLinesGroup);
+
+            planetsData.forEach((data) => {
+                const orbitRing = new THREE.Mesh(
+                    new THREE.RingGeometry(data.distance - 0.2, data.distance + 0.2, 128),
+                    new THREE.MeshBasicMaterial({ color: data.orbitColor, side: THREE.DoubleSide, transparent: true, opacity: 0.25 })
+                );
+                orbitRing.rotation.x = Math.PI / 2;
+                orbitLinesGroup.add(orbitRing);
+
+                let texFunc;
+                if (data.name === "Dünya") texFunc = createEarthTexture();
+                else if (data.name === "Jüpiter") texFunc = createJupiterTexture();
+                else texFunc = createGenericPlanetTexture(data.color, '#1e293b');
+
+                const planetMesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(data.radius, 48, 48),
+                    new THREE.MeshStandardMaterial({ map: texFunc, roughness: 0.5, metalness: 0.1 })
+                );
+
+                const initialAngle = Math.random() * Math.PI * 2;
+                planetMesh.position.set(Math.cos(initialAngle) * data.distance, 0, -Math.sin(initialAngle) * data.distance);
+                scene.add(planetMesh);
+
+                if (data.hasAtmosphere) {
+                    const atmos = new THREE.Mesh(
+                        new THREE.SphereGeometry(data.radius * 1.15, 32, 32),
+                        new THREE.MeshBasicMaterial({ color: data.atmosphereColor, transparent: true, opacity: 0.4, side: THREE.BackSide, blending: THREE.AdditiveBlending })
+                    );
+                    planetMesh.add(atmos);
+                }
+
+                if (data.hasRings) {
+                    const ring = new THREE.Mesh(
+                        new THREE.RingGeometry(data.radius * 1.35, data.radius * 2.6, 64),
+                        new THREE.MeshStandardMaterial({ map: createSaturnRingTexture(), side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
+                    );
+                    ring.rotation.x = Math.PI / 2;
+                    planetMesh.add(ring);
+                }
+
+                let moonObjects = [];
+                if (data.moons) {
+                    data.moons.forEach(m => {
+                        const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(m.radius, 20, 20), new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.7 }));
+                        scene.add(moonMesh);
+                        moonObjects.push({ mesh: moonMesh, radius: m.distance, speed: m.speed, angle: Math.random() * Math.PI * 2 });
+                    });
+                }
+
+                planetObjects.push({
+                    name: data.name,
+                    mesh: planetMesh,
+                    speed: data.speed,
+                    selfRotationSpeed: data.selfRotationSpeed || 0.01,
+                    data: data,
+                    moons: moonObjects,
+                    angle: initialAngle
+                });
+            });
+        }
+
+        function createAsteroidBelt() {
+            asteroidGroup = new THREE.Group();
+            const geo = new THREE.DodecahedronGeometry(0.35, 1);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 });
+            for (let i = 0; i < 1100; i++) {
+                const ast = new THREE.Mesh(geo, mat);
+                const dist = 68 + Math.random() * 11;
+                const angle = Math.random() * Math.PI * 2;
+                ast.position.set(Math.cos(angle) * dist, (Math.random() - 0.5) * 4, -Math.sin(angle) * dist);
+                const sc = 0.5 + Math.random() * 1.2; ast.scale.set(sc, sc, sc);
+                asteroidGroup.add(ast);
+            }
+            scene.add(asteroidGroup);
+        }
+
+        function createComet() {
+            cometGroup = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+            cometGroup.add(head);
+            scene.add(cometGroup);
+        }
+
+        function setupTabControls() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    audioEngine.playClick();
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+                    const tabId = e.target.getAttribute('data-tab');
+                    e.target.classList.add('active');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+        }
+
+        function setupUIControls() {
+            document.getElementById('btn-play-pause').addEventListener('click', () => {
+                audioEngine.playClick();
+                isPaused = !isPaused;
+                document.getElementById('play-pause-icon').textContent = isPaused ? "▶️" : "⏸️";
+                document.getElementById('play-pause-text').textContent = isPaused ? "Başlat" : "Durdur";
+            });
+
+            document.querySelectorAll('.btn-speed').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    audioEngine.playClick();
+                    document.querySelectorAll('.btn-speed').forEach(b => b.className = 'btn-speed text-xs px-2 py-0.5 rounded text-slate-300 hover:bg-slate-800 cursor-pointer');
+                    e.target.className = 'btn-speed text-xs px-2 py-0.5 rounded text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-500/40 cursor-pointer';
+                    simSpeed = parseFloat(e.target.getAttribute('data-speed'));
+                });
+            });
+
+            document.getElementById('btn-toggle-orbits').addEventListener('click', () => {
+                audioEngine.playClick();
+                showOrbits = !showOrbits;
+                orbitLinesGroup.visible = showOrbits;
+            });
+
+            document.getElementById('btn-audio').addEventListener('click', () => {
+                const active = audioEngine.toggle();
+                document.getElementById('audio-icon').textContent = active ? "🔊" : "🔇";
+            });
+
+            document.getElementById('btn-tour').addEventListener('click', startGuidedTour);
+            document.getElementById('btn-reset-view').addEventListener('click', () => { audioEngine.playClick(); resetView(); });
+
+            document.querySelectorAll('.quick-nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    audioEngine.playClick();
+                    focusOnTarget(e.target.getAttribute('data-target'));
+                });
+            });
+
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            document.getElementById('modal-btn-close').addEventListener('click', closeModal);
+            document.getElementById('modal-btn-focus').addEventListener('click', () => {
+                if (activeModalData) focusOnTarget(activeModalData.name);
+                closeModal();
+            });
+        }
+
+        function resetView() {
+            focusedTarget = null;
+            isTourActive = false;
+            document.getElementById('tour-banner').classList.add('hidden');
+            sphericalCamera = { radius: 180, theta: Math.PI / 4, phi: Math.PI / 3 };
+            cameraLookAtTarget.set(0, 0, 0);
+            document.getElementById('status-focus').textContent = "Güneş Sistemi";
+        }
+
+        function focusOnTarget(targetName) {
+            if (targetName === "Sun") { resetView(); return; }
+            if (targetName === "Asteroids") {
+                focusedTarget = { isCustomPos: true, pos: new THREE.Vector3(72, 0, 0), name: "Asteroit Kuşağı" };
+                sphericalCamera.radius = 48;
+                document.getElementById('status-focus').textContent = "Asteroit Kuşağı";
+                return;
+            }
+
+            const match = planetObjects.find(p => p.name === targetName);
+            if (match) {
+                focusedTarget = match;
+                sphericalCamera.radius = match.data.radius * 6.5;
+                document.getElementById('status-focus').textContent = match.name;
+                openPlanetModal(match.data);
+            }
+        }
+
+        let activeModalData = null;
+        function openPlanetModal(data) {
+            audioEngine.playClick();
+            activeModalData = data;
+
+            document.getElementById('modal-icon-badge').textContent = data.icon || "🪐";
+            document.getElementById('modal-category').textContent = data.category;
+            document.getElementById('modal-title').textContent = data.name;
+            document.getElementById('modal-desc-full').textContent = data.desc;
+
+            // Overview
+            document.getElementById('modal-dist-au').textContent = data.distanceAU;
+            document.getElementById('modal-dist-km').textContent = data.distanceKM;
+            document.getElementById('modal-orbit-period').textContent = data.orbitDays;
+            document.getElementById('modal-day-length').textContent = data.dayLength;
+            document.getElementById('modal-moons-count').textContent = `${data.moonsCount} Uydu`;
+            document.getElementById('modal-fact-text').textContent = data.fact;
+
+            // Physics
+            document.getElementById('modal-diameter').textContent = data.diameter;
+            document.getElementById('modal-mass').textContent = data.mass;
+            document.getElementById('modal-gravity').textContent = data.gravity;
+            document.getElementById('modal-temp-range').textContent = data.tempRange;
+            document.getElementById('modal-escape-vel').textContent = data.escapeVel;
+            document.getElementById('modal-axial-tilt').textContent = data.axialTilt;
+
+            // Atmosphere
+            const atmosContainer = document.getElementById('modal-atmosphere-list');
+            atmosContainer.innerHTML = '';
+            if (data.atmosphere) {
+                data.atmosphere.forEach(item => {
+                    atmosContainer.innerHTML += `
+                        <div>
+                            <div class="flex justify-between text-[11px] font-semibold text-slate-300 mb-0.5">
+                                <span>${item.name}</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-cyan-400 h-1.5 rounded-full" style="width: ${Math.min(100, item.pct)}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modal-interior-text').textContent = data.interior;
+
+            // Missions
+            const missionsList = document.getElementById('modal-missions-list');
+            missionsList.innerHTML = '';
+            if (data.missions) {
+                data.missions.forEach(m => {
+                    missionsList.innerHTML += `<li class="leading-relaxed">${m}</li>`;
+                });
+            }
+
+            // Comparison tab vs Earth
+            const compareContainer = document.getElementById('modal-compare-bars');
+            const earthRef = planetsData.find(p => p.name === "Dünya");
+            const planetRadius = parseFloat(data.diameter.replace(/,/g, ''));
+            const earthRadius = 12742;
+            const radiusPct = Math.min(200, (planetRadius / earthRadius) * 100);
+
+            compareContainer.innerHTML = `
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-slate-200 mb-1">
+                        <span>Çap Karşılaştırması</span>
+                        <span class="text-cyan-300">${data.name}: ${data.diameter} (Dünya'nın %${radiusPct.toFixed(0)}'i)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden flex">
+                        <div class="bg-cyan-400 h-2.5" style="width: ${Math.min(100, radiusPct)}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-slate-200 mb-1">
+                        <span>Yüzey Yerçekimi</span>
+                        <span class="text-amber-300">${data.name}: ${data.gravity}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Dünya yerçekimi: 9.81 m/s²</p>
+                </div>
+            `;
+
+            const modal = document.getElementById('planet-modal');
+            const card = document.getElementById('modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+        }
+
+        function closeModal() {
+            document.getElementById('planet-modal').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('modal-card').classList.add('scale-95');
+        }
+
+        const tourSteps = [
+            { target: "Sun", text: "Güneş: Sistemimizin kalbindeki ısı ve ışık kaynağı.", duration: 5500 },
+            { target: "Merkür", text: "Merkür: Güneş'e en yakın, atmosferi olmayan kavurucu gezegen.", duration: 5500 },
+            { target: "Venüs", text: "Venüs: Yoğun sera etkisiyle sistemin en sıcak noktası.", duration: 5500 },
+            { target: "Dünya", text: "Dünya: Okyanusları ve atmosferiyle yaşamın bildiğimiz tek adresi.", duration: 5500 },
+            { target: "Mars", text: "Mars: Pas rengi yüzeyi ve devasa volkanlarıyla Kızıl Gezegen.", duration: 5500 },
+            { target: "Asteroids", text: "Asteroit Kuşağı: Mars ile Jüpiter arasında dönen milyonlarca kaya parçası.", duration: 5500 },
+            { target: "Jüpiter", text: "Jüpiter: Devasa gaz devi ve 350 yıldır süren fırtınası.", duration: 5500 },
+            { target: "Satürn", text: "Satürn: Muhteşem altın halkalarıyla tanınan gaz devi.", duration: 5500 },
+            { target: "Uranüs", text: "Uranüs: Yan yatmış yörüngesiyle turkuaz buz devi.", duration: 5500 },
+            { target: "Neptün", text: "Neptün: Süpersonik rüzgarlarıyla en dıştaki mavi buz devi.", duration: 5500 },
+            { target: "Plüton", text: "Plüton: Kuiper Kuşağı'nın buz kaplı kalpli cüce gezegeni.", duration: 5500 }
+        ];
+
+        function startGuidedTour() {
+            audioEngine.playClick();
+            isTourActive = true; tourStepIndex = 0; tourTimer = 0;
+            document.getElementById('tour-banner').classList.remove('hidden');
+            executeTourStep();
+        }
+
+        function executeTourStep() {
+            if (!isTourActive || tourStepIndex >= tourSteps.length) { resetView(); return; }
+            const step = tourSteps[tourStepIndex];
+            document.getElementById('tour-step').textContent = `REHBERLİ TUR (${tourStepIndex + 1}/${tourSteps.length})`;
+            document.getElementById('tour-text').textContent = step.text;
+            focusOnTarget(step.target);
+        }
+
+        // Mouse/Pointer handlers
+        function onPointerDown(e) {
+            if (e.target.closest('#ui-container') || e.target.closest('#planet-modal')) return;
+            isDragging = true; hasMoved = false;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            pointerDownPos = { x: e.clientX, y: e.clientY };
+        }
+
+        function onPointerMove(e) {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            if (Math.abs(e.clientX - pointerDownPos.x) > 4 || Math.abs(e.clientY - pointerDownPos.y) > 4) hasMoved = true;
+
+            sphericalCamera.theta -= deltaX * 0.005;
+            sphericalCamera.phi = Math.max(0.08, Math.min(Math.PI - 0.08, sphericalCamera.phi - deltaY * 0.005));
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        }
+
+        function onPointerUp(e) {
+            isDragging = false;
+            if (!hasMoved && !e.target.closest('#ui-container') && !e.target.closest('#planet-modal')) {
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+
+                const meshes = planetObjects.map(p => p.mesh);
+                const intersects = raycaster.intersectObjects(meshes);
+
+                if (intersects.length > 0) {
+                    const hitMesh = intersects[0].object;
+                    const matched = planetObjects.find(p => p.mesh === hitMesh);
+                    if (matched) openPlanetModal(matched.data);
+                }
+            }
+        }
+
+        function onMouseWheel(e) {
+            sphericalCamera.radius = Math.max(12, Math.min(650, sphericalCamera.radius + e.deltaY * 0.15));
+        }
+
+        function updateCameraPosition() {
+            camera.position.x = cameraLookAtTarget.x + sphericalCamera.radius * Math.sin(sphericalCamera.phi) * Math.sin(sphericalCamera.theta);
+            camera.position.y = cameraLookAtTarget.y + sphericalCamera.radius * Math.cos(sphericalCamera.phi);
+            camera.position.z = cameraLookAtTarget.z + sphericalCamera.radius * Math.sin(sphericalCamera.phi) * Math.cos(sphericalCamera.theta);
+            camera.lookAt(cameraLookAtTarget);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isPaused) {
+                const deltaSpeed = simSpeed;
+                simDaysElapsed += deltaSpeed * 0.4;
+
+                document.getElementById('status-time').textContent = `${Math.floor(simDaysElapsed / 365)} Yıl ${Math.floor(simDaysElapsed % 365)} Gün`;
+
+                if (sunMesh) sunMesh.rotation.y += 0.002 * deltaSpeed;
+
+                // Counter-clockwise orbits and rotations
+                planetObjects.forEach(planet => {
+                    planet.angle += planet.speed * 0.2 * deltaSpeed;
+                    const px = Math.cos(planet.angle) * planet.data.distance;
+                    const pz = -Math.sin(planet.angle) * planet.data.distance;
+                    planet.mesh.position.set(px, 0, pz);
+                    planet.mesh.rotation.y += planet.selfRotationSpeed * deltaSpeed;
+
+                    if (planet.moons) {
+                        planet.moons.forEach(m => {
+                            m.angle += m.speed * 0.3 * deltaSpeed;
+                            m.mesh.position.set(px + Math.cos(m.angle) * m.radius, 0, pz - Math.sin(m.angle) * m.radius);
+                        });
+                    }
+                });
+
+                if (asteroidGroup) asteroidGroup.rotation.y += 0.0012 * deltaSpeed;
+
+                if (isTourActive) {
+                    tourTimer += 16 * deltaSpeed;
+                    if (tourTimer >= tourSteps[tourStepIndex].duration) {
+                        tourTimer = 0; tourStepIndex++; executeTourStep();
+                    }
+                }
+            }
+
+            if (focusedTarget) {
+                let targetPos = new THREE.Vector3();
+                if (focusedTarget.mesh) targetPos.copy(focusedTarget.mesh.position);
+                else if (focusedTarget.isCustomPos) targetPos.copy(focusedTarget.pos);
+                cameraLookAtTarget.lerp(targetPos, 0.06);
+            }
+
+            updateCameraPosition();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
