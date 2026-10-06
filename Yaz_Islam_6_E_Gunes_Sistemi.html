@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>3D Gelişmiş Güneş Sistemi Modeli</title>
+<style>
+    body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; color: #fff; }
+    #info-box { position: absolute; top: 20px; left: 20px; background: rgba(10,10,15,.95); padding: 25px; border-radius: 12px; border: 2px solid #555; max-width: 320px; display: none; box-shadow: 0 0 25px rgba(0,200,255,.2); z-index: 10; }
+    #info-box h2 { margin-top: 0; color: #ffcc00; border-bottom: 2px solid #ffcc00; padding-bottom: 8px; font-size: 24px; padding-right: 30px; }
+    #info-box p { font-size: 15px; line-height: 1.5; color: #e0e0e0; margin-bottom: 0; }
+    #close-btn { position: absolute; top: 20px; right: 20px; color: #aaa; font-size: 20px; font-weight: bold; cursor: pointer; }
+    #close-btn:hover { color: #f44; }
+    #hint { position: absolute; top: 12px; right: 16px; font-size: 13px; color: #9ab; pointer-events: none; text-align: right; }
+    #controls { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,.75); border: 1px solid #456; border-radius: 40px; padding: 8px 16px; z-index: 5; }
+    #controls button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #678; background: #112; color: #fff; font-size: 18px; cursor: pointer; }
+    #controls button:hover { background: #234; }
+    #speedLbl { min-width: 90px; text-align: center; font-size: 15px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="info-box">
+    <span id="close-btn" onclick="this.parentNode.style.display='none'; deselect()">×</span>
+    <h2 id="planet-name"></h2>
+    <p id="planet-details"></p>
+</div>
+<div id="hint">Boşluk: durdur / başlat<br>← → : yavaşlat / hızlandır<br>M : müzik aç / kapat<br>Gezegene tıklayın: büyür<br>Tekrar tıklayın: katmanlar</div>
+<div id="controls">
+    <button id="slow" title="Yavaşlat">⏪</button>
+    <button id="play" title="Durdur / Başlat">⏸</button>
+    <button id="fast" title="Hızlandır">⏩</button>
+    <span id="speedLbl">1x</span>
+    <button id="music" title="Müzik aç / kapat (M)">🔇</button>
+</div>
+
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+camera.position.set(0, 110, 260);
+controls.maxDistance = 900;
+controls.update();
+
+scene.add(new THREE.AmbientLight(0x666666));
+scene.add(new THREE.PointLight(0xffffff, 3.2, 1200));
+
+// ---------- Hız / Durdurma ----------
+const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 4, 8, 16];
+let speedIdx = 3, paused = false, timeScale = 1;
+function updateUI() {
+    timeScale = paused ? 0 : SPEEDS[speedIdx];
+    document.getElementById('play').textContent = paused ? '▶' : '⏸';
+    document.getElementById('speedLbl').textContent = paused ? 'Durduruldu' : SPEEDS[speedIdx] + 'x';
+}
+const slower = () => { speedIdx = Math.max(0, speedIdx - 1); updateUI(); };
+const faster = () => { speedIdx = Math.min(SPEEDS.length - 1, speedIdx + 1); updateUI(); };
+const toggle = () => { paused = !paused; updateUI(); };
+document.getElementById('slow').onclick = slower;
+document.getElementById('fast').onclick = faster;
+document.getElementById('play').onclick = toggle;
+addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.code === 'ArrowRight') faster();
+    else if (e.code === 'ArrowLeft') slower();
+});
+
+// ---------- Gezegenler (sade, orijinal görünüm) ----------
+const planetData = [
+    { name: "Güneş", size: 18, color: 0xffaa00, dist: 0, speed: 0, info: "Sistemimizin kalbi olan cüce yıldız. Sistemdeki toplam kütlenin %99.8'ini oluşturur." },
+    { name: "Merkür", size: 1.2, color: 0x8a8d8f, dist: 32, speed: 0.02, info: "Güneş'e en yakın ve en küçük gezegendir. Atmosferi olmadığı için gece ve gündüz sıcaklık farkı ekstrem düzeydedir." },
+    { name: "Venüs", size: 2.0, color: 0xe3bb76, dist: 48, speed: 0.015, info: "Güneş sisteminin en sıcak gezegenidir (460°C). Kalın karbondioksit atmosferi nedeniyle ısıyı içeri hapseder." },
+    { name: "Dünya", size: 2.2, color: 0x2b82c9, dist: 68, speed: 0.012, info: "Üzerinde yaşam barındırdığı bilinen tek gökcismidir. Yüzeyinin %71'i sularla kaplıdır." },
+    { name: "Mars", size: 1.4, color: 0xc1440e, dist: 88, speed: 0.01, info: "Kızıl Gezegen olarak bilinir. Yüzeyindeki demir oksit (pas) nedeniyle kırmızı görünür." },
+    { name: "Jüpiter", size: 7.5, color: 0xb07f35, dist: 140, speed: 0.006, info: "Güneş sisteminin en büyük gezegenidir. İçine 1300'den fazla Dünya sığabilir. Meşhur fırtınası Büyük Kırmızı Leke buradadır." },
+    { name: "Satürn", size: 6.2, color: 0xe2bf7d, dist: 195, speed: 0.004, info: "Milyarlarca buz, toz ve kaya parçasından oluşan görkemli halkalarıyla tanınan devasa gaz gezegeni." },
+    { name: "Uranüs", size: 3.8, color: 0x73c2c5, dist: 245, speed: 0.002, info: "Ekseni 98 derece yana yatık olduğu için Güneş etrafında yuvarlanan bir varil gibi döner." },
+    { name: "Neptün", size: 3.6, color: 0x274687, dist: 295, speed: 0.0015, info: "Güneş'e en uzak gezegendir. Saatte 2000 kilometreye ulaşan, Güneş sisteminin en güçlü rüzgarlarına sahiptir." }
+];
+
+const clickTargets = [], orbitPairs = [];
+let earthMesh = null, moonMesh = null, moonAngle = 0;
+
+function createColoredOrbit(radius, color) {
+    const pts = [];
+    for (let i = 0; i <= 128; i++) {
+        const t = i / 128 * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(t) * radius, 0, Math.sin(t) * radius));
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 })));
+}
+
+planetData.forEach(data => {
+    const geo = new THREE.SphereGeometry(data.size, 32, 32);
+    const mat = data.name === "Güneş"
+        ? new THREE.MeshBasicMaterial({ color: data.color })
+        : new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.5, metalness: 0.1 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData = { name: data.name, info: data.info };
+    scene.add(mesh);
+    clickTargets.push(mesh);
+    orbitPairs.push({ mesh, data, angle: Math.random() * Math.PI * 2 });
+
+    if (data.dist > 0) createColoredOrbit(data.dist, data.color);
+
+    if (data.name === "Dünya") {
+        earthMesh = mesh;
+        moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.9 }));
+        moonMesh.userData = { name: "Ay", info: "Dünya'nın tek doğal uydusudur. Kendi eksenindeki dönüşü ile Dünya etrafındaki dönüş süresi aynıdır." };
+        scene.add(moonMesh);
+        clickTargets.push(moonMesh);
+    }
+    if (data.name === "Satürn") {
+        const ring = new THREE.Mesh(new THREE.RingGeometry(data.size + 2, data.size + 8, 64),
+            new THREE.MeshStandardMaterial({ color: 0xa68a56, side: THREE.DoubleSide, transparent: true, opacity: 0.6 }));
+        ring.rotation.x = Math.PI / 2;
+        mesh.add(ring);
+    }
+});
+
+// Asteroit kuşağı
+const astGeo = new THREE.DodecahedronGeometry(0.4, 0);
+const astMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.9 });
+const asteroids = [];
+for (let i = 0; i < 400; i++) {
+    const m = new THREE.Mesh(astGeo, astMat);
+    const radius = 108 + Math.random() * 18, angle = Math.random() * Math.PI * 2;
+    m.position.set(Math.cos(angle) * radius, (Math.random() - .5) * 4, Math.sin(angle) * radius);
+    const s = 0.6 + Math.random() * 0.8;
+    m.scale.set(s, s, s);
+    scene.add(m);
+    asteroids.push({ m, radius, angle, speed: 0.002 + Math.random() * 0.003 });
+}
+
+// Yıldız arka planı
+(function () {
+    const pos = [];
+    for (let i = 0; i < 1500; i++) {
+        const v = new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - .5)
+            .normalize().multiplyScalar(900 + Math.random() * 500);
+        pos.push(v.x, v.y, v.z);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.5, sizeAttenuation: false })));
+})();
+
+// Kuyruklu yıldız
+let comet = null;
+const cometDir = new THREE.Vector3();
+function spawnComet() {
+    if (comet || paused) return;
+    const sx = (Math.random() - .5) * 600, sy = 50 + Math.random() * 50, sz = -300 - Math.random() * 100;
+    comet = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    comet.position.set(sx, sy, sz);
+    scene.add(comet);
+    const tg = new THREE.ConeGeometry(0.5, 12, 4);
+    tg.translate(0, -6, 0);
+    const tail = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.5 }));
+    comet.add(tail);
+    cometDir.subVectors(new THREE.Vector3(-sx, -sy + (Math.random() - .5) * 40, 300), comet.position).normalize();
+    tail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cometDir);
+    tail.rotateX(Math.PI);
+}
+setInterval(() => { if (Math.random() < 0.7) spawnComet(); }, 4000);
+
+// ---------- Müzik: kodla üretilen uzay ambiyans şarkısı ----------
+const CHORDS = [
+    [110, 130.81, 164.81, 220],      // Am
+    [87.31, 130.81, 174.61, 220],    // F
+    [130.81, 164.81, 196, 261.63],   // C
+    [98, 146.83, 196, 246.94]        // G
+];
+const PENT = [440, 523.25, 587.33, 659.25, 783.99, 880];
+const PLANET_NOTE = { "Güneş": 220, "Merkür": 880, "Venüs": 659.25, "Dünya": 523.25, "Mars": 587.33,
+    "Jüpiter": 261.63, "Satürn": 329.63, "Uranüs": 783.99, "Neptün": 392, "Ay": 698.46 };
+const CHORD_LEN = 8;
+let ac = null, master = null, musicOn = false, musicTimer = null, nextChord = 0, nextBell = 0, chordIdx = 0;
+
+function initAudio() {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = 0.35;
+    const delay = ac.createDelay(); delay.delayTime.value = 0.5;
+    const fb = ac.createGain(); fb.gain.value = 0.45;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    master.connect(ac.destination); master.connect(delay);
+    delay.connect(lp); lp.connect(fb); fb.connect(delay); lp.connect(ac.destination);
+    nextChord = nextBell = ac.currentTime + 0.1;
+}
+function pad(freq, t, dur) {
+    [-4, 4].forEach(det => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'triangle'; o.frequency.value = freq; o.detune.value = det;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.07, t + 2.5);
+        g.gain.linearRampToValueAtTime(0, t + dur + 1.5);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 1.6);
+    });
+}
+function bell(freq, t) {
+    [1, 2.01].forEach((m, i) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'sine'; o.frequency.value = freq * m;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(i ? 0.03 : 0.09, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0005, t + 2.2);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + 2.3);
+    });
+}
+function schedule() {
+    while (nextChord < ac.currentTime + 1.5) {
+        CHORDS[chordIdx % 4].forEach(f => pad(f, nextChord, CHORD_LEN));
+        chordIdx++; nextChord += CHORD_LEN;
+    }
+    while (nextBell < ac.currentTime + 1.5) {
+        if (Math.random() < 0.65) bell(pick(PENT) * (Math.random() < 0.2 ? 0.5 : 1), nextBell);
+        nextBell += 0.75;
+    }
+}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function toggleMusic() {
+    musicOn = !musicOn;
+    if (musicOn) {
+        if (!ac) initAudio();
+        ac.resume(); schedule(); musicTimer = setInterval(schedule, 250);
+    } else {
+        clearInterval(musicTimer); ac.suspend();
+    }
+    document.getElementById('music').textContent = musicOn ? '🔊' : '🔇';
+}
+document.getElementById('music').onclick = toggleMusic;
+addEventListener('keydown', e => { if (e.code === 'KeyM') toggleMusic(); });
+
+// ---------- Seçilen gezegeni büyütme ----------
+let selected = null, zoomDist = null;
+function select(mesh) {
+    selected = mesh;
+    const r = mesh.geometry.parameters.radius;
+    mesh.userData.k = Math.min(8, Math.max(1.3, 9 / r));   // küçük gezegen daha çok büyür
+    zoomDist = r * mesh.userData.k * 4 + 12;                // kamera yaklaşır
+}
+function deselect() {
+    if (!selected) return;
+    setLayers(selected, false);
+    selected = null;
+    zoomDist = 260;                                         // genel görünüme dön
+}
+
+// ---------- Gezegen katmanları (dıştan içe; r = yarıçapın oranı, değerler yaklaşıktır) ----------
+const LAYERS = {
+    "Güneş": [
+        { n: "Konveksiyon bölgesi", r: 1, c: "#ff7a00", d: "Sıcak plazma yüzeye yükselip soğuyarak geri iner." },
+        { n: "Radyasyon bölgesi", r: 0.7, c: "#ffb000", d: "Enerji ışık olarak binlerce yıl sürede dışarı sızar." },
+        { n: "Çekirdek", r: 0.25, c: "#fff2a0", d: "Hidrojen helyuma dönüşür; enerji burada üretilir." }],
+    "Merkür": [
+        { n: "Kabuk", r: 1, c: "#8a8d8f", d: "İnce ve kraterlerle dolu kayalık yüzey." },
+        { n: "Manto", r: 0.95, c: "#b08a6a", d: "Çok ince bir silikat tabakası." },
+        { n: "Demir çekirdek", r: 0.83, c: "#d65a2a", d: "Yarıçapının büyük kısmını kaplayan dev bir çekirdek." }],
+    "Venüs": [
+        { n: "Kabuk", r: 1, c: "#e3bb76", d: "Volkanik ovalarla kaplı kayalık yüzey." },
+        { n: "Manto", r: 0.95, c: "#d9531e", d: "Kısmen erimiş kaya." },
+        { n: "Çekirdek", r: 0.5, c: "#ffb347", d: "Büyük olasılıkla demir ve nikel." }],
+    "Dünya": [
+        { n: "Kabuk", r: 1, c: "#3b7d3a", d: "Kıtalar ve okyanus tabanı; çok ince bir tabaka." },
+        { n: "Manto", r: 0.9, c: "#d9531e", d: "Yavaş akan sıcak kaya; gezegenin hacminin çoğu." },
+        { n: "Dış çekirdek", r: 0.55, c: "#ff9d1a", d: "Sıvı demir ve nikel; manyetik alanı üretir." },
+        { n: "İç çekirdek", r: 0.19, c: "#ffe27a", d: "Basınç yüzünden katı kalan demir top." }],
+    "Mars": [
+        { n: "Kabuk", r: 1, c: "#c1440e", d: "Pas rengi, demir oksitli kalın kabuk." },
+        { n: "Manto", r: 0.9, c: "#8a3a1a", d: "Silikat kayaçlar." },
+        { n: "Çekirdek", r: 0.5, c: "#e0a040", d: "Demir ve kükürt içeren çekirdek." }],
+    "Jüpiter": [
+        { n: "Atmosfer", r: 1, c: "#b07f35", d: "Hidrojen ve helyum bulutları, devasa fırtınalar." },
+        { n: "Moleküler hidrojen", r: 0.9, c: "#8c5a2e", d: "Basınçla giderek yoğunlaşan sıvı benzeri hidrojen." },
+        { n: "Metalik hidrojen", r: 0.78, c: "#c7c7d9", d: "Elektriği ileten hidrojen; güçlü manyetik alanın kaynağı." },
+        { n: "Çekirdek", r: 0.2, c: "#ff9d1a", d: "Kaya ve buzdan oluştuğu düşünülüyor." }],
+    "Satürn": [
+        { n: "Atmosfer", r: 1, c: "#e2bf7d", d: "Hidrojen, helyum ve amonyak bulutları." },
+        { n: "Moleküler hidrojen", r: 0.85, c: "#bfa36c", d: "Derinlere inildikçe yoğunlaşan hidrojen." },
+        { n: "Metalik hidrojen", r: 0.6, c: "#c7c7d9", d: "Elektriği ileten sıkışık hidrojen." },
+        { n: "Çekirdek", r: 0.2, c: "#ff9d1a", d: "Kaya ve buz çekirdek." }],
+    "Uranüs": [
+        { n: "Atmosfer", r: 1, c: "#73c2c5", d: "Hidrojen, helyum ve metan; mavi-yeşil rengi metandan gelir." },
+        { n: "Buz mantosu", r: 0.8, c: "#3f8fb5", d: "Sıcak su, amonyak ve metan karışımı." },
+        { n: "Kaya çekirdek", r: 0.25, c: "#ff9d1a", d: "Küçük kayalık çekirdek." }],
+    "Neptün": [
+        { n: "Atmosfer", r: 1, c: "#274687", d: "Hidrojen, helyum ve metan; en güçlü rüzgarlar burada." },
+        { n: "Buz mantosu", r: 0.8, c: "#4a74ff", d: "Sıcak su, amonyak ve metan karışımı." },
+        { n: "Kaya çekirdek", r: 0.25, c: "#ff9d1a", d: "Küçük kayalık çekirdek." }],
+    "Ay": [
+        { n: "Kabuk", r: 1, c: "#8c8c8c", d: "Kraterlerle kaplı kayalık tabaka." },
+        { n: "Manto", r: 0.9, c: "#b0a090", d: "Katı kaya." },
+        { n: "Çekirdek", r: 0.2, c: "#e08a3a", d: "Küçük demir çekirdek." }]
+};
+
+function showInfo(m) {
+    document.getElementById('planet-name').textContent = m.userData.name;
+    const p = document.getElementById('planet-details');
+    p.textContent = m.userData.info;
+    if (LAYERS[m.userData.name]) {
+        const hint = document.createElement('div');
+        hint.style.cssText = 'margin-top:14px;color:#8cf;font-style:italic';
+        hint.textContent = 'Katmanları görmek için gezegene tekrar tıklayın.';
+        p.appendChild(hint);
+    }
+    document.getElementById('info-box').style.display = 'block';
+}
+
+function buildCut(m) {
+    const R = m.geometry.parameters.radius, L = LAYERS[m.userData.name];
+    const g = new THREE.Group();
+    // Bir çeyreği kesilmiş dış kabuk
+    const mat = m.material.clone(); mat.visible = true; mat.side = THREE.DoubleSide;
+    g.add(new THREE.Mesh(new THREE.SphereGeometry(R, 48, 48, 0, Math.PI * 1.5), mat));
+    // Kesit yüzeyleri: iç içe renkli halkalar
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const x = c.getContext('2d');
+    L.forEach(l => {
+        x.fillStyle = l.c; x.beginPath(); x.arc(256, 256, l.r * 256, 0, 6.283); x.fill();
+        x.strokeStyle = 'rgba(255,255,255,.4)'; x.lineWidth = 2; x.stroke();
+    });
+    const map = new THREE.CanvasTexture(c);
+    [0, Math.PI / 2].forEach(ry => {
+        const d = new THREE.Mesh(new THREE.CircleGeometry(R, 64), new THREE.MeshBasicMaterial({ map, side: THREE.DoubleSide }));
+        d.rotation.y = ry; g.add(d);
+    });
+    m.add(g);
+    return g;
+}
+
+function setLayers(m, on) {
+    if (!m || !LAYERS[m.userData.name] || !!m.userData.layersOn === on) return;
+    if (!m.userData.cut) m.userData.cut = buildCut(m);
+    m.userData.layersOn = on;
+    m.userData.cut.visible = on;
+    m.material.visible = !on;
+    if (!on) { showInfo(m); return; }
+    // Kesik kısım kameraya baksın
+    const dir = camera.position.clone().sub(m.getWorldPosition(new THREE.Vector3()));
+    m.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI * 0.75;
+    document.getElementById('planet-name').textContent = m.userData.name + " – Katmanlar";
+    const p = document.getElementById('planet-details');
+    p.textContent = '';
+    LAYERS[m.userData.name].forEach(l => {
+        const row = document.createElement('div'); row.style.margin = '8px 0';
+        const dot = document.createElement('span');
+        dot.style.cssText = 'display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;background:' + l.c;
+        const b = document.createElement('b'); b.textContent = l.n;
+        row.append(dot, b, ' – ' + l.d); p.appendChild(row);
+    });
+    const note = document.createElement('div');
+    note.style.cssText = 'margin-top:12px;color:#8cf;font-style:italic;font-size:13px';
+    note.textContent = 'Oranlar yaklaşıktır. Kapatmak için gezegene tekrar tıklayın.';
+    p.appendChild(note);
+}
+
+// Tıklama
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+renderer.domElement.addEventListener('click', e => {
+    mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hit = ray.intersectObjects(clickTargets, false)[0];
+    if (hit) {
+        const m = hit.object;
+        if (m === selected) {
+            setLayers(m, !m.userData.layersOn);     // aynı gezegene tekrar tıklama: katmanları aç / kapat
+        } else {
+            if (selected) setLayers(selected, false);
+            showInfo(m);
+            select(m);
+        }
+        if (musicOn) bell(PLANET_NOTE[m.userData.name] || 440, ac.currentTime + 0.02);
+    }
+});
+addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+// Animasyon
+function animate() {
+    requestAnimationFrame(animate);
+    const t = timeScale;
+    orbitPairs.forEach(p => {
+        if (p.data.dist === 0) return;
+        p.angle += p.data.speed * t;
+        p.mesh.position.set(Math.cos(p.angle) * p.data.dist, 0, -Math.sin(p.angle) * p.data.dist);
+        if (!p.mesh.userData.layersOn) p.mesh.rotation.y += 0.01 * t;
+    });
+    if (earthMesh && moonMesh) {
+        moonAngle += 0.04 * t;
+        const mr = 5 + 2.2 * (earthMesh.scale.x - 1);   // Dünya büyüyünce Ay içine girmesin
+        moonMesh.position.set(earthMesh.position.x + Math.cos(moonAngle) * mr, 0, earthMesh.position.z - Math.sin(moonAngle) * mr);
+    }
+    asteroids.forEach(a => {
+        a.angle += a.speed * t;
+        a.m.position.x = Math.cos(a.angle) * a.radius;
+        a.m.position.z = -Math.sin(a.angle) * a.radius;
+        a.m.rotation.x += 0.01 * t;
+    });
+    if (comet) {
+        comet.position.addScaledVector(cometDir, 3.5 * t);
+        if (comet.position.z > 320 || comet.position.z < -460) { scene.remove(comet); comet = null; }
+    }
+    // Seçili gezegeni yumuşakça büyüt, diğerlerini normale döndür
+    clickTargets.forEach(m => {
+        const goal = m === selected ? m.userData.k : 1;
+        m.scale.setScalar(m.scale.x + (goal - m.scale.x) * 0.1);
+    });
+    // Kamera seçili gezegeni takip eder (seçim yoksa Güneş'e döner)
+    const focus = selected ? selected.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3();
+    const shift = focus.sub(controls.target).multiplyScalar(0.1);
+    controls.target.add(shift);
+    camera.position.add(shift);
+    if (zoomDist !== null) {
+        const off = camera.position.clone().sub(controls.target);
+        const len = off.length();
+        off.setLength(len + (zoomDist - len) * 0.06);
+        camera.position.copy(controls.target).add(off);
+        if (Math.abs(zoomDist - len) < 0.5) zoomDist = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+}
+updateUI();
+animate();
+</script>
+</body>
+</html>
