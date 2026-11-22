@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fizik Parkı</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #87CEEB;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  #canvas.drawing-cursor {
+    cursor: crosshair;
+  }
+  #canvas:active {
+    cursor: grabbing;
+  }
+  #canvas.drawing-cursor:active {
+    cursor: crosshair;
+  }
+
+  /* Enerji Grafiği Paneli (Sol Üst) */
+  .energy-panel {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    width: 210px;
+    pointer-events: none;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .energy-panel h3 {
+    font-size: 13px;
+    color: #1e293b;
+    margin-bottom: 8px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+  }
+  .bar-label {
+    width: 68px;
+  }
+  .bar-track {
+    flex: 1;
+    height: 12px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+  .kinetik { background: #22c55e; }
+  .potansiyel { background: #3b82f6; }
+  .isi { background: #ef4444; }
+  .toplam { background: #eab308; }
+
+  /* Kontrol Paneli (Sağ Üst) */
+  .controls-panel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    width: 256px;
+    border: 1px solid rgba(0,0,0,0.08);
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  .controls-panel h3 {
+    font-size: 13px;
+    color: #1e293b;
+    margin-bottom: 8px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 8px 0 5px;
+  }
+  .char-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .char-btn {
+    padding: 6px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #334155;
+  }
+  .char-btn.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+  }
+  .control-group {
+    margin-bottom: 10px;
+  }
+  .control-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: #2563eb;
+    cursor: pointer;
+  }
+  .track-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .track-btn {
+    padding: 6px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #334155;
+  }
+  .track-btn.active {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+  }
+  .track-btn.draw-btn.active {
+    background: #16a34a;
+    color: white;
+    border-color: #16a34a;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+
+  /* Alt Oynatma Kontrolleri */
+  .bottom-bar {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.94);
+    padding: 8px 16px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .action-btn {
+    border: none;
+    background: #2563eb;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .action-btn.secondary {
+    background: #64748b;
+  }
+  .action-btn.warning {
+    background: #f59e0b;
+  }
+  .hint {
+    position: absolute;
+    bottom: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.82);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 15px;
+    font-size: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    .energy-panel { width: 162px; padding: 8px 10px; }
+    .controls-panel { width: 196px; padding: 8px 10px; }
+    .bar-label { width: 55px; font-size: 11px; }
+    .hint { font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<!-- Enerji Çubukları -->
+<div class="energy-panel">
+  <h3>Enerji Grafiği</h3>
+  <div class="bar-row">
+    <span class="bar-label">Kinetik</span>
+    <div class="bar-track"><div id="bar-ke" class="bar-fill kinetik"></div></div>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">Potansiyel</span>
+    <div class="bar-track"><div id="bar-pe" class="bar-fill potansiyel"></div></div>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">Isı</span>
+    <div class="bar-track"><div id="bar-th" class="bar-fill isi"></div></div>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">Toplam</span>
+    <div class="bar-track"><div id="bar-tot" class="bar-fill toplam"></div></div>
+  </div>
+</div>
+
+<!-- Ayarlar Paneli -->
+<div class="controls-panel">
+  <h3>Fizik Parkı</h3>
+
+  <div class="section-title">Karakter Seç</div>
+  <div class="char-buttons">
+    <button class="char-btn active" onclick="setCharacter('classic', this)">Mavi Kasklı</button>
+    <button class="char-btn" onclick="setCharacter('neon', this)">Neon Kız</button>
+    <button class="char-btn" onclick="setCharacter('robo', this)">Robo Kaykay</button>
+    <button class="char-btn" onclick="setCharacter('ninja', this)">Ninja</button>
+    <button class="char-btn" style="grid-column: span 2;" onclick="setCharacter('alien', this)">Uzaylı</button>
+  </div>
+
+  <div class="section-title">Pist Seçimi</div>
+  <div class="track-buttons">
+    <button id="btn-track-u" class="track-btn active" onclick="setTrack('u', this)">U-Pisti</button>
+    <button id="btn-track-w" class="track-btn" onclick="setTrack('w', this)">W-Pisti</button>
+    <button id="btn-track-ramp" class="track-btn" onclick="setTrack('ramp', this)">Rampa</button>
+    <button id="btn-track-custom" class="track-btn draw-btn" onclick="startDrawMode(this)">Özel Çiz</button>
+  </div>
+
+  <div class="control-group">
+    <label><span>Sürtünme</span><span id="val-friction">Yok</span></label>
+    <input type="range" id="slider-friction" min="0" max="0.04" step="0.002" value="0">
+  </div>
+
+  <div class="control-group">
+    <label><span>Kütle</span><span id="val-mass">60 kg</span></label>
+    <input type="range" id="slider-mass" min="30" max="100" step="5" value="60">
+  </div>
+
+  <div class="control-group">
+    <label><span>Yerçekimi</span><span id="val-gravity">9.8 m/s²</span></label>
+    <input type="range" id="slider-gravity" min="0" max="20" step="0.2" value="9.8">
+  </div>
+
+  <div class="control-group">
+    <label><span>Rüzgar</span><span id="val-wind">0 m/s</span></label>
+    <input type="range" id="slider-wind" min="-15" max="15" step="1" value="0">
+  </div>
+
+  <label class="checkbox-row">
+    <input type="checkbox" id="chk-grid" checked> Metre Izgarası
+  </label>
+  <label class="checkbox-row">
+    <input type="checkbox" id="chk-speed" checked> Hız Göstergesi
+  </label>
+  <label class="checkbox-row">
+    <input type="checkbox" id="chk-slow"> Ağır Çekim (Slow-Mo)
+  </label>
+</div>
+
+<div id="hint-box" class="hint">Kaykaycıyı parmağınızla veya fareyle tutup sürükleyin</div>
+
+<!-- Alt Kontrol Çubuğu -->
+<div class="bottom-bar">
+  <button class="action-btn" id="btn-pause" onclick="togglePause()">Duraklat</button>
+  <button class="action-btn warning" onclick="resetThermal()">Isıyı Sıfırla</button>
+  <button class="action-btn secondary" onclick="resetSkater()">Başa Al</button>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const hintBox = document.getElementById('hint-box');
+const customBtn = document.getElementById('btn-track-custom');
+
+let width, height, groundY, pxPerMeter;
+let trackType = 'u';
+let characterType = 'classic';
+let isDrawMode = false;
+let isDrawingTrack = false;
+let rawDrawPoints = [];
+let customSpline = [];
+let customTotalLength = 0;
+
+let isPaused = false;
+let isDragging = false;
+
+const GROUND_CLEARANCE_M = 0.04;
+
+let mass = 60;
+let gravity = 9.8;
+let friction = 0;
+let windSpeed = 0;
+
+let skater = {
+  x: 0,
+  y: GROUND_CLEARANCE_M,
+  vx: 0,
+  vy: 0,
+  s: -4.2,
+  v: 0,
+  onTrack: true,
+  angle: 0,
+  thermalEnergy: 0,
+  maxEnergyRef: 4000,
+  exitCooldown: 0
+};
+
+function resize() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+  groundY = height * 0.86;
+  pxPerMeter = Math.min(width / 14, height / 9.5);
+  if (!isDragging && !isDrawingTrack && skater.onTrack && hasActiveTrack()) {
+    updateSkaterPosFromTrack();
+  }
+}
+window.addEventListener('resize', resize);
+
+function toScreenX(mx) {
+  return width / 2 + mx * pxPerMeter;
+}
+function toScreenY(my) {
+  return groundY - my * pxPerMeter;
+}
+function toMeterX(px) {
+  return (px - width / 2) / pxPerMeter;
+}
+function toMeterY(py) {
+  return (groundY - py) / pxPerMeter;
+}
+
+function setCharacter(type, btnEl) {
+  characterType = type;
+  document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+}
+
+function hasActiveTrack() {
+  if (trackType === 'empty') return false;
+  if (trackType === 'custom') return customSpline.length >= 2;
+  return trackType === 'u' || trackType === 'w' || trackType === 'ramp';
+}
+
+function buildCustomSpline(points) {
+  if (!points || points.length < 2) return { pts: [], totalLen: 0 };
+
+  let pts = points.map(p => ({
+    x: Math.max(-6.4, Math.min(6.4, toMeterX(p.px))),
+    y: Math.max(0.25, Math.min(7.0, toMeterY(p.py)))
+  }));
+
+  const filtered = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const prev = filtered[filtered.length - 1];
+    if (Math.hypot(pts[i].x - prev.x, pts[i].y - prev.y) >= 0.04) {
+      filtered.push(pts[i]);
+    }
+  }
+  if (filtered.length < 2) return { pts: [], totalLen: 0 };
+
+  const smoothed = filtered.map((pt, idx) => {
+    if (idx === 0 || idx === filtered.length - 1) return { x: pt.x, y: pt.y };
+    const pPrev = filtered[idx - 1];
+    const pNext = filtered[idx + 1];
+    return {
+      x: (pPrev.x + pt.x * 2 + pNext.x) / 4,
+      y: Math.max(0.25, (pPrev.y + pt.y * 2 + pNext.y) / 4)
+    };
+  });
+
+  let totalLen = 0;
+  const withDist = smoothed.map((pt, idx) => {
+    if (idx > 0) {
+      totalLen += Math.hypot(pt.x - smoothed[idx - 1].x, pt.y - smoothed[idx - 1].y);
+    }
+    return { x: pt.x, y: pt.y, dist: totalLen };
+  });
+
+  return { pts: withDist, totalLen };
+}
+
+function sampleCustomAtArc(s) {
+  const clampedS = Math.max(0, Math.min(customTotalLength, s));
+  for (let i = 0; i < customSpline.length - 1; i++) {
+    const a = customSpline[i];
+    const b = customSpline[i + 1];
+    if (clampedS >= a.dist && clampedS <= b.dist) {
+      const span = Math.max(1e-6, b.dist - a.dist);
+      const t = (clampedS - a.dist) / span;
+      return {
+        x: a.x + t * (b.x - a.x),
+        y: a.y + t * (b.y - a.y)
+      };
+    }
+  }
+  const last = customSpline[customSpline.length - 1];
+  return { x: last.x, y: last.y };
+}
+
+function findClosestCustomPoint(mx, my) {
+  let bestDist = Infinity;
+  let bestS = 0;
+  let bestPt = customSpline[0];
+
+  for (let i = 0; i < customSpline.length - 1; i++) {
+    const a = customSpline[i];
+    const b = customSpline[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq > 1e-8 ? Math.max(0, Math.min(1, ((mx - a.x) * dx + (my - a.y) * dy) / lenSq)) : 0;
+    const px = a.x + t * dx;
+    const py = a.y + t * dy;
+    const d = Math.hypot(mx - px, my - py);
+    if (d < bestDist) {
+      bestDist = d;
+      bestS = a.dist + t * Math.sqrt(lenSq);
+      bestPt = { x: px, y: py };
+    }
+  }
+  return { dist: bestDist, s: bestS, x: bestPt.x, y: bestPt.y };
+}
+
+function getTrackY(x) {
+  if (trackType === 'u') {
+    return 0.22 * x * x + 0.4;
+  } else if (trackType === 'w') {
+    return 0.028 * Math.pow(x, 4) - 0.35 * x * x + 1.6;
+  } else if (trackType === 'ramp') {
+    if (x < 1) {
+      return 0.25 * Math.pow(x - 1, 2) + 0.4;
+    } else {
+      return 0.4 + 0.12 * Math.pow(x - 1, 2);
+    }
+  }
+  return 0.4;
+}
+
+function getTrackSlope(x) {
+  const dx = 0.015;
+  return (getTrackY(x + dx) - getTrackY(x - dx)) / (2 * dx);
+}
+
+function getTrackBounds() {
+  if (trackType === 'u') return { min: -4.8, max: 4.8 };
+  if (trackType === 'w') return { min: -4.4, max: 4.4 };
+  if (trackType === 'ramp') return { min: -4.6, max: 4.6 };
+  return { min: -4.5, max: 4.5 };
+}
+
+function updateSkaterPosFromTrack() {
+  if (trackType === 'custom' && customSpline.length >= 2) {
+    const p = sampleCustomAtArc(skater.s);
+    const eps = Math.min(0.03, customTotalLength * 0.01);
+    const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
+    const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
+    skater.x = p.x;
+    skater.y = p.y;
+    skater.angle = Math.atan2(pNext.y - pPrev.y, pNext.x - pPrev.x);
+    return;
+  }
+
+  skater.x = skater.s;
+  skater.y = getTrackY(skater.s);
+  skater.angle = Math.atan(getTrackSlope(skater.s));
+}
+
+function resetSkater() {
+  skater.exitCooldown = 0;
+  if (!hasActiveTrack()) {
+    skater.x = 0;
+    skater.y = 3.2;
+    skater.v = 0;
+    skater.vx = 0;
+    skater.vy = 0;
+    skater.onTrack = false;
+    skater.angle = 0;
+    skater.thermalEnergy = 0;
+    return;
+  }
+
+  if (trackType === 'custom') {
+    skater.s = Math.min(0.2, customTotalLength * 0.05);
+    skater.v = 0;
+    skater.vx = 0;
+    skater.vy = 0;
+    skater.onTrack = true;
+    skater.thermalEnergy = 0;
+    updateSkaterPosFromTrack();
+    skater.maxEnergyRef = Math.max(mass * Math.max(gravity, 9.8) * skater.y * 1.15, 1000);
+    return;
+  }
+
+  const bounds = getTrackBounds();
+  skater.s = bounds.min + Math.min(0.4, (bounds.max - bounds.min) * 0.1);
+  skater.v = 0;
+  skater.vx = 0;
+  skater.vy = 0;
+  skater.onTrack = true;
+  skater.thermalEnergy = 0;
+  updateSkaterPosFromTrack();
+  skater.maxEnergyRef = Math.max(mass * Math.max(gravity, 9.8) * skater.y * 1.15, 1000);
+}
+
+function resetThermal() {
+  skater.thermalEnergy = 0;
+}
+
+function clearActiveTrackButtons() {
+  document.querySelectorAll('.track-btn').forEach(btn => btn.classList.remove('active'));
+}
+
+function setTrack(type, btnEl) {
+  isDrawMode = false;
+  isDrawingTrack = false;
+  rawDrawPoints = [];
+  canvas.classList.remove('drawing-cursor');
+  hintBox.textContent = 'Kaykaycıyı parmağınızla veya fareyle tutup sürükleyin';
+
+  trackType = type;
+  clearActiveTrackButtons();
+  if (btnEl) btnEl.classList.add('active');
+  resetSkater();
+}
+
+function startDrawMode(btnEl) {
+  trackType = 'empty';
+  customSpline = [];
+  customTotalLength = 0;
+  rawDrawPoints = [];
+  skater.onTrack = false;
+  skater.exitCooldown = 0;
+  skater.v = 0;
+  skater.vx = 0;
+  skater.vy = 0;
+  skater.angle = 0;
+
+  isDrawMode = true;
+  isDrawingTrack = false;
+  canvas.classList.add('drawing-cursor');
+  clearActiveTrackButtons();
+  if (btnEl) btnEl.classList.add('active');
+  hintBox.textContent = 'Eski pist temizlendi — istediğin gibi pisti çiz';
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  document.getElementById('btn-pause').textContent = isPaused ? 'Devam Et' : 'Duraklat';
+}
+
+document.getElementById('slider-friction').addEventListener('input', e => {
+  friction = parseFloat(e.target.value);
+  document.getElementById('val-friction').textContent =
+    friction === 0 ? 'Yok' : friction < 0.015 ? 'Az' : friction < 0.03 ? 'Orta' : 'Çok';
+});
+
+document.getElementById('slider-mass').addEventListener('input', e => {
+  const oldMass = mass;
+  mass = parseFloat(e.target.value);
+  document.getElementById('val-mass').textContent = mass + ' kg';
+  skater.maxEnergyRef = skater.maxEnergyRef * (mass / oldMass);
+});
+
+document.getElementById('slider-gravity').addEventListener('input', e => {
+  gravity = parseFloat(e.target.value);
+  document.getElementById('val-gravity').textContent = gravity.toFixed(1) + ' m/s²';
+});
+
+document.getElementById('slider-wind').addEventListener('input', e => {
+  windSpeed = parseFloat(e.target.value);
+  const dir = windSpeed > 0 ? ' →' : windSpeed < 0 ? ' ←' : '';
+  document.getElementById('val-wind').textContent = windSpeed + ' m/s' + dir;
+});
+
+function handlePointerDown(px, py) {
+  if (isDrawMode) {
+    isDrawingTrack = true;
+    rawDrawPoints = [{ px, py }];
+    return;
+  }
+
+  const sx = toScreenX(skater.x);
+  const sy = toScreenY(skater.y) - 22;
+  const dist = Math.hypot(px - sx, py - sy);
+  if (dist < 65) {
+    isDragging = true;
+    skater.exitCooldown = 0;
+    skater.v = 0;
+    skater.vx = 0;
+    skater.vy = 0;
+    skater.thermalEnergy = 0;
+  }
+}
+
+function handlePointerMove(px, py) {
+  if (isDrawMode && isDrawingTrack) {
+    const last = rawDrawPoints[rawDrawPoints.length - 1];
+    if (!last || Math.hypot(px - last.px, py - last.py) >= 5) {
+      rawDrawPoints.push({ px, py });
+    }
+    return;
+  }
+
+  if (!isDragging) return;
+  let mx = toMeterX(px);
+  let my = Math.max(GROUND_CLEARANCE_M, toMeterY(py));
+
+  if (trackType === 'custom' && customSpline.length >= 2) {
+    const closest = findClosestCustomPoint(mx, my);
+    if (closest.dist < 0.95) {
+      skater.onTrack = true;
+      skater.exitCooldown = 0;
+      skater.s = closest.s;
+      updateSkaterPosFromTrack();
+      skater.maxEnergyRef = Math.max(mass * Math.max(gravity, 9.8) * skater.y * 1.15, 1000);
+      return;
+    }
+  } else if (hasActiveTrack()) {
+    const bounds = getTrackBounds();
+    if (mx >= bounds.min && mx <= bounds.max) {
+      const trackY = getTrackY(mx);
+      if (Math.abs(my - trackY) < 0.95) {
+        skater.onTrack = true;
+        skater.exitCooldown = 0;
+        skater.s = mx;
+        updateSkaterPosFromTrack();
+        skater.maxEnergyRef = Math.max(mass * Math.max(gravity, 9.8) * skater.y * 1.15, 1000);
+        return;
+      }
+    }
+  }
+
+  skater.onTrack = false;
+  skater.x = Math.max(-6.5, Math.min(6.5, mx));
+  skater.y = Math.min(7.5, my);
+  skater.angle = 0;
+  skater.maxEnergyRef = Math.max(mass * Math.max(gravity, 9.8) * skater.y * 1.15, 1000);
+}
+
+function handlePointerUp() {
+  if (isDrawMode && isDrawingTrack) {
+    isDrawingTrack = false;
+    const built = buildCustomSpline(rawDrawPoints);
+    rawDrawPoints = [];
+
+    if (built.pts.length >= 2 && built.totalLen > 0.25) {
+      customSpline = built.pts;
+      customTotalLength = built.totalLen;
+      trackType = 'custom';
+      isDrawMode = false;
+      canvas.classList.remove('drawing-cursor');
+      customBtn.classList.remove('active');
+      hintBox.textContent = 'Çizdiğin pist hazır! Yol bitince kaykaycı uçar';
+      resetSkater();
+    } else {
+      hintBox.textContent = 'Çizgi biraz kısa oldu; daha uzun bir pist çiz';
+    }
+    return;
+  }
+
+  if (isDragging) {
+    isDragging = false;
+    skater.v = 0;
+    skater.vx = 0;
+    skater.vy = 0;
+  }
+}
+
+canvas.addEventListener('mousedown', e => handlePointerDown(e.clientX, e.clientY));
+window.addEventListener('mousemove', e => handlePointerMove(e.clientX, e.clientY));
+window.addEventListener('mouseup', handlePointerUp);
+
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length > 0) {
+    handlePointerDown(e.touches[0].clientX, e.touches[0].clientY);
+  }
+}, { passive: false });
+
+window.addEventListener('touchmove', e => {
+  if (isDragging || isDrawingTrack) {
+    e.preventDefault();
+  }
+  if (e.touches.length > 0) {
+    handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', handlePointerUp);
+
+function isOutOfFrame() {
+  const sx = toScreenX(skater.x);
+  const sy = toScreenY(skater.y);
+  return sx < -120 || sx > width + 120 || sy < -140;
+}
+
+function updatePhysics(dt) {
+  if (isPaused || isDragging || isDrawingTrack) return;
+  if (trackType === 'empty') return;
+
+  const slowMo = document.getElementById('chk-slow').checked;
+  const effectiveDt = slowMo ? dt * 0.3 : dt;
+  const steps = 12;
+  const subDt = effectiveDt / steps;
+  const activeTrack = hasActiveTrack();
+  const bounds = (activeTrack && trackType !== 'custom') ? getTrackBounds() : null;
+  const windAccel = (windSpeed * 0.45) * (60 / mass);
+
+  for (let i = 0; i < steps; i++) {
+    if (skater.exitCooldown > 0) {
+      skater.exitCooldown = Math.max(0, skater.exitCooldown - subDt);
+    }
+
+    if (skater.onTrack && activeTrack) {
+      if (trackType === 'custom') {
+        const eps = Math.min(0.03, customTotalLength * 0.01);
+        const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
+        const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
+        const dx = pNext.x - pPrev.x;
+        const dy = pNext.y - pPrev.y;
+        const segLen = Math.max(1e-6, Math.hypot(dx, dy));
+        const tx = dx / segLen;
+        const ty = dy / segLen;
+
+        let a = -gravity * ty + windAccel * tx;
+
+        if (friction > 0 && Math.abs(skater.v) > 0.001) {
+          const cosSlope = Math.abs(tx);
+          const normalForce = mass * gravity * cosSlope;
+          const frictionDecel = (friction * 12 * normalForce) / mass;
+          const sign = skater.v > 0 ? 1 : -1;
+          const vLoss = Math.min(Math.abs(skater.v), frictionDecel * subDt);
+          const oldKE = 0.5 * mass * skater.v * skater.v;
+          skater.v -= sign * vLoss;
+          const newKE = 0.5 * mass * skater.v * skater.v;
+          skater.thermalEnergy += Math.max(0, oldKE - newKE);
+        }
+
+        skater.v += a * subDt;
+        const nextS = skater.s + skater.v * subDt;
+
+        if (nextS <= 0 || nextS >= customTotalLength) {
+          const endS = nextS <= 0 ? 0 : customTotalLength;
+          const endPt = sampleCustomAtArc(endS);
+          const outDir = nextS <= 0 ? -1 : 1;
+          skater.onTrack = false;
+          skater.exitCooldown = 0.22;
+          skater.x = endPt.x + tx * outDir * 0.08;
+          skater.y = endPt.y + ty * outDir * 0.08;
+          skater.vx = skater.v * tx;
+          skater.vy = gravity === 0 ? 0 : skater.v * ty;
+          skater.v = 0;
+        } else {
+          skater.s = nextS;
+          updateSkaterPosFromTrack();
+        }
+      } else {
+        const slope = getTrackSlope(skater.s);
+        const angle = Math.atan(slope);
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+
+        let a = -gravity * sinA + windAccel * cosA;
+
+        if (friction > 0 && Math.abs(skater.v) > 0.001) {
+          const normalForce = mass * gravity * cosA;
+          const frictionDecel = (friction * 12 * normalForce) / mass;
+          const sign = skater.v > 0 ? 1 : -1;
+          const vLoss = Math.min(Math.abs(skater.v), frictionDecel * subDt);
+          const oldKE = 0.5 * mass * skater.v * skater.v;
+          skater.v -= sign * vLoss;
+          const newKE = 0.5 * mass * skater.v * skater.v;
+          skater.thermalEnergy += Math.max(0, oldKE - newKE);
+        }
+
+        skater.v += a * subDt;
+        skater.s += skater.v * cosA * subDt;
+        updateSkaterPosFromTrack();
+
+        if (skater.s < bounds.min || skater.s > bounds.max) {
+          skater.onTrack = false;
+          skater.exitCooldown = 0.18;
+          skater.vx = skater.v * cosA;
+          skater.vy = gravity === 0 ? 0 : skater.v * sinA;
+        }
+      }
+    } else {
+      skater.vx += windAccel * subDt;
+      skater.vy -= gravity * subDt;
+      skater.x += skater.vx * subDt;
+      skater.y += skater.vy * subDt;
+      skater.angle *= 0.92;
+
+      if (activeTrack && trackType === 'custom' && skater.exitCooldown <= 0) {
+        const closest = findClosestCustomPoint(skater.x, skater.y);
+        if (closest.dist < 0.14 && skater.vy <= 0.2) {
+          skater.onTrack = true;
+          skater.s = closest.s;
+          const eps = Math.min(0.03, customTotalLength * 0.01);
+          const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
+          const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
+          const dx = pNext.x - pPrev.x;
+          const dy = pNext.y - pPrev.y;
+          const len = Math.max(1e-6, Math.hypot(dx, dy));
+          const oldKE = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
+          skater.v = skater.vx * (dx / len) + skater.vy * (dy / len);
+          const newKE = 0.5 * mass * skater.v * skater.v;
+          if (friction > 0) {
+            skater.thermalEnergy += Math.max(0, oldKE - newKE);
+          }
+          updateSkaterPosFromTrack();
+        }
+      } else if (activeTrack && trackType !== 'custom' && skater.exitCooldown <= 0 && skater.x >= bounds.min && skater.x <= bounds.max) {
+        const ty = getTrackY(skater.x);
+        if (skater.y <= ty && skater.vy <= 0) {
+          skater.onTrack = true;
+          skater.s = skater.x;
+          const angle = Math.atan(getTrackSlope(skater.s));
+          const oldKE = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
+          skater.v = skater.vx * Math.cos(angle) + skater.vy * Math.sin(angle);
+          const newKE = 0.5 * mass * skater.v * skater.v;
+          if (friction > 0) {
+            skater.thermalEnergy += Math.max(0, oldKE - newKE);
+          }
+          updateSkaterPosFromTrack();
+        }
+      }
+
+      if (skater.y <= GROUND_CLEARANCE_M) {
+        skater.y = GROUND_CLEARANCE_M;
+        skater.vy = 0;
+        skater.angle = 0;
+
+        if (friction > 0 && Math.abs(skater.vx) > 0.001) {
+          const normalForce = mass * gravity;
+          const frictionDecel = (friction * 12 * normalForce) / mass;
+          const sign = skater.vx > 0 ? 1 : -1;
+          const vLoss = Math.min(Math.abs(skater.vx), frictionDecel * subDt);
+          const oldKE = 0.5 * mass * skater.vx * skater.vx;
+          skater.vx -= sign * vLoss;
+          const newKE = 0.5 * mass * skater.vx * skater.vx;
+          skater.thermalEnergy += Math.max(0, oldKE - newKE);
+        }
+      }
+    }
+  }
+}
+
+function drawBackground() {
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+  skyGrad.addColorStop(0, '#38bdf8');
+  skyGrad.addColorStop(1, '#bae6fd');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, width, groundY);
+
+  if (Math.abs(windSpeed) > 0.5) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 2;
+    const t = performance.now() * 0.004 * windSpeed;
+    for (let i = 0; i < 6; i++) {
+      const yPos = groundY * (0.18 + i * 0.11);
+      const rawX = ((t + i * 240) % (width + 160));
+      const xPos = windSpeed > 0 ? rawX - 80 : width - rawX + 80;
+      ctx.beginPath();
+      ctx.moveTo(xPos, yPos);
+      ctx.lineTo(xPos + Math.sign(windSpeed) * 42, yPos);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  ctx.fillStyle = '#7dd3fc';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(width * 0.2, groundY - 140);
+  ctx.lineTo(width * 0.45, groundY - 60);
+  ctx.lineTo(width * 0.75, groundY - 180);
+  ctx.lineTo(width, groundY - 90);
+  ctx.lineTo(width, groundY);
+  ctx.fill();
+
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(0, groundY, width, 14);
+  ctx.fillStyle = '#78350f';
+  ctx.fillRect(0, groundY + 14, width, height - groundY);
+}
+
+function drawGrid() {
+  if (!document.getElementById('chk-grid').checked) return;
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.16)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+  ctx.font = '11px sans-serif';
+  ctx.lineWidth = 1;
+
+  for (let m = 1; m <= 7; m++) {
+    const py = toScreenY(m);
+    if (py < 20) break;
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(width, py);
+    ctx.stroke();
+    ctx.fillText(m + ' m', 14, py - 4);
+  }
+}
+
+function drawTrack() {
+  if (trackType === 'custom' && customSpline.length >= 2) {
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    const stepIdx = Math.max(1, Math.floor(customSpline.length / 8));
+    for (let i = 0; i < customSpline.length; i += stepIdx) {
+      const pt = customSpline[i];
+      ctx.beginPath();
+      ctx.moveTo(toScreenX(pt.x), toScreenY(pt.y));
+      ctx.lineTo(toScreenX(pt.x), groundY);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    customSpline.forEach((pt, idx) => {
+      const sx = toScreenX(pt.x);
+      const sy = toScreenY(pt.y);
+      if (idx === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  } else if (hasActiveTrack()) {
+    const bounds = getTrackBounds();
+    const span = bounds.max - bounds.min;
+    const step = Math.max(0.03, span / 220);
+
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 4;
+    const legStep = Math.max(0.8, span / 8);
+    for (let x = bounds.min; x <= bounds.max + 0.001; x += legStep) {
+      const clampedX = Math.min(bounds.max, x);
+      const sx = toScreenX(clampedX);
+      const sy = toScreenY(getTrackY(clampedX));
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx, groundY);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let x = bounds.min; x <= bounds.max; x += step) {
+      const sx = toScreenX(x);
+      const sy = toScreenY(getTrackY(x));
+      if (x === bounds.min) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.lineTo(toScreenX(bounds.max), toScreenY(getTrackY(bounds.max)));
+    ctx.stroke();
+
+    ctx.strokeStyle = '#f97316';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  if (isDrawMode && rawDrawPoints.length > 0) {
+    ctx.save();
+    ctx.strokeStyle = '#16a34a';
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    rawDrawPoints.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.px, pt.py);
+      else ctx.lineTo(pt.px, pt.py);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawCharacterBody() {
+  let pantsColor = '#1e3a8a';
+  let shirtColor = '#f59e0b';
+  let armColor = '#fde047';
+  let skinColor = '#fed7aa';
+  let headColor = '#2563eb';
+  let boardColor = '#ef4444';
+
+  if (characterType === 'neon') {
+    pantsColor = '#db2777';
+    shirtColor = '#10b981';
+    armColor = '#6ee7b7';
+    skinColor = '#fde68a';
+    headColor = '#ec4899';
+    boardColor = '#06b6d4';
+  } else if (characterType === 'robo') {
+    pantsColor = '#475569';
+    shirtColor = '#94a3b8';
+    armColor = '#cbd5e1';
+    skinColor = '#e2e8f0';
+    headColor = '#0ea5e9';
+    boardColor = '#8b5cf6';
+  } else if (characterType === 'ninja') {
+    pantsColor = '#111827';
+    shirtColor = '#1f2937';
+    armColor = '#374151';
+    skinColor = '#fed7aa';
+    headColor = '#dc2626';
+    boardColor = '#f97316';
+  } else if (characterType === 'alien') {
+    pantsColor = '#4c1d95';
+    shirtColor = '#6d28d9';
+    armColor = '#84cc16';
+    skinColor = '#84cc16';
+    headColor = '#a855f7';
+    boardColor = '#10b981';
+  }
+
+  ctx.fillStyle = boardColor;
+  ctx.beginPath();
+  ctx.roundRect(-22, -9, 44, 5, 3);
+  ctx.fill();
+
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(-13, -3.5, 3.5, 0, Math.PI * 2);
+  ctx.arc(13, -3.5, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = pantsColor;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-7, -9);
+  ctx.lineTo(-4, -24);
+  ctx.moveTo(7, -9);
+  ctx.lineTo(4, -24);
+  ctx.stroke();
+
+  ctx.strokeStyle = shirtColor;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(0, -24);
+  ctx.lineTo(0, -40);
+  ctx.stroke();
+
+  ctx.strokeStyle = armColor;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-14, -34);
+  ctx.lineTo(14, -38);
+  ctx.stroke();
+
+  if (characterType === 'robo') {
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.roundRect(-7, -55, 14, 14, 3);
+    ctx.fill();
+    ctx.fillStyle = headColor;
+    ctx.fillRect(-4, -51, 9, 4);
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -55);
+    ctx.lineTo(0, -61);
+    ctx.stroke();
+  } else if (characterType === 'ninja') {
+    ctx.fillStyle = '#111827';
+    ctx.beginPath();
+    ctx.arc(0, -48, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(-2, -50, 7, 4);
+    ctx.fillStyle = headColor;
+    ctx.fillRect(-7, -52, 14, 3);
+  } else if (characterType === 'alien') {
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.ellipse(0, -49, 8.5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(-3, -49, 2, 0, Math.PI * 2);
+    ctx.arc(4, -49, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = skinColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-2, -55);
+    ctx.lineTo(-6, -63);
+    ctx.moveTo(2, -55);
+    ctx.lineTo(6, -63);
+    ctx.stroke();
+    ctx.fillStyle = headColor;
+    ctx.beginPath();
+    ctx.arc(-6, -63, 2.5, 0, Math.PI * 2);
+    ctx.arc(6, -63, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (characterType === 'neon') {
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(0, -48, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = headColor;
+    ctx.beginPath();
+    ctx.arc(0, -50, 7.5, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = headColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-6, -50);
+    ctx.lineTo(-14, -45);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = skinColor;
+    ctx.beginPath();
+    ctx.arc(0, -48, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = headColor;
+    ctx.beginPath();
+    ctx.arc(0, -50, 7.5, Math.PI, 0);
+    ctx.fill();
+  }
+}
+
+function drawSkater() {
+  if (trackType === 'empty') return;
+
+  const sx = toScreenX(skater.x);
+  const sy = toScreenY(skater.y);
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(-skater.angle);
+  drawCharacterBody();
+  ctx.restore();
+
+  if (document.getElementById('chk-speed').checked && !isOutOfFrame()) {
+    const speed = skater.onTrack
+      ? Math.abs(skater.v)
+      : Math.hypot(skater.vx, skater.vy);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+    ctx.beginPath();
+    ctx.roundRect(sx - 32, sy - 82, 64, 20, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(speed.toFixed(1) + ' m/s', sx, sy - 68);
+  }
+}
+
+function updateEnergyBars() {
+  const speed = skater.onTrack
+    ? Math.abs(skater.v)
+    : Math.hypot(skater.vx, skater.vy);
+
+  const ke = 0.5 * mass * speed * speed;
+  const pe = mass * gravity * Math.max(0, skater.y - GROUND_CLEARANCE_M);
+  const th = skater.thermalEnergy;
+  const tot = ke + pe + th;
+
+  const scale = Math.max(skater.maxEnergyRef, tot * 1.05, 100);
+
+  document.getElementById('bar-ke').style.width = Math.min(100, (ke / scale) * 100) + '%';
+  document.getElementById('bar-pe').style.width = Math.min(100, (pe / scale) * 100) + '%';
+  document.getElementById('bar-th').style.width = Math.min(100, (th / scale) * 100) + '%';
+  document.getElementById('bar-tot').style.width = Math.min(100, (tot / scale) * 100) + '%';
+}
+
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+
+  updatePhysics(dt);
+  drawBackground();
+  drawGrid();
+  drawTrack();
+  drawSkater();
+  updateEnergyBars();
+
+  requestAnimationFrame(loop);
+}
+
+resize();
+resetSkater();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
