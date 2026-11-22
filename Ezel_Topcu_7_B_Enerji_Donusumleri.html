@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enerji Dönüşüm Oyunu — Ezel Topçu 7/B</title>
+<style>
+:root{
+  --bg:#0f1b22; --bg2:#13232b; --panel:#182a33; --panel2:#1f3540; --ink:#eaf4f3; --muted:#9fb6bd;
+  --line:#2c4650; --track:#24404b;
+  --k:#ffb020; --pg:#36a2eb; --pe:#39c26b; --isi:#ff5d5d; --mek:#9b7bff; --top:#d8e6e8;
+  --accent:#36c2a8; --accent2:#ffb020; --danger:#ff5d5d; --good:#39c26b;
+  --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:
+  radial-gradient(1200px 600px at 85% -10%, #1d3a3d 0%, transparent 60%),
+  radial-gradient(900px 500px at -10% 110%, #1a2f3a 0%, transparent 55%),
+  var(--bg);
+  color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;line-height:1.45}
+a{color:var(--accent)}
+header{max-width:1180px;margin:0 auto;padding:22px 20px 6px}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+h1{font-size:clamp(1.3rem,2.6vw,1.9rem);margin:0;letter-spacing:.2px}
+h1 small{display:block;font-size:.5em;color:var(--accent);font-weight:700;letter-spacing:.4px;margin-bottom:2px}
+.sub{margin:6px 0 0;color:var(--muted);font-size:.97rem;max-width:62ch}
+.infobtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.infobtn:hover{border-color:var(--accent)}
+.infobox{max-width:1180px;margin:10px auto 0;padding:0 20px}
+.infobox .inner{display:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--muted);font-size:.92rem}
+.infobox .inner.open{display:block}
+.infobox .inner b{color:var(--ink)}
+
+.topbar{max-width:1180px;margin:14px auto 0;padding:0 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.86rem;display:flex;align-items:center;gap:7px}
+.pill b{color:var(--accent2)}
+.btn-ghost{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn-ghost button{font:inherit;font-weight:700;font-size:.86rem;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn-ghost button:hover{border-color:var(--accent)}
+
+main{max-width:1180px;margin:0 auto;padding:14px 20px 40px;display:grid;grid-template-columns:minmax(300px,460px) 1fr;gap:18px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+
+.stage{position:relative}
+canvas{width:100%;height:auto;display:block;border-radius:10px;aspect-ratio:360/440;background:#9fd4ef;cursor:grab}
+canvas.dragging{cursor:grabbing}
+.toast{position:absolute;left:50%;top:14px;transform:translateX(-50%) translateY(-8px);background:#3a1414;border:1px solid var(--danger);color:#ffd9d9;padding:9px 16px;border-radius:10px;font-weight:700;font-size:.86rem;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:88%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.caption{margin:8px 2px 0;color:var(--muted);font-size:.82rem}
+
+.controls-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.main{font:inherit;font-weight:800;padding:10px 20px;border-radius:11px;border:2px solid var(--good);background:var(--good);color:#06241a;cursor:pointer;min-width:112px}
+button.main.running{background:var(--isi);border-color:var(--isi);color:#2a0606}
+button.secondary{font:inherit;font-weight:700;padding:10px 16px;border-radius:11px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+button.secondary:hover{border-color:var(--accent)}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.readout{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.readout div{background:var(--track);border-radius:9px;padding:7px 9px;font-size:.78rem;color:var(--muted)}
+.readout b{display:block;color:var(--ink);font-size:1.05rem;font-variant-numeric:tabular-nums}
+
+.sliders{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.sl{display:block}
+.sl .lh{display:flex;justify-content:space-between;font-size:.82rem;font-weight:700;margin-bottom:6px}
+.sl .lh span.v{color:var(--accent2);font-variant-numeric:tabular-nums}
+.strack{position:relative;height:10px;border-radius:5px;background:var(--track)}
+.sfill{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.shandle{position:absolute;top:50%;width:22px;height:22px;border-radius:7px;background:#fff;border:2px solid #0b161b;transform:translate(-50%,-50%);cursor:grab;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.shandle:active{cursor:grabbing}
+.shandle:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.bars h2{font-size:1.08rem;margin:2px 0 4px}
+.bars .scalelbl{font-size:.78rem;color:var(--muted);margin:0 0 10px}
+.row{display:grid;grid-template-columns:172px 1fr 86px;gap:8px;align-items:center;margin:9px 0}
+.row .name{font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:7px}
+.dot{width:12px;height:12px;border-radius:3px;flex:none}
+.track{height:25px;border-radius:7px;background:var(--track);overflow:hidden;display:flex}
+.track i{display:block;height:100%;transition:width .08s linear}
+.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:.92rem}
+.sep{border-top:1px dashed var(--line);margin:12px 0}
+@media (max-width:560px){.row{grid-template-columns:120px 1fr 74px}.row .name{font-size:.76rem}}
+.legend{font-size:.78rem;color:var(--muted);margin:4px 0 0}
+.note{margin:12px 0 0;font-size:.8rem;color:var(--muted)}
+
+.task-panel{display:none;max-width:1180px;margin:10px auto 0;padding:0 20px}
+.task-panel.open{display:block}
+.task-inner{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:14px 16px}
+.task-inner h3{margin:0 0 4px;font-size:1.02rem;color:var(--accent2)}
+.task-inner p{margin:4px 0;color:var(--muted);font-size:.9rem}
+.task-prog{display:flex;align-items:center;gap:10px;margin-top:8px}
+.task-prog .track{flex:1}
+.task-prog .val{min-width:52px}
+
+.overlay{position:fixed;inset:0;background:rgba(5,10,13,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.overlay.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:520px;width:100%;box-shadow:var(--shadow)}
+.modal h2{margin:0 0 10px;font-size:1.25rem}
+.modal p{color:var(--muted);font-size:.93rem}
+.modal ul{color:var(--muted);font-size:.92rem;padding-left:20px}
+.modal ul li{margin:6px 0}
+.modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.verdict{border-radius:10px;padding:10px 12px;font-weight:800;margin:10px 0}
+.verdict.ok{background:rgba(57,194,107,.15);color:var(--good);border:1px solid var(--good)}
+.verdict.bad{background:rgba(255,93,93,.15);color:var(--danger);border:1px solid var(--danger)}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.statgrid div{background:var(--track);border-radius:8px;padding:7px 9px;font-size:.82rem;color:var(--muted)}
+.statgrid b{display:block;color:var(--ink);font-size:1rem}
+
+footer{max-width:1180px;margin:0 auto;padding:4px 20px 26px;color:var(--muted);font-size:.78rem;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="title-row">
+    <h1><small>Yapay Zekâ ile</small>Enerji Dönüşüm Oyunu</h1>
+    <button class="infobtn" id="btnInfo" type="button">Bu oyun ne öğretiyor? ▾</button>
+  </div>
+  <p class="sub">Trambolinde zıplayan kişinin enerjisini izle, kontrolleri ayarla ve doğru anı yakalayarak seviyeleri geç.</p>
+</header>
+<div class="infobox"><div class="inner" id="infoInner">
+  <p><b>Soru:</b> Bu oyunda ne öğreniyorum?</p>
+  <p>Bir trambolinde zıplayan kişinin <b>kinetik enerjisinin</b> (hareket enerjisi), <b>çekim potansiyel enerjisinin</b> (yükseklikten gelen enerji) ve <b>esneklik potansiyel enerjisinin</b> (trambolinin gerilmesinden gelen enerji) hareket boyunca birbirine nasıl dönüştüğünü görüyorsun. Sürtünme açıldığında mekanik enerjinin bir kısmı <b>ısıya</b> dönüşür ama toplam enerji hep korunur. Kütle ve yer çekimini değiştirerek bu enerjilerin nasıl etkilendiğini de keşfedersin.</p>
+</div></div>
+
+<div class="topbar">
+  <span class="pill">Seviye <b id="lvlNo">1</b> / 10</span>
+  <span class="pill" id="lvlTitlePill">Tanışma</span>
+  <div class="btn-ghost">
+    <button id="btnTasks" type="button">🎯 Görev</button>
+    <button id="btnHelp" type="button">❓ Nasıl Oynanır</button>
+  </div>
+</div>
+
+<div class="task-panel" id="taskPanel"><div class="task-inner">
+  <h3 id="taskTitle">Seviye 1 — Tanışma</h3>
+  <p id="taskGoal">Görev metni</p>
+  <div class="task-prog"><span style="font-size:.82rem;color:var(--muted);min-width:84px" id="taskMetricName">Ölçüt</span><div class="track"><i id="taskFill" style="width:0;background:var(--accent)"></i></div><span class="val" id="taskVal">0%</span></div>
+</div></div>
+
+<main>
+  <section class="card">
+    <div class="stage">
+      <canvas id="cv" role="img" aria-label="Trambolinde zıplayan kişi animasyonu"></canvas>
+      <div class="toast" id="toast"></div>
+    </div>
+    <p class="caption">İnsanı fare ile sürükleyip istediğin yükseklikten (0–5 m) bırak. <b style="color:var(--danger)">4 m ve üzeri trambolini yırtar!</b></p>
+
+    <div class="controls-row">
+      <button id="btnGo" class="main" type="button">Başlat</button>
+      <button id="btnReset" class="secondary" type="button">Sıfırla</button>
+    </div>
+    <div class="readout">
+      <div>Süre<b><span id="rT">0,0</span> s</b></div>
+      <div>Yükseklik<b><span id="rY">2,00</span> m</b></div>
+      <div>Hız<b><span id="rV">0,0</span> m/s</b></div>
+    </div>
+
+    <div class="sliders">
+      <div class="sl"><div class="lh"><span>⚖️ Kütle</span><span class="v" id="lblMass">40 kg</span></div><div class="strack" id="sMass"><div class="sfill"></div><div class="shandle" tabindex="0" role="slider" aria-label="Kütle"></div></div></div>
+      <div class="sl"><div class="lh"><span>🌍 Yer çekimi</span><span class="v" id="lblG">9,8 N/kg (Dünya)</span></div><div class="strack" id="sG"><div class="sfill"></div><div class="shandle" tabindex="0" role="slider" aria-label="Yer çekimi"></div></div></div>
+      <div class="sl"><div class="lh"><span>🔥 Sürtünme</span><span class="v" id="lblFric">%0</span></div><div class="strack" id="sFric"><div class="sfill"></div><div class="shandle" tabindex="0" role="slider" aria-label="Sürtünme"></div></div></div>
+      <div class="sl"><div class="lh"><span>⏱️ Oynatma hızı</span><span class="v" id="lblSpd">1,00×</span></div><div class="strack" id="sSpd"><div class="sfill"></div><div class="shandle" tabindex="0" role="slider" aria-label="Oynatma hızı"></div></div></div>
+    </div>
+  </section>
+
+  <section class="card bars">
+    <h2>Enerji çubukları (joule, J)</h2>
+    <p class="scalelbl">Ölçek: 0 – <span id="scaleMax">784</span> J (bu denemenin başlangıç enerjisi)</p>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--k)"></span>Kinetik enerji</span><div class="track" id="tK"></div><span class="val" id="vK">0 J</span></div>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--pg)"></span>Çekim potansiyel enerjisi</span><div class="track" id="tPg"></div><span class="val" id="vPg">0 J</span></div>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--pe)"></span>Esneklik potansiyel enerjisi</span><div class="track" id="tPe"></div><span class="val" id="vPe">0 J</span></div>
+    <div class="sep"></div>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--mek)"></span>Mekanik enerji (K + P)</span><div class="track" id="tM"></div><span class="val" id="vM">0 J</span></div>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--isi)"></span>Isıya dönüşen enerji</span><div class="track" id="tQ"></div><span class="val" id="vQ">0 J</span></div>
+    <div class="sep"></div>
+    <div class="row"><span class="name"><span class="dot" style="background:var(--top)"></span>Toplam enerji</span><div class="track" id="tT"></div><span class="val" id="vT">0 J</span></div>
+    <p class="legend">Mekanik ve toplam çubukları, kendilerini oluşturan enerjilerin renkleriyle bölünür.</p>
+
+    <div class="explain" style="margin-top:12px;padding:10px 12px;border-left:5px solid var(--pg);background:rgba(54,162,235,.1);border-radius:6px;min-height:84px">
+      <p style="margin:0 0 5px;font-weight:700" id="e1"></p>
+      <p style="margin:0;color:var(--muted);font-size:.9rem" id="e2"></p>
+    </div>
+    <p class="note">Basit ve gerçekçi bir model: dışarıdan enerji eklenmez. Trambolinin esneklik sabiti sabittir; kütle, yer çekimi ve bırakma yüksekliği değiştikçe gerçek bir trambolinde olduğu gibi sıkışma miktarı ve hızlar da değişir. Çekim potansiyel enerjisi trambolin yüzeyine göre, esneklik potansiyel enerjisi ise sıkışma miktarına göre hesaplanır.</p>
+  </section>
+</main>
+
+<footer>Ezel Topçu 7/B — Yapay Zekâ ile Enerji Dönüşüm Oyunu</footer>
+
+<!-- Tutorial -->
+<div class="overlay" id="ovTutorial"><div class="modal">
+  <h2>Nasıl oynanır?</h2>
+  <ul>
+    <li><b>Sürükle:</b> Trambolinin üstündeki kişiyi fareyle tutup yukarı-aşağı sürükleyerek bırakma yüksekliğini ayarla (en fazla yaklaşık 5 m; 4 m ve üzeri trambolini yırtar).</li>
+    <li><b>Başlat / Durdur:</b> Başlat'a basınca kişi düşmeye başlar. Doğru anı yakaladığını düşündüğünde Durdur'a bas — o anki enerji dağılımın kontrol edilir.</li>
+    <li><b>Kontroller:</b> Kütle, yer çekimi, sürtünme ve oynatma hızını sürükleyerek değiştirebilirsin; etkisini anında görürsün.</li>
+    <li><b>Enerji çubukları:</b> Kinetik, potansiyel (çekim ve esneklik) ve ısıya dönüşen enerji joule cinsinden gösterilir. Sürtünme yokken mekanik enerji sabit kalır; sürtünme varken bir kısmı ısıya dönüşür.</li>
+    <li><b>Görev:</b> Üstteki "🎯 Görev" düğmesine basarak o seviyenin hedefini her an görebilirsin.</li>
+  </ul>
+  <div class="actions"><button class="main" id="btnTutorialOk" type="button">Başlayalım!</button></div>
+</div></div>
+
+<!-- Stats / result -->
+<div class="overlay" id="ovStats"><div class="modal">
+  <h2 id="stTitle">Sonuç</h2>
+  <div class="verdict" id="stVerdict"></div>
+  <div class="statgrid">
+    <div>Süre<b id="sT">0 s</b></div>
+    <div>Yükseklik<b id="sY">0 m</b></div>
+    <div>Hız<b id="sV">0 m/s</b></div>
+    <div>Kütle / Yer çekimi<b id="sMG">—</b></div>
+    <div>Kinetik / Çekim PE / Esneklik PE<b id="sKPP">—</b></div>
+    <div>Mekanik / Isı<b id="sMQ">—</b></div>
+  </div>
+  <p id="stHint" style="color:var(--muted);font-size:.9rem"></p>
+  <div class="actions">
+    <button class="secondary" id="btnStatsClose" type="button">Devam Et</button>
+    <button class="main" id="btnNextLevel" type="button" style="display:none">Sonraki Seviye →</button>
+  </div>
+</div></div>
+
+<!-- Finale -->
+<div class="overlay" id="ovFinale"><div class="modal">
+  <h2>🏆 Tebrikler!</h2>
+  <p>10 seviyenin tamamını başarıyla tamamladın. Artık trambolinde enerjinin nasıl dönüştüğünü çok iyi biliyorsun: kinetik, çekim potansiyel, esneklik potansiyel ve ısı enerjisi arasındaki ilişkiyi kendi gözlemlerinle keşfettin.</p>
+  <div class="actions"><button class="main" id="btnRestart" type="button">Baştan Başla</button></div>
+</div></div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+
+/* ================= LEVELS ================= */
+var LEVELS = [
+ { title:'Seviye 1 — Tanışma', metric:'Pgpct', metricName:'Çekim PE',
+   goal:'Kişiyi sürükleyerek bir yükseklikten bırak (ya da bırakmadan önce) ve o kişi hâlâ hareketsizken Durdur tuşuna basarak çekim potansiyel enerjisinin yaklaşık %100 olduğu anı yakala.',
+   check:function(s){ return s.Pgpct>=95; }, hint:'İpucu: Kişi henüz düşmeye başlamadan, en yüksek noktadayken Durdur\'a bas.' },
+ { title:'Seviye 2 — Serbest Düşüş', metric:'Kpct', metricName:'Kinetik',
+   goal:'Kişi trambolinin yüzeyine tam değdiği anda (henüz sıkışmadan hemen önce) kinetik enerji o düşüş için ulaşabileceği en yüksek değerdedir. O anı yakala.',
+   check:function(s){ return s.Kpct>=0.6*s.maxKpct; }, hint:'İpucu: Kişi tam trambolin yüzeyinden geçerken (yükseklik ≈ 0) Durdur\'a bas. Bu an çok kısa sürer; Oynatma hızını 0,25x yaparsan yakalamak kolaylaşır. Gerçek bir trambolinde bu anda bile enerjinin bir kısmı hâlâ potansiyel enerjidir — tam yüzde yüz olmaz, bu normaldir!' },
+ { title:'Seviye 3 — Esneklik Enerjisi', metric:'Pepct', metricName:'Esneklik PE',
+   goal:'Sürtünmeyi kapalı (0) tut. Trambolin en çok sıkıştığı anda (hız sıfıra yakın) esneklik potansiyel enerjisi en yüksektir, neredeyse yüzde yüze ulaşır. O anı yakala.',
+   check:function(s){ return s.frictionPct<=5 && s.Pepct>=80; }, hint:'İpucu: Sürtünmeyi 0 yap, trambolin en dipteyken (en düşük nokta) Durdur\'a bas.' },
+ { title:'Seviye 4 — Enerjinin Korunumu', metric:'Mechpct', metricName:'Mekanik',
+   goal:'Sürtünmeyi kapalı tutarak simülasyonu en az 3 saniye çalıştır; birkaç sıçrayıştan sonra bile mekanik enerjinin hâlâ yaklaşık %100 olduğunu görüp Durdur\'a bas.',
+   check:function(s){ return s.frictionPct<=2 && s.t>=3 && s.Mechpct>=95; }, hint:'İpucu: Sürtünme 0 olsun, en az 3 saniye bekle, sonra Durdur\'a bas.' },
+ { title:'Seviye 5 — Sürtünme ve Isı', metric:'Heatpct', metricName:'Isı',
+   goal:'Sürtünmeyi aç ve birkaç sıçrayış bekleyerek ısıya dönüşen enerjinin toplamın en az %20\'sine ulaştığı anı yakala.',
+   check:function(s){ return s.frictionPct>10 && s.Heatpct>=20; }, hint:'İpucu: Sürtünmeyi yükselt (en az %30-40), birkaç sıçrayış bekle, ısı çubuğunun büyümesini izle.' },
+ { title:'Seviye 6 — Kütlenin Etkisi', metric:'Kpct', metricName:'Kinetik',
+   goal:'Kütleyi en az 70 kg yap. Daha ağır bir kişide de kinetik enerjinin en yüksek olduğu an hâlâ trambolin yüzeyindedir — o anı yakala.',
+   check:function(s){ return s.mass>=70 && s.Kpct>=0.6*s.maxKpct; }, hint:'İpucu: Kütle kaydırıcısını en az 70 kg\'a getir, oynatma hızını yavaşlat, sonra yüzeye değerken Durdur\'a bas.' },
+ { title:'Seviye 7 — Farklı Bir Gök Cismi', metric:'Pgpct', metricName:'Çekim PE',
+   goal:'Yer çekimini Ay\'a yakın bir değere getir (4 N/kg veya altı). Kişi en yüksek noktadayken (düşmeden önce ya da zıpladıktan sonra tepe noktasında) çekim potansiyel enerjisinin %100 olduğu anı yakala.',
+   check:function(s){ return s.gravity<=4 && s.Pgpct>=95; }, hint:'İpucu: Yer çekimini 1,6–4 N/kg aralığına çek, kişi tepe noktasındayken (hız ≈ 0, yukarıda) Durdur\'a bas.' },
+ { title:'Seviye 8 — Güvenli Sınır', metric:'Kpct', metricName:'Kinetik',
+   goal:'Kişiyi, trambolini yırtmadan sınıra olabildiğince yakın bir yükseklikten (3,5 m ile 4 m arası) bırak. Sonra kinetik enerjinin en yüksek olduğu anı yakala.',
+   check:function(s){ return s.h0>=3.5 && s.h0<4 && s.Kpct>=0.6*s.maxKpct; }, hint:'İpucu: Kişiyi 3,5–4 m arasından (4 m\'yi geçmeden) bırak, oynatma hızını yavaşlat, sonra yüzeye değerken Durdur\'a bas.' },
+ { title:'Seviye 9 — Enerji Kaybı', metric:'Heatpct', metricName:'Isı',
+   goal:'Sürtünmeyi aç ve mekanik enerjinin yarısından fazlasının ısıya dönüştüğü (Isı ≥ %50) anı yakala.',
+   check:function(s){ return s.frictionPct>10 && s.Heatpct>=50; }, hint:'İpucu: Sürtünmeyi yüksek tut (ör. %70+), birkaç sıçrayış geçsin, ısı payı yarıyı geçince Durdur\'a bas.' },
+ { title:'Seviye 10 — Usta Seviyesi', metric:'Pepct', metricName:'Esneklik',
+   goal:'Bütün bildiklerini kullan: trambolin en çok sıkışmışken (Esneklik PE yüksek) ve bu ana kadar ısıya dönüşen enerji payı en az %10 olan bir anı yakala.',
+   check:function(s){ return s.Pepct>=75 && s.Heatpct>=10; }, hint:'İpucu: Sürtünmeyi biraz aç, birkaç sıçrayış bekle, trambolin dibe inince (hız ≈ 0) Durdur\'a bas.' }
+];
+var levelIdx = 0;
+
+/* ================= PHYSICS ================= */
+var K_SPRING = 8000;     // N/m — gerçekçi bir trambolinin yaklaşık esneklik sabiti
+var FRIC_MAX = 26;       // kg/s — sürtünme %100 iken sönüm katsayısı
+var mass = 40, gravity = 9.8, frictionPct = 0, speed = 1;
+var y, v, Q, t, E0, h0, dDrop = 0.5, running = false, raf = 0, last = 0;
+var dragging = false, torn = false;
+
+function cDamp(){ return frictionPct/100 * FRIC_MAX; }
+// Kuvvet: yer çekimi her zaman etkir; trambolin yalnızca y<0 iken (sıkışınca) yukarı iter.
+function force(yy){ return -mass*gravity + (yy<0 ? -K_SPRING*yy : 0); }
+function step(dt){
+  var cc = cDamp();
+  var a = (force(y) - cc*v)/mass;
+  var vh = v + 0.5*dt*a;
+  var yn = y + vh*dt;
+  var vn = (vh + 0.5*dt*force(yn)/mass) / (1 + 0.5*dt*cc/mass);
+  var va = 0.5*(v+vn);
+  Q += cc*va*va*dt;
+  y = yn; v = vn; t += dt;
+}
+// Potansiyel enerji referansı, o anki kütle/yer çekimi/yükseklik için hesaplanan
+// sürtünmesiz en büyük sıkışma noktasına (-dDrop) göre alınır. Böylece çekim potansiyel
+// enerjisi hiçbir zaman negatif olmaz VE kuvvet fonksiyonuyla tutarlı kalarak enerji
+// gerçekten korunur (bar grafiklerinde yüzde 100'ü asla aşmaz).
+function energies(){
+  var K = 0.5*mass*v*v;
+  var Pg = mass*gravity*(y+dDrop);
+  var Pe = y<0 ? 0.5*K_SPRING*y*y : 0;
+  var M = K+Pg+Pe;
+  var T = M+Q;
+  return {K:K,Pg:Pg,Pe:Pe,M:M,Q:Q,T:T};
+}
+// Sürtünmesiz varsayımla, bu kütle/yer çekimi/yükseklik için trambolinin ulaşacağı
+// en büyük sıkışma derinliği (gerçek bir trambolinde olduğu gibi: ağır kişi ve yüksek
+// bırakma noktası trambolini daha çok sıkıştırır).
+function computeDDrop(mm, gg, hh){
+  var mg = mm*gg;
+  return (mg + Math.sqrt(mg*mg + 2*K_SPRING*mg*hh)) / K_SPRING;
+}
+function newDrop(height){
+  h0 = Math.max(0.1, Math.min(5, height));
+  dDrop = computeDDrop(mass, gravity, h0);
+  y = h0; v = 0; Q = 0; t = 0;
+  // Gerçek başlangıç mekanik enerjisi: kişi y=h0'da durgunken Pg = mg(h0+dDrop), Pe=0, K=0.
+  // Bar ölçeği ve yüzdeler bu gerçek başlangıç değerine göre hesaplanır, böylece
+  // "toplam enerji" hiçbir zaman başlangıç değerini aşamaz (enerji korunur).
+  E0 = Math.max(1, mass*gravity*(h0+dDrop));
+}
+// Kinetik enerjinin teorik olarak ulaşabileceği en yüksek yüzde: trambolin yüzeyine
+// (y=0) değildiği andır, ve o anda serbest düşüşten kazanılan enerji tam olarak
+// mg*h0'dır — ama trambolinin kendi "tavan" referansı (dDrop) yüzünden bu, toplam
+// enerjinin %100'ü değildir; bir miktar hep potansiyel enerji olarak kalır. Bu, gerçek
+// bir trambolinin ayırt edici, öğretici bir özelliğidir.
+function theoreticalMaxKpct(){
+  var maxK = mass*gravity*h0;
+  return Math.max(5, Math.min(100, maxK/E0*100));
+}
+
+/* ================= SLIDERS ================= */
+function makeSlider(rootId, min, max, step, value, fmt, onInput){
+  var root = $(rootId);
+  var fill = root.querySelector('.sfill'), handle = root.querySelector('.shandle');
+  var val = value;
+  function render(){
+    var p = (val-min)/(max-min)*100;
+    fill.style.width = p+'%';
+    handle.style.left = p+'%';
+    handle.setAttribute('aria-valuenow', val);
+    fmt(val);
+  }
+  function setFromClientX(cx){
+    var r = root.getBoundingClientRect();
+    var p = Math.max(0, Math.min(1, (cx-r.left)/r.width));
+    var raw = min + p*(max-min);
+    val = Math.round(raw/step)*step;
+    val = Math.max(min, Math.min(max, val));
+    val = Math.round(val*1000)/1000;
+    render(); onInput(val);
+  }
+  function ptrMove(e){ setFromClientX(e.touches ? e.touches[0].clientX : e.clientX); e.preventDefault(); }
+  function ptrUp(){ document.removeEventListener('mousemove', ptrMove); document.removeEventListener('mouseup', ptrUp); document.removeEventListener('touchmove', ptrMove); document.removeEventListener('touchend', ptrUp); }
+  function ptrDown(e){ setFromClientX(e.touches ? e.touches[0].clientX : e.clientX); document.addEventListener('mousemove', ptrMove); document.addEventListener('mouseup', ptrUp); document.addEventListener('touchmove', ptrMove, {passive:false}); document.addEventListener('touchend', ptrUp); e.preventDefault(); }
+  root.addEventListener('mousedown', ptrDown);
+  root.addEventListener('touchstart', ptrDown, {passive:false});
+  handle.addEventListener('keydown', function(e){
+    if (e.key==='ArrowRight' || e.key==='ArrowUp'){ val=Math.min(max,Math.round((val+step)*1000)/1000); render(); onInput(val); e.preventDefault(); }
+    else if (e.key==='ArrowLeft' || e.key==='ArrowDown'){ val=Math.max(min,Math.round((val-step)*1000)/1000); render(); onInput(val); e.preventDefault(); }
+  });
+  render();
+  return { set:function(v2){ val=v2; render(); } };
+}
+
+function nearestBody(g){
+  var bodies=[['Ay',1.6],['Mars',3.7],['Dünya',9.8],['Satürn',10.4],['Jüpiter',24.8]];
+  var best=bodies[0], bd=Infinity;
+  bodies.forEach(function(b){ var dd=Math.abs(g-b[1]); if(dd<bd){bd=dd;best=b;} });
+  return bd<0.6 ? best[0] : null;
+}
+
+makeSlider('sMass', 20, 100, 1, mass, function(v){ mass=v; $('lblMass').textContent=v+' kg'; }, function(v){ mass=v; $('lblMass').textContent=v+' kg'; if(!running) refreshIdle(); });
+makeSlider('sG', 1.6, 25, 0.1, gravity, function(v){ var b=nearestBody(v); $('lblG').textContent=v.toFixed(1).replace('.',',')+' N/kg'+(b?' ('+b+')':''); }, function(v){ gravity=v; var b=nearestBody(v); $('lblG').textContent=v.toFixed(1).replace('.',',')+' N/kg'+(b?' ('+b+')':''); if(!running) refreshIdle(); });
+makeSlider('sFric', 0, 100, 1, frictionPct, function(v){ $('lblFric').textContent='%'+v; }, function(v){ frictionPct=v; $('lblFric').textContent='%'+v; });
+makeSlider('sSpd', 0.25, 2, 0.25, speed, function(v){ $('lblSpd').textContent=v.toFixed(2).replace('.',',')+'×'; }, function(v){ speed=v; $('lblSpd').textContent=v.toFixed(2).replace('.',',')+'×'; });
+
+function refreshIdle(){ if(!running){ h0 = Math.max(0.1, y); dDrop = computeDDrop(mass, gravity, h0); E0 = Math.max(1, mass*gravity*(h0+dDrop)); updateUI(true); } }
+
+/* ================= CANVAS ================= */
+var cv=$('cv'), cx=cv.getContext('2d');
+var LW=360, LH=440, matY=360, L=55, R=305, CX=180, S=56; // S px per metre (max 5m -> 280px)
+function fit(){
+  var r = window.devicePixelRatio || 1;
+  var w = cv.clientWidth || LW;
+  cv.width = Math.round(w*r); cv.height = Math.round(w*r*LH/LW);
+  cx.setTransform(cv.width/LW, 0, 0, cv.height/LH, 0, 0);
+}
+function yToPx(hh){ return matY - hh*S; }
+function pxToY(py){ return (matY-py)/S; }
+
+var tearT=0;
+function draw(){
+  var dark = true;
+  var sky = cx.createLinearGradient(0,0,0,LH);
+  sky.addColorStop(0,'#0e2338'); sky.addColorStop(1,'#2a5c73');
+  cx.fillStyle = sky; cx.fillRect(0,0,LW,LH);
+  cx.fillStyle = 'rgba(255,230,150,.9)'; cx.beginPath(); cx.arc(322,40,20,0,6.29); cx.fill();
+  cx.fillStyle = 'rgba(255,255,255,.14)';
+  [[60,54,24],[88,50,18],[260,110,20],[286,106,14]].forEach(function(b){ cx.beginPath(); cx.arc(b[0],b[1],b[2],0,6.29); cx.fill(); });
+  cx.fillStyle = '#2f5d3f'; cx.fillRect(0,428,LW,LH-428);
+
+  // tehlike bölgesi 4-5m
+  cx.fillStyle = 'rgba(255,93,93,.14)';
+  cx.fillRect(40, yToPx(5), LW-70, yToPx(4)-yToPx(5));
+  cx.strokeStyle='rgba(255,93,93,.55)'; cx.setLineDash([3,3]); cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(40,yToPx(4)); cx.lineTo(LW-30,yToPx(4)); cx.stroke(); cx.setLineDash([]);
+
+  // cetvel
+  cx.strokeStyle='rgba(230,240,240,.55)'; cx.fillStyle='rgba(230,240,240,.9)'; cx.font='11px sans-serif'; cx.lineWidth=1;
+  for (var i=0;i<=5;i++){ var py=yToPx(i); cx.beginPath(); cx.moveTo(8,py); cx.lineTo(22,py); cx.stroke(); cx.fillText(i+' m',25,py+4); }
+  cx.setLineDash([4,4]); cx.beginPath(); cx.moveTo(40,yToPx(h0)); cx.lineTo(LW-14,yToPx(h0)); cx.stroke(); cx.setLineDash([]);
+
+  var dep = y<0 ? -y*S : 0;
+  var sh = Math.max(0.3, 1-Math.max(0,y)/3);
+  cx.fillStyle='rgba(0,0,0,.2)'; cx.beginPath(); cx.ellipse(CX, 432, 32*sh, 5*sh, 0,0,6.29); cx.fill();
+
+  cx.lineCap='round';
+  cx.strokeStyle='#45525c'; cx.lineWidth=6;
+  cx.beginPath(); cx.moveTo(L,matY+4); cx.lineTo(L-8,428); cx.moveTo(R,matY+4); cx.lineTo(R+8,428); cx.stroke();
+
+  cx.lineWidth=1.5; cx.strokeStyle = torn ? 'rgba(255,100,100,.6)' : '#8fa0a8';
+  for (var j=0;j<=9;j++){
+    var xx=L+(R-L)*j/9, u=(xx-CX)/((R-L)/2);
+    var my=matY+dep*(1-u*u);
+    cx.beginPath(); cx.moveTo(xx,my+3); cx.lineTo(xx,matY+44); cx.stroke();
+  }
+  cx.strokeStyle = torn ? '#ff5d5d' : '#1f3a5f'; cx.lineWidth=8; cx.beginPath();
+  for (var x=L;x<=R;x+=3){ var uu=(x-CX)/((R-L)/2); var yy=matY+dep*(1-uu*uu); if(x===L) cx.moveTo(x,yy); else cx.lineTo(x,yy); }
+  cx.stroke();
+  if (torn){
+    cx.strokeStyle='#ffecec'; cx.lineWidth=2.5;
+    cx.beginPath(); cx.moveTo(CX-40,matY-4); cx.lineTo(CX-18,matY+10); cx.lineTo(CX-4,matY-6); cx.lineTo(CX+20,matY+12); cx.lineTo(CX+44,matY-2); cx.stroke();
+  }
+  cx.fillStyle='#c9302c'; cx.beginPath(); cx.arc(L,matY,6,0,6.29); cx.arc(R,matY,6,0,6.29); cx.fill();
+
+  // kişi
+  var fy = matY - y*S - 2;
+  var bend = y<0 ? Math.min(1,-y/0.4) : (y<0.25 && v>0 ? 0.3 : 0);
+  var kneeX = 8*bend+2, kneeY = fy-22+bend*4;
+  var hipY = fy-46+bend*14, shY = hipY-36, hdY = shY-14;
+  cx.lineWidth=7; cx.strokeStyle='#d62839';
+  cx.beginPath(); cx.moveTo(CX-4,fy); cx.lineTo(CX-4-kneeX,kneeY); cx.lineTo(CX,hipY);
+  cx.moveTo(CX+4,fy); cx.lineTo(CX+4+kneeX,kneeY); cx.lineTo(CX,hipY); cx.stroke();
+  cx.strokeStyle='#2b6cb0'; cx.lineWidth=11;
+  cx.beginPath(); cx.moveTo(CX,hipY); cx.lineTo(CX,shY); cx.stroke();
+  cx.lineWidth=5;
+  var armUp = v>0.5?1:(v<-0.5?0.4:0.7);
+  var ay = shY+6-34*armUp;
+  cx.beginPath(); cx.moveTo(CX,shY+4); cx.lineTo(CX-22,ay+16); cx.moveTo(CX,shY+4); cx.lineTo(CX+22,ay+16); cx.stroke();
+  cx.fillStyle='#f2c9a0'; cx.strokeStyle='#0b161b'; cx.lineWidth=2;
+  cx.beginPath(); cx.arc(CX,hdY,11,0,6.29); cx.fill(); cx.stroke();
+  if (dragging){
+    cx.strokeStyle='rgba(54,194,168,.9)'; cx.lineWidth=2; cx.setLineDash([3,3]);
+    cx.beginPath(); cx.arc(CX,hdY,22,0,6.29); cx.stroke(); cx.setLineDash([]);
+  }
+}
+
+/* ================= DRAG & DROP ================= */
+function canvasXY(e){
+  var r = cv.getBoundingClientRect();
+  var cxp = (e.touches?e.touches[0].clientX:e.clientX) - r.left;
+  var cyp = (e.touches?e.touches[0].clientY:e.clientY) - r.top;
+  return { x: cxp/r.width*LW, y: cyp/r.height*LH };
+}
+function personPx(){
+  var fy = matY - y*S - 2;
+  var bend = y<0 ? Math.min(1,-y/0.4) : 0;
+  var hipY = fy-46+bend*14, shY = hipY-36, hdY = shY-14;
+  return { x:CX, y:(hdY+hipY)/2 };
+}
+function showToast(msg){
+  var t0 = $('toast'); t0.textContent = msg; t0.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(function(){ t0.classList.remove('show'); }, 2000);
+}
+function onDown(e){
+  if (running) return;
+  var p = canvasXY(e), pp = personPx();
+  if (Math.hypot(p.x-pp.x, p.y-pp.y) < 42){
+    dragging = true; cv.classList.add('dragging'); e.preventDefault();
+  }
+}
+function onMove(e){
+  if (!dragging) return;
+  var p = canvasXY(e);
+  var ny = Math.max(0, Math.min(5.3, pxToY(p.y)));
+  y = ny; v=0; t=0; Q=0;
+  $('rY').textContent = ny.toFixed(2).replace('.',',');
+  draw(); e.preventDefault();
+}
+function onUp(){
+  if (!dragging) return;
+  dragging = false; cv.classList.remove('dragging');
+  if (y >= 4){
+    torn = true; draw();
+    showToast('⚠️ Trambolin yırtıldı! Daha aşağıdan bırak.');
+    setTimeout(function(){ torn=false; newDrop(2); updateUI(true); draw(); }, 2000);
+  } else {
+    newDrop(Math.max(0.1, y));
+    updateUI(true);
+  }
+}
+cv.addEventListener('mousedown', onDown); document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+cv.addEventListener('touchstart', onDown, {passive:false}); document.addEventListener('touchmove', onMove, {passive:false}); document.addEventListener('touchend', onUp);
+
+/* ================= UI / LOOP ================= */
+var fmt = function(x,n){ return x.toLocaleString('tr-TR', {minimumFractionDigits:n, maximumFractionDigits:n}); };
+var COL={k:'var(--k)',pg:'var(--pg)',pe:'var(--pe)',q:'var(--isi)'};
+var tracks={}; ['tK','tPg','tPe','tM','tQ','tT'].forEach(function(id){ tracks[id]=$(id); });
+function seg(id, parts){
+  var el = tracks[id];
+  while (el.children.length < parts.length) el.appendChild(document.createElement('i'));
+  for (var i=0;i<el.children.length;i++){
+    var p = parts[i];
+    el.children[i].style.width = p ? Math.max(0,Math.min(100, p[0]/E0*100))+'%' : '0';
+    if (p) el.children[i].style.background = p[1];
+  }
+}
+function numv(id,val){ $(id).textContent = fmt(Math.abs(val)<0.05?0:val,1)+' J'; }
+var lastText='';
+
+function currentState(){
+  var en = energies();
+  var M = en.M, Mp = M>1e-6 ? M/M : 0; // unused placeholder
+  var Kpct = en.M>1e-6 ? en.K/en.M*100 : 0;
+  var Pgpct = en.M>1e-6 ? en.Pg/en.M*100 : 0;
+  var Pepct = en.M>1e-6 ? en.Pe/en.M*100 : 0;
+  var Mechpct = en.M/E0*100;
+  var Heatpct = en.Q/E0*100;
+  return { y:y, v:v, t:t, mass:mass, gravity:gravity, frictionPct:frictionPct, h0:h0,
+           K:en.K, Pg:en.Pg, Pe:en.Pe, M:en.M, Q:en.Q, E0:E0,
+           Kpct:Kpct, Pgpct:Pgpct, Pepct:Pepct, Mechpct:Mechpct, Heatpct:Heatpct,
+           maxKpct:theoreticalMaxKpct() };
+}
+
+function updateUI(forceText){
+  var s = currentState();
+  $('scaleMax').textContent = Math.round(E0);
+  seg('tK',[[s.K,COL.k]]); seg('tPg',[[s.Pg,COL.pg]]); seg('tPe',[[s.Pe,COL.pe]]);
+  seg('tM',[[s.K,COL.k],[s.Pg,COL.pg],[s.Pe,COL.pe]]);
+  seg('tQ',[[s.Q,COL.q]]);
+  seg('tT',[[s.K,COL.k],[s.Pg,COL.pg],[s.Pe,COL.pe],[s.Q,COL.q]]);
+  numv('vK',s.K); numv('vPg',s.Pg); numv('vPe',s.Pe); numv('vM',s.M); numv('vQ',s.Q); numv('vT',s.M+s.Q);
+  $('rT').textContent = fmt(s.t,1); $('rY').textContent = fmt(Math.max(0,s.y),2); $('rV').textContent = fmt(s.v,1);
+
+  var e1;
+  if (s.t===0 && !running) e1 = 'Kişi '+fmt(h0,2)+' m yükseklikte durgun. Enerjisinin hepsi çekim potansiyel enerjisi olarak depolanmış.';
+  else if (s.y>=0){
+    if (Math.abs(s.v)<0.5 && s.y>0.4) e1='En yüksek nokta: Kinetik enerji çok azaldı, çekim potansiyel enerjisi en fazla.';
+    else if (s.v<0) e1='Düşüyor: Çekim potansiyel enerjisi azalıyor, kinetik enerji artıyor.';
+    else e1='Yükseliyor: Kinetik enerji azalıyor, çekim potansiyel enerjisi artıyor.';
+  } else {
+    if (Math.abs(s.v)<0.4) e1='En alçak nokta: Trambolin en çok esnedi, esneklik potansiyel enerjisi en fazla.';
+    else if (s.v<0) e1='Trambolin esniyor: Kinetik enerji, esneklik potansiyel enerjisine dönüşüyor.';
+    else e1='Trambolin toparlanıyor: Esneklik potansiyel enerjisi, kinetik enerjiye dönüşüyor.';
+  }
+  var e2 = frictionPct>0
+    ? 'Sürtünme açık: Mekanik enerji azalıyor, azalan kısım ısıya dönüşüyor. Mekanik enerji ile ısının toplamı sabit kalıyor.'
+    : 'Sürtünme kapalı: Kinetik ve potansiyel enerjinin toplamı sabit kalıyor. Enerji yalnızca bir türden diğerine dönüşüyor.';
+  var key=e1+e2;
+  if (forceText || key!==lastText){ $('e1').textContent=e1; $('e2').textContent=e2; lastText=key; }
+
+  updateTaskPanel(s);
+  draw();
+}
+
+function loop(ts){
+  if (!running) return;
+  var dt = Math.min(0.05,(ts-last)/1000)*speed; last=ts;
+  var n = Math.max(1, Math.ceil(dt/0.0006)), h=dt/n;
+  for (var i=0;i<n;i++) step(h);
+  updateUI(false);
+  raf = requestAnimationFrame(loop);
+}
+function setRunning(on){
+  running = on;
+  var b = $('btnGo');
+  b.textContent = on ? 'Durdur' : 'Başlat';
+  b.classList.toggle('running', on);
+  if (on){ last=performance.now(); raf=requestAnimationFrame(loop); }
+  else cancelAnimationFrame(raf);
+}
+$('btnGo').addEventListener('click', function(){
+  if (!running){ setRunning(true); }
+  else { setRunning(false); evaluate(); }
+});
+$('btnReset').addEventListener('click', function(){ setRunning(false); newDrop(h0||2); updateUI(true); });
+
+/* ================= TASK PANEL ================= */
+function updateTaskPanel(s){
+  var lv = LEVELS[levelIdx];
+  var val = s[lv.metric];
+  $('taskFill').style.width = Math.max(0,Math.min(100,val))+'%';
+  $('taskVal').textContent = Math.round(val)+'%';
+  $('taskMetricName').textContent = lv.metricName;
+}
+$('btnTasks').addEventListener('click', function(){ $('taskPanel').classList.toggle('open'); });
+
+function loadLevel(i){
+  levelIdx = i;
+  var lv = LEVELS[i];
+  $('lvlNo').textContent = i+1;
+  $('lvlTitlePill').textContent = lv.title.split('—')[1] ? lv.title.split('—')[1].trim() : lv.title;
+  $('taskTitle').textContent = lv.title;
+  $('taskGoal').textContent = lv.goal;
+  setRunning(false);
+  newDrop(2);
+  updateUI(true);
+}
+
+/* ================= EVALUATE ================= */
+function evaluate(){
+  var s = currentState();
+  var lv = LEVELS[levelIdx];
+  var ok = lv.check(s);
+  $('stTitle').textContent = lv.title;
+  $('stVerdict').className = 'verdict ' + (ok?'ok':'bad');
+  $('stVerdict').textContent = ok ? 'Doğru bir şekilde durdurmayı başardın! Yeni seviyeye geçiyorsunuz…' : 'Henüz hedefi yakalayamadın.';
+  $('sT').textContent = fmt(s.t,1)+' s';
+  $('sY').textContent = fmt(Math.max(0,s.y),2)+' m';
+  $('sV').textContent = fmt(s.v,1)+' m/s';
+  $('sMG').textContent = s.mass+' kg / '+s.gravity.toFixed(1)+' N/kg';
+  $('sKPP').textContent = Math.round(s.Kpct)+'% / '+Math.round(s.Pgpct)+'% / '+Math.round(s.Pepct)+'%';
+  $('sMQ').textContent = Math.round(s.Mechpct)+'% / '+Math.round(s.Heatpct)+'%';
+  $('stHint').textContent = ok ? '' : lv.hint;
+  $('btnNextLevel').style.display = ok ? 'inline-block' : 'none';
+  $('btnStatsClose').textContent = ok ? 'Kapat' : 'Devam Et';
+  $('ovStats').classList.add('open');
+  if (ok){
+    clearTimeout(evaluate._tm);
+    evaluate._tm = setTimeout(advanceLevel, 3000);
+  }
+}
+function advanceLevel(){
+  $('ovStats').classList.remove('open');
+  if (levelIdx+1 >= LEVELS.length){ $('ovFinale').classList.add('open'); return; }
+  loadLevel(levelIdx+1);
+}
+$('btnNextLevel').addEventListener('click', function(){ clearTimeout(evaluate._tm); advanceLevel(); });
+$('btnStatsClose').addEventListener('click', function(){ clearTimeout(evaluate._tm); $('ovStats').classList.remove('open'); });
+$('btnRestart').addEventListener('click', function(){ $('ovFinale').classList.remove('open'); loadLevel(0); });
+
+/* ================= MISC UI ================= */
+$('btnInfo').addEventListener('click', function(){ $('infoInner').classList.toggle('open'); });
+$('btnHelp').addEventListener('click', function(){ $('ovTutorial').classList.add('open'); });
+$('btnTutorialOk').addEventListener('click', function(){ $('ovTutorial').classList.remove('open'); });
+window.addEventListener('resize', function(){ fit(); draw(); });
+
+/* ================= INIT ================= */
+fit();
+newDrop(2);
+loadLevel(0);
+$('ovTutorial').classList.add('open');
+})();
+</script>
+</body>
+</html>
