@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7. Sınıf Fen Bilimleri - Enerji Dönüşümü Simülasyonu</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:18px;background:#f3f7fb;color:#172334}
+main{max-width:850px;margin:auto;background:white;padding:18px;border-radius:16px;box-shadow:0 4px 18px #0001}
+h1{font-size:1.45rem;margin:0 0 5px}p.sub{color:#586779;margin-top:0}
+svg{width:100%;border-radius:12px;background:#dff2ff;display:block}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+button{padding:11px 16px;border:0;border-radius:9px;background:#246fc1;color:white;font-weight:bold;font-size:1rem}
+button.secondary{background:#e8eef5;color:#172334}
+label.toggle{display:flex;gap:10px;align-items:center;padding:12px;background:#f1f5f9;border-radius:10px;margin-bottom:14px}
+input{width:19px;height:19px;accent-color:#246fc1}
+.panel{background:#f5f7fa;border-radius:12px;padding:14px;margin-top:14px}
+.barrow{margin:13px 0}.barlabel{display:flex;justify-content:space-between;gap:8px;font-size:.95rem;margin-bottom:5px}
+.track{height:13px;background:#dce3eb;border-radius:20px;overflow:hidden}.fill{height:100%;width:0;border-radius:20px}
+#kinetic{background:#3286db}#potential{background:#2ba66c}#mechanical{background:#9563ce}#heat{background:#e99a39}
+.status{font-size:.95rem}.muted{font-size:.82rem;color:#607080;line-height:1.45}
+.progress{height:9px;background:#dce3eb;border-radius:20px;overflow:hidden;margin-top:8px}.progress>div{height:100%;background:#246fc1;width:0}
+@media(max-width:520px){main{padding:13px}h1{font-size:1.2rem}.barlabel{font-size:.85rem}}
+</style>
+</head>
+<body>
+<main>
+<h1>🏍️ Enerji Dönüşümü Simülasyonu</h1>
+<p class="sub">7. Sınıf Fen Bilimleri · Hareket parkurunda ilerleyen motor</p>
+<svg viewBox="0 0 640 260" role="img" aria-label="Yokuşlu parkurda hareket eden motor">
+<rect width="640" height="260" fill="#dff2ff"/>
+<circle cx="545" cy="42" r="23" fill="#ffd45c"/>
+<path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170 L640 260 L0 260Z" fill="#8acb75"/>
+<path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170" fill="none" stroke="#596d45" stroke-width="7" stroke-linecap="round"/>
+<g fill="#fff" opacity=".8"><circle cx="85" cy="48" r="12"/><circle cx="100" cy="45" r="17"/><circle cx="117" cy="50" r="11"/></g>
+<g id="motor" transform="translate(30 187)">
+<circle cx="-13" cy="8" r="9" fill="#202b35" stroke="#fff" stroke-width="2"/><circle cx="19" cy="8" r="9" fill="#202b35" stroke="#fff" stroke-width="2"/>
+<path d="M-13 8 L-2 -5 L12 8 L-13 8 M-2 -5 L8 -8 L19 8" stroke="#d33d32" stroke-width="4" fill="none" stroke-linejoin="round"/>
+<path d="M-4 -6 L-10 -16 L7 -16 L15 -7" stroke="#27394d" stroke-width="5" fill="none" stroke-linecap="round"/>
+<circle cx="0" cy="-21" r="7" fill="#f0bd87"/><path d="M-7 -23 Q-5 -34 7 -29 L9 -21" fill="#25364a"/>
+</g>
+<text x="15" y="235" font-size="11" fill="#36543a">Başlangıç</text><text x="520" y="222" font-size="11" fill="#36543a">Parkur sonu</text>
+</svg>
+<div class="controls">
+<button id="start">▶ Başlat</button><button id="stop" class="secondary">Ⅱ Durdur</button><button id="reset" class="secondary">↻ Sıfırla</button>
+</div>
+<label class="toggle"><input type="checkbox" id="friction"><b>Sürtünmeyi aç</b><span class="muted">Isı enerjisi oluşur</span></label>
+<section class="panel">
+<div class="barlabel"><b>Enerji değerleri</b><b id="total">Toplam: 1000 J</b></div>
+<div class="barrow"><div class="barlabel"><span>🔵 Kinetik enerji</span><b id="kv">880 J</b></div><div class="track"><div class="fill" id="kinetic"></div></div></div>
+<div class="barrow"><div class="barlabel"><span>🟢 Çekim potansiyel enerjisi</span><b id="pv">120 J</b></div><div class="track"><div class="fill" id="potential"></div></div></div>
+<div class="barrow"><div class="barlabel"><span>🟣 Mekanik enerji</span><b id="mv">1000 J</b></div><div class="track"><div class="fill" id="mechanical"></div></div></div>
+<div class="barrow"><div class="barlabel"><span>🟠 Isıya dönüşen enerji</span><b id="hv">0 J</b></div><div class="track"><div class="fill" id="heat"></div></div></div>
+<hr style="border:0;border-top:1px solid #dce3eb">
+<div class="barlabel"><b>Toplam enerji</b><b id="sum">1000 J</b></div>
+</section>
+<section class="panel">
+<div class="status"><b>Motorun durumu:</b> <span id="status">Başlangıç noktasında.</span></div>
+<div class="muted" style="margin-top:8px">Parkur ilerlemesi: <span id="progressText">0%</span></div>
+<div class="progress"><div id="progressBar"></div></div>
+</section>
+<p class="muted">Model açıklaması: Başlangıç toplam enerjisi 1000 J'dür. Sürtünme kapalıyken kinetik ve potansiyel enerjinin toplamı sabit kalır. Sürtünme açıldığında mekanik enerjinin bir kısmı ısı enerjisine dönüşür. Dışarıdan enerji verilmez. Sıfırla düğmesi motoru aynı başlangıç konumuna ve başlangıç enerjisine döndürür.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);let t=0,running=false,friction=false,last=0,raf=0;
+const total=1000;
+function height(x){return .12+.72*Math.pow(Math.sin(Math.PI*x),2)}
+function draw(){
+ const h=height(t),heat=friction?Math.min(420,t*420):0,mech=total-heat,pe=mech*h,ke=mech-pe;
+ const vals={kv:ke,pv:pe,mv:mech,hv:heat};
+ for(const [id,v] of Object.entries(vals))$(id).textContent=Math.round(v)+' J';
+ for(const [id,v] of Object.entries({kinetic:ke,potential:pe,mechanical:mech,heat}))$(id).style.width=(v/total*100)+'%';
+ $('total').textContent='Toplam: '+total+' J';$('sum').textContent=Math.round(ke+pe+heat)+' J';
+ $('progressText').textContent=Math.round(t*100)+'%';$('progressBar').style.width=(t*100)+'%';
+ const px=30+580*t,py=200-95*Math.sin(Math.PI*t)*.85;$('motor').setAttribute('transform',`translate(${px} ${py})`);
+ $('status').textContent=t===0?'Başlangıç noktasında.':t>=1?'Motor parkurun sonuna ulaştı.':friction?'Sürtünme nedeniyle enerji ısıya dönüşüyor.':'Motor hareket ediyor; enerji dönüşümü sürüyor.';
+}
+function frame(now){if(!running)return;const dt=Math.min((now-last)/1000,.05);last=now;t=Math.min(1,t+dt*.12);draw();if(t>=1){running=false;return}raf=requestAnimationFrame(frame)}
+$('start').onclick=()=>{if(running)return;if(t>=1)t=0;running=true;last=performance.now();raf=requestAnimationFrame(frame)};
+$('stop').onclick=()=>{running=false;cancelAnimationFrame(raf);draw()};
+$('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);t=0;draw()};
+$('friction').onchange=e=>{friction=e.target.checked;draw()};
+draw();
+</script>
+</body>
+</html>
