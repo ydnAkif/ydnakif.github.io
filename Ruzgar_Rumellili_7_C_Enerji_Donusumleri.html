@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -13,13 +14,11 @@ header{margin-bottom:16px}
 h1{font-size:clamp(24px,4vw,34px);margin:0 0 8px}
 header p{color:var(--muted);margin:0;line-height:1.5}
 .panel{background:white;border-radius:16px;padding:16px;box-shadow:0 5px 22px #24385812;margin-bottom:16px}
-.stage-wrap{position:relative}
 canvas{display:block;width:100%;height:auto;border-radius:12px;background:linear-gradient(#eaf5ff,#fbfdff);border:1px solid #d9e5f3}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
 button{border:0;border-radius:10px;padding:11px 17px;font-weight:700;font-size:15px;cursor:pointer;background:#e9eff8;color:var(--ink)}
 button.primary{background:var(--blue);color:white}
 button:hover{filter:brightness(.96)}
-button:focus-visible,input:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
 .toggle{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f2f5fa;border-radius:10px;font-weight:700}
 .toggle input{width:18px;height:18px;accent-color:var(--blue)}
 .status{margin-left:auto;color:var(--muted);font-size:14px;font-weight:700}
@@ -45,9 +44,7 @@ h2{font-size:19px;margin:0 0 14px}
 </header>
 
 <section class="panel">
-<div class="stage-wrap">
 <canvas id="scene" width="1000" height="430" aria-label="U şeklindeki rampada hareket eden kaykaycı animasyonu"></canvas>
-</div>
 <div class="controls">
 <button class="primary" id="playBtn">▶ Başlat</button>
 <button id="resetBtn">↺ Sıfırla</button>
@@ -65,7 +62,7 @@ h2{font-size:19px;margin:0 0 14px}
 <div class="grid">
 <section class="panel">
 <h2>Enerji değerleri</h2>
-<div class="bars" id="bars">
+<div class="bars">
 <div><div class="bar-head"><span>Kinetik enerji</span><span id="kinVal">0 J</span></div><div class="track"><div class="fill kin" id="kinBar"></div></div></div>
 <div><div class="bar-head"><span>Çekim potansiyel enerjisi</span><span id="potVal">0 J</span></div><div class="track"><div class="fill pot" id="potBar"></div></div></div>
 <div><div class="bar-head"><span>Mekanik enerji (K + P)</span><span id="mechVal">0 J</span></div><div class="track"><div class="fill mech" id="mechBar"></div></div></div>
@@ -93,21 +90,25 @@ const left=110,right=890,bottom=340,top=95;
 const g=9.81, mass=1, maxHeight=10, totalStart=100;
 let x=left, v=0, running=false, friction=false, heat=0, last=0, raf=0;
 const startX=left, startV=0;
+
 const heightAt = px => {
   const u=(px-left)/(right-left);
   return 1.5 + 8.5*Math.pow(Math.abs(2*u-1),2.15);
 };
 const yAt = px => bottom - (heightAt(px)/maxHeight)*(bottom-top);
+
 function energy(){
   const h=heightAt(x);
   const p=totalStart*h/maxHeight;
   const k=Math.max(0,totalStart-heat-p);
-  return {p,k,mech:p+k,heat,total: p+k+heat};
+  return {p,k,mech:p+k,heat,total:p+k+heat};
 }
+
 function setBar(name,val){
   $(name+'Val').textContent=Math.round(val)+' J';
   $(name+'Bar').style.width=Math.max(0,Math.min(100,val/totalStart*100))+'%';
 }
+
 function explain(e){
   const ratio=heightAt(x)/maxHeight;
   if(friction && heat>1){
@@ -125,16 +126,19 @@ function explain(e){
    ? 'Sürtünme açık: mekanik enerji azalırken ısı enerjisi artar. Mekanik + ısı enerjisi toplamı 100 J kalır.'
    : 'Sürtünme kapalı: kinetik + potansiyel enerji (mekanik enerji) 100 J sabit kalır.';
 }
+
 function draw(){
   ctx.clearRect(0,0,W,H);
-  // sky and ground
   ctx.fillStyle='#eaf5ff';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#dff1df';ctx.fillRect(0,bottom+38,W,H-bottom-38);
-  // guide lines
+
   ctx.strokeStyle='#d4e2f1';ctx.lineWidth=1;ctx.setLineDash([5,7]);
-  for(let i=1;i<=4;i++){let yy=bottom-i*(bottom-top)/5;ctx.beginPath();ctx.moveTo(65,yy);ctx.lineTo(935,yy);ctx.stroke()}
+  for(let i=1;i<=4;i++){
+    let yy=bottom-i*(bottom-top)/5;
+    ctx.beginPath();ctx.moveTo(65,yy);ctx.lineTo(935,yy);ctx.stroke();
+  }
   ctx.setLineDash([]);
-  // ramp
+
   ctx.beginPath();ctx.moveTo(left-28,yAt(left)-3);
   for(let px=left-28;px<=right+28;px+=4){
     const clamped=Math.max(left,Math.min(right,px));
@@ -143,80 +147,118 @@ function draw(){
   ctx.lineTo(right+28,yAt(right)-3);
   ctx.strokeStyle='#34445c';ctx.lineWidth=12;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
   ctx.strokeStyle='#91a4bc';ctx.lineWidth=3;ctx.stroke();
-  // height labels
+
   ctx.fillStyle='#52647e';ctx.font='bold 16px Arial';
-  ctx.fillText('Yükseklik',24,45);ctx.fillText('En alt nokta',435,390);
-  ctx.fillText('Başlangıç',left-45,70);ctx.fillText('Karşı taraf',right-35,70);
-  // little energy arrows
+  ctx.fillText('Yükseklik',24,45);
+  ctx.fillText('En alt nokta',435,390);
+  ctx.fillText('Başlangıç',left-45,70);
+  ctx.fillText('Karşı taraf',right-35,70);
+
   const e=energy();
   ctx.fillStyle='#f39a32';ctx.font='bold 17px Arial';
   if(heightAt(x)>7)ctx.fillText('Potansiyel enerji yüksek',610,35);
   else if(x>left+300&&x<right-300)ctx.fillText('Kinetik enerji yüksek',390,35);
-  // skateboarder
+
   const yy=yAt(x)-18;
   ctx.save();ctx.translate(x,yy);
   ctx.fillStyle='#f5a623';ctx.beginPath();ctx.arc(0,-24,11,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle='#26364d';ctx.lineWidth=6;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(0,10);ctx.moveTo(0,-4);ctx.lineTo(-14,5);ctx.moveTo(0,-4);ctx.lineTo(14,3);ctx.moveTo(0,10);ctx.lineTo(-11,22);ctx.moveTo(0,10);ctx.lineTo(12,20);ctx.stroke();
-  ctx.strokeStyle='#2878d0';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-23,24);ctx.lineTo(23,24);ctx.stroke();
-  ctx.fillStyle='#27364b';ctx.beginPath();ctx.arc(-15,29,5,0,Math.PI*2);ctx.arc(15,29,5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0,-12);ctx.lineTo(0,10);
+  ctx.moveTo(0,-4);ctx.lineTo(-14,5);
+  ctx.moveTo(0,-4);ctx.lineTo(14,3);
+  ctx.moveTo(0,10);ctx.lineTo(-11,22);
+  ctx.moveTo(0,10);ctx.lineTo(12,20);
+  ctx.stroke();
+  ctx.strokeStyle='#2878d0';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(-23,24);ctx.lineTo(23,24);ctx.stroke();
+  ctx.fillStyle='#27364b';ctx.beginPath();
+  ctx.arc(-15,29,5,0,Math.PI*2);
+  ctx.arc(15,29,5,0,Math.PI*2);ctx.fill();
   ctx.restore();
-  // small position marker
-  ctx.fillStyle='#2878d0';ctx.beginPath();ctx.arc(x,yAt(x)+2,5,0,Math.PI*2);ctx.fill();
-  // status info
+
+  ctx.fillStyle='#2878d0';ctx.beginPath();
+  ctx.arc(x,yAt(x)+2,5,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#25354c';ctx.font='bold 15px Arial';
   ctx.fillText('Kaykaycı',x-32,yy-46);
   ctx.fillStyle='#64748b';ctx.font='14px Arial';
   ctx.fillText('U şeklindeki motorsuz pist',390,420);
 }
+
 function updateUI(){
  const e=energy();
- setBar('kin',e.k);setBar('pot',e.p);setBar('mech',e.mech);setBar('heat',e.heat);setBar('total',e.total);
- explain(e);draw();
+ setBar('kin',e.k);
+ setBar('pot',e.p);
+ setBar('mech',e.mech);
+ setBar('heat',e.heat);
+ setBar('total',e.total);
+ explain(e);
+ draw();
 }
-function stop(){running=false;cancelAnimationFrame(raf);$('playBtn').textContent='▶ Başlat';$('status').textContent='Durum: Duraklatıldı'}
+
+function stop(){
+ running=false;
+ cancelAnimationFrame(raf);
+ $('playBtn').textContent='▶ Başlat';
+ $('status').textContent='Durum: Duraklatıldı';
+}
+
 function tick(ts){
  if(!running)return;
  if(!last)last=ts;
- let dt=Math.min((ts-last)/1000,.035);last=ts;
- const h=heightAt(x);
+ let dt=Math.min((ts-last)/1000,.035);
+ last=ts;
+
  const dhdx=(heightAt(Math.min(right,x+1))-heightAt(Math.max(left,x-1)))/Math.max(1,Math.min(right,x+1)-Math.max(left,x-1));
  const accel=-0.95*dhdx*5.2;
  let a=accel;
  if(friction && Math.abs(v)>.05)a-=Math.sign(v)*1.05;
+
  v+=a*dt;
  const oldX=x;
  x+=v*dt*42;
+
  if(x<left){x=left;v=Math.abs(v)*.92}
  if(x>right){x=right;v=-Math.abs(v)*.92}
- // Simple energy accounting: friction converts a small portion of mechanical energy to heat.
+
  if(friction){
    const travelled=Math.abs(x-oldX);
    heat=Math.min(totalStart-2,heat+travelled*.018);
  }
- // If no friction, the model uses conservation of mechanical energy.
  if(!friction)heat=0;
+
  updateUI();
  if(friction && heat>=totalStart-2){v=0}
  $('status').textContent='Durum: Hareket ediyor';
  raf=requestAnimationFrame(tick);
 }
+
 function reset(){
- stop();last=0;x=startX;v=startV;heat=0;
+ stop();
+ last=0;
+ x=startX;
+ v=startV;
+ heat=0;
  $('status').textContent='Durum: Başlangıç konumu';
  updateUI();
 }
+
 $('playBtn').addEventListener('click',()=>{
  if(running){stop();return}
- running=true;last=0;$('playBtn').textContent='Ⅱ Durdur';$('status').textContent='Durum: Hareket ediyor';
+ running=true;
+ last=0;
+ $('playBtn').textContent='Ⅱ Durdur';
+ $('status').textContent='Durum: Hareket ediyor';
  raf=requestAnimationFrame(tick);
 });
+
 $('resetBtn').addEventListener('click',reset);
+
 $('friction').addEventListener('change',e=>{
  friction=e.target.checked;
- // Changing the setting does not reset the run; use Reset for identical trial conditions.
  updateUI();
 });
+
 reset();
 })();
 </script>
