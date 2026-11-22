@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hız Treni Enerji Dönüşümleri</title>
+<style>
+  :root {
+    --bg1: #0b1026; --bg2: #1b1446;
+    --card: rgba(255,255,255,.07); --card-line: rgba(255,255,255,.14);
+    --text: #e8eaf6; --muted: #a5accf;
+    --k: #34d399; --p: #a78bfa; --m: #38bdf8; --q: #fb923c; --t: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px 14px 30px;
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #3b2a8f55, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #be185d33, transparent 60%),
+      linear-gradient(180deg, var(--bg1), var(--bg2));
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  h1 {
+    margin: 0; font-size: clamp(22px, 4.2vw, 34px); letter-spacing: .3px;
+    background: linear-gradient(90deg, #fde68a, #fb923c 45%, #f472b6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--card-line); color: var(--muted); }
+  .chip b { color: var(--text); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--card-line);
+    border-radius: 18px; padding: 14px; margin-bottom: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    backdrop-filter: blur(6px);
+  }
+  .card h3 { margin: 0 0 10px; font-size: 16px; letter-spacing: .3px; }
+  canvas { touch-action: none; width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  button {
+    font: inherit; font-size: 15px; font-weight: 700; color: #fff;
+    border: none; border-radius: 999px; padding: 10px 20px; cursor: pointer;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    box-shadow: 0 6px 14px rgba(59,130,246,.35);
+    transition: transform .08s ease, filter .15s ease;
+  }
+  button:hover { filter: brightness(1.12); }
+  button:active { transform: translateY(1px) scale(.98); }
+  button.go { background: linear-gradient(135deg, #10b981, #22c55e); box-shadow: 0 6px 14px rgba(16,185,129,.35); }
+  button.stop { background: linear-gradient(135deg, #f59e0b, #ef4444); box-shadow: 0 6px 14px rgba(239,68,68,.35); }
+  button.sec { background: rgba(255,255,255,.12); box-shadow: none; border: 1px solid var(--card-line); }
+  button.small { font-size: 13px; padding: 7px 13px; }
+  button.tool.active { background: linear-gradient(135deg, #f59e0b, #f97316); border-color: transparent; box-shadow: 0 4px 12px rgba(249,115,22,.45); }
+  .legend { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 26px; height: 8px; border-radius: 4px; background: repeating-linear-gradient(90deg, #9a3412 0 4px, #fed7aa 4px 6px); }
+
+  .switch { display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border-radius: 999px; background: rgba(251,146,60,.12); border: 1px solid rgba(251,146,60,.5); cursor: pointer; font-weight: 700; font-size: 14px; user-select: none; }
+  .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .knob { width: 46px; height: 26px; border-radius: 999px; background: #475569; position: relative; transition: background .2s; flex: none; }
+  .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 2px 4px rgba(0,0,0,.4); }
+  .switch input:checked + .knob { background: linear-gradient(135deg, #fb923c, #ef4444); }
+  .switch input:checked + .knob::after { transform: translateX(20px); }
+  .switch input:focus-visible + .knob { outline: 2px solid #fde68a; outline-offset: 2px; }
+
+  label.opt { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  select { font: inherit; font-size: 13px; color: var(--text); background: rgba(255,255,255,.1); border: 1px solid var(--card-line); border-radius: 10px; padding: 6px 8px; }
+  select option { color: #111827; }
+  input[type=range] { accent-color: #a78bfa; }
+  .opt b { color: var(--text); min-width: 52px; display: inline-block; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 860px) { .grid { grid-template-columns: 1.3fr 1fr; } .grid .card { margin-bottom: 0; } }
+  .grid { margin-bottom: 14px; }
+
+  .info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .info div { background: rgba(0,0,0,.25); border: 1px solid var(--card-line); border-radius: 12px; padding: 8px 6px; text-align: center; font-size: 12px; color: var(--muted); }
+  .info b { display: block; margin-top: 2px; font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .bar-row { display: grid; grid-template-columns: 158px 1fr 86px; gap: 10px; align-items: center; margin: 9px 0; }
+  @media (max-width: 520px) { .bar-row { grid-template-columns: 1fr 74px; } .bar-row .bar-label { grid-column: 1 / -1; } .bar-row .track { grid-column: 1; } }
+  .bar-label { font-size: 14px; line-height: 1.2; }
+  .bar-label b { display: flex; align-items: center; gap: 7px; }
+  .bar-label i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .bar-label span { display: block; font-size: 11px; color: var(--muted); margin: 2px 0 0 17px; }
+  .track { display: flex; background: rgba(0,0,0,.35); border-radius: 999px; height: 20px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,.4); }
+  .fill { height: 100%; width: 0%; }
+  .val { text-align: right; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .c-k { background: linear-gradient(90deg, #10b981, var(--k)); }
+  .c-p { background: linear-gradient(90deg, #7c3aed, var(--p)); }
+  .c-m { background: linear-gradient(90deg, #0284c7, var(--m)); }
+  .c-q { background: linear-gradient(90deg, #ea580c, var(--q)); }
+  .c-t { background: linear-gradient(90deg, #cbd5e1, var(--t)); }
+  .d-k { background: var(--k); } .d-p { background: var(--p); } .d-m { background: var(--m); } .d-q { background: var(--q); } .d-t { background: var(--t); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .bubble { background: rgba(0,0,0,.25); border: 1px solid var(--card-line); border-radius: 16px; padding: 14px; font-size: 16px; line-height: 1.5; min-height: 100px; }
+  .l2 { margin-top: 10px; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; background: rgba(251,146,60,.16); border: 1px solid rgba(251,146,60,.45); color: #fed7aa; }
+  .l2.off { background: rgba(52,211,153,.13); border-color: rgba(52,211,153,.4); color: #a7f3d0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; overflow: hidden; border-radius: 10px; }
+  th, td { padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--card-line); font-variant-numeric: tabular-nums; }
+  th { background: rgba(255,255,255,.1); color: var(--muted); font-weight: 700; }
+  td.tag { font-weight: 700; }
+  td.tag.on { color: #fdba74; } td.tag.off { color: #6ee7b7; }
+  .hint { font-size: 13px; color: var(--muted); margin: 0 0 10px; line-height: 1.5; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎢 Hız Treni: Enerji Dönüşümleri</h1>
+    <div class="chips">
+      <span class="chip">Hazırlayan: <b>Uygar Doğrular – 7C</b></span>
+      <span class="chip">Fen Bilimleri · 2. Ünite</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <canvas id="cv" width="960" height="420"></canvas>
+    <div class="controls">
+      <button id="btnRun" class="go">▶ Başlat</button>
+      <button id="btnReset" class="sec">↺ Sıfırla</button>
+      <button id="btnDefault" class="sec small" title="Treni ilk yerine, 20 m yüksekliğe geri koy">📍 İlk yere koy</button>
+      <label class="switch" title="Sürtünmeyi aç veya kapat">
+        <input type="checkbox" id="chkFr">
+        <span class="knob"></span>
+        <span>🔥 Sürtünme: <span id="frTxt">KAPALI</span></span>
+      </label>
+      <label class="opt">Hız
+        <select id="selSpeed">
+          <option value="1">Normal</option>
+          <option value="0.4">Ağır çekim</option>
+        </select>
+      </label>
+      <label class="opt">Tren kütlesi
+        <input type="range" id="rngMass" min="50" max="200" step="10" value="100">
+        <b id="massTxt">100 kg</b>
+      </label>
+    </div>
+    <div class="controls">
+      <span class="opt">🛤️ Pist araçları:</span>
+      <button id="tMove" class="tool sec small active">✋ Treni taşı</button>
+      <button id="tPaint" class="tool sec small">🖌️ Sürtünme çiz</button>
+      <button id="tErase" class="tool sec small">🧽 Sil</button>
+      <button id="tClear" class="tool sec small">🗑️ Hepsini temizle</button>
+      <span class="legend"><i></i> Şeritli yer = sürtünmeli bölge</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>📊 Enerji göstergeleri</h3>
+      <div class="info">
+        <div>⏱ Süre<b id="iT">0,0 s</b></div>
+        <div>📏 Yükseklik<b id="iH">0 m</b></div>
+        <div>💨 Hız<b id="iV">0 m/s</b></div>
+      </div>
+      <div class="bar-row"><div class="bar-label"><b><i class="d-k"></i>Kinetik enerji</b><span>Ek = ½ · m · v²</span></div><div class="track"><div class="fill c-k" id="bK"></div></div><div class="val" id="vK">0 J</div></div>
+      <div class="bar-row"><div class="bar-label"><b><i class="d-p"></i>Çekim potansiyel enerjisi</b><span>Ep = m · g · h</span></div><div class="track"><div class="fill c-p" id="bP"></div></div><div class="val" id="vP">0 J</div></div>
+      <div class="bar-row"><div class="bar-label"><b><i class="d-m"></i>Mekanik enerji</b><span>Kinetik + Potansiyel</span></div><div class="track"><div class="fill c-m" id="bM"></div></div><div class="val" id="vM">0 J</div></div>
+      <div class="bar-row"><div class="bar-label"><b><i class="d-q"></i>Isıya dönüşen enerji</b><span>Sürtünmeden</span></div><div class="track"><div class="fill c-q" id="bQ"></div></div><div class="val" id="vQ">0 J</div></div>
+      <div class="bar-row"><div class="bar-label"><b><i class="d-t"></i>Toplam enerji</b><span>Mekanik (mavi) + Isı (turuncu)</span></div><div class="track"><div class="fill c-m" id="bTm"></div><div class="fill c-q" id="bTq"></div></div><div class="val" id="vT">0 J</div></div>
+      <div class="note">Bu pistte yay veya lastik yok, bu yüzden esneklik potansiyel enerjisi yoktur. Motor da yok: tren en yüksek noktadan serbest bırakılır. Basit model: hava direnci ve ses ihmal edilir. g = 10 N/kg.<br>Treni tutup pistte istediğin yere bırakabilirsin. Bıraktığın yer yeni başlangıç yeri olur: toplam enerji, treni koyduğun yüksekliğe göre hesaplanır ve Sıfırla treni oraya geri getirir. İki denemede treni aynı yere koy.<br>"🖌️ Sürtünme çiz" ile pistin istediğin yerlerini sürtünmeli yapabilirsin (şeritli bölgeler). Tren oralardan geçerken enerjisinin bir kısmı ısıya dönüşür. "🧽 Sil" ile bölgeyi silebilir, "✋ Treni taşı" ile treni tutmaya geri dönebilirsin.</div>
+    </div>
+
+    <div class="card">
+      <h3>💬 Şu anda ne oluyor?</h3>
+      <div class="bubble">
+        <div id="txt1"></div>
+        <div class="l2 off" id="txt2"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📝 Deneme kayıtları</h3>
+    <p class="hint">Oyunu durdur, sonra "Değerleri kaydet" düğmesine bas. Önce sürtünme kapalıyken, sonra Sıfırla ve sürtünme açıkken aynı yerde (örneğin 10 saniyede) kayıt al. Değerleri karşılaştır.</p>
+    <div class="row">
+      <button id="btnSnap" class="small">📌 Değerleri kaydet</button>
+      <button id="btnClear" class="small sec">Kayıtları temizle</button>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Sürtünme</th><th>Süre (s)</th><th>Kinetik (J)</th><th>Potansiyel (J)</th><th>Mekanik (J)</th><th>Isı (J)</th><th>Toplam (J)</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function () {
+// PHYSICS-START
+const G = 10;          // N/kg
+const MU = 0.06;       // sürtünme katsayısı (sürtünme açıkken)
+const XL = 100;        // pist uzunluğu (m)
+const START_H = 20;    // başlangıç yüksekliği (m)
+const STEP = 10;       // kontrol noktaları arası yatay uzaklık (m)
+const HP = [28, 16, 5, 3, 9, 13, 8, 4, 8, 15, 28]; // pist yükseklikleri (m)
+
+// Elle çizilen sürtünmeli bölgeler: pist 1 m'lik 100 parçaya bölünür
+const MU_ROUGH = 0.2;                 // sürtünmeli (pürüzlü) bölgenin katsayısı
+const CELLS = 100;
+const rough = new Array(CELLS).fill(false);
+function cellOf(x) { return Math.max(0, Math.min(CELLS - 1, Math.floor(x * CELLS / XL))); }
+function roughAny() { return rough.some(Boolean); }
+
+function node(i) {
+  const n = HP.length;
+  if (i === 0) return (HP[1] - HP[0]) / STEP;
+  if (i === n - 1) return (HP[n - 1] - HP[n - 2]) / STEP;
+  return (HP[i + 1] - HP[i - 1]) / (2 * STEP);
+}
+function seg(x) {
+  let i = Math.floor(x / STEP);
+  if (i < 0) i = 0;
+  if (i > HP.length - 2) i = HP.length - 2;
+  return i;
+}
+function h(x) {
+  const i = seg(x), t = (x - i * STEP) / STEP, t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * HP[i] + (t3 - 2 * t2 + t) * STEP * node(i) +
+         (-2 * t3 + 3 * t2) * HP[i + 1] + (t3 - t2) * STEP * node(i + 1);
+}
+function dh(x) {
+  const i = seg(x), t = (x - i * STEP) / STEP, t2 = t * t;
+  return ((6 * t2 - 6 * t) * HP[i] + (3 * t2 - 4 * t + 1) * STEP * node(i) +
+          (-6 * t2 + 6 * t) * HP[i + 1] + (3 * t2 - 2 * t) * STEP * node(i + 1)) / STEP;
+}
+function findStartX() {
+  let a = 0, b = STEP;
+  for (let k = 0; k < 60; k++) { const mid = (a + b) / 2; if (h(mid) > START_H) a = mid; else b = mid; }
+  return (a + b) / 2;
+}
+const DEFAULT_X = findStartX();
+let startX = DEFAULT_X;   // trenin başlangıç yeri (kullanıcı değiştirebilir)
+const sim = { x: DEFAULT_X, v: 0, Q: 0, t: 0, m: 100, friction: false, stopped: false };
+
+function resetSim() { sim.x = startX; sim.v = 0; sim.Q = 0; sim.t = 0; sim.stopped = false; }
+
+// Treni pistte istenen yere koy: orası yeni başlangıç yeri olur
+function placeTrain(x) {
+  startX = Math.max(0, Math.min(XL, x));
+  resetSim();
+}
+
+// Bulunulan yerdeki sürtünme katsayısı: çizilmiş bölgede MU_ROUGH, değilse genel ayara bağlı
+function muAt(x) { return rough[cellOf(x)] ? MU_ROUGH : (sim.friction ? MU : 0); }
+
+function forces(x) {
+  const s = dh(x), den = Math.sqrt(1 + s * s);
+  return { sin: s / den, cos: 1 / den, ag: -G * (s / den), fr: muAt(x) * G / den };
+}
+
+function startEnergy() { return sim.m * G * h(startX); }
+
+function stepSim(dt) {
+  const f = forces(sim.x);
+  const v = sim.v;
+  let vn;
+  if (v === 0) {
+    vn = Math.abs(f.ag) > f.fr ? (f.ag - f.fr * Math.sign(f.ag)) * dt : 0;
+  } else {
+    vn = v + (f.ag - f.fr * Math.sign(v)) * dt;
+    if (vn * v <= 0) vn = Math.abs(f.ag) > f.fr ? vn : 0;
+  }
+  sim.x += vn * f.cos * dt;
+  sim.v = vn;
+  sim.Q += sim.m * f.fr * Math.abs(vn) * dt;   // sürtünmenin yaptığı iş = ısıya dönüşen enerji
+  sim.t += dt;
+  // Sayısal hesaptan doğan çok küçük kaymayı düzelt: kinetik = başlangıç enerjisi - potansiyel - ısı
+  // (yalnızca tren yeterince hızlıyken ve yön değiştirmemişken uygulanır)
+  if (Math.abs(sim.v) > 0.3 && Math.sign(sim.v) === Math.sign(v)) {
+    const Kt = startEnergy() - sim.m * G * h(sim.x) - sim.Q;
+    if (Kt > 0) sim.v = Math.sign(sim.v) * Math.sqrt(2 * Kt / sim.m);
+  }
+  if (sim.x < 0) { sim.x = 0; sim.v = 0; }
+  if (sim.x > XL) { sim.x = XL; sim.v = 0; }
+  const g2 = forces(sim.x);
+  sim.stopped = (sim.v === 0 && Math.abs(g2.ag) <= g2.fr && g2.fr > 0);
+}
+
+function energies() {
+  const K = 0.5 * sim.m * sim.v * sim.v;
+  const P = sim.m * G * h(sim.x);
+  return { K: K, P: P, M: K + P, Q: sim.Q, T: K + P + sim.Q };
+}
+// PHYSICS-END
+
+// ---------- Ekran ----------
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height, PL = 30, PR = 30, PT = 24, PB = 46;
+const px = function (x) { return PL + x * (W - PL - PR) / XL; };
+const py = function (hh) { return H - PB - hh * (H - PT - PB) / 30; };
+const GROUND_Y = H - PB + 10;
+
+const el = function (id) { return document.getElementById(id); };
+const btnRun = el('btnRun'), chkFr = el('chkFr');
+let running = false, speedFactor = 1, dragging = false;
+let mode = 'move', painting = false, hoverX = null, lastPX = null;
+
+function fmt(n) { return Math.round(n).toLocaleString('tr-TR'); }
+function fmt1(n) { return n.toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+
+function display() {
+  const e = energies();
+  const Md = Math.round(e.M);
+  const Kd = Math.round(e.K);
+  const Pd = Md - Kd;
+  const Td = Math.round(e.T);
+  const Qd = Td - Md;
+  return { K: Kd, P: Pd, M: Md, Q: Qd, T: Td };
+}
+
+// yuvarlatılmış dikdörtgen
+function rr(x, y, w, hh, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + hh, r);
+  ctx.arcTo(x + w, y + hh, x, y + hh, r);
+  ctx.arcTo(x, y + hh, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ---------- Arka plan (bir kez çizilir) ----------
+const bg = document.createElement('canvas');
+bg.width = W; bg.height = H;
+(function drawBackground() {
+  const c = bg.getContext('2d');
+  const sky = c.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#1b1446');
+  sky.addColorStop(0.45, '#5b2a9e');
+  sky.addColorStop(0.78, '#f06292');
+  sky.addColorStop(1, '#ffb27a');
+  c.fillStyle = sky; c.fillRect(0, 0, W, H);
+
+  // yıldızlar (sabit sahte rastgele)
+  let seed = 7;
+  const rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 70; i++) {
+    const sx = rnd() * W, sy = rnd() * H * 0.5, sr = 0.5 + rnd() * 1.4;
+    c.fillStyle = 'rgba(255,255,255,' + (0.35 + rnd() * 0.55) + ')';
+    c.beginPath(); c.arc(sx, sy, sr, 0, Math.PI * 2); c.fill();
+  }
+
+  // güneş
+  const sg = c.createRadialGradient(800, 290, 10, 800, 290, 120);
+  sg.addColorStop(0, 'rgba(255,240,170,.95)');
+  sg.addColorStop(0.35, 'rgba(255,190,110,.6)');
+  sg.addColorStop(1, 'rgba(255,150,100,0)');
+  c.fillStyle = sg; c.beginPath(); c.arc(800, 290, 120, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffe9a8'; c.beginPath(); c.arc(800, 290, 40, 0, Math.PI * 2); c.fill();
+
+  // bulutlar
+  const cloud = function (cx, cy, s, a) {
+    c.fillStyle = 'rgba(255,255,255,' + a + ')';
+    [[0, 0, 26], [28, -8, 22], [54, 0, 24], [26, 8, 24]].forEach(function (p) {
+      c.beginPath(); c.arc(cx + p[0] * s, cy + p[1] * s, p[2] * s, 0, Math.PI * 2); c.fill();
+    });
+  };
+  cloud(120, 90, 0.8, 0.18); cloud(660, 70, 1, 0.14); cloud(380, 140, 0.6, 0.12);
+
+  // uzak tepeler
+  c.fillStyle = 'rgba(76,29,149,.75)';
+  c.beginPath(); c.moveTo(0, H);
+  for (let x = 0; x <= W; x += 10) c.lineTo(x, 300 + Math.sin(x / 90) * 22 + Math.sin(x / 37) * 7);
+  c.lineTo(W, H); c.closePath(); c.fill();
+
+  // dönme dolap silueti
+  const wx = 520, wy = 170, wr = 66;
+  c.strokeStyle = 'rgba(30,20,80,.75)'; c.lineWidth = 3;
+  c.beginPath(); c.arc(wx, wy, wr, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.arc(wx, wy, wr * 0.55, 0, Math.PI * 2); c.stroke();
+  c.lineWidth = 2;
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6;
+    c.beginPath(); c.moveTo(wx, wy); c.lineTo(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr); c.stroke();
+    c.fillStyle = 'rgba(255,214,102,.85)';
+    c.beginPath(); c.arc(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr, 4.5, 0, Math.PI * 2); c.fill();
+  }
+  c.strokeStyle = 'rgba(30,20,80,.75)'; c.lineWidth = 4;
+  c.beginPath(); c.moveTo(wx, wy); c.lineTo(wx - 46, 330); c.moveTo(wx, wy); c.lineTo(wx + 46, 330); c.stroke();
+
+  // yakın tepeler
+  c.fillStyle = 'rgba(46,16,101,.9)';
+  c.beginPath(); c.moveTo(0, H);
+  for (let x = 0; x <= W; x += 10) c.lineTo(x, 335 + Math.sin(x / 120 + 1) * 16 + Math.sin(x / 45) * 5);
+  c.lineTo(W, H); c.closePath(); c.fill();
+
+  // zemin
+  const gr = c.createLinearGradient(0, GROUND_Y, 0, H);
+  gr.addColorStop(0, '#15803d'); gr.addColorStop(1, '#052e16');
+  c.fillStyle = gr; c.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(0, GROUND_Y, W, 2);
+
+  // pist destekleri
+  c.strokeStyle = 'rgba(30,27,75,.75)'; c.lineWidth = 3;
+  for (let x = 2; x < XL; x += 4) {
+    c.beginPath(); c.moveTo(px(x), py(h(x)) + 2); c.lineTo(px(x), GROUND_Y); c.stroke();
+  }
+  c.lineWidth = 2; c.strokeStyle = 'rgba(30,27,75,.5)';
+  for (let x = 2; x < XL - 4; x += 8) {
+    c.beginPath(); c.moveTo(px(x), py(h(x)) + 6); c.lineTo(px(x + 4), GROUND_Y - 4); c.stroke();
+  }
+
+  // ray
+  const trace = function (dy) {
+    c.beginPath();
+    for (let x = 0; x <= XL; x += 0.5) {
+      if (x === 0) c.moveTo(px(x), py(h(x)) + dy); else c.lineTo(px(x), py(h(x)) + dy);
+    }
+    c.stroke();
+  };
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  c.strokeStyle = 'rgba(56,189,248,.28)'; c.lineWidth = 16; trace(0);
+  c.strokeStyle = '#1e1b4b'; c.lineWidth = 9; trace(0);
+  c.strokeStyle = '#e0f2fe'; c.lineWidth = 2.5; trace(-3);
+
+  // yükseklik ölçeği
+  c.fillStyle = 'rgba(255,255,255,.85)'; c.font = '11px Arial';
+  [0, 10, 20].forEach(function (m) {
+    c.fillText(m + ' m', 4, py(m) + 4);
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(24, py(m), 6, 1);
+    c.fillStyle = 'rgba(255,255,255,.85)';
+  });
+})();
+
+// ---------- Kıvılcımlar ----------
+const sparks = [];
+function emitSparks(cx, cy, ang) {
+  const n = Math.min(3, Math.floor(Math.abs(sim.v) / 5) + (Math.random() < 0.3 ? 1 : 0));
+  for (let i = 0; i < n; i++) {
+    const lx = Math.random() < 0.5 ? -16 : 16, ly = -1;
+    const wx = cx + lx * Math.cos(ang) - ly * Math.sin(ang);
+    const wy = cy + lx * Math.sin(ang) + ly * Math.cos(ang);
+    sparks.push({
+      x: wx, y: wy,
+      vx: (Math.random() - 0.5) * 90 - Math.sign(sim.v) * 45,
+      vy: -30 - Math.random() * 80,
+      life: 0.45 + Math.random() * 0.3, max: 0.75
+    });
+  }
+}
+
+function drawScene(dt) {
+  ctx.drawImage(bg, 0, 0);
+
+  // elle çizilen sürtünmeli bölgeler
+  const drawRun = function (a, b) {
+    const trace = function () {
+      ctx.beginPath();
+      for (let x = a; x < b; x += 0.25) {
+        if (x === a) ctx.moveTo(px(x), py(h(x))); else ctx.lineTo(px(x), py(h(x)));
+      }
+      ctx.lineTo(px(b), py(h(b)));
+      ctx.stroke();
+    };
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(251,146,60,.35)'; ctx.lineWidth = 19; trace();
+    ctx.strokeStyle = '#9a3412'; ctx.lineWidth = 10; trace();
+    ctx.strokeStyle = '#fed7aa'; ctx.lineWidth = 2;
+    for (let x = a + 0.3; x < b; x += 0.6) {
+      const ang2 = Math.atan2(py(h(x + 0.1)) - py(h(x - 0.1)), px(x + 0.1) - px(x - 0.1));
+      const tx = Math.cos(ang2), ty = Math.sin(ang2), nx = -ty, ny = tx;
+      const X = px(x), Y = py(h(x));
+      ctx.beginPath();
+      ctx.moveTo(X - nx * 5 - tx * 2, Y - ny * 5 - ty * 2);
+      ctx.lineTo(X + nx * 5 + tx * 2, Y + ny * 5 + ty * 2);
+      ctx.stroke();
+    }
+  };
+  for (let i = 0; i < CELLS;) {
+    if (!rough[i]) { i++; continue; }
+    let j = i;
+    while (j < CELLS && rough[j]) j++;
+    drawRun(i * XL / CELLS, j * XL / CELLS);
+    i = j;
+  }
+
+  const cx = px(sim.x), cy = py(h(sim.x));
+  const e = 0.5;
+  const ang = Math.atan2(py(h(sim.x + e)) - py(h(sim.x - e)), px(sim.x + e) - px(sim.x - e));
+
+  // yükseklik çizgisi
+  ctx.setLineDash([3, 5]); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.lineTo(cx, GROUND_Y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (running && muAt(sim.x) > 0 && Math.abs(sim.v) > 1) emitSparks(cx, cy, ang);
+
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(ang);
+
+  // ısı parıltısı
+  if (muAt(sim.x) > 0 && Math.abs(sim.v) > 0.3) {
+    const inten = Math.min(1, Math.abs(sim.v) / 15);
+    const grd = ctx.createRadialGradient(0, -6, 3, 0, -6, 46);
+    grd.addColorStop(0, 'rgba(251,146,60,' + (0.7 * inten) + ')');
+    grd.addColorStop(1, 'rgba(251,146,60,0)');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(0, -6, 46, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // tekerlekler
+  [-16, 16].forEach(function (wx) {
+    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(wx, -5, 6.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(wx, -5, 2.6, 0, Math.PI * 2); ctx.fill();
+  });
+
+  // gövde
+  const body = ctx.createLinearGradient(0, -30, 0, -9);
+  body.addColorStop(0, '#fb7185'); body.addColorStop(1, '#be123c');
+  ctx.fillStyle = body; ctx.strokeStyle = '#4c0519'; ctx.lineWidth = 2;
+  rr(-30, -30, 60, 21, 9); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; rr(-24, -27, 48, 4, 2); ctx.fill();
+  ctx.fillStyle = '#fde047'; rr(-30, -19, 60, 3, 1.5); ctx.fill();
+
+  // yolcular
+  [[-11, '#fcd9b6', '#f43f5e'], [9, '#e8b98a', '#38bdf8']].forEach(function (p) {
+    ctx.fillStyle = p[2]; ctx.beginPath(); ctx.arc(p[0], -29, 6.5, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = p[1]; ctx.beginPath(); ctx.arc(p[0], -34, 6.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(p[0] - 2, -35, 1, 0, Math.PI * 2); ctx.arc(p[0] + 2, -35, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(p[0], -33, 2.6, 0.2, Math.PI - 0.2); ctx.stroke();
+  });
+  // güvenlik barı
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-22, -28); ctx.lineTo(20, -28); ctx.stroke();
+
+  // hız oku
+  if (Math.abs(sim.v) > 0.5) {
+    const dir = sim.v > 0 ? 1 : -1;
+    const len = dir * Math.min(56, 10 + Math.abs(sim.v) * 2.4);
+    ctx.strokeStyle = '#4ade80'; ctx.fillStyle = '#4ade80'; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(0, -54); ctx.lineTo(len, -54); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(len + dir * 3, -54); ctx.lineTo(len - dir * 8, -60); ctx.lineTo(len - dir * 8, -48); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  // kıvılcımlar
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.life -= dt;
+    if (s.life <= 0) { sparks.splice(i, 1); continue; }
+    s.vy += 320 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+    ctx.fillStyle = 'rgba(255,' + (150 + ((Math.random() * 90) | 0)) + ',50,' + (s.life / s.max) + ')';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // fırça göstergesi
+  if (mode !== 'move' && hoverX !== null && hoverX >= 0 && hoverX <= XL) {
+    ctx.strokeStyle = mode === 'paint' ? '#fb923c' : '#e2e8f0'; ctx.lineWidth = 2.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.arc(px(hoverX), py(h(hoverX)), 15, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // tutma ipucu / tutma halkası
+  if (dragging) {
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.arc(cx, cy - 18, 44, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  } else if (mode === 'move' && !running && sim.t === 0) {
+    const hint = '👆 Beni tut ve istediğin yere koy!';
+    ctx.font = 'bold 13px Arial';
+    const hw = ctx.measureText(hint).width + 18;
+    const hx = Math.min(Math.max(cx - hw / 2, 4), W - hw - 4);
+    const hy = Math.max(cy - 92, 4);
+    ctx.fillStyle = 'rgba(15,23,42,.82)'; rr(hx, hy, hw, 24, 12); ctx.fill();
+    ctx.fillStyle = '#fde68a'; ctx.fillText(hint, hx + 9, hy + 17);
+  }
+
+  // yükseklik etiketi
+  const label = fmt1(h(sim.x)) + ' m';
+  ctx.font = 'bold 13px Arial';
+  const tw = ctx.measureText(label).width + 16;
+  const lx = Math.min(Math.max(cx - tw / 2, 4), W - tw - 4);
+  const ly = Math.min(cy + 16, GROUND_Y - 6);
+  ctx.fillStyle = 'rgba(15,23,42,.82)'; rr(lx, ly, tw, 22, 11); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText(label, lx + 8, ly + 16);
+}
+
+function explain() {
+  const e = energies();
+  const f = forces(sim.x);
+  const vh = sim.v * f.sin;       // yüksekliğin değişim hızı
+  const t1 = el('txt1'), t2 = el('txt2');
+  let a;
+  if (sim.t === 0) {
+    a = '🏁 Tren en yüksek noktada duruyor. Hızı 0 olduğu için kinetik enerjisi 0, enerjinin tamamı çekim potansiyel enerjisi. Başlat düğmesine bas!';
+  } else if (sim.stopped && sim.Q < 1) {
+    a = '🛑 Pist burada çok az eğimli, sürtünme treni tutuyor ve tren hiç kaymıyor. Treni daha yüksek ve daha dik bir yere koyup tekrar dene.';
+  } else if (sim.stopped) {
+    a = '🛑 Tren durdu. Kinetik enerji 0. Sürtünme yüzünden mekanik enerjinin büyük kısmı ısıya dönüştü.';
+  } else if (Math.abs(sim.v) < 1.5 && h(sim.x) > 8) {
+    a = '⏸️ Tren neredeyse duruyor: kinetik enerji en az, çekim potansiyel enerjisi en fazla. Şimdi geri dönecek.';
+  } else if (vh < -0.3) {
+    a = '⬇️ Tren aşağı iniyor: yükseklik azalıyor, çekim potansiyel enerjisi azalıyor. Hız artıyor, kinetik enerji artıyor.';
+  } else if (vh > 0.3) {
+    a = '⬆️ Tren yukarı çıkıyor: yükseklik artıyor, çekim potansiyel enerjisi artıyor. Hız azalıyor, kinetik enerji azalıyor.';
+  } else {
+    a = '➡️ Pist burada neredeyse yatay: kinetik ve potansiyel enerji çok az değişiyor.';
+  }
+  t1.textContent = a;
+
+  if (sim.friction) {
+    t2.className = 'l2';
+    t2.textContent = '🔥 Sürtünme AÇIK: Mekanik enerjinin bir kısmı ısıya dönüştü (şu ana kadar ' + fmt(e.Q) + ' J). Mekanik enerji azaldı ama mekanik + ısı = toplam enerji değişmedi.';
+  } else if (roughAny()) {
+    t2.className = Math.round(e.Q) > 0 ? 'l2' : 'l2 off';
+    t2.textContent = (muAt(sim.x) > 0 ? '🔥 Tren şu an sürtünmeli bölgede: enerjinin bir kısmı ısıya dönüşüyor. ' : '🟧 Şeritli yerler sürtünmeli. Tren oralardan geçerken enerji ısıya dönüşür. ') +
+      'Şu ana kadar ısıya dönüşen: ' + fmt(e.Q) + ' J. Mekanik + ısı = toplam enerji değişmez.';
+  } else {
+    t2.className = 'l2 off';
+    t2.textContent = '✅ Sürtünme KAPALI: Isıya dönüşen enerji 0. Kinetik + potansiyel = mekanik enerji sabit, toplam enerji de sabit.';
+  }
+}
+
+function updateUI() {
+  const d = display(), E0 = Math.round(startEnergy());
+  const pct = function (val) { return Math.max(0, Math.min(100, val / E0 * 100)) + '%'; };
+  const set = function (bar, valId, val) {
+    el(bar).style.width = pct(val);
+    el(valId).textContent = fmt(val) + ' J';
+  };
+  set('bK', 'vK', d.K); set('bP', 'vP', d.P); set('bM', 'vM', d.M); set('bQ', 'vQ', d.Q);
+  el('bTm').style.width = pct(d.M);
+  el('bTq').style.width = pct(d.Q);
+  el('vT').textContent = fmt(d.T) + ' J';
+  el('iT').textContent = fmt1(sim.t) + ' s';
+  el('iH').textContent = fmt1(h(sim.x)) + ' m';
+  el('iV').textContent = fmt1(Math.abs(sim.v)) + ' m/s';
+  explain();
+}
+
+function updateButtons() {
+  btnRun.textContent = running ? '⏸ Durdur' : '▶ Başlat';
+  btnRun.className = running ? 'stop' : 'go';
+}
+
+let last = null;
+function frame(ts) {
+  if (last === null) last = ts;
+  const dt = Math.min(0.05, (ts - last) / 1000);
+  last = ts;
+  if (running && !sim.stopped) {
+    const sdt = dt * speedFactor;
+    const n = Math.max(1, Math.ceil(sdt / 0.0005));
+    const hs = sdt / n;
+    for (let i = 0; i < n; i++) stepSim(hs);
+    if (sim.stopped) { running = false; updateButtons(); }
+  }
+  drawScene(dt);
+  updateUI();
+  requestAnimationFrame(frame);
+}
+
+// ---------- Düğmeler ----------
+btnRun.addEventListener('click', function () {
+  if (sim.stopped) return;
+  running = !running;
+  updateButtons();
+});
+el('btnReset').addEventListener('click', function () {
+  running = false; resetSim(); sparks.length = 0; updateButtons();
+});
+el('btnDefault').addEventListener('click', function () {
+  running = false; placeTrain(DEFAULT_X); sparks.length = 0; updateButtons();
+});
+
+// ---------- Treni tut ve taşı ----------
+function pointerToCanvas(ev) {
+  const r = cv.getBoundingClientRect();
+  return { x: (ev.clientX - r.left) * W / r.width, y: (ev.clientY - r.top) * H / r.height };
+}
+function nearTrain(p) {
+  const dx = p.x - px(sim.x), dy = p.y - (py(h(sim.x)) - 18);
+  return dx * dx + dy * dy < 60 * 60;
+}
+cv.addEventListener('pointerdown', function (ev) {
+  const p = pointerToCanvas(ev);
+  if (mode !== 'move') {
+    painting = true; lastPX = null;
+    cv.setPointerCapture(ev.pointerId);
+    paintAt(p);
+    ev.preventDefault();
+    return;
+  }
+  if (!nearTrain(p)) return;
+  dragging = true;
+  running = false; updateButtons();
+  sparks.length = 0;
+  cv.setPointerCapture(ev.pointerId);
+  cv.style.cursor = 'grabbing';
+  placeTrain((p.x - PL) * XL / (W - PL - PR));
+  ev.preventDefault();
+});
+cv.addEventListener('pointermove', function (ev) {
+  const p = pointerToCanvas(ev);
+  hoverX = (p.x - PL) * XL / (W - PL - PR);
+  if (painting) {
+    paintAt(p);
+  } else if (dragging) {
+    placeTrain((p.x - PL) * XL / (W - PL - PR));
+  } else if (mode === 'move') {
+    cv.style.cursor = nearTrain(p) ? 'grab' : 'default';
+  }
+});
+function endDrag() { dragging = false; painting = false; lastPX = null; cv.style.cursor = mode === 'move' ? 'default' : 'crosshair'; }
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('pointerleave', function () { if (!painting) hoverX = null; });
+
+// ---------- Sürtünme fırçası ----------
+function paintAt(p) {
+  const xx = (p.x - PL) * XL / (W - PL - PR);
+  if (xx < -2 || xx > XL + 2) return;
+  const a = lastPX === null ? xx : lastPX;
+  const lo = Math.min(a, xx) - 1.2, hi = Math.max(a, xx) + 1.2;
+  const val = mode === 'paint';
+  for (let i = Math.max(0, Math.floor(lo * CELLS / XL)); i <= Math.min(CELLS - 1, Math.floor(hi * CELLS / XL)); i++) rough[i] = val;
+  lastPX = xx;
+  sim.stopped = false;
+}
+function setMode(m) {
+  mode = m; dragging = false; painting = false;
+  ['Move', 'Paint', 'Erase'].forEach(function (n) {
+    el('t' + n).classList.toggle('active', m === n.toLowerCase());
+  });
+  cv.style.cursor = m === 'move' ? 'default' : 'crosshair';
+}
+el('tMove').addEventListener('click', function () { setMode('move'); });
+el('tPaint').addEventListener('click', function () { setMode('paint'); });
+el('tErase').addEventListener('click', function () { setMode('erase'); });
+el('tClear').addEventListener('click', function () { rough.fill(false); sim.stopped = false; });
+chkFr.addEventListener('change', function () {
+  sim.friction = chkFr.checked;
+  sim.stopped = false;
+  el('frTxt').textContent = sim.friction ? 'AÇIK' : 'KAPALI';
+});
+el('selSpeed').addEventListener('change', function (ev) { speedFactor = parseFloat(ev.target.value); });
+el('rngMass').addEventListener('input', function (ev) {
+  sim.m = parseInt(ev.target.value, 10);
+  el('massTxt').textContent = sim.m + ' kg';
+  running = false; resetSim(); sparks.length = 0; updateButtons();
+});
+
+// ---------- Deneme kayıtları ----------
+const rows = [];
+function renderTable() {
+  const tb = el('tbody');
+  tb.innerHTML = '';
+  rows.forEach(function (r, i) {
+    const tr = document.createElement('tr');
+    const cells = [i + 1, r.fr, fmt1(r.t), fmt(r.K), fmt(r.P), fmt(r.M), fmt(r.Q), fmt(r.T)];
+    cells.forEach(function (c, idx) {
+      const td = document.createElement('td');
+      td.textContent = c;
+      if (idx === 1) td.className = 'tag ' + (r.fr !== 'Kapalı' ? 'on' : 'off');
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+}
+el('btnSnap').addEventListener('click', function () {
+  const d = display();
+  rows.push({ fr: sim.friction ? 'Açık' : (roughAny() ? 'Bölgesel' : 'Kapalı'), t: sim.t, K: d.K, P: d.P, M: d.M, Q: d.Q, T: d.T });
+  renderTable();
+});
+el('btnClear').addEventListener('click', function () { rows.length = 0; renderTable(); });
+
+updateButtons();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
