@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Enerji Dönüşümleri Simülasyonu - 7. Sınıf Fen Bilimleri</title>
     <style>
-        /* Modern Sistem Fontları ve Sıfırlama */
         :root {
             --bg-main: #f0f4f8;
             --card-bg: #ffffff;
@@ -106,6 +105,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
         }
 
         .canvas-card {
@@ -122,12 +122,14 @@
         .canvas-wrapper {
             position: relative;
             width: 100%;
-            height: 390px;
+            height: 400px;
+            min-height: 320px;
             border-radius: 12px;
             overflow: hidden;
-            background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 65%, #f0fdf4 65%, #dcfce7 100%);
+            background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 75%, #dcfce7 75%, #bbf7d0 100%);
             cursor: grab;
             touch-action: none;
+            user-select: none;
         }
 
         .canvas-wrapper:active {
@@ -136,7 +138,8 @@
 
         @media (max-width: 600px) {
             .canvas-wrapper {
-                height: 310px;
+                height: 320px;
+                min-height: 280px;
             }
         }
 
@@ -158,10 +161,11 @@
             pointer-events: none;
             gap: 8px;
             flex-wrap: wrap;
+            z-index: 2;
         }
 
         .telemetry-pill {
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(6px);
             padding: 6px 12px;
             border-radius: 10px;
@@ -172,11 +176,11 @@
             border: 1px solid rgba(226, 232, 240, 0.9);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .drag-hint {
-            background: rgba(30, 58, 138, 0.88);
+            background: rgba(30, 58, 138, 0.9);
             color: white;
             padding: 5px 11px;
             border-radius: 999px;
@@ -482,8 +486,8 @@
                 <!-- Kontrol Düğmeleri ve Ayarlar -->
                 <div class="controls-bar">
                     <div class="btn-group">
-                        <button id="btnPlayPause" class="btn-play">⏸️ Durdur</button>
-                        <button id="btnReset" class="btn-reset">🔄 Sıfırla</button>
+                        <button type="button" id="btnPlayPause" class="btn-play">⏸️ Durdur</button>
+                        <button type="button" id="btnReset" class="btn-reset">🔄 Sıfırla</button>
                     </div>
 
                     <div class="settings-group">
@@ -516,7 +520,7 @@
                     <span id="motionStateBadge">HAREKET HALİNDE</span>
                 </div>
                 <div class="explanation-main" id="explanationMain">
-                    Yokuş aşağı inerken yükseklik azalır: Çekim potansiyel enerjisi azalırken kinetik enerji artar.
+                    Yokuş aşağı inerken çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.
                 </div>
                 <div class="explanation-sub" id="explanationFriction">
                     ⚠️ Sürtünme kuvveti nedeniyle mekanik enerjinin bir kısmı ısı enerjisine dönüşüyor.
@@ -524,7 +528,7 @@
             </div>
         </section>
 
-        <!-- Sağ Kolon: Joule Göstergeleri -->
+        <!-- Sağ Kolon: Enerji Göstergeleri Paneli -->
         <aside class="meters-panel">
             <div class="panel-title">
                 <span>📊 Anlık Enerji Göstergeleri</span>
@@ -608,10 +612,9 @@
     <script>
         /**
          * 7. Sınıf Fen Bilimleri - Enerji Dönüşümleri Kaykay Rampası Simülasyonu
-         * Fizik Motoru ve Görselleştirme
+         * Fizik Motoru, Dayanıklı Canvas Ölçekleme ve Görselleştirme
          */
         (function() {
-            // Canvas ve Bağlam
             const canvas = document.getElementById('simCanvas');
             const ctx = canvas.getContext('2d');
             const wrapper = document.getElementById('canvasWrapper');
@@ -648,13 +651,13 @@
             const G = 10;                  // Yerçekimi ivmesi (m/s^2 - 7. sınıf müfredatı standardı)
             const MAX_HEIGHT = 8.0;        // Rampa maksimum yüksekliği (metre)
             const HALF_WIDTH_M = 10.0;     // Rampa merkezden sağa/sola yatay mesafe (metre)
-            const DEFAULT_START_X = -8.66; // h = 6.0 m'ye karşılık gelen başlangıç x konumu (8 * (x/10)^2 = 6 => x = -sqrt(0.75)*10)
+            const DEFAULT_START_X = -8.66; // h = 6.0 m'ye karşılık gelen başlangıç x konumu
 
             // Simülasyon Durumu
             let state = {
                 mass: 50,                  // kg
                 x: DEFAULT_START_X,        // metre cinsinden yatay konum [-10, 10]
-                v: 0,                      // teğetsel hız (m/s), sağa doğru pozitif, sola doğru negatif
+                v: 0,                      // teğetsel hız (m/s)
                 eTotal: 0,                 // Toplam enerji (Joule)
                 eThermal: 0,               // Isıya dönüşen enerji (Joule)
                 frictionCoeff: 0,          // 0 = kapalı, 0.012 = düşük, 0.035 = yüksek
@@ -662,16 +665,17 @@
                 isPlaying: true,
                 isDragging: false,
                 isResting: false,          // Sürtünmeden dolayı tamamen durdu mu?
-                peakFlashTimer: 0          // Tepe noktasında anlık durma mesajını görünür tutma sayacı
+                peakFlashTimer: 0,         // Tepe noktasında anlık durma mesajı sayacı
+                wheelAngle: 0              // Tekerlek dönüş açısı
             };
 
-            // Rampa Matematiksel Fonksiyonları: Parabolik U-Rampa: h(x) = MAX_HEIGHT * (x / HALF_WIDTH_M)^2
+            // Parabolik U-Rampa: h(x) = MAX_HEIGHT * (x / HALF_WIDTH_M)^2
             function getHeightAtX(x) {
                 const norm = x / HALF_WIDTH_M;
                 return MAX_HEIGHT * norm * norm;
             }
 
-            // Rampanın eğim açısı (radyan): dh/dx = 2 * MAX_HEIGHT * x / (HALF_WIDTH_M^2)
+            // Rampanın eğim açısı (radyan)
             function getSlopeAngleAtX(x) {
                 const dhdx = (2 * MAX_HEIGHT * x) / (HALF_WIDTH_M * HALF_WIDTH_M);
                 return Math.atan(dhdx);
@@ -698,39 +702,55 @@
                 updateUI();
             }
 
-            // Canvas Boyutlandırma (Retina / Yüksek DPI Uyumlu)
+            // Görünüm Ölçüleri (Fallback değerler ile başlar)
             let viewMetrics = {
                 width: 800,
-                height: 390,
-                padLeft: 56,
+                height: 400,
+                padLeft: 58,
                 padRight: 36,
-                padTop: 52,
+                padTop: 58,
                 padBottom: 42,
-                plotW: 708,
-                plotH: 296
+                plotW: 706,
+                plotH: 300
             };
 
+            // Canvas Boyutlandırma (Kesin görünür genişlik/yükseklik garantili)
             function resizeCanvas() {
                 const rect = wrapper.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
+                const w = Math.max(300, Math.floor(rect.width || wrapper.clientWidth || 760));
+                const h = Math.max(280, Math.floor(rect.height || wrapper.clientHeight || 400));
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+                if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+                    canvas.width = Math.round(w * dpr);
+                    canvas.height = Math.round(h * dpr);
+                }
+
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-                viewMetrics.width = rect.width;
-                viewMetrics.height = rect.height;
-                viewMetrics.padLeft = rect.width < 500 ? 44 : 58;
-                viewMetrics.padRight = rect.width < 500 ? 22 : 36;
-                viewMetrics.padTop = 52;
-                viewMetrics.padBottom = 38;
-                viewMetrics.plotW = viewMetrics.width - viewMetrics.padLeft - viewMetrics.padRight;
-                viewMetrics.plotH = viewMetrics.height - viewMetrics.padTop - viewMetrics.padBottom;
+                viewMetrics.width = w;
+                viewMetrics.height = h;
+                viewMetrics.padLeft = w < 500 ? 44 : 58;
+                viewMetrics.padRight = w < 500 ? 22 : 36;
+                viewMetrics.padTop = 58;
+                viewMetrics.padBottom = 40;
+                viewMetrics.plotW = Math.max(120, w - viewMetrics.padLeft - viewMetrics.padRight);
+                viewMetrics.plotH = Math.max(120, h - viewMetrics.padTop - viewMetrics.padBottom);
+            }
+
+            // ResizeObserver ile kapsayıcı boyutu değiştiğinde anında güncelle
+            if (typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(() => {
+                    resizeCanvas();
+                    renderScene();
+                });
+                ro.observe(wrapper);
             }
 
             // Dünya Koordinatlarını (metre) Ekran Koordinatlarına (piksel) Çevirme
             function worldToScreen(xMeters, hMeters) {
-                const normX = (xMeters + HALF_WIDTH_M) / (2 * HALF_WIDTH_M); // 0..1
-                const normH = hMeters / MAX_HEIGHT; // 0..1
+                const normX = (xMeters + HALF_WIDTH_M) / (2 * HALF_WIDTH_M);
+                const normH = hMeters / MAX_HEIGHT;
                 const sx = viewMetrics.padLeft + normX * viewMetrics.plotW;
                 const sy = viewMetrics.padTop + (1 - normH) * viewMetrics.plotH;
                 return { x: sx, y: sy };
@@ -743,7 +763,7 @@
             }
 
             /**
-             * Fizik Güncelleme Adımı (Alt adımlarla yüksek hassasiyetli enerji korunumu)
+             * Fizik Güncelleme Adımı
              */
             function stepPhysics(dt) {
                 if (!state.isPlaying || state.isDragging || state.isResting) return;
@@ -760,7 +780,7 @@
                     // Teğetsel yerçekimi ivmesi: a_g = -g * sin(theta)
                     const aGrav = -G * sinTheta;
 
-                    // Sürtünme ivmesi (hız yönüne ters)
+                    // Sürtünme ivmesi
                     let aFric = 0;
                     if (state.frictionCoeff > 0 && Math.abs(state.v) > 0.0001) {
                         const normalAccel = G * cosTheta;
@@ -771,30 +791,28 @@
                     const prevV = state.v;
                     let nextV = prevV + (aGrav + aFric) * subDt;
 
-                    // Sürtünme yüzünden hız yön değiştirdiyse ve eğim çok düşükse durdur
+                    // Hız yön değiştirme (Tepe noktası veya sürtünme ile durma)
                     if (state.frictionCoeff > 0 && prevV * nextV < 0) {
                         const maxStaticPull = Math.abs(G * sinTheta);
                         const frictionHold = state.frictionCoeff * G * cosTheta * 2.2;
                         if (maxStaticPull <= frictionHold && getHeightAtX(state.x) < 0.04) {
                             state.v = 0;
                             state.x = 0;
+                            state.eThermal = state.eTotal;
                             state.isResting = true;
                             break;
                         } else {
-                            // Tepe noktasından dönüş anı
-                            state.peakFlashTimer = 0.45;
+                            state.peakFlashTimer = 0.5;
                         }
                     } else if (prevV * nextV < 0) {
-                        // Sürtünmesiz tepe noktasından dönüş anı
-                        state.peakFlashTimer = 0.45;
+                        state.peakFlashTimer = 0.5;
                     }
 
                     state.v = nextV;
-
-                    // Yatay konum değişimi: dx = v * cos(theta) * dt
                     state.x += state.v * cosTheta * subDt;
+                    state.wheelAngle += state.v * subDt * 3.5;
 
-                    // Sınır kontrolü (Sürtünmesiz ortamda sayısal sapmayı engellemek için tam enerji korunumu)
+                    // Sınır kontrolü
                     if (state.x > HALF_WIDTH_M) {
                         state.x = HALF_WIDTH_M;
                         state.v = 0;
@@ -803,23 +821,24 @@
                         state.v = 0;
                     }
 
-                    // Enerji Korunumu Düzeltmesi (Sayısal kaymayı sıfırlar)
+                    // Enerji Korunumu Düzeltmesi
                     const currentH = getHeightAtX(state.x);
                     const currentEp = state.mass * G * currentH;
 
                     if (state.frictionCoeff === 0) {
-                        // Sürtünme kapalıyken Mekanik Enerji = Toplam Enerji kesinlikle sabit kalır
-                        const targetEk = Math.max(0, state.eTotal - currentEp);
+                        // Sürtünme kapalıyken birikmiş ısı enerjisi (state.eThermal) SABİT kalır
+                        const availableMech = Math.max(0, state.eTotal - state.eThermal);
+                        const targetEk = Math.max(0, availableMech - currentEp);
                         const targetSpeed = Math.sqrt((2 * targetEk) / state.mass);
                         state.v = (state.v >= 0 ? 1 : -1) * targetSpeed;
                     } else {
-                        // Sürtünme açıkken Mekanik Enerji + Isı Enerjisi = Toplam Enerji sabit kalır
+                        // Sürtünme açıkken Mekanik Enerji + Isı Enerjisi = Toplam Enerji
                         const currentEk = 0.5 * state.mass * state.v * state.v;
                         let currentMech = currentEp + currentEk;
+                        const maxAllowedMech = Math.max(0, state.eTotal - state.eThermal);
 
-                        if (currentMech > state.eTotal - state.eThermal) {
-                            // Mekanik enerji artamaz; fazla kısmı kırp
-                            currentMech = Math.max(0, state.eTotal - state.eThermal);
+                        if (currentMech > maxAllowedMech) {
+                            currentMech = maxAllowedMech;
                             const correctedEk = Math.max(0, currentMech - currentEp);
                             const correctedSpeed = Math.sqrt((2 * correctedEk) / state.mass);
                             state.v = (state.v >= 0 ? 1 : -1) * correctedSpeed;
@@ -828,7 +847,7 @@
                         state.eThermal = Math.max(0, state.eTotal - (currentEp + 0.5 * state.mass * state.v * state.v));
 
                         // Enerji neredeyse tamamen ısıya dönüştüyse kaykaycıyı en altta durdur
-                        if (state.eTotal - state.eThermal < 1.5 && Math.abs(state.x) < 0.15) {
+                        if (state.eTotal - state.eThermal < 2.0 && Math.abs(state.x) < 0.2) {
                             state.x = 0;
                             state.v = 0;
                             state.eThermal = state.eTotal;
@@ -844,218 +863,275 @@
             }
 
             /**
-             * Sahne Çizimi (Arka Plan, Izgara, U-Rampa ve Kaykaycı Karakter)
+             * Sahne Çizim Fonksiyonu (Arka Plan, Izgara, Rampa ve Kaykaycı)
              */
-            function drawScene() {
-                const { width, height, padLeft, padRight, padTop, padBottom, plotW, plotH } = viewMetrics;
-                ctx.clearRect(0, 0, width, height);
+            function renderScene() {
+                const w = viewMetrics.width;
+                const h = viewMetrics.height;
+                ctx.clearRect(0, 0, w, h);
 
-                // 1. Yükseklik Izgara Çizgileri (0 m'den 8 m'ye kadar her 2 metrede bir)
+                const groundY = worldToScreen(0, 0).y;
+
+                // 1. Gökyüzü ve Zemin Arka Planı
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+                skyGrad.addColorStop(0, '#bae6fd');
+                skyGrad.addColorStop(1, '#e0f2fe');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, w, groundY);
+
+                // Dekoratif Bulutlar
+                drawCloud(w * 0.22, viewMetrics.padTop + 26, 0.85);
+                drawCloud(w * 0.76, viewMetrics.padTop + 18, 1.0);
+
+                // Çimenlik Zemin
+                const grassGrad = ctx.createLinearGradient(0, groundY, 0, h);
+                grassGrad.addColorStop(0, '#86efac');
+                grassGrad.addColorStop(1, '#4ade80');
+                ctx.fillStyle = grassGrad;
+                ctx.fillRect(0, groundY, w, h - groundY);
+
+                // 2. Yükseklik Izgara Çizgileri ve Metre Etiketleri (0m, 2m, 4m, 6m, 8m)
                 ctx.save();
-                ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                ctx.font = '700 11px -apple-system, BlinkMacSystemFont, sans-serif';
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
 
-                for (let h = 0; h <= MAX_HEIGHT; h += 2) {
-                    const pt = worldToScreen(0, h);
-                    
-                    // Kesikli yatay referans çizgisi
+                for (let hm = 0; hm <= MAX_HEIGHT; hm += 2) {
+                    const pt = worldToScreen(-HALF_WIDTH_M, hm);
                     ctx.beginPath();
-                    ctx.setLineDash(h === 0 ? [] : [5, 5]);
-                    ctx.strokeStyle = h === 0 ? '#64748b' : 'rgba(100, 116, 139, 0.28)';
-                    ctx.lineWidth = h === 0 ? 2 : 1.2;
-                    ctx.moveTo(padLeft, pt.y);
-                    ctx.lineTo(width - padRight, pt.y);
+                    ctx.moveTo(viewMetrics.padLeft - 6, pt.y);
+                    ctx.lineTo(w - viewMetrics.padRight + 6, pt.y);
+                    ctx.strokeStyle = hm === 0 ? '#15803d' : 'rgba(30, 58, 138, 0.16)';
+                    ctx.lineWidth = hm === 0 ? 2 : 1;
+                    if (hm > 0) ctx.setLineDash([5, 5]);
+                    else ctx.setLineDash([]);
                     ctx.stroke();
 
-                    // Sol eksen metre etiketi
-                    ctx.fillStyle = '#334155';
-                    ctx.fillText(`${h} m`, padLeft - 10, pt.y);
+                    // Metre etiketi
+                    ctx.fillStyle = hm === 0 ? '#14532d' : '#1e3a8a';
+                    ctx.fillText(`${hm} m`, viewMetrics.padLeft - 10, pt.y);
                 }
                 ctx.restore();
 
-                // 2. Rampa Gövdesi (Dolgulu Ahşap/Beton Yapı)
-                ctx.save();
-                ctx.beginPath();
-                const steps = 100;
-                const startPt = worldToScreen(-HALF_WIDTH_M, getHeightAtX(-HALF_WIDTH_M));
-                ctx.moveTo(startPt.x, startPt.y);
-
-                for (let i = 1; i <= steps; i++) {
-                    const wx = -HALF_WIDTH_M + (i / steps) * (2 * HALF_WIDTH_M);
-                    const wh = getHeightAtX(wx);
-                    const pt = worldToScreen(wx, wh);
-                    ctx.lineTo(pt.x, pt.y);
+                // 3. U-Şekilli Kaykay Rampası Gövdesi (Ahşap/Beton Destek Yapısı)
+                const steps = 80;
+                const rampPoints = [];
+                for (let i = 0; i <= steps; i++) {
+                    const xm = -HALF_WIDTH_M + (2 * HALF_WIDTH_M * i) / steps;
+                    const hm = getHeightAtX(xm);
+                    rampPoints.push(worldToScreen(xm, hm));
                 }
 
-                const rightTop = worldToScreen(HALF_WIDTH_M, MAX_HEIGHT);
-                const rightBottom = worldToScreen(HALF_WIDTH_M, 0);
-                const leftBottom = worldToScreen(-HALF_WIDTH_M, 0);
-
-                ctx.lineTo(rightBottom.x, rightBottom.y + 16);
-                ctx.lineTo(leftBottom.x, leftBottom.y + 16);
+                // Rampa Dolgusu
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(rampPoints[0].x, groundY);
+                for (let i = 0; i < rampPoints.length; i++) {
+                    ctx.lineTo(rampPoints[i].x, rampPoints[i].y);
+                }
+                ctx.lineTo(rampPoints[rampPoints.length - 1].x, groundY);
                 ctx.closePath();
 
-                const rampGrad = ctx.createLinearGradient(0, padTop, 0, height - padBottom + 16);
-                rampGrad.addColorStop(0, '#cbd5e1');
-                rampGrad.addColorStop(1, '#94a3b8');
-                ctx.fillStyle = rampGrad;
+                const rampBodyGrad = ctx.createLinearGradient(0, viewMetrics.padTop, 0, groundY);
+                rampBodyGrad.addColorStop(0, '#cbd5e1');
+                rampBodyGrad.addColorStop(1, '#94a3b8');
+                ctx.fillStyle = rampBodyGrad;
                 ctx.fill();
 
-                // Rampa Destek Dikmeleri (Estetik Görünüm)
+                // Rampa İç Destek Dikmeleri
                 ctx.strokeStyle = 'rgba(71, 85, 105, 0.25)';
-                ctx.lineWidth = 2;
-                for (let gx = -8; gx <= 8; gx += 4) {
-                    if (gx === 0) continue;
-                    const topP = worldToScreen(gx, getHeightAtX(gx));
-                    const botP = worldToScreen(gx, 0);
+                ctx.lineWidth = 1.5;
+                for (let xm = -8; xm <= 8; xm += 2) {
+                    if (xm === 0) continue;
+                    const topPt = worldToScreen(xm, getHeightAtX(xm));
                     ctx.beginPath();
-                    ctx.moveTo(topP.x, topP.y);
-                    ctx.lineTo(botP.x, botP.y + 14);
+                    ctx.moveTo(topPt.x, topPt.y);
+                    ctx.lineTo(topPt.x, groundY);
                     ctx.stroke();
                 }
 
-                // Rampa Yüzey Rayı / Yolu
+                // Rampa Üst Kayma Yüzeyi (Ray / Pist)
                 ctx.beginPath();
-                for (let i = 0; i <= steps; i++) {
-                    const wx = -HALF_WIDTH_M + (i / steps) * (2 * HALF_WIDTH_M);
-                    const wh = getHeightAtX(wx);
-                    const pt = worldToScreen(wx, wh);
-                    if (i === 0) ctx.moveTo(pt.x, pt.y);
-                    else ctx.lineTo(pt.x, pt.y);
+                for (let i = 0; i < rampPoints.length; i++) {
+                    if (i === 0) ctx.moveTo(rampPoints[i].x, rampPoints[i].y);
+                    else ctx.lineTo(rampPoints[i].x, rampPoints[i].y);
                 }
                 ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
                 ctx.lineWidth = 7;
-                // Sürtünme açıksa rampa yüzeyi hafif kırmızımsı/pürüzlü ton alır
-                ctx.strokeStyle = state.frictionCoeff > 0 ? '#dc2626' : '#0284c7';
+                ctx.strokeStyle = state.frictionCoeff > 0 ? '#dc2626' : '#1e293b';
                 ctx.stroke();
-                ctx.restore();
 
-                // En alt nokta (h = 0 m) işareti
-                const bottomCenter = worldToScreen(0, 0);
-                ctx.fillStyle = '#0f172a';
-                ctx.font = 'bold 11px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('En Alt Nokta (h = 0 m)', bottomCenter.x, bottomCenter.y + 28);
-
-                // 3. Kaykaycı Karakteri Çizimi
-                drawSkater();
-            }
-
-            /**
-             * Rampa Eğimine Göre Dönen Sevimli Kasklı Kaykaycı Çizimi
-             */
-            function drawSkater() {
-                const h = getHeightAtX(state.x);
-                const pos = worldToScreen(state.x, h);
-                
-                // Ekran koordinatlarında eğim açısını hesapla (piksel en/boy oranını dikkate alarak)
-                const dxWorld = 0.05;
-                const p1 = worldToScreen(state.x - dxWorld, getHeightAtX(state.x - dxWorld));
-                const p2 = worldToScreen(state.x + dxWorld, getHeightAtX(state.x + dxWorld));
-                const screenAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-                ctx.save();
-                ctx.translate(pos.x, pos.y);
-                ctx.rotate(screenAngle);
-
-                // Sürükleme sırasında etrafında seçim halkası göster
-                if (state.isDragging) {
-                    ctx.beginPath();
-                    ctx.arc(0, -24, 34, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(37, 99, 235, 0.16)';
-                    ctx.fill();
-                    ctx.strokeStyle = '#2563eb';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([4, 4]);
+                // Sürtünme açıksa yüzeyde pürüzlü tırtık çizgisi göster
+                if (state.frictionCoeff > 0) {
+                    ctx.setLineDash([4, 6]);
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#fca5a5';
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
 
-                // Sürtünme kıvılcımları / ısı efekti (sürtünme açık ve hareket ediyorsa)
-                if (state.frictionCoeff > 0 && Math.abs(state.v) > 0.6 && !state.isDragging) {
-                    ctx.fillStyle = '#f97316';
-                    const sparkDir = state.v > 0 ? -1 : 1;
-                    for (let s = 0; s < 3; s++) {
-                        const sx = sparkDir * (14 + Math.random() * 14);
-                        const sy = -3 - Math.random() * 8;
-                        ctx.beginPath();
-                        ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+                // En Alt Nokta (0 m Referans İşareti)
+                const bottomPt = worldToScreen(0, 0);
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(bottomPt.x, bottomPt.y + 4, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // 4. Kaykaycı Anlık Yükseklik Kesikli Çizgisi
+                const skaterH = state.isResting ? 0 : getHeightAtX(state.x);
+                const skaterPos = worldToScreen(state.x, skaterH);
+                if (skaterH > 0.15) {
+                    ctx.save();
+                    ctx.setLineDash([4, 4]);
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(skaterPos.x, skaterPos.y);
+                    ctx.lineTo(skaterPos.x, groundY);
+                    ctx.stroke();
+                    ctx.restore();
                 }
 
-                // Kaykay Tekerlekleri
-                ctx.fillStyle = '#1e293b';
-                ctx.beginPath();
-                ctx.arc(-13, -5, 4.5, 0, Math.PI * 2);
-                ctx.arc(13, -5, 4.5, 0, Math.PI * 2);
-                ctx.fill();
+                // 5. Kaykaycı ve Kaykay Çizimi
+                drawSkater(skaterPos.x, skaterPos.y);
+            }
 
-                // Tekerlek Jantları
-                ctx.fillStyle = '#facc15';
+            function drawCloud(cx, cy, scale) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(scale, scale);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
                 ctx.beginPath();
-                ctx.arc(-13, -5, 1.8, 0, Math.PI * 2);
-                ctx.arc(13, -5, 1.8, 0, Math.PI * 2);
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.arc(16, -4, 22, 0, Math.PI * 2);
+                ctx.arc(36, 0, 17, 0, Math.PI * 2);
+                ctx.arc(18, 8, 18, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.restore();
+            }
 
-                // Kaykay Tahtası
-                ctx.strokeStyle = '#ea580c';
-                ctx.lineWidth = 4.5;
-                ctx.lineCap = 'round';
+            /**
+             * Rampanın Eğimine Uygun Açı ile Kaykaycı Çizimi
+             */
+            function drawSkater(sx, sy) {
+                // Ekran koordinatlarında teğet açısını hesapla
+                const eps = 0.05;
+                const x1 = Math.max(-HALF_WIDTH_M, state.x - eps);
+                const x2 = Math.min(HALF_WIDTH_M, state.x + eps);
+                const p1 = worldToScreen(x1, getHeightAtX(x1));
+                const p2 = worldToScreen(x2, getHeightAtX(x2));
+                const screenAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+                // Kütleye göre hafif ölçekleme (30kg -> 0.9, 80kg -> 1.15)
+                const massScale = 0.9 + ((state.mass - 30) / 50) * 0.25;
+                const facing = state.v < -0.05 ? -1 : 1;
+
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.rotate(screenAngle);
+                ctx.scale(massScale, massScale);
+
+                // Sürükleme sırasında seçim halesi
+                if (state.isDragging) {
+                    ctx.beginPath();
+                    ctx.arc(0, -26, 36, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(37, 99, 235, 0.18)';
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#2563eb';
+                    ctx.stroke();
+                }
+
+                // Sürtünme açıksa ve hareket ediyorsa tekerleklerde ısı kıvılcımı/parıltısı
+                if (state.frictionCoeff > 0 && Math.abs(state.v) > 0.6 && !state.isDragging) {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -3, 24, 5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Kaykay Tahtası (Deck)
+                ctx.fillStyle = '#f97316';
+                ctx.strokeStyle = '#9a3412';
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(-21, -11);
-                ctx.lineTo(-17, -9);
-                ctx.lineTo(17, -9);
-                ctx.lineTo(21, -11);
+                ctx.roundRect(-20, -10, 40, 5, 3);
+                ctx.fill();
                 ctx.stroke();
 
-                // Bacaklar
+                // Tekerlekler (2 adet)
+                const wheelOffsets = [-12, 12];
+                wheelOffsets.forEach(wx => {
+                    ctx.save();
+                    ctx.translate(wx, -4);
+                    ctx.rotate(state.wheelAngle);
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 4.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Jant çizgisi
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.moveTo(-2.5, 0);
+                    ctx.lineTo(2.5, 0);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                // Kaykaycı Vücudu (Yönüne göre çevir)
+                ctx.scale(facing, 1);
+
+                // Bacaklar (Dizler hafif bükülü denge duruşu)
                 ctx.strokeStyle = '#1e3a8a';
                 ctx.lineWidth = 4.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                // Sol bacak
                 ctx.beginPath();
-                ctx.moveTo(-8, -10);
-                ctx.lineTo(-4, -23);
-                ctx.moveTo(8, -10);
-                ctx.lineTo(4, -23);
+                ctx.moveTo(-4, -24);
+                ctx.lineTo(-9, -17);
+                ctx.lineTo(-8, -10);
+                ctx.stroke();
+                // Sağ bacak
+                ctx.beginPath();
+                ctx.moveTo(4, -24);
+                ctx.lineTo(9, -17);
+                ctx.lineTo(8, -10);
                 ctx.stroke();
 
                 // Gövde (Tişört)
-                ctx.fillStyle = '#3b82f6';
+                ctx.fillStyle = '#2563eb';
                 ctx.beginPath();
-                ctx.roundRect(-7, -38, 14, 17, 5);
+                ctx.roundRect(-7, -40, 14, 17, 5);
                 ctx.fill();
 
-                // Denge Kolları
-                ctx.strokeStyle = '#fdbcb4';
+                // Kollar (Denge için açık)
+                ctx.strokeStyle = '#fbbf24';
                 ctx.lineWidth = 3.8;
                 ctx.beginPath();
-                ctx.moveTo(-6, -34);
-                ctx.lineTo(-16, -28);
-                ctx.moveTo(6, -34);
-                ctx.lineTo(16, -28);
+                ctx.moveTo(-6, -36);
+                ctx.lineTo(-16, -29);
+                ctx.moveTo(6, -36);
+                ctx.lineTo(16, -31);
                 ctx.stroke();
 
                 // Kafa
-                ctx.fillStyle = '#fdbcb4';
+                ctx.fillStyle = '#fde68a';
                 ctx.beginPath();
-                ctx.arc(0, -45, 7.5, 0, Math.PI * 2);
+                ctx.arc(0, -47, 7, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Güvenlik Kaskı (Kırmızı)
+                // Kask (Güvenlik Kaskı)
                 ctx.fillStyle = '#ef4444';
                 ctx.beginPath();
-                ctx.arc(0, -46.5, 8.5, Math.PI, 0);
+                ctx.arc(0, -48.5, 7.6, Math.PI, 0);
                 ctx.fill();
-                // Kask Siperliği
-                const facing = state.v < -0.1 ? -1 : 1;
-                ctx.fillRect(facing > 0 ? 2 : -10, -47.5, 8, 2.5);
-
-                // Göz
-                ctx.fillStyle = '#0f172a';
-                ctx.beginPath();
-                ctx.arc(facing * 3.5, -44.5, 1.3, 0, Math.PI * 2);
-                ctx.fill();
+                // Kask siperliği
+                ctx.fillStyle = '#b91c1c';
+                ctx.fillRect(2, -49, 6.5, 2.2);
 
                 ctx.restore();
             }
@@ -1064,21 +1140,29 @@
              * Enerji Değerlerini, Barları ve Dinamik Türkçe Açıklamaları Güncelleme
              */
             function updateUI() {
-                const h = getHeightAtX(state.x);
-                const speed = Math.abs(state.v);
-
-                const ep = Math.round(state.mass * G * h);
-                const ek = Math.round(0.5 * state.mass * speed * speed);
-                let eisi = Math.round(state.eThermal);
+                const h = state.isResting ? 0 : getHeightAtX(state.x);
+                const speed = state.isResting ? 0 : Math.abs(state.v);
                 const etop = Math.round(state.eTotal);
 
-                // Yuvarlama kaynaklı 1 J farklarını önlemek için tutarlı dengeleme
-                let emek = ep + ek;
-                if (state.frictionCoeff === 0) {
-                    emek = etop;
-                    eisi = 0;
+                let ep, ek, emek, eisi;
+
+                if (state.isResting) {
+                    ep = 0;
+                    ek = 0;
+                    emek = 0;
+                    eisi = etop;
                 } else {
-                    eisi = Math.max(0, etop - emek);
+                    ep = Math.round(state.mass * G * h);
+                    ek = Math.round(0.5 * state.mass * speed * speed);
+                    eisi = Math.min(etop, Math.round(state.eThermal));
+                    emek = Math.max(0, etop - eisi);
+
+                    if (emek === 0) {
+                        ep = 0;
+                        ek = 0;
+                    } else if (ep + ek !== emek) {
+                        ek = Math.max(0, emek - ep);
+                    }
                 }
 
                 // Telemetri Metinleri
@@ -1092,7 +1176,7 @@
                 textEmek.textContent = `${emek} J`;
                 textEtop.textContent = `${etop} J`;
 
-                // Bar Genişlikleri (Referans ölçek: Toplam enerji veya maksimum olası enerji)
+                // Bar Genişlikleri
                 const scaleRef = Math.max(etop, state.mass * G * MAX_HEIGHT, 1);
                 barEk.style.width = `${Math.min(100, (ek / scaleRef) * 100)}%`;
                 barEp.style.width = `${Math.min(100, (ep / scaleRef) * 100)}%`;
@@ -1105,7 +1189,6 @@
             }
 
             function updateEducationalText(h, speed) {
-                // Sürtünme uyarısı alt kutusu
                 if (state.frictionCoeff > 0 && !state.isResting && !state.isDragging) {
                     explanationFriction.classList.add('visible');
                 } else {
@@ -1122,105 +1205,109 @@
                 if (state.isResting) {
                     motionStateBadge.textContent = 'DURDU (ISIYA DÖNÜŞTÜ)';
                     explanationCard.style.borderLeftColor = '#ef4444';
-                    explanationMain.textContent = 'Tüm mekanik enerji sürtünme yoluyla ısı enerjisine dönüştü. Toplam enerji korundu!';
+                    explanationMain.textContent = 'Mekanik enerjisinin tamamı ısıya dönüştü ve kaykaycı durdu.';
                     return;
                 }
 
                 if (!state.isPlaying) {
                     motionStateBadge.textContent = 'DURAKLATILDI';
                     explanationCard.style.borderLeftColor = '#64748b';
-                    explanationMain.textContent = `Simülasyon duraklatıldı. Şu anki yükseklik ${h.toFixed(2)} m; enerjilerin anlık dağılımını sağdaki göstergelerden inceleyebilirsin.`;
+                    explanationMain.textContent = 'Simülasyon duraklatıldı. Enerji dönüşümünü izlemeye devam etmek için Başlat düğmesine bas.';
                     return;
                 }
 
-                // En alt noktadan geçiş (h <= 0.12 m)
-                if (h <= 0.12 && speed > 0.3) {
-                    motionStateBadge.textContent = 'EN ALT NOKTA (h ≈ 0 m)';
-                    explanationCard.style.borderLeftColor = '#10b981';
-                    explanationMain.textContent = 'En alt noktada (h = 0 m) çekim potansiyel enerjisi sıfırdır, sürat ve kinetik enerji en yüksek değerdedir!';
-                    return;
-                }
-
-                // En tepe noktada anlık duruş (hız çok düşük veya az önce yön değiştirdi)
-                if (speed < 0.45 || state.peakFlashTimer > 0) {
-                    motionStateBadge.textContent = 'EN TEPE NOKTA';
+                // Tepe noktasında anlık durma durumu
+                if (state.peakFlashTimer > 0 || (speed < 0.25 && h > 0.2)) {
+                    motionStateBadge.textContent = 'TEPE NOKTASI';
                     explanationCard.style.borderLeftColor = '#3b82f6';
-                    explanationMain.textContent = 'En yüksek noktada kaykaycı anlık olarak durur: Kinetik enerji sıfır, çekim potansiyel enerjisi maksimumdur.';
+                    explanationMain.textContent = 'Tepe noktasında anlık olarak durdu; tüm mekanik enerji potansiyel enerjiye dönüştü.';
                     return;
                 }
 
-                // Yokuş aşağı mı iniyor yoksa yokuş yukarı mı çıkıyor?
-                // x < 0 ve v > 0 => sağa doğru merkeze iniyor (Yokuş aşağı)
-                // x > 0 ve v < 0 => sola doğru merkeze iniyor (Yokuş aşağı)
-                const isGoingDown = (state.x < 0 && state.v > 0) || (state.x > 0 && state.v < 0);
+                // En alt noktadan geçiş
+                if (Math.abs(state.x) < 0.45 && speed > 0.5) {
+                    motionStateBadge.textContent = 'EN ALT NOKTA (MAKSİMUM HIZ)';
+                    explanationCard.style.borderLeftColor = '#10b981';
+                    explanationMain.textContent = 'En alt noktada hız maksimumdur; potansiyel enerjinin tamamı kinetik enerjiye dönüştü.';
+                    return;
+                }
 
+                // Yokuş aşağı mı yokuş yukarı mı gidiyor? (x * v < 0 ise merkeze/aşağıya doğru inmektedir)
+                const isGoingDown = (state.x * state.v) < 0;
                 if (isGoingDown) {
                     motionStateBadge.textContent = 'YOKUŞ AŞAĞI İNİŞ';
                     explanationCard.style.borderLeftColor = '#10b981';
-                    explanationMain.textContent = 'Yokuş aşağı inerken yükseklik azalır: Çekim potansiyel enerjisi azalırken kinetik enerji artar.';
+                    explanationMain.textContent = 'Yokuş aşağı inerken çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.';
                 } else {
                     motionStateBadge.textContent = 'YOKUŞ YUKARI ÇIKIŞ';
                     explanationCard.style.borderLeftColor = '#f59e0b';
-                    explanationMain.textContent = 'Yokuş yukarı çıkarken kaykaycı yavaşlar: Kinetik enerji çekim potansiyel enerjisine dönüşür.';
+                    explanationMain.textContent = 'Yokuş yukarı çıkarken kinetik enerji çekim potansiyel enerjisine dönüşüyor.';
                 }
             }
 
             /**
-             * Fare ve Dokunmatik Ekran Sürükle-Bırak Etkileşimi
+             * Fare ve Dokunmatik Etkileşim (Sürükle-Bırak)
              */
-            function getPointerPos(evt) {
+            function getPointerClientX(e) {
+                if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
+                return e.clientX;
+            }
+
+            function handleDragStart(e) {
                 const rect = canvas.getBoundingClientRect();
-                const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-                const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-                return {
-                    x: clientX - rect.left,
-                    y: clientY - rect.top
-                };
-            }
+                const clientX = getPointerClientX(e);
+                const sx = clientX - rect.left;
 
-            function handlePointerDown(evt) {
-                const pt = getPointerPos(evt);
-                const skaterScreen = worldToScreen(state.x, getHeightAtX(state.x));
-                const dist = Math.hypot(pt.x - skaterScreen.x, pt.y - (skaterScreen.y - 20));
-
-                // Kaykaycıya yakın tıklandıysa veya rampa üzerine tıklandıysa sürüklemeyi başlat
-                if (dist < 75 || (pt.x >= viewMetrics.padLeft && pt.x <= viewMetrics.width - viewMetrics.padRight)) {
-                    state.isDragging = true;
-                    state.isResting = false;
-                    state.v = 0;
-                    state.x = screenToWorldX(pt.x);
-                    initEnergyFromState();
-                    updateUI();
-                }
-            }
-
-            function handlePointerMove(evt) {
-                if (!state.isDragging) return;
-                evt.preventDefault();
-                const pt = getPointerPos(evt);
-                state.x = screenToWorldX(pt.x);
+                state.isDragging = true;
+                state.isResting = false;
                 state.v = 0;
+                state.x = screenToWorldX(sx);
                 initEnergyFromState();
                 updateUI();
+                renderScene();
             }
 
-            function handlePointerUp() {
+            function handleDragMove(e) {
+                if (!state.isDragging) return;
+                if (e.cancelable) e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const clientX = getPointerClientX(e);
+                const sx = clientX - rect.left;
+
+                state.x = screenToWorldX(sx);
+                state.v = 0;
+                state.isResting = false;
+                initEnergyFromState();
+                updateUI();
+                renderScene();
+            }
+
+            function handleDragEnd() {
                 if (!state.isDragging) return;
                 state.isDragging = false;
+                state.isResting = false;
+                state.v = 0;
                 initEnergyFromState();
+
+                // Bırakıldığı anda simülasyonu otomatik başlat
+                state.isPlaying = true;
+                btnPlayPause.innerHTML = '⏸️ Durdur';
+                btnPlayPause.classList.remove('paused');
+
                 updateUI();
+                renderScene();
             }
 
-            canvas.addEventListener('mousedown', handlePointerDown);
-            window.addEventListener('mousemove', handlePointerMove);
-            window.addEventListener('mouseup', handlePointerUp);
+            wrapper.addEventListener('mousedown', handleDragStart);
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
 
-            canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
-            window.addEventListener('touchmove', handlePointerMove, { passive: false });
-            window.addEventListener('touchend', handlePointerUp);
+            wrapper.addEventListener('touchstart', handleDragStart, { passive: true });
+            window.addEventListener('touchmove', handleDragMove, { passive: false });
+            window.addEventListener('touchend', handleDragEnd);
 
             /**
-             * Düğme ve Ayar Kontrolleri
+             * Kontrol Düğmeleri ve Ayar Dinleyicileri
              */
             btnPlayPause.addEventListener('click', () => {
                 state.isPlaying = !state.isPlaying;
@@ -1228,80 +1315,96 @@
                     btnPlayPause.innerHTML = '⏸️ Durdur';
                     btnPlayPause.classList.remove('paused');
                 } else {
-                    btnPlayPause.innerHTML = '▶️ Devam Et';
+                    btnPlayPause.innerHTML = '▶️ Başlat';
                     btnPlayPause.classList.add('paused');
                 }
                 updateUI();
             });
 
             btnReset.addEventListener('click', () => {
+                state.isPlaying = true;
+                btnPlayPause.innerHTML = '⏸️ Durdur';
+                btnPlayPause.classList.remove('paused');
                 resetSimulation();
-                if (!state.isPlaying) {
-                    state.isPlaying = true;
-                    btnPlayPause.innerHTML = '⏸️ Durdur';
-                    btnPlayPause.classList.remove('paused');
-                }
+                renderScene();
             });
 
-            // Sürtünme Seçici
-            document.querySelectorAll('#frictionControl .seg-btn').forEach(btn => {
+            // Sürtünme Seçici (Kapalı / Düşük / Yüksek)
+            const frictionBtns = document.querySelectorAll('#frictionControl .seg-btn');
+            frictionBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('#frictionControl .seg-btn').forEach(b => {
-                        b.classList.remove('active', 'friction-on');
-                    });
+                    frictionBtns.forEach(b => b.classList.remove('active', 'friction-on'));
                     btn.classList.add('active');
                     const val = parseFloat(btn.dataset.val);
                     if (val > 0) btn.classList.add('friction-on');
                     state.frictionCoeff = val;
+                    // ÖNEMLİ: Sürtünme kapatıldığında birikmiş ısı enerjisi (state.eThermal) sıfırlanmaz,
+                    // kaykaycı kalan mekanik enerjisiyle (eTotal - eThermal) hareketine devam eder.
                     updateUI();
                 });
             });
 
-            // Zaman Hızı Seçici
-            document.querySelectorAll('#speedControl .seg-btn').forEach(btn => {
+            // Hız Seçici (Normal / Ağır Çekim)
+            const speedBtns = document.querySelectorAll('#speedControl .seg-btn');
+            speedBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('#speedControl .seg-btn').forEach(b => b.classList.remove('active'));
+                    speedBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     state.timeScale = parseFloat(btn.dataset.val);
                 });
             });
 
-            // Kütle Kaydırıcısı
+            // Kütle Kaydırıcısı (30 - 80 kg)
             massSlider.addEventListener('input', () => {
+                const oldMass = state.mass;
                 const newMass = parseInt(massSlider.value, 10);
-                const ratio = newMass / state.mass;
+                const ratio = newMass / oldMass;
+
                 state.mass = newMass;
-                state.eTotal *= ratio;
-                state.eThermal *= ratio;
                 massLabel.textContent = newMass;
                 headerMassVal.textContent = newMass;
+
+                // Enerjileri yeni kütleye göre orantılı ölçekle (hız ve ısı oranını koru)
+                state.eTotal *= ratio;
+                state.eThermal *= ratio;
                 updateUI();
+                renderScene();
+            });
+
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                renderScene();
             });
 
             /**
              * Ana Animasyon Döngüsü
              */
             let lastTime = performance.now();
-            function gameLoop(now) {
-                const dt = Math.min(0.05, (now - lastTime) / 1000);
+            function mainLoop(now) {
+                const dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
                 lastTime = now;
 
                 stepPhysics(dt);
-                drawScene();
                 updateUI();
+                renderScene();
 
-                requestAnimationFrame(gameLoop);
+                requestAnimationFrame(mainLoop);
             }
 
             // Başlatma
-            window.addEventListener('resize', () => {
+            function startSimulation() {
                 resizeCanvas();
-                drawScene();
-            });
+                resetSimulation();
+                renderScene();
+                lastTime = performance.now();
+                requestAnimationFrame(mainLoop);
+            }
 
-            resizeCanvas();
-            resetSimulation();
-            requestAnimationFrame(gameLoop);
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', startSimulation);
+            } else {
+                startSimulation();
+            }
         })();
     </script>
 </body>
