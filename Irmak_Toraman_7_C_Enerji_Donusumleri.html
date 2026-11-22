@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7. Sınıf Fen Bilimleri: Hız Treni Enerji Dönüşümleri</title>
+    <style>
+        /* Genel Sıfırlama ve Sistem Fontları (Çevrimdışı Uyumlu) */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --bg-gradient-start: #f0f4f8;
+            --bg-gradient-end: #d9e2ec;
+            --card-bg: #ffffff;
+            --text-main: #102a43;
+            --text-muted: #486581;
+            --primary-blue: #2563eb;
+            --primary-blue-hover: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-red: #ef4444;
+            --accent-slate: #1e293b;
+            --border-color: #bcccdc;
+            --shadow-sm: 0 2px 6px rgba(16, 42, 67, 0.08);
+            --shadow-md: 0 8px 20px rgba(16, 42, 67, 0.12);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        /* Üst Başlık Alanı */
+        header {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 12px 20px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-left: 6px solid var(--primary-blue);
+        }
+
+        .title-group h1 {
+            font-size: clamp(1.1rem, 2.2vw, 1.45rem);
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title-group p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .constants-badge {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334e68;
+        }
+
+        .constants-badge span {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        /* Ana Düzen (Sol: Pist ve Kontroller | Sağ: Enerji Grafikleri ve Açıklama) */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.45fr 1fr;
+            gap: 14px;
+            flex: 1;
+        }
+
+        @media (max-width: 960px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sol Panel: Simülasyon Sahnesi */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            min-height: 330px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #cbd5e1;
+            background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 65%, #dcfce7 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sahne İçi Anlık Bilgi Etiketleri */
+        .telemetry-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px);
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.85rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            pointer-events: none;
+        }
+
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .telemetry-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .telemetry-val {
+            font-weight: 800;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Kontrol Çubuğu */
+        .controls-bar {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-blue-hover);
+        }
+        .btn-primary.paused {
+            background: var(--accent-green);
+        }
+        .btn-primary.paused:hover {
+            background: #059669;
+        }
+
+        .btn-reset {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-reset:hover {
+            background: #cbd5e1;
+        }
+
+        /* Sürtünme ve Hız Anahtarları */
+        .toggles-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 20px;
+            transition: background 0.25s;
+        }
+
+        .switch::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.25s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        input[type="checkbox"] {
+            display: none;
+        }
+
+        input[type="checkbox"]:checked + .switch {
+            background: var(--accent-red);
+        }
+
+        input[type="checkbox"]:checked + .switch::after {
+            transform: translateX(20px);
+        }
+
+        .speed-toggle {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #334e68;
+            padding: 7px 12px;
+            font-size: 0.84rem;
+        }
+        .speed-toggle.slow-active {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        /* Sağ Panel: Enerji Çubukları ve Açıklamalar */
+        .section-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 6px;
+        }
+
+        .energy-bars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+            margin-bottom: 14px;
+        }
+
+        .energy-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+
+        .energy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .energy-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .energy-value {
+            font-variant-numeric: tabular-nums;
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 22px;
+            background: #e2e8f0;
+            border-radius: 7px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 7px;
+            transition: width 0.05s linear;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* Enerji Türleri Renkleri */
+        .bg-kinetic { background: linear-gradient(90deg, #10b981, #059669); }
+        .bg-potential { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .bg-mechanical { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+        .bg-thermal { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .bg-total { background: linear-gradient(90deg, #334155, #0f172a); }
+
+        .text-kinetic { color: #059669; }
+        .text-potential { color: #2563eb; }
+        .text-mechanical { color: #7c3aed; }
+        .text-thermal { color: #dc2626; }
+        .text-total { color: #0f172a; }
+
+        /* Dinamik Türkçe Açıklama Kutusu */
+        .explanation-card {
+            margin-top: auto;
+            background: #eff6ff;
+            border: 2px solid #93c5fd;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .explanation-card.friction-mode {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .explanation-title {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+            color: #1d4ed8;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .explanation-card.friction-mode .explanation-title {
+            color: #b91c1c;
+        }
+
+        .explanation-text {
+            font-size: 0.95rem;
+            line-height: 1.45;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .note-footer {
+            margin-top: 8px;
+            font-size: 0.78rem;
+            color: #64748b;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Üst Başlık -->
+    <header>
+        <div class="title-group">
+            <h1>🎢 7. Sınıf Fen Bilimleri: Hız Treni (Lunapark) Enerji Dönüşümleri Simülasyonu</h1>
+            <p>Motorsuz bir pistte çekim potansiyel, kinetik, mekanik ve ısı enerjisi dönüşümlerini gözlemle.</p>
+        </div>
+        <div class="constants-badge" title="Sabit Sistem Değerleri">
+            <div>Vagon Kütlesi (m): <span>100 kg</span></div>
+            <div>Yerçekimi (g): <span>10 N/kg</span></div>
+            <div>Başlangıç Yüksekliği (h): <span>30 m</span></div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik -->
+    <main class="main-layout">
+        
+        <!-- Sol Bölüm: Pist Görselleştirmesi ve Kontroller -->
+        <section class="panel">
+            <div class="canvas-wrapper" id="canvasContainer">
+                <canvas id="coasterCanvas"></canvas>
+                
+                <!-- Sağ Üst Anlık Yükseklik ve Sürat Göstergesi -->
+                <div class="telemetry-overlay">
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Yükseklik (h):</span>
+                        <span class="telemetry-val" id="heightDisplay">30.0 m</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Sürat (v):</span>
+                        <span class="telemetry-val" id="speedDisplay">0.0 m/s</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Durum:</span>
+                        <span class="telemetry-val" id="statusBadge" style="color:#2563eb;">Hazır</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontrol Düğmeleri -->
+            <div class="controls-bar">
+                <div class="btn-group">
+                    <button id="playPauseBtn" class="btn-primary paused">
+                        <span id="playIcon">▶</span> <span id="playText">Başlat</span>
+                    </button>
+                    <button id="resetBtn" class="btn-reset">
+                        ↺ Sıfırla
+                    </button>
+                </div>
+
+                <div class="toggles-group">
+                    <label class="toggle-box" title="Sürtünme kuvvetini açıp kapatarak iki durumu karşılaştırın">
+                        <span>Sürtünme:</span>
+                        <input type="checkbox" id="frictionToggle">
+                        <div class="switch"></div>
+                        <span id="frictionLabel" style="color:#059669; min-width: 48px;">Kapalı</span>
+                    </label>
+
+                    <button id="slowMoBtn" class="speed-toggle" title="Enerji dönüşümlerini daha yavaş inceleyin">
+                        🐢 Yavaş Çekim: Kapalı
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sağ Bölüm: Enerji Çubukları ve Bilimsel Açıklama -->
+        <section class="panel">
+            <div class="section-title">
+                <span>📊 Anlık Enerji Dönüşüm Grafiği</span>
+                <span style="font-size:0.78rem; font-weight:600; color:#64748b;">Birim: Joule (J)</span>
+            </div>
+
+            <div class="energy-bars-container">
+                <!-- Kinetik Enerji -->
+                <div class="energy-item">
+                    <div class="energy-header">
+                        <span class="energy-name text-kinetic"><span class="dot bg-kinetic"></span> Kinetik Enerji (Hareket)</span>
+                        <span class="energy-value text-kinetic" id="keVal">0 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bg-kinetic" id="keBar"></div>
+                    </div>
+                </div>
+
+                <!-- Çekim Potansiyel Enerjisi -->
+                <div class="energy-item">
+                    <div class="energy-header">
+                        <span class="energy-name text-potential"><span class="dot bg-potential"></span> Çekim Potansiyel Enerjisi (Konum)</span>
+                        <span class="energy-value text-potential" id="peVal">30.000 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bg-potential" id="peBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Mekanik Enerji -->
+                <div class="energy-item">
+                    <div class="energy-header">
+                        <span class="energy-name text-mechanical"><span class="dot bg-mechanical"></span> Mekanik Enerji (Kinetik + Potansiyel)</span>
+                        <span class="energy-value text-mechanical" id="meVal">30.000 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bg-mechanical" id="meBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Isıya Dönüşen Enerji -->
+                <div class="energy-item">
+                    <div class="energy-header">
+                        <span class="energy-name text-thermal"><span class="dot bg-thermal"></span> Isıya Dönüşen Enerji (Sürtünme)</span>
+                        <span class="energy-value text-thermal" id="thVal">0 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bg-thermal" id="thBar"></div>
+                    </div>
+                </div>
+
+                <!-- Toplam Enerji -->
+                <div class="energy-item" style="background: #f1f5f9; border-color: #94a3b8;">
+                    <div class="energy-header">
+                        <span class="energy-name text-total"><span class="dot bg-total"></span> Toplam Enerji (Korunan Enerji)</span>
+                        <span class="energy-value text-total" id="totVal">30.000 J</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bg-total" id="totBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anlık Açıklama Paneli -->
+            <div class="explanation-card" id="explanationCard">
+                <div class="explanation-title" id="explanationTitle">
+                    💡 Anlık Enerji Analizi
+                </div>
+                <div class="explanation-text" id="explanationText">
+                    Vagon en yüksek noktada (30 m) duruyor. Sahip olduğu tüm enerji <strong>çekim potansiyel enerjisidir</strong> (30.000 J). Başlat düğmesine basarak hareketi gözlemleyebilirsin.
+                </div>
+                <div class="note-footer">
+                    <strong>Not:</strong> Dışarıdan enerji verilmeyen kapalı bir sistem modellenmiştir. Hava direnci ve ray sürtünmesi tek bir "Sürtünme" ayarıyla temsil edilmektedir.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * 7. Sınıf Fen Bilimleri - Hız Treni (Lunapark) Enerji Dönüşümleri Simülasyonu
+         * Saf JavaScript (ES6+) ve HTML5 Canvas ile geliştirilmiştir.
+         */
+
+        // --- FİZİK SABİTLERİ VE BAŞLANGIÇ KOŞULLARI ---
+        const MASS = 100;              // Kütle (kg)
+        const GRAVITY = 10;            // Yerçekimi ivmesi (N/kg veya m/s^2 - 7. sınıf sade hesaplama için 10)
+        const INITIAL_HEIGHT = 30.0;   // Başlangıç yüksekliği (m)
+        const INITIAL_SPEED = 0.0;     // Başlangıç sürati (m/s)
+        const TOTAL_ENERGY = MASS * GRAVITY * INITIAL_HEIGHT; // 30.000 Joule (Sabit)
+
+        // --- SİMÜLASYON DURUM DEĞİŞKENLERİ ---
+        let isRunning = false;
+        let isFrictionOn = false;
+        let isSlowMo = false;
+        let isStoppedAtBottom = false;
+
+        // Vagonun pist üzerindeki parametrik konumu (s: 0 ile 1000 arası yay uzunluğu birimi)
+        let trackPoints = [];          // Örneklenmiş pist noktaları {xNorm, height, dist, slopeAngle}
+        let totalTrackLength = 0;      // Toplam pist uzunluğu (metre cinsinden ölçekli)
+        let currentDist = 0;           // Vagonun pist başından itibaren aldığı yol (m)
+        let velocity = INITIAL_SPEED;  // Vagonun teğetsel hızı (+ ileri, - geri) (m/s)
+        let thermalEnergy = 0;         // Isıya dönüşen enerji (J)
+
+        // --- DOM ELEMENTLERİ ---
+        const canvas = document.getElementById('coasterCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const playText = document.getElementById('playText');
+        const resetBtn = document.getElementById('resetBtn');
+        const frictionToggle = document.getElementById('frictionToggle');
+        const frictionLabel = document.getElementById('frictionLabel');
+        const slowMoBtn = document.getElementById('slowMoBtn');
+
+        // Telemetri ve Enerji Çubuğu Elementleri
+        const heightDisplay = document.getElementById('heightDisplay');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const statusBadge = document.getElementById('statusBadge');
+
+        const keVal = document.getElementById('keVal');
+        const peVal = document.getElementById('peVal');
+        const meVal = document.getElementById('meVal');
+        const thVal = document.getElementById('thVal');
+        const totVal = document.getElementById('totVal');
+
+        const keBar = document.getElementById('keBar');
+        const peBar = document.getElementById('peBar');
+        const meBar = document.getElementById('meBar');
+        const thBar = document.getElementById('thBar');
+        const totBar = document.getElementById('totBar');
+
+        const explanationCard = document.getElementById('explanationCard');
+        const explanationTitle = document.getElementById('explanationTitle');
+        const explanationText = document.getElementById('explanationText');
+
+        /**
+         * Pist Profilini Oluşturan Matematiksel Fonksiyon
+         * xNorm: 0.0 (sol başlangıç) ile 1.0 (sağ bitiş) arasında normalize yatay konum
+         * Dönen değer: Metre cinsinden yükseklik (0 m ile 35 m arası)
+         * Tasarım:
+         * 1. Sol tarafta eğimli başlayan 30 m başlangıç tepesi (başlangıçta eğim olduğu için vagon anında hızlanır)
+         * 2. Ortada 0 m seviyesinde derin bir vadi tabanı
+         * 3. Sağ tarafta 20 m yüksekliğinde ikinci bir tepe
+         * 4. En sağda 35 m'ye kadar yükselen dik çıkış rampası (vagon 30 m'ye ulaşıp pürüzsüzce geri döner)
+         */
+        function getTrackHeightAtX(xNorm) {
+            const controlPoints = [
+                { x: 0.00, h: 35.0 }, // Sol güvenlik duvarı (35 m)
+                { x: 0.18, h: 12.0 }, // Başlangıç noktası (x=0.065) bu dik iniş yamacının üzerindedir!
+                { x: 0.30, h: 0.0  }, // 1. Vadi Tabanı (En derin nokta: 0 m)
+                { x: 0.44, h: 11.0 },
+                { x: 0.56, h: 20.0 }, // Sağ Orta Tepe (20 m)
+                { x: 0.68, h: 7.0  }, // 2. Vadi (7 m)
+                { x: 0.82, h: 21.0 },
+                { x: 0.92, h: 30.0 }, // Sağ Çıkış Rampası 30 m seviyesi
+                { x: 1.00, h: 35.0 }  // En sağ 35 m tepe noktası
+            ];
+
+            // Kosinüs interpolasyonu ile sürekli ve pürüzsüz (C1 türevlenebilir) pist eğrisi
+            for (let i = 0; i < controlPoints.length - 1; i++) {
+                const p0 = controlPoints[i];
+                const p1 = controlPoints[i + 1];
+                if (xNorm >= p0.x && xNorm <= p1.x) {
+                    const t = (xNorm - p0.x) / (p1.x - p0.x);
+                    const mu = (1 - Math.cos(t * Math.PI)) / 2;
+                    return p0.h * (1 - mu) + p1.h * mu;
+                }
+            }
+            return 30.0;
+        }
+
+        /**
+         * Pist geometrisini yüksek çözünürlüklü olarak örnekler ve yay uzunluklarını hesaplar.
+         */
+        function buildTrackGeometry() {
+            trackPoints = [];
+            const steps = 2000;
+            const horizontalScaleMeters = 120; // Pistin yatay genişliği ~120 metre
+            let accumulatedDist = 0;
+
+            for (let i = 0; i <= steps; i++) {
+                const xNorm = i / steps;
+                const h = getTrackHeightAtX(xNorm);
+                const xMeters = xNorm * horizontalScaleMeters;
+
+                if (i > 0) {
+                    const prev = trackPoints[i - 1];
+                    const dx = xMeters - prev.xMeters;
+                    const dh = h - prev.height;
+                    const segmentLen = Math.sqrt(dx * dx + dh * dh);
+                    accumulatedDist += segmentLen;
+                }
+
+                trackPoints.push({
+                    xNorm: xNorm,
+                    xMeters: xMeters,
+                    height: h,
+                    dist: accumulatedDist,
+                    angle: 0
+                });
+            }
+
+            // Her nokta için teğet eğim açısını (radyan) hesapla
+            for (let i = 0; i < trackPoints.length; i++) {
+                const prev = trackPoints[Math.max(0, i - 1)];
+                const next = trackPoints[Math.min(trackPoints.length - 1, i + 1)];
+                const dx = next.xMeters - prev.xMeters;
+                const dh = next.height - prev.height;
+                trackPoints[i].angle = Math.atan2(dh, dx);
+            }
+
+            totalTrackLength = accumulatedDist;
+            // Başlangıç konumu: tam 30.0 m yüksekliğine denk gelen eğimli yamaç noktası
+            const startPoint = trackPoints.reduce((best, p) => {
+                if (p.xNorm <= 0.18 && Math.abs(p.height - INITIAL_HEIGHT) < Math.abs(best.height - INITIAL_HEIGHT)) {
+                    return p;
+                }
+                return best;
+            }, trackPoints[0]);
+            currentDist = startPoint.dist;
+        }
+
+        /**
+         * Verilen yay uzunluğu (dist) için pist üzerindeki interpolasyonlu noktayı döndürür.
+         */
+        function getPointAtDistance(dist) {
+            if (dist <= 0) return trackPoints[0];
+            if (dist >= totalTrackLength) return trackPoints[trackPoints.length - 1];
+
+            let low = 0;
+            let high = trackPoints.length - 1;
+            while (low < high - 1) {
+                const mid = Math.floor((low + high) / 2);
+                if (trackPoints[mid].dist <= dist) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+
+            const p0 = trackPoints[low];
+            const p1 = trackPoints[high];
+            const span = p1.dist - p0.dist;
+            const ratio = span > 0 ? (dist - p0.dist) / span : 0;
+
+            return {
+                xNorm: p0.xNorm + (p1.xNorm - p0.xNorm) * ratio,
+                height: p0.height + (p1.height - p0.height) * ratio,
+                angle: p0.angle + (p1.angle - p0.angle) * ratio,
+                dist: dist
+            };
+        }
+
+        /**
+         * Enerji sınırına (E_p = E_mekanik) ulaşıldığında vagonun tam dönüş mesafesini (dist) ikili aramayla bulur.
+         * Böylece vagon dönüş yüksekliğini asla aşmaz ve kayan nokta hatasıyla takılı kalmaz.
+         */
+        function findExactTurningDistance(fromDist, toDist, targetHeight) {
+            let d0 = fromDist;
+            let d1 = toDist;
+            for (let i = 0; i < 24; i++) {
+                const mid = (d0 + d1) / 2;
+                const hMid = getPointAtDistance(mid).height;
+                if (hMid < targetHeight) {
+                    d0 = mid;
+                } else {
+                    d1 = mid;
+                }
+            }
+            return d0;
+        }
+
+        /**
+         * Kesintisiz İleri-Geri Salınım Fizik Motoru
+         * - Teğetsel ivme a_t = -g * sin(theta) - a_sürtünme ile yön işaretli hız (v) güncellenir.
+         * - Dönüş noktalarında (v = 0 geçişlerinde) vagon asla kilitlenmez; -g * sin(theta) kuvveti
+         *   vagonu pürüzsüzce ters yöne ivmelendirir.
+         * - Enerji projeksiyonu (energy projection) ile Ep > Emekanik olması engellenir.
+         */
+        function updatePhysics(dt) {
+            if (!isRunning || isStoppedAtBottom) return;
+
+            const effectiveDt = isSlowMo ? dt * 0.35 : dt;
+            const subSteps = 16; // Yüksek hassasiyetli alt adımlar
+            const subDt = effectiveDt / subSteps;
+            const frictionCoeff = 0.055;
+
+            for (let step = 0; step < subSteps; step++) {
+                const currentPt = getPointAtDistance(currentDist);
+                const sinTheta = Math.sin(currentPt.angle);
+                const cosTheta = Math.cos(currentPt.angle);
+
+                // Teğetsel yerçekimi ivmesi: sağa yokuş yukarıda negatif, sağa yokuş aşağıda pozitif
+                const gravityAccel = -GRAVITY * sinTheta;
+                let totalAccel = gravityAccel;
+
+                if (isFrictionOn) {
+                    const normalAccel = GRAVITY * Math.max(0, cosTheta);
+                    const frictionDecel = frictionCoeff * normalAccel;
+
+                    if (Math.abs(velocity) > 0.04) {
+                        // Hareket yönünün tam tersine sürtünme ivmesi
+                        totalAccel -= Math.sign(velocity) * frictionDecel;
+                    } else if (currentPt.height < 2.0 && Math.abs(gravityAccel) <= frictionDecel) {
+                        // Hız sıfıra çok yakın ve vadi tabanında yerçekimi eğim bileşeni sürtünmeyi yenemiyor -> Dur!
+                        velocity = 0;
+                        isStoppedAtBottom = true;
+                        break;
+                    } else {
+                        // Yamaçtaki yerçekimi kuvveti sürtünmeyi yenerek vagonu aşağı doğru ivmelendirir
+                        const dir = gravityAccel !== 0 ? Math.sign(gravityAccel) : 1;
+                        totalAccel = gravityAccel - dir * Math.min(Math.abs(gravityAccel) * 0.25, frictionDecel);
+                    }
+                }
+
+                // Velocity-Verlet hız ve konum güncellemesi
+                const prevDist = currentDist;
+                const prevVel = velocity;
+                velocity = prevVel + totalAccel * subDt;
+                currentDist = prevDist + 0.5 * (prevVel + velocity) * subDt;
+
+                const ds = Math.abs(currentDist - prevDist);
+
+                // Sürtünme açıksa ısıya dönüşen enerjiyi hesapla: E_ısı += F_s * ds
+                if (isFrictionOn && ds > 0) {
+                    const normalForce = MASS * GRAVITY * Math.max(0, cosTheta);
+                    const frictionForce = frictionCoeff * normalForce;
+                    const deltaThermal = frictionForce * ds;
+                    const newPtCheck = getPointAtDistance(currentDist);
+                    const maxPossibleThermal = Math.max(0, TOTAL_ENERGY - MASS * GRAVITY * newPtCheck.height);
+                    thermalEnergy = Math.min(TOTAL_ENERGY, thermalEnergy + Math.min(deltaThermal, Math.max(0, maxPossibleThermal - thermalEnergy)));
+                }
+
+                // Enerji Korunumu Projeksiyonu (Energy Projection)
+                const allowedMechanicalE = Math.max(0, TOTAL_ENERGY - (isFrictionOn ? thermalEnergy : 0));
+                const maxReachableHeight = allowedMechanicalE / (MASS * GRAVITY);
+                const newPt = getPointAtDistance(currentDist);
+                const potentialE = MASS * GRAVITY * newPt.height;
+
+                if (potentialE > allowedMechanicalE + 0.5 && prevVel * velocity >= 0 && Math.abs(prevVel) > 0.1) {
+                    // Vagon çıkabileceği maksimum yüksekliğe (dönüş noktasına) ulaştı!
+                    currentDist = findExactTurningDistance(prevDist, currentDist, maxReachableHeight);
+                    velocity = 0;
+                } else {
+                    const exactKineticE = Math.max(0, allowedMechanicalE - potentialE);
+                    const exactSpeed = Math.sqrt((2 * exactKineticE) / MASS);
+                    const dir = velocity !== 0 ? Math.sign(velocity) : Math.sign(totalAccel);
+                    velocity = dir * exactSpeed;
+                }
+
+                // Pist uç sınır koruması
+                if (currentDist <= 0) {
+                    currentDist = 0;
+                    velocity = 0;
+                } else if (currentDist >= totalTrackLength) {
+                    currentDist = totalTrackLength;
+                    velocity = 0;
+                }
+            }
+        }
+
+        /**
+         * Enerji Çubuklarını, Sayısal Değerleri ve Dinamik Türkçe Açıklamaları Günceller
+         */
+        function updateUI() {
+            const pt = getPointAtDistance(currentDist);
+            const h = Math.max(0, pt.height);
+            const speed = Math.abs(velocity);
+
+            // 7. sınıf formülleriyle anlık enerji hesaplamaları
+            const thermalE = isFrictionOn ? Math.min(TOTAL_ENERGY, thermalEnergy) : 0;
+            const mechanicalE = Math.max(0, TOTAL_ENERGY - thermalE);
+            const potentialE = Math.min(mechanicalE, MASS * GRAVITY * h);
+            const kineticE = Math.max(0, mechanicalE - potentialE);
+
+            // Telemetri değerleri
+            heightDisplay.textContent = h.toFixed(1) + ' m';
+            speedDisplay.textContent = speed.toFixed(1) + ' m/s';
+
+            if (!isRunning && speed === 0 && Math.abs(h - INITIAL_HEIGHT) < 0.1 && thermalE === 0) {
+                statusBadge.textContent = 'Hazır';
+                statusBadge.style.color = '#2563eb';
+            } else if (isStoppedAtBottom) {
+                statusBadge.textContent = 'Durdu';
+                statusBadge.style.color = '#dc2626';
+            } else if (!isRunning) {
+                statusBadge.textContent = 'Duraklatıldı';
+                statusBadge.style.color = '#d97706';
+            } else {
+                statusBadge.textContent = velocity >= 0 ? 'İleri Hareket →' : '← Geri Dönüş';
+                statusBadge.style.color = '#059669';
+            }
+
+            // Çubuk genişlikleri ve Joule değerleri
+            const formatJ = (val) => Math.round(val).toLocaleString('tr-TR') + ' J';
+
+            keVal.textContent = formatJ(kineticE);
+            peVal.textContent = formatJ(potentialE);
+            meVal.textContent = formatJ(mechanicalE);
+            thVal.textContent = formatJ(thermalE);
+            totVal.textContent = formatJ(TOTAL_ENERGY);
+
+            keBar.style.width = ((kineticE / TOTAL_ENERGY) * 100).toFixed(1) + '%';
+            peBar.style.width = ((potentialE / TOTAL_ENERGY) * 100).toFixed(1) + '%';
+            meBar.style.width = ((mechanicalE / TOTAL_ENERGY) * 100).toFixed(1) + '%';
+            thBar.style.width = ((thermalE / TOTAL_ENERGY) * 100).toFixed(1) + '%';
+            totBar.style.width = '100%';
+
+            // Dinamik Türkçe Açıklama Metni
+            if (isFrictionOn) {
+                explanationCard.classList.add('friction-mode');
+                explanationTitle.innerHTML = '🔥 Sürtünmeli Sistem — Enerji Dönüşümü';
+            } else {
+                explanationCard.classList.remove('friction-mode');
+                explanationTitle.innerHTML = '💡 Sürtünmesiz Sistem — Enerjinin Korunumu';
+            }
+
+            const sinTheta = Math.sin(pt.angle);
+            const isDescending = (velocity > 0.2 && sinTheta < -0.02) || (velocity < -0.2 && sinTheta > 0.02);
+            const isAscending = (velocity > 0.2 && sinTheta > 0.02) || (velocity < -0.2 && sinTheta < -0.02);
+
+            if (isStoppedAtBottom) {
+                explanationText.innerHTML = 'Sürtünme kuvveti nedeniyle mekanik enerjinin tamamı <strong>ısı enerjisine</strong> dönüştü ve vagon en çukur noktada durdu. Toplam enerji hâlâ 30.000 J olarak korundu.';
+            } else if (!isRunning && speed === 0 && thermalE === 0) {
+                explanationText.innerHTML = 'Vagon en yüksek noktada (30 m) duruyor. Sahip olduğu tüm enerji <strong>çekim potansiyel enerjisidir</strong> (30.000 J). Başlat düğmesine basarak hareketi gözlemleyebilirsin.';
+            } else if (speed < 0.8 && h > 1.0) {
+                explanationText.innerHTML = 'Vagon dönüş tepesine ulaştı! Kinetik enerjisinin tamamı <strong>çekim potansiyel enerjisine</strong> dönüştü ve şimdi yerçekimi etkisiyle ters yöne hızlanacak.';
+            } else if (h < 1.2) {
+                explanationText.innerHTML = isFrictionOn
+                    ? 'Vagon en alt noktadan (0 m) geçiyor. Çekim potansiyel enerjisi sıfırlandı; kalan mekanik enerjinin tamamı <strong>kinetik enerjiye</strong> dönüştü, bir kısmı ise <strong>ısıya</strong> aktarıldı.'
+                    : 'Vagon en alt noktadan (0 m) en yüksek süratiyle geçiyor! Başlangıçtaki çekim potansiyel enerjisinin tamamı <strong>kinetik enerjiye</strong> (30.000 J) dönüştü.';
+            } else if (isDescending) {
+                explanationText.innerHTML = isFrictionOn
+                    ? '<strong>İniş hareketi:</strong> Yükseklik azaldığı için <strong>çekim potansiyel enerjisi</strong> azalıyor; büyük kısmı <strong>kinetik enerjiye</strong>, sürtünme nedeniyle bir kısmı ise <strong>ısı enerjisine</strong> dönüşüyor.'
+                    : '<strong>İniş hareketi:</strong> Yükseklik azaldıkça <strong>çekim potansiyel enerjisi</strong> azalıyor ve doğrudan <strong>kinetik enerjiye</strong> dönüşerek vagonu hızlandırıyor. Mekanik enerji sabit!';
+            } else if (isAscending) {
+                explanationText.innerHTML = isFrictionOn
+                    ? '<strong>Çıkış hareketi:</strong> Vagon yükseldikçe <strong>kinetik enerjisi</strong> azalarak <strong>çekim potansiyel enerjisine</strong> ve sürtünmeyle <strong>ısıya</strong> dönüşüyor.'
+                    : '<strong>Çıkış hareketi:</strong> Vagon yükseldikçe <strong>kinetik enerjisi</strong> azalıyor ve <strong>çekim potansiyel enerjisine</strong> dönüşüyor. Sürtünme olmadığı için başlangıç yüksekliğine (30 m) kadar çıkabilir.';
+            }
+        }
+
+        /**
+         * Canvas Boyutunu Duyarlı (Responsive) Olarak Ayarlar
+         */
+        function resizeCanvas() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawScene();
+        }
+
+        /**
+         * Pist, Referans Çizgileri, Destek Kolonları ve Hız Treni Vagonunu Çizer
+         */
+        function drawScene() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            if (width === 0 || height === 0) return;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const padLeft = 48;
+            const padRight = 24;
+            const padTop = 44;
+            const padBottom = 34;
+            const maxMetersHeight = 36.0;
+
+            const plotW = width - padLeft - padRight;
+            const plotH = height - padTop - padBottom;
+
+            const toScreenX = (xNorm) => padLeft + xNorm * plotW;
+            const toScreenY = (hMeters) => padTop + plotH * (1 - hMeters / maxMetersHeight);
+
+            // 1. Dekoratif Arka Plan Bulutları
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+            const drawCloud = (cx, cy, scale) => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 16 * scale, cy - 5 * scale, 22 * scale, 0, Math.PI * 2);
+                ctx.arc(cx + 34 * scale, cy, 16 * scale, 0, Math.PI * 2);
+                ctx.fill();
+            };
+            drawCloud(width * 0.22, 42, 0.9);
+            drawCloud(width * 0.62, 34, 1.05);
+            ctx.restore();
+
+            // 2. Yükseklik Referans Çizgileri (0 m, 10 m, 20 m, 30 m)
+            const levels = [0, 10, 20, 30];
+            ctx.save();
+            levels.forEach(lvl => {
+                const y = toScreenY(lvl);
+                ctx.beginPath();
+                ctx.setLineDash(lvl === 0 ? [] : [6, 6]);
+                ctx.strokeStyle = lvl === 0 ? '#15803d' : 'rgba(51, 65, 85, 0.35)';
+                ctx.lineWidth = lvl === 0 ? 3 : 1.3;
+                ctx.moveTo(padLeft - 8, y);
+                ctx.lineTo(width - padRight, y);
+                ctx.stroke();
+
+                // Sol taraftaki metre etiketleri
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(lvl + ' m', padLeft - 12, y);
+            });
+            ctx.restore();
+
+            // 3. Pist Altı Çimenlik Dolgu ve Destek Direkleri
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(toScreenX(0), toScreenY(0));
+            for (let i = 0; i < trackPoints.length; i += 4) {
+                const p = trackPoints[i];
+                ctx.lineTo(toScreenX(p.xNorm), toScreenY(p.height));
+            }
+            ctx.lineTo(toScreenX(1), toScreenY(0));
+            ctx.closePath();
+            const hillGrad = ctx.createLinearGradient(0, padTop, 0, toScreenY(0));
+            hillGrad.addColorStop(0, 'rgba(134, 239, 172, 0.45)');
+            hillGrad.addColorStop(1, 'rgba(34, 197, 94, 0.75)');
+            ctx.fillStyle = hillGrad;
+            ctx.fill();
+
+            // Lunapark çelik destek kolonları
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            for (let xN = 0.06; xN <= 0.96; xN += 0.075) {
+                const hVal = getTrackHeightAtX(xN);
+                if (hVal > 1.5) {
+                    const sx = toScreenX(xN);
+                    const syTop = toScreenY(hVal) + 4;
+                    const syBot = toScreenY(0);
+                    ctx.beginPath();
+                    ctx.moveTo(sx, syTop);
+                    ctx.lineTo(sx, syBot);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+
+            // 4. Başlangıç Yüksekliği İşaretçisi (30 m Referans Bayrağı)
+            const startPt = trackPoints.reduce((best, p) => {
+                if (p.xNorm <= 0.18 && Math.abs(p.height - INITIAL_HEIGHT) < Math.abs(best.height - INITIAL_HEIGHT)) {
+                    return p;
+                }
+                return best;
+            }, trackPoints[0]);
+            const flagX = toScreenX(startPt.xNorm);
+            const flagY = toScreenY(startPt.height);
+            ctx.save();
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(flagX, flagY);
+            ctx.lineTo(flagX, flagY - 24);
+            ctx.stroke();
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(flagX, flagY - 24);
+            ctx.lineTo(flagX + 16, flagY - 19);
+            ctx.lineTo(flagX, flagY - 14);
+            ctx.fill();
+            ctx.restore();
+
+            // 5. Çelik Ray Çizimi
+            ctx.save();
+            ctx.beginPath();
+            for (let i = 0; i < trackPoints.length; i += 2) {
+                const p = trackPoints[i];
+                const sx = toScreenX(p.xNorm);
+                const sy = toScreenY(p.height);
+                if (i === 0) ctx.moveTo(sx, sy);
+                else ctx.lineTo(sx, sy);
+            }
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = isFrictionOn ? '#b91c1c' : '#1e293b';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Ray iç parlama çizgisi
+            ctx.strokeStyle = isFrictionOn ? '#fca5a5' : '#94a3b8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+
+            // 6. Hız Treni Vagonunun Çizimi
+            const cartPt = getPointAtDistance(currentDist);
+            const cx = toScreenX(cartPt.xNorm);
+            const cy = toScreenY(cartPt.height);
+
+            // Ekran koordinatlarındaki teğet açı (y ekseni aşağı doğru arttığı için dh işareti ters)
+            const dxScreen = plotW;
+            const dyScreen = -plotH / maxMetersHeight;
+            const screenAngle = Math.atan2(Math.sin(cartPt.angle) * dyScreen, Math.cos(cartPt.angle) * dxScreen);
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(screenAngle);
+
+            // Sürtünme açıksa ve vagon hareket ediyorsa tekerleklerde kıvılcım/ısı efekti
+            if (isFrictionOn && Math.abs(velocity) > 0.8) {
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+                for (let s = 0; s < 4; s++) {
+                    const sparkX = -14 - Math.random() * 14 * Math.sign(velocity);
+                    const sparkY = -2 - Math.random() * 8;
+                    ctx.beginPath();
+                    ctx.arc(sparkX, sparkY, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Vagon gövdesi
+            ctx.fillStyle = '#2563eb';
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-20, -22, 40, 15, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            // Sarı güvenlik şeridi
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(-18, -15, 36, 3);
+
+            // Yolcu silüetleri
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(-8, -26, 4.5, 0, Math.PI * 2);
+            ctx.arc(8, -26, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tekerlekler
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-11, -5, 4.5, 0, Math.PI * 2);
+            ctx.arc(11, -5, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(-11, -5, 1.8, 0, Math.PI * 2);
+            ctx.arc(11, -5, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // --- KONTROL VE ETKİLEŞİM OLAYLARI ---
+        function updatePlayButtonUI() {
+            if (isRunning) {
+                playPauseBtn.classList.remove('paused');
+                playIcon.textContent = '⏸';
+                playText.textContent = 'Durdur';
+            } else {
+                playPauseBtn.classList.add('paused');
+                playIcon.textContent = '▶';
+                playText.textContent = 'Başlat';
+            }
+        }
+
+        playPauseBtn.addEventListener('click', () => {
+            if (isStoppedAtBottom) {
+                resetSimulation();
+            }
+            isRunning = !isRunning;
+            updatePlayButtonUI();
+            updateUI();
+        });
+
+        // Sıfırla Düğmesi (Birebir aynı başlangıç koşullarına döner)
+        function resetSimulation() {
+            isRunning = false;
+            isStoppedAtBottom = false;
+            velocity = INITIAL_SPEED;
+            thermalEnergy = 0;
+
+            const startPoint = trackPoints.reduce((best, p) => {
+                if (p.xNorm <= 0.18 && Math.abs(p.height - INITIAL_HEIGHT) < Math.abs(best.height - INITIAL_HEIGHT)) {
+                    return p;
+                }
+                return best;
+            }, trackPoints[0]);
+            currentDist = startPoint.dist;
+
+            updatePlayButtonUI();
+            updateUI();
+            drawScene();
+        }
+
+        resetBtn.addEventListener('click', resetSimulation);
+
+        frictionToggle.addEventListener('change', (e) => {
+            isFrictionOn = e.target.checked;
+            if (isFrictionOn) {
+                frictionLabel.textContent = 'Açık';
+                frictionLabel.style.color = '#dc2626';
+            } else {
+                frictionLabel.textContent = 'Kapalı';
+                frictionLabel.style.color = '#059669';
+                isStoppedAtBottom = false;
+            }
+            updateUI();
+            drawScene();
+        });
+
+        slowMoBtn.addEventListener('click', () => {
+            isSlowMo = !isSlowMo;
+            if (isSlowMo) {
+                slowMoBtn.classList.add('slow-active');
+                slowMoBtn.textContent = '🐢 Yavaş Çekim: Açık';
+            } else {
+                slowMoBtn.classList.remove('slow-active');
+                slowMoBtn.textContent = '🐢 Yavaş Çekim: Kapalı';
+            }
+        });
+
+        // --- ANA ANİMASYON DÖNGÜSÜ ---
+        let lastTimestamp = null;
+
+        function animate(timestamp) {
+            if (lastTimestamp !== null) {
+                const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+                if (isRunning) {
+                    updatePhysics(dt);
+                    updateUI();
+                }
+                drawScene();
+            }
+            lastTimestamp = timestamp;
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        window.onload = function () {
+            buildTrackGeometry();
+            resizeCanvas();
+            resetSimulation();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
