@@ -26,14 +26,14 @@ input{width:19px;height:19px;accent-color:#246fc1}
 <body>
 <main>
 <h1>🏍️ Enerji Dönüşümü Simülasyonu</h1>
-<p class="sub">7. Sınıf Fen Bilimleri · Hareket parkurunda ilerleyen motor</p>
+<p class="sub">7. Sınıf Fen Bilimleri · Motor çimenlik parkur yolunu takip ediyor</p>
 <svg viewBox="0 0 640 260" role="img" aria-label="Yokuşlu parkurda hareket eden motor">
 <rect width="640" height="260" fill="#dff2ff"/>
 <circle cx="545" cy="42" r="23" fill="#ffd45c"/>
 <path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170 L640 260 L0 260Z" fill="#8acb75"/>
 <path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170" fill="none" stroke="#596d45" stroke-width="7" stroke-linecap="round"/>
 <g fill="#fff" opacity=".8"><circle cx="85" cy="48" r="12"/><circle cx="100" cy="45" r="17"/><circle cx="117" cy="50" r="11"/></g>
-<g id="motor" transform="translate(30 187)">
+<g id="motor" transform="translate(30 187)"><g id="energyTag" transform="translate(0 -52)"><rect id="energyTagBg" x="-43" y="-12" width="86" height="20" rx="9" fill="#3286db" stroke="#ffffff" stroke-width="1.5"/><text id="energyTagText" x="0" y="2" text-anchor="middle" font-size="10" font-weight="bold" fill="#ffffff">Kinetik</text></g>
 <circle cx="-13" cy="8" r="9" fill="#202b35" stroke="#fff" stroke-width="2"/><circle cx="19" cy="8" r="9" fill="#202b35" stroke="#fff" stroke-width="2"/>
 <path d="M-13 8 L-2 -5 L12 8 L-13 8 M-2 -5 L8 -8 L19 8" stroke="#d33d32" stroke-width="4" fill="none" stroke-linejoin="round"/>
 <path d="M-4 -6 L-10 -16 L7 -16 L15 -7" stroke="#27394d" stroke-width="5" fill="none" stroke-linecap="round"/>
@@ -48,34 +48,38 @@ input{width:19px;height:19px;accent-color:#246fc1}
 <section class="panel">
 <div class="barlabel"><b>Enerji değerleri</b><b id="total">Toplam: 1000 J</b></div>
 <div class="barrow"><div class="barlabel"><span>🔵 Kinetik enerji</span><b id="kv">880 J</b></div><div class="track"><div class="fill" id="kinetic"></div></div></div>
-<div class="barrow"><div class="barlabel"><span>🟢 Çekim potansiyel enerjisi</span><b id="pv">120 J</b></div><div class="track"><div class="fill" id="potential"></div></div></div>
+<div class="barrow"><div class="barlabel"><span>🟢 Potansiyel enerji (çekim)</span><b id="pv">120 J</b></div><div class="track"><div class="fill" id="potential"></div></div></div>
 <div class="barrow"><div class="barlabel"><span>🟣 Mekanik enerji</span><b id="mv">1000 J</b></div><div class="track"><div class="fill" id="mechanical"></div></div></div>
 <div class="barrow"><div class="barlabel"><span>🟠 Isıya dönüşen enerji</span><b id="hv">0 J</b></div><div class="track"><div class="fill" id="heat"></div></div></div>
 <hr style="border:0;border-top:1px solid #dce3eb">
 <div class="barlabel"><b>Toplam enerji</b><b id="sum">1000 J</b></div>
 </section>
-<section class="panel">
-<div class="status"><b>Motorun durumu:</b> <span id="status">Başlangıç noktasında.</span></div>
-<div class="muted" style="margin-top:8px">Parkur ilerlemesi: <span id="progressText">0%</span></div>
-<div class="progress"><div id="progressBar"></div></div>
-</section>
-<p class="muted">Model açıklaması: Başlangıç toplam enerjisi 1000 J'dür. Sürtünme kapalıyken kinetik ve potansiyel enerjinin toplamı sabit kalır. Sürtünme açıldığında mekanik enerjinin bir kısmı ısı enerjisine dönüşür. Dışarıdan enerji verilmez. Sıfırla düğmesi motoru aynı başlangıç konumuna ve başlangıç enerjisine döndürür.</p>
+
+<p class="muted">Model açıklaması: Motor yeşil çimenlik alanın üzerindeki kıvrımlı parkur çizgisini takip eder. Başlangıç toplam enerjisi 1000 J'dür. Sürtünme kapalıyken kinetik ve potansiyel enerjinin toplamı sabit kalır. Sürtünme açıldığında mekanik enerjinin bir kısmı ısı enerjisine dönüşür. Dışarıdan enerji verilmez. Sıfırla düğmesi motoru aynı başlangıç konumuna ve başlangıç enerjisine döndürür.</p>
 </main>
 <script>
 const $=id=>document.getElementById(id);let t=0,running=false,friction=false,last=0,raf=0;
 const total=1000;
-function height(x){return .12+.72*Math.pow(Math.sin(Math.PI*x),2)}
+function bezier(a,b,c,u){const v=1-u;return v*v*a+2*v*u*b+u*u*c}
+function routePoint(t){
+ const s=[[[0,200],[100,200],[160,105]],[[160,105],[215,20],[300,110]],[[300,110],[370,190],[430,125]],[[430,125],[500,50],[640,170]]];
+ const z=Math.min(t*4,3.999999),i=Math.floor(z),u=z-i,p=s[i];
+ return {x:bezier(p[0][0],p[1][0],p[2][0],u),y:bezier(p[0][1],p[1][1],p[2][1],u)};
+}
 function draw(){
- const h=height(t),heat=friction?Math.min(420,t*420):0,mech=total-heat,pe=mech*h,ke=mech-pe;
+ const p=routePoint(t),heat=friction?Math.min(420,t*420):0,mech=total-heat,pe=mech*Math.max(0,Math.min(.85,(200-p.y)/180)),ke=mech-pe;
+ const dominant = heat>ke && heat>pe ? {name:'Isı enerjisi',color:'#e99a39'} :
+                  pe>ke ? {name:'Potansiyel',color:'#2ba66c'} :
+                  {name:'Kinetik',color:'#3286db'};
+ $('energyTagBg').setAttribute('fill',dominant.color);
+ $('energyTagText').textContent=dominant.name;
  const vals={kv:ke,pv:pe,mv:mech,hv:heat};
  for(const [id,v] of Object.entries(vals))$(id).textContent=Math.round(v)+' J';
  for(const [id,v] of Object.entries({kinetic:ke,potential:pe,mechanical:mech,heat}))$(id).style.width=(v/total*100)+'%';
  $('total').textContent='Toplam: '+total+' J';$('sum').textContent=Math.round(ke+pe+heat)+' J';
- $('progressText').textContent=Math.round(t*100)+'%';$('progressBar').style.width=(t*100)+'%';
- const px=30+580*t,py=200-95*Math.sin(Math.PI*t)*.85;$('motor').setAttribute('transform',`translate(${px} ${py})`);
- $('status').textContent=t===0?'Başlangıç noktasında.':t>=1?'Motor parkurun sonuna ulaştı.':friction?'Sürtünme nedeniyle enerji ısıya dönüşüyor.':'Motor hareket ediyor; enerji dönüşümü sürüyor.';
+ $('motor').setAttribute('transform',`translate(${p.x} ${p.y-17})`);
 }
-function frame(now){if(!running)return;const dt=Math.min((now-last)/1000,.05);last=now;t=Math.min(1,t+dt*.12);draw();if(t>=1){running=false;return}raf=requestAnimationFrame(frame)}
+function frame(now){if(!running)return;const dt=Math.min((now-last)/1000,.05);last=now;t=Math.min(1,t+dt*.32);draw();if(t>=1){running=false;return}raf=requestAnimationFrame(frame)}
 $('start').onclick=()=>{if(running)return;if(t>=1)t=0;running=true;last=performance.now();raf=requestAnimationFrame(frame)};
 $('stop').onclick=()=>{running=false;cancelAnimationFrame(raf);draw()};
 $('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);t=0;draw()};
