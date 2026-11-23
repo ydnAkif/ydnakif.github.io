@@ -27,8 +27,8 @@ input{width:19px;height:19px;accent-color:#246fc1}
 <main>
 <h1>🏍️ Enerji Dönüşümü Simülasyonu</h1>
 <p class="sub">7. Sınıf Fen Bilimleri · Motor çimenlik parkur yolunu takip ediyor</p>
-<svg viewBox="0 0 640 260" role="img" aria-label="Yokuşlu parkurda hareket eden motor">
-<rect width="640" height="260" fill="#dff2ff"/>
+<svg viewBox="-48 0 736 260" role="img" aria-label="Yokuşlu parkurda hareket eden motor">
+<rect x="-48" width="736" height="260" fill="#dff2ff"/>
 <circle cx="545" cy="42" r="23" fill="#ffd45c"/>
 <path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170 L640 260 L0 260Z" fill="#8acb75"/>
 <path d="M0 200 Q100 200 160 105 Q215 20 300 110 Q370 190 430 125 Q500 50 640 170" fill="none" stroke="#596d45" stroke-width="7" stroke-linecap="round"/>
@@ -42,8 +42,9 @@ input{width:19px;height:19px;accent-color:#246fc1}
 <text x="15" y="235" font-size="11" fill="#36543a">Başlangıç</text><text x="520" y="222" font-size="11" fill="#36543a">Parkur sonu</text>
 </svg>
 <div class="controls">
-<button id="start">▶ Başlat</button><button id="stop" class="secondary">Ⅱ Durdur</button><button id="reset" class="secondary">↻ Sıfırla</button>
+<button type="button" id="start">▶ Başlat</button><button type="button" id="stop" class="secondary">Ⅱ Durdur</button><button type="button" id="reset" class="secondary">↻ Sıfırla</button>
 </div>
+<p id="runStatus" class="status" role="status">Başlamaya hazır</p>
 <label class="toggle"><input type="checkbox" id="friction"><b>Sürtünmeyi aç</b><span class="muted">Isı enerjisi oluşur</span></label>
 <section class="panel">
 <div class="barlabel"><b>Enerji değerleri</b><b id="total">Toplam: 1000 J</b></div>
@@ -58,7 +59,7 @@ input{width:19px;height:19px;accent-color:#246fc1}
 <p class="muted">Model açıklaması: Motor yeşil çimenlik alanın üzerindeki kıvrımlı parkur çizgisini takip eder. Başlangıç toplam enerjisi 1000 J'dür. Sürtünme kapalıyken kinetik ve potansiyel enerjinin toplamı sabit kalır. Sürtünme açıldığında mekanik enerjinin bir kısmı ısı enerjisine dönüşür. Dışarıdan enerji verilmez. Sıfırla düğmesi motoru aynı başlangıç konumuna ve başlangıç enerjisine döndürür.</p>
 </main>
 <script>
-const $=id=>document.getElementById(id);let t=0,running=false,friction=false,last=0,raf=0;
+const $=id=>document.getElementById(id);let t=0,running=false,friction=false,last=null,raf=0;
 const total=1000;
 function bezier(a,b,c,u){const v=1-u;return v*v*a+2*v*u*b+u*u*c}
 function routePoint(t){
@@ -79,12 +80,51 @@ function draw(){
  $('total').textContent='Toplam: '+total+' J';$('sum').textContent=Math.round(ke+pe+heat)+' J';
  $('motor').setAttribute('transform',`translate(${p.x} ${p.y-17})`);
 }
-function frame(now){if(!running)return;const dt=Math.min((now-last)/1000,.05);last=now;t=Math.min(1,t+dt*.32);draw();if(t>=1){running=false;return}raf=requestAnimationFrame(frame)}
-$('start').onclick=()=>{if(running)return;if(t>=1)t=0;running=true;last=performance.now();raf=requestAnimationFrame(frame)};
-$('stop').onclick=()=>{running=false;cancelAnimationFrame(raf);draw()};
-$('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);t=0;draw()};
+function setRunStatus(message) {
+ $('runStatus').textContent=message;
+ $('start').disabled=running;
+ $('stop').disabled=!running;
+}
+
+function frame(now) {
+ if (!running) return;
+ const dt=last===null ? 0 : Math.max(0,Math.min((now-last)/1000,.05));
+ last=now;
+ t=Math.min(1,t+dt*.32);
+ draw();
+ if (t>=1) {
+  running=false;
+  setRunStatus('Parkur tamamlandı');
+  return;
+ }
+ raf=requestAnimationFrame(frame);
+}
+
+$('start').onclick=()=>{
+ if (running) return;
+ if (t>=1) t=0;
+ running=true;
+ last=null;
+ draw();
+ setRunStatus('Motor hareket ediyor');
+ raf=requestAnimationFrame(frame);
+};
+$('stop').onclick=()=>{
+ running=false;
+ cancelAnimationFrame(raf);
+ setRunStatus('Duraklatıldı');
+};
+$('reset').onclick=()=>{
+ running=false;
+ cancelAnimationFrame(raf);
+ t=0;
+ last=null;
+ draw();
+ setRunStatus('Başlamaya hazır');
+};
 $('friction').onchange=e=>{friction=e.target.checked;draw()};
 draw();
+setRunStatus('Başlamaya hazır');
 </script>
 </body>
 </html>
