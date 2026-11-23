@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enerji Dönüşümleri Simülasyonu - Yaya Bağlı Cisim</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(125deg, #064e3b 0%, #047857 35%, #10b981 70%, #84cc16 100%);
+      background-size: 200% 200%;
+      animation: bgShift 14s ease infinite;
+      color: #064e3b;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes bgShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1220px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-radius: 22px;
+      box-shadow: 0 22px 55px rgba(6, 78, 59, 0.38);
+      overflow: hidden;
+      border: 2px solid rgba(167, 243, 208, 0.85);
+    }
+
+    header {
+      background: linear-gradient(90deg, #065f46 0%, #059669 45%, #10b981 80%, #65a30d 100%);
+      color: #ffffff;
+      padding: 20px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(5, 150, 105, 0.28);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    header .subtitle {
+      font-size: 0.95rem;
+      opacity: 0.96;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .student-badge {
+      background: rgba(255, 255, 255, 0.22);
+      padding: 9px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 22px;
+      padding: 24px;
+      background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+
+    @media (max-width: 920px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel {
+      background: #ffffff;
+      border: 2px solid #bbf7d0;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.09);
+    }
+
+    .panel-title {
+      font-size: 1.06rem;
+      font-weight: 800;
+      color: #064e3b;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      background: #022c22;
+      border: 2.5px solid #10b981;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(6, 95, 70, 0.25);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 14px;
+      background: linear-gradient(90deg, #ecfdf5, #f0fdf4);
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1.5px solid #a7f3d0;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.93rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    #toggleBtn {
+      background: linear-gradient(135deg, #10b981, #047857);
+      color: #ffffff;
+      min-width: 122px;
+      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.35);
+    }
+
+    #toggleBtn.running {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+    }
+
+    #toggleBtn:hover {
+      filter: brightness(1.07);
+    }
+
+    #resetBtn {
+      background: linear-gradient(135deg, #334155, #0f172a);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+    }
+
+    #resetBtn:hover {
+      filter: brightness(1.1);
+    }
+
+    .speed-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      padding: 5px 8px;
+      border-radius: 10px;
+      border: 1.5px solid #a7f3d0;
+    }
+
+    .speed-label {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #065f46;
+      margin-right: 2px;
+    }
+
+    .speed-btn {
+      padding: 6px 10px;
+      font-size: 0.84rem;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+
+    .speed-btn.active {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border-color: #047857;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+    }
+
+    .friction-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #a7f3d0;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 25px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #10b981;
+      transition: 0.25s;
+      border-radius: 25px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 19px;
+      width: 19px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #ef4444;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(23px);
+    }
+
+    .status-pill {
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+
+    .status-off {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-on {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .explanation-box {
+      margin-top: 14px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+      border-left: 6px solid #059669;
+      padding: 13px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08);
+    }
+
+    .explanation-title {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #047857;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    #explanationText {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.45;
+    }
+
+    .info-note {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #334155;
+      background: #fefce8;
+      padding: 10px 13px;
+      border-radius: 10px;
+      border: 1.5px dashed #eab308;
+    }
+
+    .bars-container {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .energy-item {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 9px 12px;
+    }
+
+    .energy-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .energy-value {
+      font-variant-numeric: tabular-nums;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 2px 8px;
+      border-radius: 7px;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 0.86rem;
+    }
+
+    .bar-bg {
+      width: 100%;
+      height: 17px;
+      background: #e2e8f0;
+      border-radius: 9px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9px;
+      transition: width 0.04s linear;
+    }
+
+    .bar-kinetic {
+      background: linear-gradient(90deg, #34d399, #10b981, #047857);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+    .bar-elastic {
+      background: linear-gradient(90deg, #38bdf8, #3b82f6, #1d4ed8);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+    .bar-mech {
+      background: linear-gradient(90deg, #c084fc, #a855f7, #7e22ce);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    }
+    .bar-heat {
+      background: linear-gradient(90deg, #fbbf24, #f97316, #dc2626);
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+    }
+    .bar-total {
+      background: linear-gradient(90deg, #059669, #10b981, #65a30d);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.55);
+    }
+
+    .divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #a7f3d0, transparent);
+      margin: 2px 0;
+    }
+
+    .chart-card {
+      background: #022c22;
+      border: 2px solid #10b981;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(6, 95, 70, 0.2);
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #064e3b;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>⚡ 7. Sınıf Fen Bilimleri — Enerji Dönüşümleri Simülasyonu</h1>
+        <div class="subtitle">Senaryo: Yatay Düzlemde Yaya Bağlı Cisim (Esneklik Potansiyel ↔ Kinetik Enerji)</div>
+      </div>
+      <div class="student-badge">🎓 Kerem Karaoğlu • 7-B</div>
+    </header>
+
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-title">
+          <span>🎮 Canlandırma Alanı</span>
+          <span style="font-size: 0.83rem; color: #065f46; background: #d1fae5; padding: 3px 9px; border-radius: 7px; font-weight: 700;">Başlangıç: Yayın En Sıkışık Hali (v = 0 m/s)</span>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="simCanvas" width="660" height="340"></canvas>
+        </div>
+
+        <div class="controls">
+          <div class="btn-group">
+            <button id="toggleBtn">▶ Başlat</button>
+            <button id="resetBtn">↺ Sıfırla</button>
+          </div>
+
+          <div class="speed-controls">
+            <span class="speed-label">Hız:</span>
+            <button class="speed-btn" data-speed="0.35">🐢 Yavaş</button>
+            <button class="speed-btn active" data-speed="1.0">▶ Normal</button>
+            <button class="speed-btn" data-speed="2.0">⚡ Hızlı</button>
+          </div>
+
+          <div class="friction-control">
+            <span style="font-weight: 800; font-size: 0.9rem; color: #064e3b;">Sürtünme:</span>
+            <label class="switch">
+              <input type="checkbox" id="frictionToggle" />
+              <span class="slider"></span>
+            </label>
+            <span id="frictionStatus" class="status-pill status-off">KAPALI</span>
+          </div>
+        </div>
+
+        <div class="explanation-box">
+          <div class="explanation-title">💡 Anlık Enerji Dönüşümü Açıklaması</div>
+          <div id="explanationText">
+            Yay maksimum düzeyde sıkıştırıldı. Tüm enerji esneklik potansiyel enerjisi olarak depolandı. Başlat düğmesine basarak hareketi gözlemleyin.
+          </div>
+        </div>
+
+        <div class="info-note">
+          <strong>📌 Bilgi Notu:</strong> Bu modelde cisim yatay zeminde hareket ettiği için yüksekliği değişmez; bu nedenle <strong>çekim potansiyel enerjisi sabittir (0 J)</strong>. Enerji dönüşümü <strong>esneklik potansiyel enerjisi</strong> ile <strong>kinetik enerji</strong> arasında gerçekleşir.
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="panel">
+          <div class="panel-title">
+            <span>📊 Enerji Göstergeleri (Joule - J)</span>
+            <span style="font-size: 0.84rem; color: #ffffff; background: linear-gradient(90deg, #059669, #65a30d); padding: 3px 10px; border-radius: 7px; font-weight: 800;">Toplam: 100,0 J</span>
+          </div>
+
+          <div class="bars-container">
+            <div class="energy-item" style="border-color: #6ee7b7;">
+              <div class="energy-header">
+                <span style="color: #059669;">🟢 Kinetik Enerji</span>
+                <span class="energy-value" id="valKinetic">0,0 J</span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill bar-kinetic" id="barKinetic"></div>
+              </div>
+            </div>
+
+            <div class="energy-item" style="border-color: #93c5fd;">
+              <div class="energy-header">
+                <span style="color: #2563eb;">🔵 Esneklik Potansiyel Enerjisi</span>
+                <span class="energy-value" id="valElastic">100,0 J</span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill bar-elastic" id="barElastic"></div>
+              </div>
+            </div>
+
+            <div class="energy-item" style="border-color: #d8b4fe;">
+              <div class="energy-header">
+                <span style="color: #7e22ce;">🟣 Mekanik Enerji (Kinetik + Potansiyel)</span>
+                <span class="energy-value" id="valMech">100,0 J</span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill bar-mech" id="barMech"></div>
+              </div>
+            </div>
+
+            <div class="energy-item" style="border-color: #fdba74;">
+              <div class="energy-header">
+                <span style="color: #ea580c;">🟠 Isıya Dönüşen Enerji (Sürtünme)</span>
+                <span class="energy-value" id="valHeat">0,0 J</span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill bar-heat" id="barHeat"></div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="energy-item" style="background: linear-gradient(135deg, #ecfdf5, #f7fee7); border-color: #6ee7b7;">
+              <div class="energy-header">
+                <span style="color: #064e3b;">⭐ Toplam Enerji (Mekanik + Isı)</span>
+                <span class="energy-value" id="valTotal" style="background: linear-gradient(90deg, #059669, #65a30d); color: #ffffff; border: none;">100,0 J</span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill bar-total" id="barTotal" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <span>📈 Canlı Enerji Değişim Grafiği</span>
+            <span style="font-size: 0.78rem; color: #047857; font-weight: 700;">Hareket Boyunca Kayıt</span>
+          </div>
+
+          <div class="chart-card">
+            <canvas id="graphCanvas" width="460" height="175"></canvas>
+          </div>
+
+          <div class="chart-legend">
+            <span><i class="legend-dot" style="background: #34d399;"></i>Kinetik</span>
+            <span><i class="legend-dot" style="background: #38bdf8;"></i>Esneklik Pot.</span>
+            <span><i class="legend-dot" style="background: #fb923c;"></i>Isı</span>
+            <span><i class="legend-dot" style="background: #fde047;"></i>Toplam (100 J)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("simCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const graphCanvas = document.getElementById("graphCanvas");
+    const gCtx = graphCanvas.getContext("2d");
+
+    const toggleBtn = document.getElementById("toggleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const speedBtns = document.querySelectorAll(".speed-btn");
+    const frictionToggle = document.getElementById("frictionToggle");
+    const frictionStatus = document.getElementById("frictionStatus");
+    const explanationText = document.getElementById("explanationText");
+
+    const valKinetic = document.getElementById("valKinetic");
+    const valElastic = document.getElementById("valElastic");
+    const valMech = document.getElementById("valMech");
+    const valHeat = document.getElementById("valHeat");
+    const valTotal = document.getElementById("valTotal");
+
+    const barKinetic = document.getElementById("barKinetic");
+    const barElastic = document.getElementById("barElastic");
+    const barMech = document.getElementById("barMech");
+    const barHeat = document.getElementById("barHeat");
+    const barTotal = document.getElementById("barTotal");
+
+    const TOTAL_ENERGY = 100.0;
+    const MASS = 2.0;
+    const K_SPRING = 50.0;
+    const INITIAL_X = -2.0;
+    const INITIAL_V = 0.0;
+
+    let x = INITIAL_X;
+    let v = INITIAL_V;
+    let heatEnergy = 0.0;
+    let isRunning = false;
+    let frictionEnabled = false;
+    let timeScale = 1.0;
+    let lastTimestamp = null;
+    let particles = [];
+    let trail = [];
+
+    const MAX_HISTORY = 140;
+    let history = [];
+
+    function formatJoule(val) {
+      return val.toFixed(1).replace(".", ",") + " J";
+    }
+
+    function getEnergies() {
+      let elastic = 0.5 * K_SPRING * x * x;
+      let kinetic = 0.5 * MASS * v * v;
+
+      if (!frictionEnabled) {
+        heatEnergy = 0.0;
+        const sum = elastic + kinetic;
+        if (sum > 0) {
+          const scale = TOTAL_ENERGY / sum;
+          elastic *= scale;
+          kinetic *= scale;
+        } else {
+          elastic = TOTAL_ENERGY;
+          kinetic = 0.0;
+        }
+      } else {
+        const mech = elastic + kinetic;
+        if (mech + heatEnergy > TOTAL_ENERGY) {
+          const scale = Math.max(0, TOTAL_ENERGY - heatEnergy) / (mech || 1);
+          elastic *= scale;
+          kinetic *= scale;
+        }
+        heatEnergy = Math.max(0, TOTAL_ENERGY - (elastic + kinetic));
+      }
+
+      const mechEnergy = elastic + kinetic;
+      const totalEnergy = mechEnergy + heatEnergy;
+
+      return { kinetic, elastic, mechEnergy, heatEnergy, totalEnergy };
+    }
+
+    function recordHistory(energies) {
+      history.push({
+        k: energies.kinetic,
+        e: energies.elastic,
+        h: energies.heatEnergy,
+        t: energies.totalEnergy
+      });
+      if (history.length > MAX_HISTORY) {
+        history.shift();
+      }
+    }
+
+    function updateUI(shouldRecord = false) {
+      const energies = getEnergies();
+      const { kinetic, elastic, mechEnergy, heatEnergy, totalEnergy } = energies;
+
+      if (shouldRecord) {
+        recordHistory(energies);
+      }
+
+      valKinetic.textContent = formatJoule(kinetic);
+      valElastic.textContent = formatJoule(elastic);
+      valMech.textContent = formatJoule(mechEnergy);
+      valHeat.textContent = formatJoule(heatEnergy);
+      valTotal.textContent = formatJoule(totalEnergy);
+
+      barKinetic.style.width = Math.min(100, (kinetic / TOTAL_ENERGY) * 100) + "%";
+      barElastic.style.width = Math.min(100, (elastic / TOTAL_ENERGY) * 100) + "%";
+      barMech.style.width = Math.min(100, (mechEnergy / TOTAL_ENERGY) * 100) + "%";
+      barHeat.style.width = Math.min(100, (heatEnergy / TOTAL_ENERGY) * 100) + "%";
+      barTotal.style.width = Math.min(100, (totalEnergy / TOTAL_ENERGY) * 100) + "%";
+
+      updateExplanation(kinetic, elastic, mechEnergy, heatEnergy);
+    }
+
+    function updateExplanation(kinetic, elastic, mechEnergy, heatEnergy) {
+      if (!isRunning && x === INITIAL_X && v === INITIAL_V && heatEnergy === 0) {
+        explanationText.textContent =
+          "Yay maksimum düzeyde sıkıştırıldı. Tüm enerji esneklik potansiyel enerjisi olarak depolandı. Başlat düğmesine basarak hareketi gözlemleyin.";
+        return;
+      }
+
+      if (frictionEnabled && mechEnergy < 0.25) {
+        explanationText.textContent =
+          "Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve cisim denge konumunda durdu. Toplam enerji (100 J) korundu.";
+        return;
+      }
+
+      const posAbs = Math.abs(x);
+
+      if (posAbs < 0.18) {
+        explanationText.textContent = frictionEnabled
+          ? "Cisim denge konumundan en yüksek hızla geçiyor! Kinetik enerji en büyük değerinde, sürtünme nedeniyle bir miktar enerji ısıya dönüşüyor."
+          : "Cisim denge konumundan en yüksek hızla geçiyor! Esneklik potansiyel enerjisi sıfırlandı, kinetik enerji en büyük değerine ulaştı.";
+      } else if ((x < 0 && v > 0) || (x > 0 && v < 0)) {
+        const stateText = x < 0 ? "Sıkışmış yay açılırken" : "Gerilmiş yay toplanırken";
+        explanationText.textContent = frictionEnabled
+          ? `${stateText} cisim hızlanıyor: Esneklik potansiyel enerjisi azalırken kinetik enerji ve sürtünmeden dolayı ısı enerjisi artıyor.`
+          : `${stateText} cisim hızlanıyor: Yayın esneklik potansiyel enerjisi azalıyor, cismin kinetik enerjisi artıyor.`;
+      } else {
+        const stateText = x > 0 ? "Yay gerilirken" : "Yay sıkışırken";
+        explanationText.textContent = frictionEnabled
+          ? `${stateText} cisim yavaşlıyor: Kinetik enerji azalırken yayın esneklik potansiyel enerjisi ve ısıya dönüşen enerji artıyor.`
+          : `${stateText} cisim yavaşlıyor: Cismin kinetik enerjisi azalıyor, yayda depolanan esneklik potansiyel enerjisi artıyor.`;
+      }
+    }
+
+    function spawnHeatParticles(blockCenterX, groundY) {
+      if (!frictionEnabled || !isRunning || Math.abs(v) < 0.4) return;
+      if (Math.random() < 0.65) {
+        particles.push({
+          x: blockCenterX + (Math.random() - 0.5) * 52,
+          y: groundY - 2,
+          vx: -Math.sign(v) * (25 + Math.random() * 50),
+          vy: -(25 + Math.random() * 50),
+          life: 1.0,
+          size: 2.5 + Math.random() * 2.5,
+          color: Math.random() < 0.5 ? "#fde047" : "#f97316"
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt * 2.1;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function stepPhysics(dt) {
+      const subSteps = 20;
+      const subDt = (dt * timeScale) / subSteps;
+      const dampingCoeff = 0.85;
+
+      for (let i = 0; i < subSteps; i++) {
+        if (frictionEnabled) {
+          const currentMech = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
+          if (currentMech < 0.08 && Math.abs(v) < 0.05) {
+            x = 0;
+            v = 0;
+            heatEnergy = TOTAL_ENERGY;
+            break;
+          }
+        }
+
+        const forceSpring = -K_SPRING * x;
+        const forceFriction = frictionEnabled ? -dampingCoeff * v : 0;
+        const acc = (forceSpring + forceFriction) / MASS;
+
+        const prevEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
+        v += acc * subDt;
+        x += v * subDt;
+        const newEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
+
+        if (frictionEnabled) {
+          const loss = Math.max(0, prevEnergy - newEnergy);
+          heatEnergy = Math.min(TOTAL_ENERGY, heatEnergy + loss);
+        }
+      }
+    }
+
+    function drawGraph() {
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      gCtx.clearRect(0, 0, w, h);
+
+      const gGrad = gCtx.createLinearGradient(0, 0, 0, h);
+      gGrad.addColorStop(0, "#022c22");
+      gGrad.addColorStop(1, "#064e3b");
+      gCtx.fillStyle = gGrad;
+      gCtx.fillRect(0, 0, w, h);
+
+      const padLeft = 38;
+      const padRight = 14;
+      const padTop = 14;
+      const padBottom = 22;
+      const plotW = w - padLeft - padRight;
+      const plotH = h - padTop - padBottom;
+
+      gCtx.font = "bold 10px sans-serif";
+      gCtx.textAlign = "right";
+      [0, 50, 100].forEach((jVal) => {
+        const yPos = padTop + plotH - (jVal / TOTAL_ENERGY) * plotH;
+        gCtx.strokeStyle = "rgba(167, 243, 208, 0.16)";
+        gCtx.lineWidth = 1;
+        gCtx.beginPath();
+        gCtx.moveTo(padLeft, yPos);
+        gCtx.lineTo(w - padRight, yPos);
+        gCtx.stroke();
+
+        gCtx.fillStyle = "#a7f3d0";
+        gCtx.fillText(jVal + "J", padLeft - 5, yPos + 3);
+      });
+
+      gCtx.fillStyle = "#6ee7b7";
+      gCtx.textAlign = "center";
+      gCtx.fillText("Zaman (Hareket Süreci)", padLeft + plotW / 2, h - 5);
+
+      if (history.length < 2) return;
+
+      function drawSeries(key, color, width, dashed = false) {
+        gCtx.save();
+        if (dashed) gCtx.setLineDash([5, 4]);
+        gCtx.strokeStyle = color;
+        gCtx.lineWidth = width;
+        gCtx.beginPath();
+        history.forEach((pt, idx) => {
+          const px = padLeft + (idx / (MAX_HISTORY - 1)) * plotW;
+          const py = padTop + plotH - (Math.min(TOTAL_ENERGY, Math.max(0, pt[key])) / TOTAL_ENERGY) * plotH;
+          if (idx === 0) gCtx.moveTo(px, py);
+          else gCtx.lineTo(px, py);
+        });
+        gCtx.stroke();
+        gCtx.restore();
+      }
+
+      drawSeries("t", "#fde047", 2.2, true);
+      drawSeries("e", "#38bdf8", 2.4, false);
+      drawSeries("k", "#34d399", 2.4, false);
+      drawSeries("h", "#fb923c", 2.4, false);
+    }
+
+    function drawRealisticSpring(startX, endX, centerY, coils, radius, compressionRatio) {
+      const lead = 20;
+      const springStart = startX + lead;
+      const springEnd = endX - lead;
+      const span = Math.max(24, springEnd - springStart);
+
+      let darkCol = "#0284c7";
+      let midCol = "#38bdf8";
+      let lightCol = "#e0f2fe";
+
+      if (compressionRatio > 0.25) {
+        darkCol = "#be123c";
+        midCol = "#fb7185";
+        lightCol = "#ffe4e6";
+      } else if (compressionRatio < -0.25) {
+        darkCol = "#1d4ed8";
+        midCol = "#60a5fa";
+        lightCol = "#dbeafe";
+      } else {
+        darkCol = "#047857";
+        midCol = "#34d399";
+        lightCol = "#d1fae5";
+      }
+
+      ctx.save();
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(startX, centerY);
+      ctx.lineTo(springStart, centerY);
+      ctx.moveTo(springEnd, centerY);
+      ctx.lineTo(endX, centerY);
+      ctx.stroke();
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.beginPath();
+      ctx.arc(startX + 3, centerY, 6, 0, Math.PI * 2);
+      ctx.arc(endX - 3, centerY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      const step = span / coils;
+
+      for (let i = 0; i < coils; i++) {
+        const x1 = springStart + i * step;
+        const x2 = x1 + step * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, centerY + radius);
+        ctx.quadraticCurveTo((x1 + x2) / 2, centerY, x2, centerY - radius);
+        ctx.strokeStyle = darkCol;
+        ctx.lineWidth = 6.5;
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < coils; i++) {
+        const x1 = springStart + i * step + step * 0.5;
+        const x2 = springStart + (i + 1) * step;
+
+        const coilGrad = ctx.createLinearGradient(0, centerY - radius, 0, centerY + radius);
+        coilGrad.addColorStop(0, lightCol);
+        coilGrad.addColorStop(0.45, midCol);
+        coilGrad.addColorStop(1, darkCol);
+
+        ctx.beginPath();
+        ctx.moveTo(x1, centerY - radius);
+        ctx.quadraticCurveTo((x1 + x2) / 2, centerY, x2, centerY + radius);
+        ctx.strokeStyle = coilGrad;
+        ctx.lineWidth = 7.5;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const bgGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      bgGrad.addColorStop(0, "#022c22");
+      bgGrad.addColorStop(0.5, "#064e3b");
+      bgGrad.addColorStop(1, "#065f46");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const glow1 = ctx.createRadialGradient(180, 95, 10, 180, 95, 200);
+      glow1.addColorStop(0, "rgba(52, 211, 153, 0.25)");
+      glow1.addColorStop(1, "rgba(52, 211, 153, 0)");
+      ctx.fillStyle = glow1;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const glow2 = ctx.createRadialGradient(510, 120, 10, 510, 120, 210);
+      glow2.addColorStop(0, "rgba(163, 230, 53, 0.22)");
+      glow2.addColorStop(1, "rgba(163, 230, 53, 0)");
+      ctx.fillStyle = glow2;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const groundY = 248;
+      const wallX = 62;
+      const equilibriumX = 350;
+      const scalePxPerMeter = 98;
+
+      const blockWidth = 78;
+      const blockHeight = 62;
+      const blockCenterX = equilibriumX + x * scalePxPerMeter;
+      const blockLeftX = blockCenterX - blockWidth / 2;
+      const blockTopY = groundY - blockHeight - 6;
+
+      ctx.strokeStyle = "rgba(167, 243, 208, 0.08)";
+      ctx.lineWidth = 1;
+      for (let gx = 60; gx < canvas.width; gx += 25) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 18);
+        ctx.lineTo(gx, groundY);
+        ctx.stroke();
+      }
+      for (let gy = 35; gy < groundY; gy += 25) {
+        ctx.beginPath();
+        ctx.moveTo(wallX, gy);
+        ctx.lineTo(canvas.width - 20, gy);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(6, 78, 59, 0.85)";
+      ctx.strokeStyle = "rgba(110, 231, 183, 0.5)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(18, 14, 188, 28, 9);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#bef264";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "left";
+      const speedLabel = timeScale < 1 ? "🐢 Ağır Çekim (0.35x)" : timeScale > 1 ? "⚡ Hızlı Mod (2.0x)" : "▶ Normal Hız (1.0x)";
+      ctx.fillText(speedLabel, 28, 32);
+
+      ctx.save();
+      ctx.setLineDash([7, 6]);
+      ctx.strokeStyle = "#a3e635";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(equilibriumX, 58);
+      ctx.lineTo(equilibriumX, groundY + 26);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#d9f99d";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Denge Konumu (x = 0)", equilibriumX, 48);
+
+      const leftLimitX = equilibriumX + INITIAL_X * scalePxPerMeter;
+      const rightLimitX = equilibriumX - INITIAL_X * scalePxPerMeter;
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1.5;
+      [leftLimitX, rightLimitX].forEach((lx, idx) => {
+        ctx.beginPath();
+        ctx.moveTo(lx, groundY - 82);
+        ctx.lineTo(lx, groundY + 12);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ecfdf5";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillText(idx === 0 ? "En Sıkışık" : "En Gergin", lx, groundY - 88);
+      });
+
+      ctx.fillStyle = "#a7f3d0";
+      ctx.font = "bold 11px sans-serif";
+      [-2, -1, 0, 1, 2].forEach((m) => {
+        const mx = equilibriumX + m * scalePxPerMeter;
+        ctx.fillRect(mx - 1, groundY, 2, 7);
+        ctx.fillText((m > 0 ? "+" + m : m) + " m", mx, groundY + 20);
+      });
+
+      const groundGrad = ctx.createLinearGradient(20, groundY, canvas.width - 20, groundY);
+      if (frictionEnabled) {
+        groundGrad.addColorStop(0, "#b45309");
+        groundGrad.addColorStop(0.5, "#ea580c");
+        groundGrad.addColorStop(1, "#dc2626");
+      } else {
+        groundGrad.addColorStop(0, "#059669");
+        groundGrad.addColorStop(0.5, "#10b981");
+        groundGrad.addColorStop(1, "#65a30d");
+      }
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(20, groundY, canvas.width - 40, 28);
+
+      ctx.strokeStyle = frictionEnabled ? "#fde047" : "#a7f3d0";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(20, groundY);
+      ctx.lineTo(canvas.width - 20, groundY);
+      ctx.stroke();
+
+      if (frictionEnabled) {
+        ctx.strokeStyle = "#fef08a";
+        ctx.lineWidth = 2;
+        for (let fx = 65; fx < canvas.width - 30; fx += 13) {
+          ctx.beginPath();
+          ctx.moveTo(fx, groundY);
+          ctx.lineTo(fx - 6, groundY + 9);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#fdba74";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("🔥 Sürtünmeli Yüzey (Isı Oluşur)", canvas.width - 24, groundY + 48);
+      } else {
+        ctx.fillStyle = "#6ee7b7";
+        ctx.font = "bold 12px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("✨ Sürtünmesiz Yüzey (Isı = 0 J)", canvas.width - 24, groundY + 48);
+      }
+
+      const wallGrad = ctx.createLinearGradient(wallX - 24, groundY - 140, wallX, groundY);
+      wallGrad.addColorStop(0, "#475569");
+      wallGrad.addColorStop(0.5, "#64748b");
+      wallGrad.addColorStop(1, "#334155");
+      ctx.fillStyle = wallGrad;
+      ctx.beginPath();
+      ctx.roundRect(wallX - 24, groundY - 140, 24, 140, [6, 0, 0, 0]);
+      ctx.fill();
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.3)";
+      ctx.lineWidth = 1.5;
+      for (let wy = groundY - 128; wy < groundY; wy += 14) {
+        ctx.beginPath();
+        ctx.moveTo(wallX - 22, wy);
+        ctx.lineTo(wallX - 4, wy - 12);
+        ctx.stroke();
+      }
+
+      if (isRunning && trail.length > 1) {
+        for (let i = 1; i < trail.length; i++) {
+          ctx.strokeStyle = `rgba(190, 242, 100, ${(i / trail.length) * 0.45})`;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(trail[i - 1], blockTopY + blockHeight / 2);
+          ctx.lineTo(trail[i], blockTopY + blockHeight / 2);
+          ctx.stroke();
+        }
+      }
+
+      const compressionRatio = -x / 2.0;
+      drawRealisticSpring(wallX, blockLeftX, blockTopY + blockHeight / 2, 12, 16, compressionRatio);
+
+      particles.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = "#f97316";
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      const wheelRadius = 7;
+      [blockLeftX + 16, blockLeftX + blockWidth - 16].forEach((wx) => {
+        ctx.fillStyle = "#1e293b";
+        ctx.beginPath();
+        ctx.arc(wx, groundY - wheelRadius, wheelRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = "#bef264";
+        ctx.beginPath();
+        ctx.arc(wx, groundY - wheelRadius, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.save();
+      ctx.shadowColor = "rgba(250, 204, 21, 0.45)";
+      ctx.shadowBlur = 16;
+      const blockGrad = ctx.createLinearGradient(blockLeftX, blockTopY, blockLeftX, blockTopY + blockHeight);
+      blockGrad.addColorStop(0, "#fde047");
+      blockGrad.addColorStop(0.5, "#f59e0b");
+      blockGrad.addColorStop(1, "#d97706");
+      ctx.fillStyle = blockGrad;
+      ctx.beginPath();
+      ctx.roundRect(blockLeftX, blockTopY, blockWidth, blockHeight, 11);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.beginPath();
+      ctx.roundRect(blockLeftX + 4, blockTopY + 3, blockWidth - 8, 12, 6);
+      ctx.fill();
+
+      ctx.strokeStyle = "#fef9c3";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(blockLeftX, blockTopY, blockWidth, blockHeight, 11);
+      ctx.stroke();
+
+      ctx.fillStyle = "#1e1b4b";
+      ctx.font = "900 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("CİSİM", blockCenterX, blockTopY + 30);
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.beginPath();
+      ctx.roundRect(blockCenterX - 22, blockTopY + 37, 44, 18, 6);
+      ctx.fill();
+      ctx.fillStyle = "#fde047";
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillText("2 kg", blockCenterX, blockTopY + 50);
+
+      if (Math.abs(v) > 0.15) {
+        const dir = v > 0 ? 1 : -1;
+        const arrowLen = Math.min(82, Math.abs(v) * 10);
+        const arrowStartX = blockCenterX;
+        const arrowEndX = blockCenterX + dir * arrowLen;
+        const arrowY = blockTopY - 20;
+
+        ctx.save();
+        ctx.shadowColor = "#bef264";
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = "#bef264";
+        ctx.fillStyle = "#bef264";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(arrowStartX, arrowY);
+        ctx.lineTo(arrowEndX, arrowY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(arrowEndX, arrowY);
+        ctx.lineTo(arrowEndX - dir * 10, arrowY - 6);
+        ctx.lineTo(arrowEndX - dir * 10, arrowY + 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = "#ecfccb";
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillText("Hız Yönü", blockCenterX, arrowY - 10);
+      }
+    }
+
+    function animate(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min(0.033, (timestamp - lastTimestamp) / 1000);
+      lastTimestamp = timestamp;
+
+      if (isRunning) {
+        stepPhysics(dt);
+        const equilibriumX = 350;
+        const scalePxPerMeter = 98;
+        const blockCenterX = equilibriumX + x * scalePxPerMeter;
+        trail.push(blockCenterX);
+        if (trail.length > 18) trail.shift();
+        spawnHeatParticles(blockCenterX, 248);
+        updateUI(true);
+      }
+
+      updateParticles(dt);
+      drawScene();
+      drawGraph();
+      requestAnimationFrame(animate);
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      isRunning = !isRunning;
+      if (isRunning) {
+        toggleBtn.textContent = "⏸ Durdur";
+        toggleBtn.classList.add("running");
+        lastTimestamp = performance.now();
+        updateUI(true);
+      } else {
+        toggleBtn.textContent = "▶ Başlat";
+        toggleBtn.classList.remove("running");
+        updateUI(false);
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      isRunning = false;
+      toggleBtn.textContent = "▶ Başlat";
+      toggleBtn.classList.remove("running");
+      x = INITIAL_X;
+      v = INITIAL_V;
+      heatEnergy = 0.0;
+      particles = [];
+      trail = [];
+      history = [];
+      lastTimestamp = null;
+      updateUI(true);
+      drawScene();
+      drawGraph();
+    });
+
+    speedBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        speedBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        timeScale = parseFloat(btn.dataset.speed);
+        drawScene();
+      });
+    });
+
+    frictionToggle.addEventListener("change", (e) => {
+      frictionEnabled = e.target.checked;
+      if (frictionEnabled) {
+        frictionStatus.textContent = "AÇIK";
+        frictionStatus.className = "status-pill status-on";
+      } else {
+        frictionStatus.textContent = "KAPALI";
+        frictionStatus.className = "status-pill status-off";
+      }
+      updateUI(true);
+      drawScene();
+      drawGraph();
+    });
+
+    updateUI(true);
+    drawScene();
+    drawGraph();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
