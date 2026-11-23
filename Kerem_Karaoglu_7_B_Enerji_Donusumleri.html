@@ -622,28 +622,20 @@
     }
 
     function getEnergies() {
-      let elastic = 0.5 * K_SPRING * x * x;
-      let kinetic = 0.5 * MASS * v * v;
+      const availableMech = Math.max(0, TOTAL_ENERGY - heatEnergy);
+      const rawElastic = 0.5 * K_SPRING * x * x;
+      const rawKinetic = 0.5 * MASS * v * v;
+      const rawSum = rawElastic + rawKinetic;
 
-      if (!frictionEnabled) {
-        heatEnergy = 0.0;
-        const sum = elastic + kinetic;
-        if (sum > 0) {
-          const scale = TOTAL_ENERGY / sum;
-          elastic *= scale;
-          kinetic *= scale;
-        } else {
-          elastic = TOTAL_ENERGY;
-          kinetic = 0.0;
-        }
-      } else {
-        const mech = elastic + kinetic;
-        if (mech + heatEnergy > TOTAL_ENERGY) {
-          const scale = Math.max(0, TOTAL_ENERGY - heatEnergy) / (mech || 1);
-          elastic *= scale;
-          kinetic *= scale;
-        }
-        heatEnergy = Math.max(0, TOTAL_ENERGY - (elastic + kinetic));
+      let elastic = 0.0;
+      let kinetic = 0.0;
+
+      if (availableMech > 0 && rawSum > 0) {
+        const scale = availableMech / rawSum;
+        elastic = rawElastic * scale;
+        kinetic = rawKinetic * scale;
+      } else if (availableMech > 0) {
+        elastic = availableMech;
       }
 
       const mechEnergy = elastic + kinetic;
@@ -694,18 +686,21 @@
         return;
       }
 
-      if (frictionEnabled && mechEnergy < 0.25) {
+      if (mechEnergy < 0.25) {
         explanationText.textContent =
-          "Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve cisim denge konumunda durdu. Toplam enerji (100 J) korundu.";
+          "Mekanik enerjinin tamamı ısı enerjisine dönüştü ve cisim durdu. Toplam enerji (100 J) korundu.";
         return;
       }
 
       const posAbs = Math.abs(x);
 
-      if (posAbs < 0.18) {
+      if (!frictionEnabled && heatEnergy > 0.05) {
+        explanationText.textContent =
+          "Sürtünme kapatıldı: Biriken ısı korundu ve yeni ısı dönüşümü durdu; kalan mekanik enerji kinetik ve esneklik potansiyel enerjisi arasında dönüşüyor.";
+      } else if (posAbs < 0.18) {
         explanationText.textContent = frictionEnabled
           ? "Cisim denge konumundan en yüksek hızla geçiyor! Kinetik enerji en büyük değerinde, sürtünme nedeniyle bir miktar enerji ısıya dönüşüyor."
-          : "Cisim denge konumundan en yüksek hızla geçiyor! Esneklik potansiyel enerjisi sıfırlandı, kinetik enerji en büyük değerine ulaştı.";
+          : "Cisim denge konumundan en yüksek hızla geçiyor! Esneklik potansiyel enerjisi en düşük düzeyde, kinetik enerji en büyük değerinde.";
       } else if ((x < 0 && v > 0) || (x > 0 && v < 0)) {
         const stateText = x < 0 ? "Sıkışmış yay açılırken" : "Gerilmiş yay toplanırken";
         explanationText.textContent = frictionEnabled
@@ -750,30 +745,36 @@
       const subSteps = 20;
       const subDt = (dt * timeScale) / subSteps;
       const dampingCoeff = 0.85;
+      const availableMech = Math.max(0, TOTAL_ENERGY - heatEnergy);
+      const maxAmp = availableMech > 0 ? Math.sqrt((2 * availableMech) / K_SPRING) : 0;
 
       for (let i = 0; i < subSteps; i++) {
-        if (frictionEnabled) {
-          const currentMech = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
-          if (currentMech < 0.08 && Math.abs(v) < 0.05) {
-            x = 0;
-            v = 0;
-            heatEnergy = TOTAL_ENERGY;
-            break;
-          }
+        if (availableMech <= 0.05) {
+          x = 0;
+          v = 0;
+          heatEnergy = TOTAL_ENERGY;
+          break;
         }
 
+        const prevEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
         const forceSpring = -K_SPRING * x;
         const forceFriction = frictionEnabled ? -dampingCoeff * v : 0;
         const acc = (forceSpring + forceFriction) / MASS;
 
-        const prevEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
         v += acc * subDt;
         x += v * subDt;
-        const newEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
 
         if (frictionEnabled) {
-          const loss = Math.max(0, prevEnergy - newEnergy);
+          const newEnergy = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
+          const loss = Math.max(0, prevEnergy - newEnergy) * 0.25;
           heatEnergy = Math.min(TOTAL_ENERGY, heatEnergy + loss);
+        } else if (maxAmp > 0) {
+          const currE = 0.5 * K_SPRING * x * x + 0.5 * MASS * v * v;
+          if (currE > availableMech) {
+            const ampScale = maxAmp / Math.sqrt((2 * currE) / K_SPRING || 1);
+            x *= ampScale;
+            v *= ampScale;
+          }
         }
       }
     }
