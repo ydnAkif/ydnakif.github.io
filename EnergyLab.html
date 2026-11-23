@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enerji Lab — 7. Sınıf Enerji Dönüşümleri · Karşılaştırmalı Deney</title>
+<meta name="description" content="7. sınıf Fen Bilimleri: sarkaç, zıplayan top, yaylı fırlatıcı ve kaykay rampası. Sürtünme, ağır çekim, hedef süre, tema seçimi, A/B deneme karşılaştırma ve gömülü doğrulama testleri. Çevrimdışı tek dosya.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFAF1F' d='M13 2 5 13h5l-1 9 8-11h-5z'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg0:#060A16;--panelA:rgba(26,36,71,.74);--panelB:rgba(15,22,46,.92);--inset:rgba(10,16,36,.55);
+  --chipBg:#0A1024;--track:#0A1024;--headerBg:rgba(7,11,24,.86);
+  --ink:#EDF1FF;--mut:#98A6CE;--line:rgba(122,148,255,.17);--line2:rgba(122,148,255,.34);
+  --gridCss:rgba(105,130,255,.05);--gridCss2:rgba(105,130,255,.022);
+  --aur1:#2B3CFF;--aur2:#7A2BFF;--aur3:#00C2FF;--aurOp:.28;--grainOp:.05;
+  --k:#FFAF1F;--k2:#FFCF6E;--pg:#3EA8FF;--pg2:#7CC4FF;--pe:#69E85C;--pe2:#A5F291;
+  --mech:#C479FF;--mech2:#DBA9FF;--heat:#FF4D5D;--heat2:#D63447;--tot:#F4F7FF;
+  --ok:#4ADE80;--warn:#FFAF1F;--danger:#FF4D5D;--info:#39D5FF;--cyan:#39D5FF;
+  --shadow:0 10px 40px rgba(0,0,0,.35);
+  --disp:"Avenir Next","Avenir","Futura","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Segoe UI Mono",Consolas,Menlo,monospace;
+}
+body[data-theme="class"]{
+  --bg0:#F1EDE4;--panelA:rgba(255,255,255,.94);--panelB:rgba(245,241,232,.96);--inset:rgba(238,233,222,.85);
+  --chipBg:#FFFFFF;--track:#E6E0D2;--headerBg:rgba(248,245,238,.92);
+  --ink:#1C2330;--mut:#586274;--line:rgba(28,38,60,.16);--line2:rgba(28,38,60,.32);
+  --gridCss:rgba(40,60,100,.07);--gridCss2:rgba(40,60,100,.035);
+  --aur1:#E8C88A;--aur2:#BFD4E8;--aur3:#D9E8C4;--aurOp:.35;--grainOp:.035;
+  --k:#B26A00;--k2:#E09A20;--pg:#0B5FBF;--pg2:#3E8AD8;--pe:#1B7F2E;--pe2:#4CA85C;
+  --mech:#7A2FB8;--mech2:#A05FD0;--heat:#C0263A;--heat2:#961C2C;--tot:#1C2330;
+  --ok:#1B7F2E;--warn:#B26A00;--danger:#C0263A;--info:#0B5FBF;--cyan:#0B5FBF;
+  --shadow:0 8px 28px rgba(60,50,30,.14);
+}
+body[data-theme="board"]{
+  --bg0:#0C1B16;--panelA:rgba(24,45,35,.8);--panelB:rgba(15,31,24,.94);--inset:rgba(11,25,19,.6);
+  --chipBg:#0A1712;--track:#0A1712;--headerBg:rgba(9,20,15,.88);
+  --ink:#EAF3EA;--mut:#9DB8A6;--line:rgba(160,220,180,.18);--line2:rgba(160,220,180,.36);
+  --gridCss:rgba(180,230,200,.06);--gridCss2:rgba(180,230,200,.03);
+  --aur1:#1F6B45;--aur2:#2F7F6B;--aur3:#8FC79A;--aurOp:.22;--grainOp:.07;
+  --k:#FFC24D;--k2:#FFDD9A;--pg:#6FC3FF;--pg2:#A8DCFF;--pe:#8FE86F;--pe2:#C4F5AE;
+  --mech:#D3A0FF;--mech2:#E8CCFF;--heat:#FF6B6B;--heat2:#D14A4A;--tot:#F2F7F0;
+  --ok:#8FE86F;--warn:#FFC24D;--danger:#FF6B6B;--info:#6FC3FF;--cyan:#8FE86F;
+  --shadow:0 10px 36px rgba(0,0,0,.4);
+}
+body[data-theme="contrast"]{
+  --bg0:#000000;--panelA:#0B0B0B;--panelB:#050505;--inset:#000000;
+  --chipBg:#000000;--track:#141414;--headerBg:rgba(0,0,0,.95);
+  --ink:#FFFFFF;--mut:#DCDCDC;--line:rgba(255,255,255,.5);--line2:rgba(255,255,255,.78);
+  --gridCss:rgba(255,255,255,.10);--gridCss2:rgba(255,255,255,.05);
+  --aur1:#000;--aur2:#000;--aur3:#000;--aurOp:0;--grainOp:0;
+  --k:#FFD400;--k2:#FFF08A;--pg:#4DC3FF;--pg2:#A6E2FF;--pe:#5CFF5C;--pe2:#B4FFB4;
+  --mech:#E39BFF;--mech2:#F3D4FF;--heat:#FF5C5C;--heat2:#C43A3A;--tot:#FFFFFF;
+  --ok:#5CFF5C;--warn:#FFD400;--danger:#FF5C5C;--info:#4DC3FF;--cyan:#4DC3FF;
+  --shadow:0 0 0 1px rgba(255,255,255,.25);
+}
+body[data-sc="pendulum"]{--sc:var(--mech);--scSoft:rgba(196,121,255,.15)}
+body[data-sc="ball"]{--sc:var(--k);--scSoft:rgba(255,175,31,.15)}
+body[data-sc="spring"]{--sc:var(--pe);--scSoft:rgba(105,232,92,.15)}
+body[data-sc="ramp"]{--sc:var(--pg);--scSoft:rgba(62,168,255,.15)}
+body[data-theme="class"][data-sc="pendulum"]{--scSoft:rgba(122,47,184,.12)}
+body[data-theme="class"][data-sc="ball"]{--scSoft:rgba(178,106,0,.12)}
+body[data-theme="class"][data-sc="spring"]{--scSoft:rgba(27,127,46,.12)}
+body[data-theme="class"][data-sc="ramp"]{--scSoft:rgba(11,95,191,.12)}
+
+*{margin:0;padding:0;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--line2) var(--track)}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:var(--track);border-radius:8px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--sc),var(--cyan));border-radius:8px;border:2px solid var(--track)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--sc),var(--tot))}
+::selection{background:var(--k);color:var(--bg0)}
+body{font-family:var(--body);color:var(--ink);background:var(--bg0);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--gridCss) 1px,transparent 1px),linear-gradient(90deg,var(--gridCss) 1px,transparent 1px),
+  linear-gradient(var(--gridCss2) 1px,transparent 1px),linear-gradient(90deg,var(--gridCss2) 1px,transparent 1px);
+  background-size:88px 88px,88px 88px,22px 22px,22px 22px}
+.aurora{position:fixed;border-radius:50%;filter:blur(95px);opacity:var(--aurOp);z-index:0;pointer-events:none;transition:opacity .3s}
+.a1{width:540px;height:540px;left:-160px;top:-140px;background:var(--aur1);animation:d1 46s ease-in-out infinite alternate}
+.a2{width:500px;height:500px;right:-140px;top:24%;background:var(--aur2);animation:d2 58s ease-in-out infinite alternate}
+.a3{width:440px;height:440px;left:34%;bottom:-220px;background:var(--aur3);animation:d3 64s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate(90px,70px) scale(1.15)}}
+@keyframes d2{to{transform:translate(-80px,-60px) scale(1.1) rotate(18deg)}}
+@keyframes d3{to{transform:translate(70px,-90px) scale(1.2)}}
+.grain{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:var(--grainOp);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+.mono{font-family:var(--mono)}
+button{font-family:var(--body);cursor:pointer;user-select:none;-webkit-user-select:none;color:var(--ink);touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+svg{display:block}.hide{display:none!important}
+
+header{position:fixed;top:0;left:0;right:0;height:64px;z-index:100;background:var(--headerBg);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);animation:rise .5s ease both}
+.hwrap{max-width:1620px;margin:0 auto;height:100%;padding:0 18px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.hex{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,var(--mech),var(--pg));
+  border:1px solid var(--line2);box-shadow:0 0 18px var(--scSoft)}
+.brand h1{font-family:var(--disp);font-size:19px;font-weight:800;letter-spacing:2.4px;line-height:1;white-space:nowrap}
+.brand h1 em{font-style:normal;background:linear-gradient(90deg,var(--k),var(--heat));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{display:block;color:var(--mut);font-size:11px;margin-top:3px;white-space:nowrap}
+.hright{margin-left:auto;display:flex;align-items:center;gap:9px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:10px;font-size:12.5px;background:var(--chipBg);border:1px solid var(--line);white-space:nowrap}
+.chip.conserve{border-color:var(--ok)}
+.chip.conserve b{font-family:var(--mono);color:var(--tot)}
+#cons-ok{color:var(--ok);font-weight:700;font-size:11.5px}#cons-ok.bad{color:var(--danger)}
+#test-chip{cursor:pointer;border-color:var(--line2);font-weight:700;font-size:11.5px}
+#test-chip.pass{border-color:var(--ok);color:var(--ok)}#test-chip.fail{border-color:var(--danger);color:var(--danger)}
+.icon-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;font-size:12.5px;font-weight:600;background:var(--inset);border:1px solid var(--line);transition:.15s}
+.icon-btn:hover{border-color:var(--cyan)}
+.icon-btn svg{width:17px;height:17px;stroke:var(--cyan);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn.muted svg{stroke:var(--mut)}
+
+main{position:relative;z-index:1;max-width:1620px;margin:0 auto;padding:82px 18px 34px;display:grid;
+  grid-template-columns:300px minmax(0,1fr) 386px;gap:16px;grid-template-areas:"controls center energy";align-items:start}
+#controls{grid-area:controls;position:sticky;top:80px;max-height:calc(100vh - 96px);overflow-y:auto;animation:rise .55s .08s ease both}
+#center{grid-area:center;min-width:0;animation:rise .55s .1s ease both}
+#energy{grid-area:energy;position:sticky;top:80px;max-height:calc(100vh - 96px);overflow-y:auto;animation:rise .55s .14s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.panel{background:linear-gradient(180deg,var(--panelA),var(--panelB));border:1px solid var(--line);border-radius:16px;padding:16px;
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .3s,border-color .3s}
+.panel h2{font-family:var(--disp);font-size:12.5px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.panel h2 svg{width:15px;height:15px;stroke:var(--sc);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.panel h2 .unit{margin-left:auto;font-size:10px;color:var(--mut);font-weight:600;text-transform:none;letter-spacing:.4px}
+.ctl-group{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--inset)}
+.ctl-title{font-size:11px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--sc);margin-bottom:10px}
+.ctl-title small{display:block;font-weight:500;text-transform:none;color:var(--mut);margin-top:2px;font-size:10.5px;letter-spacing:.2px}
+.ctl-row{margin-bottom:12px}.ctl-row:last-child{margin-bottom:0}
+.ctl-lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:600;margin-bottom:6px}
+.ctl-lab output{font-family:var(--mono);font-size:12px;color:var(--sc);font-weight:700}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:linear-gradient(90deg,var(--sc) var(--p),var(--track) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;margin-top:-6px;background:var(--tot);border:3px solid var(--sc);box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:grab}
+input[type=range]::-moz-range-track{height:6px;border-radius:4px;background:var(--track)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:4px;background:var(--sc)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--tot);border:3px solid var(--sc)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 44%;padding:8px 6px;border-radius:9px;border:1px solid var(--line);background:var(--chipBg);font-size:11px;font-weight:700;color:var(--mut);transition:.15s}
+.seg button.on{color:var(--ink);border-color:var(--sc);background:var(--scSoft);box-shadow:0 0 10px var(--scSoft)}
+.seg.five button{flex:1 1 17%;font-family:var(--mono);font-size:10.5px;padding:8px 3px}
+.summary{font-size:11px;color:var(--mut);background:var(--chipBg);border:1px dashed var(--line2);border-radius:9px;padding:8px 10px;line-height:1.55;margin-top:10px}
+.summary b{color:var(--tot)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:12.5px;font-weight:700;border:1px solid var(--line2);background:var(--inset);transition:.15s;width:100%}
+.btn:hover{border-color:var(--sc);transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn.violet{border-color:var(--mech);color:var(--mech)}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-row .btn{flex:1 1 46%}
+.switch{display:flex;align-items:center;gap:10px;background:none;border:none;padding:2px 0;width:100%;text-align:left}
+.switch .track{flex:none;width:44px;height:24px;border-radius:13px;background:var(--track);border:1px solid var(--line2);position:relative;transition:background .2s}
+.switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--mut);transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,.4)}
+.switch[aria-checked="true"] .track{background:linear-gradient(90deg,var(--pg),var(--cyan))}
+.switch[aria-checked="true"] .knob{transform:translateX(20px);background:var(--tot)}
+.switch.heat[aria-checked="true"] .track{background:linear-gradient(90deg,var(--heat),var(--k))}
+.sw-txt{font-size:12.5px;font-weight:600}
+.sw-txt small{display:block;font-weight:500;color:var(--mut);font-size:10.5px;margin-top:1px}
+.sw-txt b{color:var(--sc)}
+.switch.heat[aria-checked="true"] .sw-txt b{color:var(--heat)}
+.hint{font-size:10.5px;color:var(--mut);line-height:1.5;margin-top:9px}
+.kbd-hints{font-size:10px;color:var(--mut);text-align:center;line-height:2}
+.kbd-hints kbd{font-family:var(--mono);background:var(--chipBg);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:9.5px;color:var(--ink)}
+
+#tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.tab{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panelA),var(--panelB));text-align:left;transition:.18s;min-width:0}
+.tab svg{width:26px;height:26px;flex:none;stroke:var(--mut);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:.18s}
+.tab>span{min-width:0}
+.tab .tname{display:block;font-size:13.5px;font-weight:800;font-family:var(--disp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab .tsub{display:block;font-size:10.5px;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab:hover{border-color:var(--line2);transform:translateY(-2px)}
+.tab.on{border-color:var(--sc);box-shadow:0 0 0 1px var(--sc),0 6px 24px var(--scSoft);background:linear-gradient(180deg,var(--scSoft),var(--panelB))}
+.tab.on svg{stroke:var(--sc)}
+
+#stage-wrap{padding:0;overflow:hidden;height:clamp(400px,56vh,600px);display:flex;flex-direction:column;position:relative;transition:border-color .25s,box-shadow .25s}
+body.slowmo #stage-wrap{border-color:var(--cyan);box-shadow:var(--shadow),0 0 30px var(--scSoft)}
+#stage-box{flex:1;min-height:0;position:relative;cursor:pointer}
+#stage{width:100%;height:100%;display:block}
+.hud{position:absolute;z-index:5;pointer-events:none}
+.hud.tl{top:10px;left:10px;display:flex;flex-direction:column;gap:4px}
+.hud.tr{top:10px;right:10px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.hchip{font-family:var(--mono);font-size:11.5px;padding:4px 9px;border-radius:8px;background:var(--chipBg);border:1px solid var(--line);color:var(--ink);opacity:.94}
+.badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:8px;background:var(--chipBg);border:1px solid var(--line2);color:var(--cyan)}
+.badge.hot{color:var(--heat);border-color:var(--heat)}
+.badge.tgt{color:var(--mech);border-color:var(--mech);display:none}
+body.has-target .badge.tgt{display:inline-block}
+#hud-slow{display:none;color:var(--bg0);background:linear-gradient(135deg,var(--cyan),var(--pg));border-color:var(--cyan);font-weight:800;animation:slowpulse 1.4s ease-in-out infinite}
+body.slowmo #hud-slow{display:inline-block}
+@keyframes slowpulse{0%,100%{opacity:1}50%{opacity:.72}}
+#formula-chip{bottom:10px;left:10px;font-size:11px;color:var(--ink);max-width:74%;line-height:1.5}
+#stage-pill{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;padding:10px 20px;border-radius:999px;
+  background:var(--chipBg);border:1px solid var(--sc);font-size:13.5px;font-weight:700;box-shadow:0 0 26px var(--scSoft);
+  animation:pulse 2s ease-in-out infinite;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.035)}}
+#sound-note{display:none;align-items:center;gap:8px;padding:7px 14px;font-size:11.5px;color:var(--warn);background:var(--inset);border-top:1px solid var(--warn)}
+#sound-note svg{width:14px;height:14px;flex:none;stroke:var(--warn);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body[data-sc="ball"] #sound-note{display:flex}
+
+#transport{position:sticky;top:72px;z-index:40;display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0;padding:10px 14px;border-radius:14px;
+  border:1px solid var(--line2);background:var(--headerBg);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:var(--shadow)}
+#play-btn{display:inline-flex;align-items:center;gap:9px;padding:11px 22px;border-radius:12px;border:none;font-size:15px;font-weight:800;font-family:var(--disp);
+  color:var(--bg0);background:linear-gradient(135deg,var(--k2),var(--k));box-shadow:0 6px 22px var(--scSoft);transition:.15s}
+#play-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+#play-btn:active{transform:scale(.97)}
+#play-btn.running{background:linear-gradient(135deg,var(--pg2),var(--pg));color:var(--bg0)}
+#play-btn svg{width:17px;height:17px;fill:currentColor;stroke:none}
+#reset-btn,#step-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 15px;border-radius:12px;font-size:13px;font-weight:700;background:transparent;transition:.15s}
+#reset-btn{border:1px solid var(--mech);color:var(--mech)}
+#reset-btn:hover{background:var(--scSoft)}
+#step-btn{border:1px solid var(--line2);color:var(--ink)}
+#step-btn:hover{border-color:var(--cyan)}
+#step-btn.off{opacity:.42}
+#reset-btn svg,#step-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+#fric-btn{width:auto;padding:4px 8px;border-radius:10px}
+.speed-group{display:inline-flex;align-items:center;gap:6px;padding-left:11px;border-left:1px dashed var(--line2)}
+#slow-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;font-size:12.5px;font-weight:800;background:var(--chipBg);border:1px solid var(--line2);color:var(--mut);transition:.15s}
+#slow-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#slow-btn:hover{border-color:var(--cyan);color:var(--ink)}
+#slow-btn.on{color:var(--bg0);background:linear-gradient(135deg,var(--cyan),var(--pg));border-color:var(--cyan);box-shadow:0 0 16px var(--scSoft)}
+.spd-presets{display:inline-flex;gap:4px}
+.spd-chip{padding:7px 9px;border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:700;background:var(--chipBg);border:1px solid var(--line);color:var(--mut);transition:.12s}
+.spd-chip:hover{border-color:var(--line2);color:var(--ink)}
+.spd-chip.on{color:var(--ink);border-color:var(--sc);background:var(--scSoft)}
+#time-chip{margin-left:auto;font-size:11.5px;color:var(--mut);background:var(--chipBg);border:1px solid var(--line);padding:7px 11px;border-radius:9px;white-space:nowrap}
+
+#flow{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;padding:11px 14px;margin-bottom:12px}
+.fchip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:10px;background:var(--chipBg);border:1px solid var(--line);font-size:11.5px;font-weight:700;transition:.2s}
+.fchip .dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.fchip output{font-family:var(--mono);font-weight:600;font-size:10.5px;color:var(--mut)}
+.fchip.recv{border-color:var(--c);box-shadow:0 0 12px var(--scSoft)}
+.farrows{display:flex;flex-direction:column;gap:2px}
+.farrows svg,.fheat svg{width:30px;height:11px;stroke:var(--line2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.farrows svg.on{stroke:var(--ac);stroke-dasharray:5 4;animation:dash .5s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-9}}
+.fheat{display:inline-flex;align-items:center;gap:6px;margin-left:6px;padding-left:12px;border-left:1px dashed var(--line2)}
+.fheat small{font-size:9.5px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+.fheat svg.on{stroke:var(--heat);stroke-dasharray:5 4;animation:dash .5s linear infinite}
+#flow-pe{display:none;align-items:center;gap:7px}
+body[data-sc="spring"] #flow-pe{display:inline-flex}
+
+#now-box{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;min-height:56px;margin-bottom:10px;
+  background:linear-gradient(90deg,var(--scSoft),transparent 70%);border:1px solid var(--line);border-left:3px solid var(--sc);transition:.2s}
+#now-box svg{width:20px;height:20px;flex:none;fill:var(--sc);animation:bolt 1.6s ease-in-out infinite}
+@keyframes bolt{0%,100%{opacity:1}50%{opacity:.55}}
+#now-box[data-type="heat"]{border-left-color:var(--heat)}#now-box[data-type="heat"] svg{fill:var(--heat)}
+#now-box[data-type="ok"]{border-left-color:var(--ok)}#now-box[data-type="ok"] svg{fill:var(--ok)}
+#now-box[data-type="info"]{border-left-color:var(--info)}#now-box[data-type="info"] svg{fill:var(--info)}
+#now-box[data-type="warn"]{border-left-color:var(--warn)}#now-box[data-type="warn"] svg{fill:var(--warn)}
+#now-text{font-size:14px;font-weight:600;line-height:1.45}
+#log{height:158px;overflow-y:auto;padding-right:5px;display:flex;flex-direction:column;gap:4px}
+.log-item{display:grid;grid-template-columns:66px 1fr;gap:9px;align-items:baseline;padding:6px 10px;border-radius:8px;background:var(--inset);border-left:2px solid var(--sc);animation:rise .3s ease both}
+.log-item.heat{border-left-color:var(--heat)}.log-item.ok{border-left-color:var(--ok)}.log-item.info{border-left-color:var(--info)}.log-item.warn{border-left-color:var(--warn)}
+.log-item .lt{font-family:var(--mono);font-size:10px;color:var(--mut)}
+.log-item p{font-size:12px;line-height:1.45;color:var(--ink)}
+.log-empty{font-size:12px;color:var(--mut);padding:10px;text-align:center}
+
+.bar-row{margin-bottom:11px}
+.bar-head{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.bar-head .dot{width:9px;height:9px;border-radius:3px;background:var(--c);box-shadow:0 0 8px var(--c);flex:none;align-self:center}
+.bar-head label{font-size:12px;font-weight:700}
+.bar-head .sym{font-family:var(--mono);font-size:10px;color:var(--mut)}
+.bar-head output{margin-left:auto;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--c)}
+.track{height:15px;border-radius:8px;background:var(--track);border:1px solid var(--line);box-shadow:inset 0 2px 5px rgba(0,0,0,.35);overflow:hidden}
+.fill{height:100%;width:0%;border-radius:7px}
+.fill.f-k{background:linear-gradient(90deg,var(--k2),var(--k))}
+.fill.f-pg{background:linear-gradient(90deg,var(--pg2),var(--pg))}
+.fill.f-pe{background:linear-gradient(90deg,var(--pe2),var(--pe))}
+.fill.f-mech{background:linear-gradient(90deg,var(--mech2),var(--mech))}
+.fill.f-heat{background:repeating-linear-gradient(45deg,var(--heat) 0 6px,var(--heat2) 6px 12px)}
+.bar-sub{font-size:10px;color:var(--mut);margin-top:3px}
+#row-pe{display:none}
+body[data-sc="spring"] #row-pe{display:block}
+.total-row{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)}
+.total-row .bar-head label{font-size:13px}
+.total-row .bar-head output{color:var(--tot);font-size:14px}
+.total-track{height:20px;border-radius:9px;background:var(--track);border:1px solid var(--tot);overflow:hidden;display:flex}
+.total-track div{height:100%;width:0%}
+#tot-seg-k{background:var(--k)}#tot-seg-pg{background:var(--pg)}#tot-seg-pe{background:var(--pe)}
+#tot-seg-q{background:repeating-linear-gradient(45deg,var(--heat) 0 6px,var(--heat2) 6px 12px)}
+#eq-line{margin-top:12px;font-size:11.5px;text-align:center;background:var(--chipBg);border:1px solid var(--line);border-radius:10px;padding:9px 8px;color:var(--ink);line-height:1.6}
+#eq-line b{color:var(--ok)}
+.eq-cap{font-size:10.5px;color:var(--mut);text-align:center;margin-top:7px;line-height:1.5;font-style:italic}
+.graph-block{margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.graph-block h3,.notes h3,.cmp-block h3{font-size:11px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+#graph-wrap{height:150px;background:var(--track);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#graph{width:100%;height:100%;display:block}
+#legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:10.5px;color:var(--mut)}
+#legend span{display:inline-flex;align-items:center;gap:5px}
+#legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+#legend .l-line{width:14px;height:2px;border-radius:1px;background:var(--tot)}
+#lg-pe{display:none}
+body[data-sc="spring"] #lg-pe{display:inline-flex}
+.notes{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}
+.notes ul{list-style:none}
+.notes li{font-size:11px;color:var(--mut);line-height:1.55;padding:3px 0 3px 15px;position:relative}
+.notes li::before{content:"▸";position:absolute;left:0;color:var(--sc)}
+.notes li.active{color:var(--warn)}
+.notes li.key{color:var(--ink);font-weight:600}
+.foot{margin-top:14px;text-align:center;font-size:10.5px;color:var(--mut);line-height:1.8}
+.foot .tag{display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--chipBg);margin:2px}
+
+#compare,#verify,#oral{margin-top:12px}
+.cmp-slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.slot{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--inset);min-width:0}
+.slot h4{font-family:var(--disp);font-size:12px;letter-spacing:1px;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.slot h4 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.slot.a h4 i{background:var(--mech)}.slot.b h4 i{background:var(--k)}
+.slot .meta{font-size:10.5px;color:var(--mut);line-height:1.6;font-family:var(--mono);word-break:break-word}
+.slot .meta b{color:var(--ink)}
+.slot .big{font-family:var(--mono);font-size:14px;font-weight:800;color:var(--tot);margin:5px 0}
+.slot .btn{margin-top:8px;font-size:11px;padding:7px 9px}
+.slot.empty{border-style:dashed;opacity:.85}
+.cmp-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:10px}
+.cmp-table th,.cmp-table td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono)}
+.cmp-table th:first-child,.cmp-table td:first-child{text-align:left;font-family:var(--body);font-weight:600;color:var(--mut)}
+.cmp-table thead th{color:var(--mut);font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.cmp-table td.va{color:var(--mech);font-weight:700}.cmp-table td.vb{color:var(--k);font-weight:700}
+.cmp-table td.df{color:var(--cyan)}
+.cmp-table tr.hl td{background:var(--scSoft)}
+.cmp-table tr.hl td:first-child{color:var(--ink);font-weight:800}
+#cmp-verdict{font-size:12.5px;line-height:1.6;padding:11px 13px;border-radius:11px;background:var(--scSoft);border:1px solid var(--line);border-left:3px solid var(--sc);margin-bottom:9px}
+.cmp-warn{font-size:11.5px;line-height:1.55;padding:9px 12px;border-radius:10px;background:var(--inset);border:1px solid var(--warn);border-left:3px solid var(--warn);color:var(--warn);margin-bottom:9px;font-weight:600}
+#cmp-wrap{height:170px;background:var(--track);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#cmp-graph{width:100%;height:100%;display:block}
+#cmp-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:10.5px;color:var(--mut)}
+#cmp-legend span{display:inline-flex;align-items:center;gap:6px}
+#cmp-legend i{width:18px;height:0;border-top:3px solid;display:inline-block}
+#cmp-legend i.dash{border-top-style:dashed}
+.cmp-empty{font-size:12px;color:var(--mut);line-height:1.6;padding:10px;text-align:center}
+
+.ver-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#ver-score{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--ok)}
+#ver-score.part{color:var(--warn)}#ver-score.bad{color:var(--danger)}
+.ver-head .btn{width:auto;flex:none;font-size:11.5px;padding:8px 12px}
+#ver-note{font-size:10.5px;color:var(--mut);line-height:1.5;margin-bottom:10px}
+.rubric{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;margin-bottom:12px}
+.rub{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--inset)}
+.rub .rn{font-size:10.5px;color:var(--mut);font-weight:600;line-height:1.3}
+.rub .rv{font-family:var(--mono);font-size:14px;font-weight:800;margin-top:3px}
+.rub.full .rv{color:var(--ok)}.rub.part .rv{color:var(--warn)}.rub.zero .rv{color:var(--danger)}
+#ver-list{display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;padding-right:5px}
+.vt{display:grid;grid-template-columns:20px 1fr auto;gap:9px;align-items:baseline;padding:6px 10px;border-radius:8px;background:var(--inset);border-left:2px solid var(--ok)}
+.vt.bad{border-left-color:var(--danger)}
+.vt .vi{font-weight:800;color:var(--ok);font-size:13px}
+.vt.bad .vi{color:var(--danger)}
+.vt .vn{font-size:11.5px;font-weight:600;line-height:1.4}
+.vt .vd{font-family:var(--mono);font-size:10px;color:var(--mut);text-align:right;max-width:46%;word-break:break-word}
+
+#oral-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px}
+.ocard{border:1px solid var(--line);border-radius:12px;padding:11px;background:var(--inset);text-align:left;transition:.15s;display:block;width:100%}
+.ocard:hover{border-color:var(--sc);transform:translateY(-2px)}
+.ocard .oq{font-size:12.5px;font-weight:700;line-height:1.45;display:flex;gap:8px}
+.ocard .oq b{color:var(--sc);font-family:var(--mono);flex:none}
+.ocard .oa{font-size:11.5px;color:var(--mut);line-height:1.55;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2);display:none}
+.ocard.open .oa{display:block}
+.ocard .oh{font-size:9.5px;color:var(--mut);margin-top:7px;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
+.ocard.open .oh{color:var(--ok)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,150%);z-index:120;max-width:min(560px,92vw);padding:11px 20px;border-radius:12px;
+  background:var(--headerBg);border:1px solid var(--sc);font-size:12.5px;font-weight:600;box-shadow:var(--shadow);
+  transition:transform .3s cubic-bezier(.2,.9,.3,1.2);text-align:center;line-height:1.5}
+#toast.show{transform:translate(-50%,0)}
+
+@media (max-width:1359px){
+  main{grid-template-columns:minmax(0,1fr) 360px;grid-template-areas:"center energy" "controls energy"}
+  #controls{position:static;max-height:none}
+}
+@media (max-width:899px){
+  main{grid-template-columns:minmax(0,1fr);grid-template-areas:"center" "energy" "controls"}
+  #energy{position:static;max-height:none}
+  #stage-wrap{height:clamp(300px,44vh,480px)}
+}
+@media (max-width:760px){.brand small{display:none}.brand h1{font-size:16px}#sound-lbl{display:none}.chip.conserve .e0lbl{display:none}#test-chip .tlbl{display:none}}
+@media (max-width:620px){
+  #tabs{grid-template-columns:1fr 1fr}.tab .tsub{display:none}#time-chip{display:none}
+  #play-btn{flex:1;justify-content:center}.hud.tl .hchip{font-size:10px;padding:3px 7px}
+  #formula-chip{font-size:9.5px;max-width:88%}#now-text{font-size:13px}
+  #transport{gap:7px;padding:9px 11px}#reset-btn,#step-btn{padding:10px 12px;font-size:12px}
+  .cmp-slots{grid-template-columns:1fr}.vt{grid-template-columns:18px 1fr}.vt .vd{grid-column:2;text-align:left;max-width:100%}
+  .cmp-table{font-size:10.5px}.cmp-table th,.cmp-table td{padding:5px 4px}
+}
+@media (max-width:479px){.spd-presets{display:none}.speed-group{padding-left:0;border-left:none}}
+@media (prefers-reduced-motion:reduce){
+  .aurora,#stage-pill,#now-box svg,#hud-slow,.farrows svg.on,.fheat svg.on{animation:none!important}
+  header,#controls,#center,#energy,.log-item{animation:none!important}
+}
+</style>
+</head>
+<body data-sc="pendulum" data-theme="night">
+<div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div><div class="grain"></div>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <span class="hex"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" style="color:var(--bg0)" d="M13 2 5 13h5l-1 9 8-11h-5z"/></svg></span>
+      <div><h1>ENERJİ <em>LAB</em></h1><small>7. Sınıf Fen Bilimleri • Enerji Dönüşümleri ve Korunumu</small></div>
+    </div>
+    <div class="hright">
+      <div class="chip conserve" title="Toplam enerji her adımda korunuyor"><span class="e0lbl">E₀ =</span><b id="cons-val">20,0 J</b><span id="cons-ok">✓ sabit</span></div>
+      <button id="test-chip" class="chip" title="Doğrulama testleri paneline git"><span class="tlbl">Doğrulama</span> <b id="test-chip-val">…</b></button>
+      <button id="sound-btn" class="icon-btn" aria-pressed="true" aria-label="Sesi kapat">
+        <svg id="sound-on-ico" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+        <svg id="sound-off-ico" class="hide" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+        <span id="sound-lbl">Ses Açık</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <aside id="controls" class="panel">
+    <h2><svg viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2.4"/><circle cx="8" cy="16" r="2.4"/></svg>Deney Kontrolleri</h2>
+    <div class="ctl-group">
+      <div class="ctl-title">Başlangıç Ayarları<small>Değişince deneme başa sarar — her deneme aynı koşullarla başlar</small></div>
+      <div class="ctl-row">
+        <div class="ctl-lab"><span>Kütle (m)</span><output id="mass-out">2 kg</output></div>
+        <input type="range" id="mass-range" min="1" max="5" step="0.5" value="2" aria-label="Kütle">
+      </div>
+      <div class="ctl-row">
+        <div class="ctl-lab"><span id="init-label">Başlangıç açısı (θ₀)</span><output id="init-out">60°</output></div>
+        <input type="range" id="init-range" min="15" max="75" step="1" value="60" aria-label="Başlangıç koşulu">
+      </div>
+      <div class="ctl-row">
+        <div class="ctl-lab"><span>Yerçekimi</span></div>
+        <div class="seg"><button id="g-earth" class="on" aria-pressed="true">🌍 Dünya · g=10</button><button id="g-moon" aria-pressed="false">🌙 Ay · g=1,6</button></div>
+      </div>
+      <div id="init-summary" class="summary mono"></div>
+      <div class="btn-row"><button id="rand-btn" class="btn violet"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>Rastgele Koşullar</button></div>
+    </div>
+    <div class="ctl-group">
+      <div class="ctl-title">Deneme Süresi<small>Hedef süreye ulaşınca otomatik duraklar — eşit süreli A/B karşılaştırması için</small></div>
+      <div class="ctl-lab"><span>Hedef</span><output id="target-out">sınırsız</output></div>
+      <div class="seg five" id="target-seg">
+        <button data-t="0" class="on">∞</button><button data-t="2">2 s</button><button data-t="5">5 s</button><button data-t="10">10 s</button><button data-t="20">20 s</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <div class="ctl-title">Canlı Ayarlar<small>Hareket sırasında anında uygulanır</small></div>
+      <div class="ctl-row">
+        <div class="ctl-lab"><span>İnce hız ayarı</span><output id="speed-out">1,00×</output></div>
+        <input type="range" id="speed-range" min="0.1" max="2" step="0.05" value="1" aria-label="Simülasyon hızı">
+      </div>
+      <div class="ctl-row"><button id="trail-sw" class="switch" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span class="sw-txt">Hareket izi<small>Geçmiş konumları göster</small></span></button></div>
+      <div class="ctl-row"><button id="vec-sw" class="switch" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span class="sw-txt">Hız vektörü<small>Oklar hızı ve yönü gösterir</small></span></button></div>
+      <div class="ctl-row"><button id="grid-sw" class="switch" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span class="sw-txt">Izgara ve cetvel<small>Metre çizgileri ve ölçek</small></span></button></div>
+      <div class="ctl-row"><button id="part-sw" class="switch" role="switch" aria-checked="true"><span class="track"><span class="knob"></span></span><span class="sw-txt">Isı parçacıkları<small>Sürtünme kaybını kıvılcımlarla göster</small></span></button></div>
+    </div>
+    <div class="ctl-group">
+      <div class="ctl-title">Tema<small>Renk düzeni anında değişir, seçim kaydedilir</small></div>
+      <div class="seg" id="theme-seg">
+        <button data-th="night" class="on">🌌 Gece Lab</button>
+        <button data-th="class">☀️ Sınıf Aydınlık</button>
+        <button data-th="board">🟩 Kara Tahta</button>
+        <button data-th="contrast">◐ Yüksek Kontrast</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <div class="ctl-title">Kayıt ve Dışa Aktarım</div>
+      <div class="btn-row" style="margin-top:0">
+        <button id="csv-btn" class="btn"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>Veri (CSV)</button>
+        <button id="png-btn" class="btn"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l6-5 4 3 4-4 4 4"/></svg>Görüntü (PNG)</button>
+      </div>
+      <p class="hint">📐 Matematik + bilişim: CSV'yi Excel / Numbers / Sheets'te aç, enerji–zaman grafiğini kendin çiz. Ondalık ayırıcı virgül, sütun ayırıcı noktalı virgül.</p>
+    </div>
+    <div class="kbd-hints"><kbd>Boşluk</kbd> Başlat/Durdur · <kbd>S</kbd> Yavaşlat · <kbd>.</kbd> Adım<br><kbd>R</kbd> Sıfırla · <kbd>F</kbd> Sürtünme · <kbd>T</kbd> Tema</div>
+  </aside>
+
+  <section id="center">
+    <nav id="tabs" aria-label="Senaryo seçimi">
+      <button class="tab on" data-sc="pendulum" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 3h16"/><path d="M12 3l5 12"/><circle cx="17.6" cy="17.6" r="3"/><path d="M12 3v9" stroke-dasharray="2 3"/></svg><span><span class="tname">Sarkaç</span><span class="tsub">yükseklik ⇄ hız</span></span></button>
+      <button class="tab" data-sc="ball" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 2.5 3 14.5 0 17M12 3.5c-3 2.5-3 14.5 0 17"/></svg><span><span class="tname">Zıplayan Top</span><span class="tsub">Ep ⇄ Ek + ısı</span></span></button>
+      <button class="tab" data-sc="spring" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10"/><path d="M12 3v2l4 1.5-8 2.5 8 2.5-8 2.5 8 2.5-4 1.5v3"/></svg><span><span class="tname">Yaylı Fırlatıcı</span><span class="tsub">esneklik + çekim</span></span></button>
+      <button class="tab" data-sc="ramp" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 4c1 10 4 15 9 15s8-5 9-15"/><circle cx="6.6" cy="8" r="1.8"/></svg><span><span class="tname">Kaykay Rampası</span><span class="tsub">parabolik yarım boru</span></span></button>
+    </nav>
+
+    <div id="stage-wrap" class="panel">
+      <div id="stage-box">
+        <canvas id="stage" aria-label="Enerji dönüşümü simülasyon sahnesi"></canvas>
+        <div class="hud tl"><span class="hchip" id="hud-t">t = 0,00 s</span><span class="hchip" id="hud-v">v = 0,0 m/s</span><span class="hchip" id="hud-h">h = 0,00 m</span><span class="hchip" id="hud-q">Q = 0,0 J</span></div>
+        <div class="hud tr"><span class="badge" id="hud-slow">🐢 AĞIR ÇEKİM 0,25×</span><span class="badge tgt" id="hud-target">🎯 HEDEF 5 s</span><span class="badge" id="hud-g">g = 10 N/kg · Dünya</span><span class="badge" id="hud-fric">Sürtünme: KAPALI</span></div>
+        <div class="hud hchip" id="formula-chip"></div>
+        <div id="stage-pill">▶ Başlat — sahneye de tıklayabilirsin</div>
+      </div>
+      <div id="sound-note"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg><span>Bu basit modelde <b>ses enerjisi ihmal edilmiştir</b>; çarpışma kayıpları yalnızca ısıya dönüşen enerji olarak gösterilir.</span></div>
+    </div>
+
+    <div id="transport">
+      <button id="play-btn"><svg id="play-ico" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="play-lbl">Başlat</span></button>
+      <button id="reset-btn" title="Cismi ilk konumuna ve başlangıç hızına döndürür (R)"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3.2-6.9L3 8"/><path d="M3 3v5h5"/></svg>Sıfırla</button>
+      <button id="step-btn" title="Duraklatıp 0,1 s ilerlet (.)"><svg viewBox="0 0 24 24"><path d="M5 5v14l8-7z"/><path d="M17 5v14"/></svg>Adım +0,1 s</button>
+      <button id="fric-btn" class="switch heat" role="switch" aria-checked="false" title="Sürtünmeyi aç/kapat (F)"><span class="track"><span class="knob"></span></span><span class="sw-txt">Sürtünme: <b id="fric-state">KAPALI</b><small>Kapatınca birikmiş ısı korunur</small></span></button>
+      <span class="speed-group">
+        <button id="slow-btn" aria-pressed="false" title="Ağır çekim 0,25× (S)"><svg viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l-4.5-5"/><circle cx="12" cy="17" r="1.3"/></svg><span id="slow-lbl">Yavaşlat</span></button>
+        <span class="spd-presets">
+          <button class="spd-chip" data-spd="0.25">¼×</button>
+          <button class="spd-chip" data-spd="0.5">½×</button>
+          <button class="spd-chip on" data-spd="1">1×</button>
+          <button class="spd-chip" data-spd="2">2×</button>
+        </span>
+      </span>
+      <span id="time-chip" class="mono">t = 0,00 s · 1,00×</span>
+    </div>
+
+    <div id="flow" class="panel" aria-label="Anlık enerji akışı">
+      <span class="fchip" id="chip-pg" style="--c:var(--pg)"><span class="dot"></span>Çekim P. <output id="fv-pg">0,0 J</output></span>
+      <span class="farrows"><svg id="ar-pg-k" style="--ac:var(--pg)" viewBox="0 0 30 11"><path d="M2 5.5h24m0 0-5-4m5 4-5 4"/></svg><svg id="ar-k-pg" style="--ac:var(--k)" viewBox="0 0 30 11"><path d="M28 5.5H4m0 0 5-4m-5 4 5 4"/></svg></span>
+      <span class="fchip" id="chip-k" style="--c:var(--k)"><span class="dot"></span>Kinetik <output id="fv-k">0,0 J</output></span>
+      <span id="flow-pe"><span class="farrows"><svg id="ar-k-pe" style="--ac:var(--k)" viewBox="0 0 30 11"><path d="M2 5.5h24m0 0-5-4m5 4-5 4"/></svg><svg id="ar-pe-k" style="--ac:var(--pe)" viewBox="0 0 30 11"><path d="M28 5.5H4m0 0 5-4m-5 4 5 4"/></svg></span><span class="fchip" id="chip-pe" style="--c:var(--pe)"><span class="dot"></span>Esneklik P. <output id="fv-pe">0,0 J</output></span></span>
+      <span class="fheat"><small>sürtünme</small><svg id="ar-heat" viewBox="0 0 30 11"><path d="M2 5.5h24m0 0-5-4m5 4-5 4"/></svg><span class="fchip" id="chip-q" style="--c:var(--heat)"><span class="dot"></span>Isı <output id="fv-q">0,0 J</output></span></span>
+    </div>
+
+    <div id="narr" class="panel">
+      <h2><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Enerji Anlatımı</h2>
+      <div id="now-box" data-type="info"><svg viewBox="0 0 24 24"><path d="M13 2 5 13h5l-1 9 8-11h-5z"/></svg><p id="now-text" aria-live="polite"></p></div>
+      <div id="log"><div class="log-empty">Deneme başlayınca olaylar burada zaman damgasıyla listelenir.</div></div>
+    </div>
+
+    <div id="compare" class="panel">
+      <h2><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Denemeleri Karşılaştır<span class="unit">A / B · süre eşitliği kontrol edilir</span></h2>
+      <div class="cmp-slots">
+        <div class="slot a empty" id="slot-a"><h4><i></i>DENEME A</h4><div class="meta" id="meta-a">Boş. Bir deneme çalıştırıp “A'ya Kaydet”e bas.</div><div class="big" id="big-a">—</div><button class="btn" id="load-a" disabled>Koşulları Yükle</button></div>
+        <div class="slot b empty" id="slot-b"><h4><i></i>DENEME B</h4><div class="meta" id="meta-b">Boş. Sürtünmeyi değiştirip tekrar çalıştır, “B'ye Kaydet”e bas.</div><div class="big" id="big-b">—</div><button class="btn" id="load-b" disabled>Koşulları Yükle</button></div>
+      </div>
+      <div class="btn-row" style="margin-top:0;margin-bottom:12px">
+        <button id="save-a" class="btn violet">A'ya Kaydet</button>
+        <button id="save-b" class="btn">B'ye Kaydet</button>
+        <button id="cmp-sync" class="btn" disabled>Süreyi Eşitle</button>
+        <button id="cmp-clear" class="btn">Temizle</button>
+        <button id="cmp-csv" class="btn">Rapor (CSV)</button>
+      </div>
+      <div id="cmp-body"><div class="cmp-empty">Öneri: <b>hedef süreyi 5 s</b> yap, aynı başlangıç koşullarıyla bir <b>sürtünmesiz</b>, bir <b>sürtünmeli</b> deneme kaydet. Süreler eşit olmazsa uygulama uyarır ve eşit süredeki değerleri ayrıca gösterir.</div></div>
+      <div class="cmp-block" id="cmp-graph-block" style="display:none">
+        <h3>Mekanik enerji ve ısı — A (düz) / B (kesikli)</h3>
+        <div id="cmp-wrap"><canvas id="cmp-graph" aria-label="Karşılaştırma grafiği"></canvas></div>
+        <div id="cmp-legend">
+          <span><i style="border-color:var(--mech)"></i>A mekanik</span>
+          <span><i class="dash" style="border-color:var(--k)"></i>B mekanik</span>
+          <span><i style="border-color:var(--heat)"></i>A ısı</span>
+          <span><i class="dash" style="border-color:var(--heat)"></i>B ısı</span>
+          <span><i style="border-color:var(--tot);border-top-width:2px"></i>Toplam (E₀)</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="verify" class="panel">
+      <h2><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Doğrulama Testleri<span class="unit">sayfa açılışında otomatik çalışır</span></h2>
+      <div class="ver-head">
+        <span id="ver-score">—/100</span>
+        <button id="ver-run" class="btn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3.2-6.9L3 8"/><path d="M3 3v5h5"/></svg>Testleri Yeniden Çalıştır</button>
+      </div>
+      <p id="ver-note">Tepe değerleri örnekleme aralığından değil, her alt adımdan doğrudan yakalanır (tolerans 1·10⁻⁵). Isı korunumu ve süre farkı yorumu için regresyon testleri vardır. Fizik testleri ayrı hesap bağlamında çalışır; arayüz testleri koşulları geri yükler ve denemeyi başa sarar.</p>
+      <div class="rubric" id="rubric"></div>
+      <div id="ver-list"></div>
+    </div>
+
+    <div id="oral" class="panel">
+      <h2><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v3a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Sözlü Değerlendirme Kartları<span class="unit">25 puanlık sözlü bölüm için</span></h2>
+      <div class="btn-row" style="margin-top:0;margin-bottom:11px">
+        <button id="oral-toggle" class="btn">Tüm Yanıtları Göster</button>
+        <button id="oral-shuffle" class="btn violet">Kartları Karıştır</button>
+      </div>
+      <div id="oral-cards"></div>
+    </div>
+
+    <div class="foot"><span class="tag">Tek HTML · çevrimdışı</span><span class="tag">7. Sınıf · Kuvvet ve Enerji</span><span class="tag">Enerji yoktan var, vardan yok edilmez — yalnızca dönüşür ⚡</span></div>
+  </section>
+
+  <aside id="energy" class="panel">
+    <h2><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Enerji Ölçer<span class="unit">birim: joule (J)</span></h2>
+    <div id="bars"></div>
+    <div class="total-row">
+      <div class="bar-head"><span class="dot" style="--c:var(--tot)"></span><label>Toplam Enerji</label><span class="sym">E₀</span><output id="tot-out">0,0 J</output></div>
+      <div class="total-track"><div id="tot-seg-k"></div><div id="tot-seg-pg"></div><div id="tot-seg-pe"></div><div id="tot-seg-q"></div></div>
+      <div class="bar-sub">Kinetik + potansiyel + ısı — toplam çubuk hep aynı uzunlukta kalır.</div>
+    </div>
+    <div id="eq-line" class="mono"></div>
+    <div class="eq-cap">Sürtünme kapatılsa bile birikmiş ısı geri dönmez: cisim kalan mekanik enerjiyle (E₀ − Q) hareket eder.</div>
+    <div class="graph-block">
+      <h3>Enerji – Zaman Grafiği (son 30 s)</h3>
+      <div id="graph-wrap"><canvas id="graph" aria-label="Enerji zaman grafiği"></canvas></div>
+      <div id="legend"><span><i style="background:var(--k)"></i>Kinetik</span><span><i style="background:var(--pg)"></i>Çekim P.</span><span id="lg-pe"><i style="background:var(--pe)"></i>Esneklik P.</span><span><i style="background:var(--heat)"></i>Isı</span><span><i class="l-line"></i>Toplam</span></div>
+    </div>
+    <div class="notes">
+      <h3>Model Notları</h3>
+      <ul>
+        <li id="note-g">g = 10 N/kg (Dünya). Ay modunda g = 1,6 N/kg.</li>
+        <li>Sistem kapalıdır: dışarıdan enerji verilmez.</li>
+        <li>Sürtünme açıkken kayıp yalnızca <b>ısıya</b> dönüşür (basit model).</li>
+        <li class="key">Sürtünmeyi kapatmak birikmiş ısıyı silmez; yalnızca yeni kaybı durdurur. Kalan mekanik enerji E₀ − Q'da sabitlenir.</li>
+        <li id="note-sound">Zıplayan top: ses enerjisi ihmal edilir.</li>
+        <li>Rampa paraboliktir: y = H·(x/W)². Kenarda eğim sıfır değildir, kaykaycı ilk anda hızlanır.</li>
+        <li>Isı biriken bir büyüklüktür: karşılaştırmada süreleri eşitle ya da J/s cinsinden güce bak.</li>
+        <li>Sürtünme kapalıyken hareket ideal modelde sonsuza dek sürer.</li>
+      </ul>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:100px 20px;text-align:center">Bu simülasyon için JavaScript gereklidir.</p></noscript>
+
+<script>
+(()=>{ 'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const sgn=v=>v>0?1:v<0?-1:0;
+const fmt=(v,d=1)=>{let n=Number(v);if(!isFinite(n))n=0;if(Math.abs(n)<0.5*Math.pow(10,-d))n=0;return n.toFixed(d).replace('.',',');};
+const TAU=Math.PI*2,MONO='ui-monospace,"SF Mono",Consolas,Menlo,monospace';
+const hexA=(h,a)=>'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';
+function rr(c,x,y,w,h,r){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+const store={get(k,d){try{const v=localStorage.getItem('enerjilab.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('enerjilab.'+k,JSON.stringify(v));}catch(e){}}};
+
+const THEMES={
+ night:{label:'Gece Lab',rgb:{k:[255,175,31],pg:[62,168,255],pe:[105,232,92]},hex:{k:'#FFAF1F',pg:'#3EA8FF',pe:'#69E85C',mech:'#C479FF',heat:'#FF4D5D',tot:'#F4F7FF'},
+  cv:{bgTop:'#0A1124',bgMid:'#0D1530',bgBot:'#101A3A',grid:'rgba(105,130,255,.045)',gridMaj:'rgba(105,130,255,.09)',floor:'#0A0F20',floorLine:'rgba(122,148,255,.35)',hatch:'rgba(122,148,255,.10)',text:'rgba(152,166,206,.8)',vig:'rgba(4,7,16,.5)',mote:'122,148,255',metal:'#93A7DC',metal2:'#5A6FA8',base:'#1B2547',baseLine:'rgba(122,148,255,.4)',skin:'#FFD9A6',board:'#C479FF',jacket:'#39D5FF',wheel:'#0A1024'}},
+ class:{label:'Sınıf Aydınlık',rgb:{k:[178,106,0],pg:[11,95,191],pe:[27,127,46]},hex:{k:'#B26A00',pg:'#0B5FBF',pe:'#1B7F2E',mech:'#7A2FB8',heat:'#C0263A',tot:'#1C2330'},
+  cv:{bgTop:'#FBF8F1',bgMid:'#F5F1E7',bgBot:'#EDE7DA',grid:'rgba(40,60,100,.08)',gridMaj:'rgba(40,60,100,.14)',floor:'#E2DBCC',floorLine:'rgba(60,70,90,.45)',hatch:'rgba(60,70,90,.14)',text:'rgba(70,80,100,.9)',vig:'rgba(120,105,70,.14)',mote:'120,110,80',metal:'#7C8AA5',metal2:'#4E5B75',base:'#DDD5C4',baseLine:'rgba(60,70,90,.4)',skin:'#E8B98A',board:'#7A2FB8',jacket:'#0B5FBF',wheel:'#3A4356'}},
+ board:{label:'Kara Tahta',rgb:{k:[255,194,77],pg:[111,195,255],pe:[143,232,111]},hex:{k:'#FFC24D',pg:'#6FC3FF',pe:'#8FE86F',mech:'#D3A0FF',heat:'#FF6B6B',tot:'#F2F7F0'},
+  cv:{bgTop:'#10231C',bgMid:'#0E1F19',bgBot:'#0C1A15',grid:'rgba(180,230,200,.07)',gridMaj:'rgba(180,230,200,.12)',floor:'#0A1712',floorLine:'rgba(180,230,200,.4)',hatch:'rgba(180,230,200,.12)',text:'rgba(190,220,200,.85)',vig:'rgba(4,12,8,.5)',mote:'180,230,200',metal:'#B8CDBE',metal2:'#7E9A86',base:'#1A3128',baseLine:'rgba(180,230,200,.4)',skin:'#F0D3A8',board:'#D3A0FF',jacket:'#8FE86F',wheel:'#0A1712'}},
+ contrast:{label:'Yüksek Kontrast',rgb:{k:[255,212,0],pg:[77,195,255],pe:[92,255,92]},hex:{k:'#FFD400',pg:'#4DC3FF',pe:'#5CFF5C',mech:'#E39BFF',heat:'#FF5C5C',tot:'#FFFFFF'},
+  cv:{bgTop:'#000000',bgMid:'#050505',bgBot:'#0A0A0A',grid:'rgba(255,255,255,.14)',gridMaj:'rgba(255,255,255,.26)',floor:'#111111',floorLine:'rgba(255,255,255,.8)',hatch:'rgba(255,255,255,.25)',text:'rgba(255,255,255,.95)',vig:'rgba(0,0,0,0)',mote:'255,255,255',metal:'#FFFFFF',metal2:'#BBBBBB',base:'#1A1A1A',baseLine:'rgba(255,255,255,.8)',skin:'#FFFFFF',board:'#E39BFF',jacket:'#4DC3FF',wheel:'#000000'}}
+};
+let TH=THEMES.night;
+const mix3=(k,p,e)=>{const s=k+p+e||1,R=TH.rgb;
+  return 'rgb('+(((R.k[0]*k+R.pg[0]*p+R.pe[0]*e)/s)|0)+','+(((R.k[1]*k+R.pg[1]*p+R.pe[1]*e)/s)|0)+','+(((R.k[2]*k+R.pg[2]*p+R.pe[2]*e)/s)|0)+')';};
+
+const S={scenario:'pendulum',theme:'night',g:10,fric:false,speed:1,speedBeforeSlow:1,targetT:0,
+  trail:true,vectors:true,grid:true,particles:true,sound:true,testing:false,
+  phase:'armed',t:0,Q:0,E0:0,acc:0,sampleT:0,trailT:0,diss:0,
+  m:2,iv:60,st:{},events:[],samples:[],trailPts:[],parts:[],motes:[],
+  prev:{K:0,Pg:0,Pe:0},lastPhaseTxt:'',msgUntil:0,
+  lastTurn:-9,lastBottom:-9,lastBounce:-9,lastHeatMsg:-9,lastPhaseLog:-9,heatFlash:-9,
+  emberAcc:0,reduce:matchMedia('(prefers-reduced-motion: reduce)').matches,
+  trials:{A:null,B:null}};
+const eps=c=>Math.max(0.02,c.E0*0.003);
+const isSpring=()=>S.scenario==='spring';
+const budgetOf=c=>c.E0-c.Q;
+function ev(c,type,text,kind,extra){if(c.events){const e={type,text,kind,t:c.t};if(extra)Object.assign(e,extra);c.events.push(e);}}
+function makeCtx(key,m,iv,g,fric){
+  const r=SCEN[key].setup(m,iv,g);
+  return {key,m,iv,g,fric,E0:r.E0,st:r.st,Q:0,t:0,diss:0,events:null,lastTurn:-9,lastBottom:-9,lastBounce:-9,heatFlash:-9};
+}
+/* Sürtünmesiz: mekanik bütçe E0 − Q (birikmiş ısı ASLA silinmez), iki yönlü izdüşüm.
+   Sürtünmeli: tek yönlü düzeltme + Q = E0 − mekanik (monoton artar, donma yok). */
+function project(c,U,Meff,getV,setV,vPrev){
+  const budget=budgetOf(c);
+  if(!c.fric){
+    /* Dönüş noktası bu alt adımın içinde (işaret değişti ya da hız ≈ 0): çağıran tam uç noktaya oturtur.
+       Hız ≈ 0 durumu önemli: yoksa izdüşüm hızı yeniden şişirir ve cisim v = a·h sabit noktasında takılır. */
+    if(vPrev&&(vPrev*getV()<=0||Math.abs(getV())<1e-9))return false;
+    const Kt=budget-U;
+    if(Kt<=0){setV(0);return false;}
+    setV((sgn(getV())||1)*Math.sqrt(2*Kt/Meff));
+    return true;
+  }
+  const K=0.5*Meff*getV()*getV();
+  if(K+U>budget)setV((sgn(getV())||1)*Math.sqrt(2*Math.max(0,budget-U)/Meff));
+  c.Q=clamp(c.E0-(0.5*Meff*getV()*getV()+U),0,c.E0);
+  return true;
+}
+
+const SCEN={
+pendulum:{
+  name:'Sarkaç',hstep:1/240,trailMode:'line',
+  mCfg:{min:1,max:5,step:0.5,def:2},
+  iCfg:{min:15,max:75,step:1,def:60,label:'Başlangıç açısı (θ₀)',out:v=>fmt(v,0)+'°'},
+  L:2,pivotY:3.3,b:0.5,
+  setup(m,iv,g){const th=iv*Math.PI/180;return{E0:m*g*this.L*(1-Math.cos(th)),st:{th,w:0,pw:0,pth:th}};},
+  step(c,h){
+    const m=c.m,g=c.g,L=this.L,st=c.st;
+    let a=-(g/L)*Math.sin(st.th);
+    if(c.fric)a-=this.b/(m*L*L)*st.w;
+    const w0=st.w;
+    st.w+=a*h;st.th+=st.w*h;
+    const U=m*g*L*(1-Math.cos(st.th));
+    const ok=project(c,U,m*L*L,()=>st.w,v=>st.w=v,w0);
+    if(!ok){st.th=(st.th>=0?1:-1)*Math.acos(clamp(1-budgetOf(c)/(m*g*L),-1,1));st.w=0;}
+    c.diss=c.fric?this.b*st.w*st.w:0;
+    if(sgn(st.w)!==sgn(st.pw)&&Math.abs(st.pw)>0.05&&c.t-c.lastTurn>0.6){c.lastTurn=c.t;ev(c,'turn','Uç nokta: sarkaç anlık durdu. Ek = 0, çekim potansiyel enerji en büyük.','convert');}
+    if(sgn(st.th)!==sgn(st.pth)&&Math.abs(st.w)>0.3&&c.t-c.lastBottom>0.6){c.lastBottom=c.t;ev(c,'bottom','En alt nokta: hız en büyük! Ep en küçük, kinetik enerji en büyük.','convert');}
+    st.pw=st.w;st.pth=st.th;
+    if(c.fric&&budgetOf(c)<eps(c)){st.th=0;st.w=0;c.Q=c.E0;ev(c,'settle','pendulum','ok');}
+  },
+  snap(c){const m=c.m,L=this.L,st=c.st,h=L*(1-Math.cos(st.th));
+    return{K:0.5*m*L*L*st.w*st.w,Pg:m*c.g*h,Pe:0,x:L*Math.sin(st.th),y:this.pivotY-L*Math.cos(st.th),
+      vx:L*st.w*Math.cos(st.th),vy:L*st.w*Math.sin(st.th),h,spd:Math.abs(L*st.w),r:0.2+m*0.025};},
+  view(){return{x0:-3,x1:3,y0:-0.45,y1:3.95};},
+  summary(c){return 'θ₀ = '+fmt(c.iv,0)+'° · m = '+fmt(c.m,1)+' kg · v₀ = 0 → <b>E₀ = '+fmt(c.E0)+' J</b>';},
+  intro(c){return 'Sarkaç '+fmt(c.iv,0)+'° açıda tutuluyor. Bırakılınca çekim potansiyel enerjisi kinetik enerjiye dönüşecek. Başlat\'a bas!';},
+  formula(sn){return 'Ep = m·g·h = '+fmt(sn.Pg)+' J  ·  Ek = ½·m·v² = '+fmt(sn.K)+' J';},
+  emberPos(sn){return{x:sn.x,y:sn.y};},
+  drawGround(M,c){
+    drawFloor(M,0);const g=ctx,X=M.X,Y=M.Y,T=TH.cv;
+    g.fillStyle=T.base;g.strokeStyle=T.baseLine;g.lineWidth=1;
+    rr(g,X(-1.35),Y(3.52),X(1.35)-X(-1.35),9,3);g.fill();g.stroke();
+    dashLine(M,this.pivotY-this.L*Math.cos(c.iv*Math.PI/180),hexA(TH.hex.pg,.6),'başlangıç yüksekliği');
+    if(c.Q>c.E0*0.005){
+      const th=Math.acos(clamp(1-budgetOf(c)/(c.m*c.g*this.L),-1,1));
+      dashLine(M,this.pivotY-this.L*Math.cos(th),hexA(TH.hex.mech,.65),'kalan E ile tepe (Q='+fmt(c.Q,0)+' J)');
+    }
+    g.setLineDash([4,5]);g.strokeStyle=hexA(TH.hex.tot,.28);
+    g.beginPath();g.moveTo(X(0),Y(this.pivotY));g.lineTo(X(0),Y(this.pivotY-this.L-0.25));g.stroke();g.setLineDash([]);
+  },
+  drawObj(M,c,sn){
+    const g=ctx,X=M.X,Y=M.Y,st=c.st,T=TH.cv,px=X(0),py=Y(this.pivotY),bx=X(sn.x),by=Y(sn.y);
+    g.strokeStyle=hexA(TH.hex.k,.55);g.lineWidth=1.5;
+    g.beginPath();g.arc(px,py,40,Math.PI/2,Math.PI/2-st.th,st.th>0);g.stroke();
+    g.fillStyle=TH.hex.k;g.font='700 11px '+MONO;
+    const mid=Math.PI/2-st.th/2;g.fillText('θ='+fmt(Math.abs(st.th)*180/Math.PI,0)+'°',px+58*Math.cos(mid)-14,py+58*Math.sin(mid)+4);
+    const rod=g.createLinearGradient(px,py,bx,by);rod.addColorStop(0,T.metal);rod.addColorStop(1,T.metal2);
+    g.strokeStyle=rod;g.lineWidth=3;g.beginPath();g.moveTo(px,py);g.lineTo(bx,by);g.stroke();
+    const r=sn.r*M.s,col=mix3(sn.K,sn.Pg,0),kf=sn.K/Math.max(budgetOf(c),0.001);
+    g.save();g.shadowColor=col;g.shadowBlur=14+34*kf;
+    const rg=g.createRadialGradient(bx-r*0.35,by-r*0.35,r*0.15,bx,by,r);
+    rg.addColorStop(0,'#FFFFFF');rg.addColorStop(0.25,col);rg.addColorStop(1,hexA(TH.hex.tot,.25));
+    g.fillStyle=rg;g.beginPath();g.arc(bx,by,r,0,TAU);g.fill();g.restore();
+    g.strokeStyle=hexA(TH.hex.tot,.35);g.lineWidth=1.2;g.beginPath();g.arc(bx,by,r,0,TAU);g.stroke();
+    g.fillStyle=T.metal;g.beginPath();g.arc(px,py,6,0,TAU);g.fill();
+    g.fillStyle=T.wheel;g.beginPath();g.arc(px,py,2.4,0,TAU);g.fill();
+  }
+},
+ball:{
+  name:'Zıplayan Top',hstep:1/480,trailMode:'ghost',
+  mCfg:{min:0.5,max:3,step:0.1,def:1},
+  iCfg:{min:1,max:8,step:0.5,def:5,label:'Bırakma yüksekliği (h₀)',out:v=>fmt(v,1)+' m'},
+  kd:0.08,e:0.78,
+  setup(m,iv,g){return{E0:m*g*iv,st:{y:iv,v:0,sq:0,rot:0}};},
+  step(c,h){
+    const m=c.m,g=c.g,st=c.st;
+    let a=-g;if(c.fric)a-=this.kd/m*st.v;
+    const v0=st.v;
+    st.v+=a*h;st.y+=st.v*h;
+    if(st.y<=0){
+      st.y=0;
+      const Kimp=Math.max(0,budgetOf(c));let loss=0;
+      if(c.fric){loss=(1-this.e*this.e)*Kimp;c.Q=clamp(c.Q+loss,0,c.E0);c.heatFlash=c.t+0.4;}
+      const Ka=Math.max(0,budgetOf(c));
+      if(c.fric&&Ka<eps(c)){st.v=0;c.Q=c.E0;ev(c,'settle','ball','ok',{loss,Kimp});}
+      else{st.v=Math.sqrt(2*Ka/m);st.sq=1;
+        if(c.t-c.lastBounce>0.28){c.lastBounce=c.t;
+          ev(c,'bounce',c.fric?('Çarpışma! Kinetik enerjinin ≈%'+fmt((1-this.e*this.e)*100,0)+'\'i ısıya dönüştü ('+fmt(loss)+' J). Ses ihmal edilir.'):'Tam esnek çarpışma: kinetik enerji korundu, top kalan enerjiyle aynı yüksekliğe çıkacak.',c.fric?'heat':'convert',{loss,Kimp});}}
+    }else{
+      const U=m*g*st.y;
+      const ok=project(c,U,m,()=>st.v,v=>st.v=v,v0);
+      if(!ok){st.y=budgetOf(c)/(m*g);st.v=0;
+        if(c.t-c.lastTurn>0.4){c.lastTurn=c.t;ev(c,'apex','Tepe nokta: v = 0. Tüm mekanik enerji çekim potansiyel enerjisi.','convert');}}
+    }
+    c.diss=c.fric?this.kd*st.v*st.v:0;
+    st.sq*=Math.exp(-14*h);st.rot+=st.v*h*1.3;
+  },
+  snap(c){const st=c.st,m=c.m;return{K:0.5*m*st.v*st.v,Pg:m*c.g*st.y,Pe:0,x:0,y:st.y,vx:0,vy:st.v,h:st.y,spd:Math.abs(st.v),r:0.2+m*0.05};},
+  view(c){return{x0:-2.4,x1:2.4,y0:-0.45,y1:Math.max(3,c.iv*1.18+0.5)};},
+  summary(c){return 'h₀ = '+fmt(c.iv,1)+' m · m = '+fmt(c.m,1)+' kg · v₀ = 0 → <b>E₀ = '+fmt(c.E0)+' J</b>';},
+  intro(c){return 'Top '+fmt(c.iv,1)+' m yükseklikte, durgun (v₀ = 0). Bırakınca Ep → Ek dönüşümünü izle. Bu modelde ses ihmal edilir.';},
+  formula(sn){return 'Ep = m·g·h = '+fmt(sn.Pg)+' J  ·  Ek = ½·m·v² = '+fmt(sn.K)+' J';},
+  emberPos(sn){return{x:(Math.random()-0.5)*0.3,y:sn.y+0.08};},
+  drawGround(M,c){
+    drawFloor(M,0);dashLine(M,c.iv,hexA(TH.hex.pg,.6),'h₀ = '+fmt(c.iv,1)+' m');
+    if(c.Q>c.E0*0.005)dashLine(M,budgetOf(c)/(c.m*c.g),hexA(TH.hex.mech,.65),'kalan E ile tepe (Q='+fmt(c.Q,0)+' J)');
+  },
+  drawObj(M,c,sn){
+    const g=ctx,X=M.X,Y=M.Y,st=c.st,T=TH.cv,r=sn.r*M.s,cx=X(0);
+    const sh=clamp(1-sn.y*0.09,0.35,1);
+    g.fillStyle='rgba(0,0,0,'+(0.3*sh)+')';g.beginPath();g.ellipse(cx,Y(0)+4,r*1.15*sh+4,4.5,0,0,TAU);g.fill();
+    const col=mix3(sn.K,sn.Pg,0),kf=sn.K/Math.max(budgetOf(c),0.001),sy=1-0.32*st.sq,sx=1+0.32*st.sq;
+    g.save();g.translate(cx,Y(st.y));g.scale(sx,sy);
+    g.shadowColor=col;g.shadowBlur=14+36*kf;
+    const rg=g.createRadialGradient(-r*0.35,-r*1.35,r*0.15,0,-r,r);
+    rg.addColorStop(0,'#FFFFFF');rg.addColorStop(0.28,col);rg.addColorStop(1,hexA(TH.hex.tot,.22));
+    g.fillStyle=rg;g.beginPath();g.arc(0,-r,r,0,TAU);g.fill();g.shadowBlur=0;
+    g.save();g.beginPath();g.arc(0,-r,r,0,TAU);g.clip();g.translate(0,-r);g.rotate(st.rot);
+    g.strokeStyle=hexA(TH.hex.tot,.4);g.lineWidth=Math.max(1.4,r*0.07);
+    g.beginPath();g.moveTo(-r,0);g.lineTo(r,0);g.stroke();
+    g.beginPath();g.moveTo(0,-r);g.quadraticCurveTo(r*0.75,0,0,r);g.stroke();
+    g.beginPath();g.moveTo(0,-r);g.quadraticCurveTo(-r*0.75,0,0,r);g.stroke();
+    g.restore();
+    g.strokeStyle=hexA(TH.hex.tot,.35);g.lineWidth=1.2;g.beginPath();g.arc(0,-r,r,0,TAU);g.stroke();g.restore();
+  }
+},
+spring:{
+  name:'Yaylı Fırlatıcı',hstep:1/600,trailMode:'ghost',
+  mCfg:{min:0.2,max:1,step:0.05,def:0.5},
+  iCfg:{min:0.2,max:0.6,step:0.05,def:0.4,label:'Yay sıkışması (x₀)',out:v=>fmt(v,2)+' m'},
+  k:250,L0:1.4,cs:1.4,kd2:0.02,r:0.22,
+  setup(m,iv,g){const y0=this.L0-iv;return{E0:0.5*this.k*iv*iv+m*g*y0,st:{y:y0,v:0,sq:0,wasC:true,pv:0}};},
+  U(c,y){return c.m*c.g*y+(y<this.L0?0.5*this.k*(this.L0-y)*(this.L0-y):0);},
+  step(c,h){
+    const m=c.m,g=c.g,k=this.k,L0=this.L0,st=c.st;
+    const contact=st.y<L0,comp=Math.max(0,L0-st.y);
+    let a=-g+(contact?k*comp/m:0);
+    if(c.fric){if(contact)a-=this.cs/m*st.v;a-=this.kd2/m*st.v;}
+    const v0=st.v;
+    st.v+=a*h;st.y+=st.v*h;
+    const U=this.U(c,st.y);
+    const ok=project(c,U,m,()=>st.v,v=>st.v=v,v0);
+    if(!ok){
+      const B=budgetOf(c),yt=B/(m*g);
+      if(st.y<L0){const A=k*L0-m*g,D=A*A-2*k*(0.5*k*L0*L0-B);st.y=(A-Math.sqrt(Math.max(0,D)))/k;}else st.y=yt;
+      st.v=0;
+      if(c.t-c.lastTurn>0.5){c.lastTurn=c.t;ev(c,'turn',st.y<L0?'En çok sıkışma: kinetik enerji esneklik potansiyel enerjisine dönüştü.':'Tepe nokta: v = 0. Enerji çekim potansiyel enerjisi.','convert');}
+    }
+    c.diss=c.fric?((st.y<L0?this.cs*st.v*st.v:0)+this.kd2*st.v*st.v):0;
+    if(c.diss>1)c.heatFlash=c.t+0.25;
+    const nowC=st.y<L0;
+    if(st.wasC&&!nowC&&st.v>0)ev(c,'leave','Top yaydan ayrıldı: esneklik enerjisi bitti. Şimdi kinetik → çekim potansiyel.','convert');
+    if(!st.wasC&&nowC&&st.v<0&&c.t-c.lastBounce>0.3){c.lastBounce=c.t;st.sq=0.6;ev(c,'contact','Top yaya değdi: kinetik enerji yayı sıkıştırmaya başlıyor (kinetik → esneklik).','convert');}
+    st.wasC=nowC;st.pv=st.v;st.sq*=Math.exp(-14*h);
+    const yeq=L0-m*g/k,Umin=m*g*yeq+0.5*k*(L0-yeq)*(L0-yeq);
+    if(c.fric&&budgetOf(c)<=Umin+eps(c)&&nowC){st.y=yeq;st.v=0;c.Q=c.E0-Umin;ev(c,'settle','spring','ok');}
+  },
+  snap(c){const st=c.st,m=c.m,pe=st.y<this.L0?0.5*this.k*(this.L0-st.y)*(this.L0-st.y):0;
+    return{K:0.5*m*st.v*st.v,Pg:m*c.g*st.y,Pe:pe,x:0,y:st.y,vx:0,vy:st.v,h:st.y,spd:Math.abs(st.v),r:this.r};},
+  view(c){return{x0:-2.1,x1:2.1,y0:-0.45,y1:Math.max(3.2,c.E0/(c.m*c.g)*1.1+0.4)};},
+  summary(c){return 'x₀ = '+fmt(c.iv,2)+' m · m = '+fmt(c.m,2)+' kg · k = 250 N/m → <b>E₀ = '+fmt(c.E0)+' J</b>';},
+  intro(c){return 'Yay '+fmt(c.iv,2)+' m sıkıştırıldı: esneklik potansiyel enerjisi hazır. Başlat ile fırlat!';},
+  formula(sn){return 'Ee = ½·k·x² = '+fmt(sn.Pe)+' J · Ep = m·g·h = '+fmt(sn.Pg)+' J · Ek = '+fmt(sn.K)+' J';},
+  emberPos(c){return{x:(Math.random()-0.5)*0.5,y:c.st.y*0.55};},
+  drawGround(M,c){
+    drawFloor(M,0);const g=ctx,X=M.X,Y=M.Y,T=TH.cv;
+    g.fillStyle=T.base;g.strokeStyle=T.baseLine;g.lineWidth=1;
+    rr(g,X(-0.8),Y(0.12),X(0.8)-X(-0.8),Y(0)-Y(0.12),3);g.fill();g.stroke();
+    g.setLineDash([3,6]);g.strokeStyle=hexA(TH.hex.tot,.22);
+    g.beginPath();g.moveTo(X(-0.5),Y(0.12));g.lineTo(X(-0.5),Y(this.L0));g.moveTo(X(0.5),Y(0.12));g.lineTo(X(0.5),Y(this.L0));g.stroke();g.setLineDash([]);
+    dashLine(M,this.L0,hexA(TH.hex.pe,.55),'yayın doğal boyu');
+    dashLine(M,c.E0/(c.m*c.g),hexA(TH.hex.pg,.6),'ideal tepe (hiç kayıp yok)');
+    if(c.Q>c.E0*0.005){const b=budgetOf(c)/(c.m*c.g);if(b>this.L0+0.05)dashLine(M,b,hexA(TH.hex.mech,.65),'kalan E ile tepe (Q='+fmt(c.Q,0)+' J)');}
+  },
+  drawObj(M,c,sn){
+    const g=ctx,X=M.X,Y=M.Y,st=c.st,T=TH.cv,r=sn.r*M.s,cx=X(0);
+    const yb=Y(0.12),yt=Y(st.y),n=9,amp=0.3*M.s,pef=sn.Pe/Math.max(c.E0,0.001);
+    g.save();g.shadowColor=TH.hex.pe;g.shadowBlur=6+26*pef;
+    g.strokeStyle=TH.hex.pe;g.lineWidth=4;g.lineJoin='round';g.beginPath();g.moveTo(cx,yb);
+    for(let i=1;i<n;i++)g.lineTo(cx+(i%2?amp:-amp),lerp(yb,yt,i/n));
+    g.lineTo(cx,yt);g.stroke();g.restore();
+    const col=mix3(sn.K,sn.Pg,sn.Pe),kf=sn.K/Math.max(budgetOf(c),0.001),sy=1-0.3*st.sq,sx=1+0.3*st.sq;
+    g.save();g.translate(cx,Y(st.y));g.scale(sx,sy);
+    g.shadowColor=col;g.shadowBlur=14+34*kf;
+    const rg=g.createRadialGradient(-r*0.35,-r*1.35,r*0.15,0,-r,r);
+    rg.addColorStop(0,'#FFFFFF');rg.addColorStop(0.28,col);rg.addColorStop(1,hexA(TH.hex.tot,.22));
+    g.fillStyle=rg;g.beginPath();g.arc(0,-r,r,0,TAU);g.fill();
+    g.shadowBlur=0;g.strokeStyle=hexA(TH.hex.tot,.35);g.lineWidth=1.2;g.beginPath();g.arc(0,-r,r,0,TAU);g.stroke();g.restore();
+  }
+},
+ramp:{
+  name:'Kaykay Rampası',hstep:1/240,trailMode:'line',
+  mCfg:{min:20,max:60,step:5,def:40},
+  iCfg:{min:0.5,max:2.5,step:0.1,def:2.5,label:'Başlangıç yüksekliği (h₀)',out:v=>fmt(v,1)+' m'},
+  H:2.5,W:4,mu:0.06,
+  y(x){return this.H*(x/this.W)*(x/this.W);},
+  sl(x){return 2*this.H*x/(this.W*this.W);},
+  setup(m,iv,g){const x0=-this.W*Math.sqrt(clamp(iv/this.H,0,1));return{E0:m*g*iv,st:{x:x0,v:0,pv:0,px:x0}};},
+  step(c,h){
+    const m=c.m,g=c.g,st=c.st;
+    const sl=this.sl(st.x),f=Math.sqrt(1+sl*sl);
+    let a=-g*sl/f;
+    if(c.fric)a-=this.mu*g*sgn(st.v);
+    const v0=st.v;
+    st.v+=a*h;st.x=clamp(st.x+st.v/f*h,-this.W,this.W);
+    const U=m*g*this.y(st.x);
+    if(c.fric)c.Q=clamp(c.Q+this.mu*m*g*Math.abs(st.v)*h,0,c.E0);
+    const ok=project(c,U,m,()=>st.v,v=>st.v=v,v0);
+    /* Sürtünme hızın işaretini ters çevirdiyse (v0·v<0) cisim bu adimda durmuştur. Sabit |v|<eşiği kullanmak
+       a·h'den küçük kaldığında (ör. Ay'da g=1,6) cismi her adımda yeniden durdurup hiç hızlanmasını engelliyordu. */
+    if(!ok||(c.fric&&v0*st.v<0&&budgetOf(c)>eps(c))){
+      const xt=this.W*Math.sqrt(clamp(budgetOf(c)/(m*g),0,this.H)/this.H);
+      const side=sgn(st.x)||-1;st.x=side*xt;st.v=0;
+      if(c.t-c.lastTurn>0.6){c.lastTurn=c.t;ev(c,'turn','Uç nokta: kaykaycı anlık durdu. Ek = 0, Ep en büyük.','convert');}
+    }
+    c.diss=c.fric?this.mu*m*g*Math.abs(st.v):0;
+    if(sgn(st.v)!==sgn(st.pv)&&Math.abs(st.pv)>0.05&&c.t-c.lastTurn>0.6){c.lastTurn=c.t;ev(c,'turn','Uç nokta: kaykaycı anlık durdu. Ek = 0, Ep en büyük.','convert');}
+    if(sgn(st.x)!==sgn(st.px)&&Math.abs(st.v)>0.5&&c.t-c.lastBottom>0.6){c.lastBottom=c.t;ev(c,'bottom','En alt nokta: hız en büyük! Ep → Ek dönüşümü tamamlandı.','convert');}
+    st.pv=st.v;st.px=st.x;
+    if(c.fric&&budgetOf(c)<eps(c)){st.x=0;st.v=0;c.Q=c.E0;ev(c,'settle','ramp','ok');}
+  },
+  snap(c){const st=c.st,m=c.m,sl=this.sl(st.x),f=Math.sqrt(1+sl*sl),h=this.y(st.x);
+    return{K:0.5*m*st.v*st.v,Pg:m*c.g*h,Pe:0,x:st.x,y:h,vx:st.v/f,vy:st.v*sl/f,h,spd:Math.abs(st.v),r:0.55};},
+  view(){return{x0:-4.7,x1:4.7,y0:-0.7,y1:3.1};},
+  summary(c){return 'h₀ = '+fmt(c.iv,1)+' m · m = '+fmt(c.m,0)+' kg · v₀ = 0 → <b>E₀ = '+fmt(c.E0)+' J</b>';},
+  intro(c){return 'Kaykaycı '+fmt(c.iv,1)+' m yükseklikte duruyor (v₀ = 0). Rampa parabolik: kenarda eğim var, bırakılınca hemen hızlanır. Başlat!';},
+  formula(sn){return 'Ep = m·g·h = '+fmt(sn.Pg)+' J  ·  Ek = ½·m·v² = '+fmt(sn.K)+' J';},
+  emberPos(sn){return{x:sn.x+(Math.random()-0.5)*0.4,y:sn.y+0.04};},
+  drawGround(M,c){
+    drawFloor(M,-0.55);const g=ctx,X=M.X,Y=M.Y,T=TH.cv;
+    g.beginPath();g.moveTo(X(-this.W),Y(this.y(-this.W)));
+    for(let i=1;i<=80;i++){const x=-this.W+i*this.W/40;g.lineTo(X(x),Y(this.y(x)));}
+    g.lineTo(X(this.W),Y(-0.55));g.lineTo(X(-this.W),Y(-0.55));g.closePath();
+    const fg=g.createLinearGradient(0,Y(this.H),0,Y(-0.55));
+    fg.addColorStop(0,hexA(TH.hex.mech,.3));fg.addColorStop(1,hexA(TH.hex.pg,.06));
+    g.fillStyle=fg;g.fill();
+    g.save();g.shadowColor=TH.hex.pg;g.shadowBlur=10;g.strokeStyle=TH.hex.pg;g.lineWidth=2.5;
+    g.beginPath();g.moveTo(X(-this.W),Y(this.y(-this.W)));
+    for(let i=1;i<=80;i++){const x=-this.W+i*this.W/40;g.lineTo(X(x),Y(this.y(x)));}
+    g.stroke();g.restore();
+    dashLine(M,c.iv,hexA(TH.hex.pg,.6),'h₀ = '+fmt(c.iv,1)+' m');
+    if(c.Q>c.E0*0.005)dashLine(M,budgetOf(c)/(c.m*c.g),hexA(TH.hex.mech,.65),'kalan E ile tepe (Q='+fmt(c.Q,0)+' J)');
+  },
+  drawObj(M,c,sn){
+    const g=ctx,X=M.X,Y=M.Y,st=c.st,T=TH.cv,u=M.s,sl=this.sl(st.x);
+    g.save();g.translate(X(st.x),Y(sn.y));g.rotate(-Math.atan(sl));g.rotate(sgn(st.v)*Math.abs(st.v)*0.018);
+    g.fillStyle=T.board;rr(g,-0.45*u,-0.20*u,0.9*u,0.07*u,0.035*u);g.fill();
+    g.fillStyle=T.wheel;g.strokeStyle=T.metal;g.lineWidth=1.4;
+    for(const wx of[-0.3,0.3]){g.beginPath();g.arc(wx*u,-0.065*u,0.065*u,0,TAU);g.fill();g.stroke();}
+    g.lineCap='round';g.strokeStyle=T.jacket;g.lineWidth=0.085*u;
+    g.beginPath();g.moveTo(-0.2*u,-0.18*u);g.lineTo(-0.12*u,-0.36*u);g.lineTo(0,-0.5*u);g.stroke();
+    g.beginPath();g.moveTo(0.2*u,-0.18*u);g.lineTo(0.12*u,-0.36*u);g.lineTo(0,-0.5*u);g.stroke();
+    g.beginPath();g.moveTo(0,-0.5*u);g.lineTo(0,-0.85*u);g.stroke();
+    g.lineWidth=0.06*u;
+    g.beginPath();g.moveTo(0,-0.78*u);g.lineTo(-0.28*u,-0.62*u);g.moveTo(0,-0.78*u);g.lineTo(0.28*u,-0.66*u);g.stroke();
+    g.fillStyle=T.skin;g.beginPath();g.arc(0,-0.98*u,0.12*u,0,TAU);g.fill();
+    g.fillStyle=TH.hex.k;g.beginPath();g.arc(0,-0.99*u,0.125*u,Math.PI,0);g.fill();
+    g.restore();
+  }
+}};
+
+/* ---- Ses ---- */
+let AC=null,master=null,noiseBuf=null;
+function ensureAudio(){if(AC||S.testing)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+  AC=new C();master=AC.createGain();master.gain.value=S.sound?0.5:0;master.connect(AC.destination);}catch(e){AC=null;}}
+function ready(){if(!AC||!S.sound||S.testing)return false;if(AC.state==='suspended'){const p=AC.resume();if(p&&p.catch)p.catch(()=>{});}return true;}
+function beep(f0,f1,dur,vol,type){if(!ready())return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+0.02);}
+function thump(p){if(!ready())return;beep(150,45,0.16,0.15+0.4*p,'sine');const t=AC.currentTime;
+  if(!noiseBuf){noiseBuf=AC.createBuffer(1,Math.floor(AC.sampleRate*0.08),AC.sampleRate);
+    const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);}
+  const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
+  s.buffer=noiseBuf;f.type='lowpass';f.frequency.value=320;
+  g.gain.setValueAtTime(0.22*p,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.08);
+  s.connect(f);f.connect(g);g.connect(master);s.start(t);}
+function boing(){if(!ready())return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+  o.type='triangle';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(330,t+0.06);o.frequency.exponentialRampToValueAtTime(90,t+0.3);
+  g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.34);
+  o.connect(g);g.connect(master);o.start(t);o.stop(t+0.36);}
+const tick=()=>beep(850,600,0.05,0.1,'sine');
+const clickS=()=>beep(520,420,0.05,0.12,'sine');
+const chime=()=>{beep(660,660,0.14,0.16,'sine');setTimeout(()=>beep(880,880,0.28,0.16,'sine'),130);};
+
+/* ---- Anlatım ---- */
+const nowBox=$('now-box'),nowText=$('now-text'),logEl=$('log'),toastEl=$('toast');
+let toastTimer=null;
+function toast(m){if(S.testing)return;toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2600);}
+function setNow(t,type,log){nowText.textContent=t;nowBox.dataset.type=type||'convert';if(log)addLog(t,type);}
+function addLog(t,type){
+  const e=logEl.querySelector('.log-empty');if(e)e.remove();
+  const d=document.createElement('div');d.className='log-item '+(type||'');
+  const s=document.createElement('span');s.className='lt';s.textContent='t='+fmt(S.t,2)+'s';
+  const p=document.createElement('p');p.textContent=t;
+  d.appendChild(s);d.appendChild(p);logEl.prepend(d);
+  while(logEl.children.length>40)logEl.lastChild.remove();
+  logEl.scrollTop=0;
+}
+function settle(kind){
+  if(S.phase==='settled')return;
+  S.phase='settled';S.diss=0;chime();
+  const m={pendulum:'Sarkaç durdu. Tüm mekanik enerji ısıya dönüştü: Q = '+fmt(S.Q)+' J. Toplam hâlâ E₀ = '+fmt(S.E0)+' J ✓',
+    ball:'Top durdu. Mekanik enerjinin tamamı ısıya dönüştü (Q = E₀). Toplam enerji korundu ✓',
+    spring:'Top yay üzerinde dengede. Kalan: çekim + esneklik potansiyel; gerisi ısı. Toplam = E₀ ✓',
+    ramp:'Kaykaycı en alt noktada durdu. Tüm mekanik enerji ısıya dönüştü. Toplam = E₀ ✓'};
+  setNow(m[kind],'ok',true);updateTransport();
+}
+function handleEvent(e){
+  if(e.type==='settle'){settle(e.text);return;}
+  if(e.type==='bounce'){burst(0,0.06,14,S.fric?TH.hex.heat:TH.hex.k,1.8);S.parts.push({type:'ring',x:0,y:0.03,r:0.06,life:0.4,max:0.4});thump(clamp(e.Kimp/S.E0,0.1,1));}
+  if(e.type==='contact'){boing();burst(0,SCEN.spring.L0,8,TH.hex.pe,1.2);}
+  if(e.type==='turn')tick();
+  setNow(e.text,e.kind,true);
+  S.msgUntil=S.t+(e.type==='bounce'?1.3:1.4);
+}
+function phaseText(sn){
+  const thr=S.E0*0.0004,dPg=sn.Pg-S.prev.Pg,dPe=sn.Pe-S.prev.Pe;
+  if(isSpring()){
+    if(S.st.y<SCEN.spring.L0){
+      if(dPe<-thr)return 'Yay açılıyor: esneklik potansiyel enerjisi → kinetik enerji.';
+      if(dPe>thr)return 'Yay sıkışıyor: kinetik enerji → esneklik potansiyel enerjisi.';
+    }else{
+      if(S.st.v>0.05)return 'Yükseliyor: kinetik enerji → çekim potansiyel enerjisi (yavaşlıyor).';
+      if(S.st.v<-0.05)return 'Düşüyor: çekim potansiyel enerjisi → kinetik enerji (hızlanıyor).';
+    }
+  }else{
+    if(dPg<-thr)return 'Alçalıyor: çekim potansiyel enerjisi → kinetik enerji (hızlanıyor).';
+    if(dPg>thr)return 'Yükseliyor: kinetik enerji → çekim potansiyel enerjisi (yavaşlıyor).';
+  }
+  return S.lastPhaseTxt;
+}
+
+/* ---- Motor ---- */
+function pushSample(){const sn=SCEN[S.scenario].snap(S);
+  S.samples.push({t:S.t,K:sn.K,Pg:sn.Pg,Pe:sn.Pe,Q:S.Q,spd:sn.spd,h:sn.h});
+  if(S.samples.length>2000)S.samples.splice(0,S.samples.length-2000);}
+function reinit(clearLog){
+  const sc=SCEN[S.scenario];
+  S.phase='armed';S.t=0;S.Q=0;S.acc=0;S.sampleT=0;S.trailT=0;S.diss=0;S.emberAcc=0;
+  const r=sc.setup(S.m,S.iv,S.g);S.E0=r.E0;S.st=r.st;S.events=[];
+  S.samples.length=0;S.trailPts.length=0;S.parts.length=0;
+  S.prev={K:0,Pg:0,Pe:0};S.lastPhaseTxt='';S.msgUntil=0;
+  S.lastTurn=-9;S.lastBottom=-9;S.lastBounce=-9;S.lastHeatMsg=-9;S.lastPhaseLog=-9;S.heatFlash=-9;
+  if(clearLog!==false)logEl.innerHTML='<div class="log-empty">Deneme başlayınca olaylar burada zaman damgasıyla listelenir.</div>';
+  setNow(sc.intro(S),'info',false);pushSample();updateStatic();updateTransport();
+}
+function togglePlay(){
+  ensureAudio();
+  if(S.phase==='running'){S.phase='paused';clickS();updateTransport();return;}
+  if(S.phase==='settled')reinit(true);
+  if(S.targetT>0&&S.t>=S.targetT-1e-9){setTarget(0);toast('Hedef süre tamamlandı — sınır kaldırıldı, devam ediyor.');}
+  const armed=S.phase==='armed';
+  S.phase='running';clickS();
+  if(armed){
+    const i={pendulum:'Sarkaç bırakıldı: Ep → Ek dönüşümü başlıyor!',
+      ball:'Top serbest bırakıldı: çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.',
+      spring:'Yay serbest kaldı: esneklik potansiyel enerjisi → kinetik enerji!',
+      ramp:'Kaykaycı bırakıldı: yükseklik hıza dönüşüyor!'};
+    setNow(i[S.scenario],'convert',true);S.msgUntil=S.t+1.4;
+    if(S.scenario==='spring')boing();
+  }
+  updateTransport();
+}
+function reset(){ensureAudio();clickS();reinit(true);toast('Sıfırlandı — aynı başlangıç koşulları: '+SCEN[S.scenario].summary(S).replace(/<[^>]+>/g,''));}
+function stepOnce(){
+  ensureAudio();
+  if(S.phase==='settled'){toast('Deneme tamamlandı — Sıfırla ile yeniden başlat.');return;}
+  if(S.phase==='running'||S.phase==='armed'){S.phase='paused';updateTransport();}
+  const h=SCEN[S.scenario].hstep,n=Math.max(1,Math.round(0.1/h));
+  for(let i=0;i<n&&S.phase!=='settled';i++)stepSim(h,true);
+  clickS();
+}
+function stepSim(h,manual){
+  SCEN[S.scenario].step(S,h);
+  S.Q=clamp(S.Q,0,S.E0);
+  if(S.events.length){for(const e of S.events)handleEvent(e);S.events.length=0;}
+  S.t+=h;S.sampleT+=h;S.trailT+=h;
+  const sc=SCEN[S.scenario],iv=sc.trailMode==='ghost'?0.05:0.02;
+  if(S.trailT>=iv){S.trailT=0;const sn=sc.snap(S);
+    S.trailPts.push({x:sn.x,y:sn.y+(S.scenario==='ball'||S.scenario==='spring'?sn.r:0),r:sn.r});
+    const cap=sc.trailMode==='ghost'?9:120;while(S.trailPts.length>cap)S.trailPts.shift();}
+  if(S.sampleT>=0.1){S.sampleT-=0.1;pushSample();}
+  if(!manual&&S.targetT>0&&S.t>=S.targetT-1e-9&&S.phase==='running'){
+    S.t=S.targetT;S.phase='paused';S.acc=0;tick();
+    setNow('Hedef süreye ulaşıldı: '+fmt(S.targetT,2)+' s. Deneme duraklatıldı — A/B karşılaştırması için kaydet. Kalan mekanik enerji '+fmt(S.E0-S.Q)+' J, ısı '+fmt(S.Q)+' J.','info',true);
+    toast('🎯 '+fmt(S.targetT,2)+' s tamamlandı — şimdi “A\'ya Kaydet” veya “B\'ye Kaydet”.');
+    updateTransport();
+  }
+}
+function runHeadless(key,m,iv,g,fric,seconds){
+  const c=makeCtx(key,m,iv,g,fric),sc=SCEN[key],h=sc.hstep,n=Math.round(seconds/h);
+  const samples=[];let st=0,peakH=0,peakHlate=0,peakA=0,peakAlate=0,maxSpd=0;
+  for(let i=0;i<n;i++){
+    sc.step(c,h);c.t+=h;st+=h;
+    const sn=sc.snap(c);
+    if(sn.h>peakH)peakH=sn.h;
+    if(c.t>1.5&&sn.h>peakHlate)peakHlate=sn.h;
+    if(key==='pendulum'){const a=Math.abs(c.st.th);if(a>peakA)peakA=a;if(c.t>1.5&&a>peakAlate)peakAlate=a;}
+    if(sn.spd>maxSpd)maxSpd=sn.spd;
+    if(st>=0.1){st-=0.1;samples.push({t:c.t,K:sn.K,Pg:sn.Pg,Pe:sn.Pe,Q:c.Q,spd:sn.spd,h:sn.h});}
+  }
+  const sn=sc.snap(c);samples.push({t:c.t,K:sn.K,Pg:sn.Pg,Pe:sn.Pe,Q:c.Q,spd:sn.spd,h:sn.h});
+  return {c,samples,peakH,peakHlate,peakA,peakAlate,maxSpd};
+}
+
+/* ---- Parçacıklar ---- */
+function burst(x,y,n,hex,spd){
+  if(!S.particles||S.testing)return;
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI,s=(0.5+Math.random())*spd;
+    S.parts.push({type:'spark',x,y,vx:Math.cos(a)*s*(Math.random()<0.5?-1:1),vy:Math.abs(Math.sin(a))*s,life:0.45+Math.random()*0.25,max:0.7,hex});}
+  if(S.parts.length>160)S.parts.splice(0,S.parts.length-160);
+}
+function updateParticles(dt){
+  if(S.particles&&S.phase==='running'&&S.fric&&S.diss>0.03&&!S.reduce){
+    S.emberAcc+=clamp(S.diss*0.35,0,34)*dt;
+    const sc=SCEN[S.scenario],p=sc.emberPos(S.scenario==='spring'?S:sc.snap(S));
+    while(S.emberAcc>1){S.emberAcc-=1;
+      S.parts.push({type:'ember',x:p.x+(Math.random()-0.5)*0.25,y:p.y,vx:0,vy:0.5+Math.random()*0.7,life:0.9,max:0.9,wig:Math.random()*6});}
+    if(S.parts.length>160)S.parts.splice(0,S.parts.length-160);
+  }
+  for(let i=S.parts.length-1;i>=0;i--){const p=S.parts[i];p.life-=dt;
+    if(p.life<=0){S.parts.splice(i,1);continue;}
+    if(p.type==='ring'){p.r+=2.4*dt;continue;}
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    if(p.type==='spark')p.vy-=4*dt;
+    if(p.type==='ember')p.vx=Math.sin(S.t*3+p.wig)*0.2;}
+}
+function drawParticles(M){
+  const g=ctx;
+  for(const p of S.parts){const a=clamp(p.life/p.max,0,1),px=M.X(p.x),py=M.Y(p.y);
+    if(p.type==='ring'){g.strokeStyle=hexA(TH.hex.heat,a*0.8);g.lineWidth=2;g.beginPath();g.arc(px,py,p.r*M.s,0,TAU);g.stroke();}
+    else if(p.type==='ember'){g.fillStyle=hexA(TH.hex.heat,a*0.85);g.beginPath();g.arc(px,py,2.2,0,TAU);g.fill();}
+    else{g.globalAlpha=a;g.fillStyle=p.hex;g.beginPath();g.arc(px,py,2,0,TAU);g.fill();g.globalAlpha=1;}}
+}
+
+/* ---- Çizim ---- */
+const stage=$('stage'),ctx=stage.getContext('2d'),stageBox=$('stage-box');
+const graph=$('graph'),gctx=graph.getContext('2d'),graphWrap=$('graph-wrap');
+const cmpCv=$('cmp-graph'),cctx=cmpCv.getContext('2d'),cmpWrap=$('cmp-wrap');
+let stW=0,stH=0,gW=0,gH=0,cW=0,cH=0;
+function fit(cv,c2,box){const r=box.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(10,r.width),h=Math.max(10,r.height);
+  cv.width=Math.round(w*d);cv.height=Math.round(h*d);c2.setTransform(d,0,0,d,0,0);return[w,h];}
+function fitAll(){[stW,stH]=fit(stage,ctx,stageBox);[gW,gH]=fit(graph,gctx,graphWrap);[cW,cH]=fit(cmpCv,cctx,cmpWrap);}
+function drawFloor(M,y0){const g=ctx,py=M.Y(y0),T=TH.cv;
+  g.fillStyle=T.floor;g.fillRect(0,py,stW,stH-py);
+  g.strokeStyle=T.floorLine;g.lineWidth=1.5;g.beginPath();g.moveTo(0,py);g.lineTo(stW,py);g.stroke();
+  g.strokeStyle=T.hatch;g.lineWidth=1;
+  for(let x=-10;x<stW;x+=16){g.beginPath();g.moveTo(x,py+3);g.lineTo(x+10,py+13);g.stroke();}}
+function dashLine(M,y,color,label){const g=ctx,py=M.Y(y);
+  g.setLineDash([6,5]);g.strokeStyle=color;g.lineWidth=1;g.beginPath();g.moveTo(40,py);g.lineTo(stW-8,py);g.stroke();g.setLineDash([]);
+  g.fillStyle=color;g.font='600 10px '+MONO;g.textAlign='right';g.fillText(label,stW-12,py-5);g.textAlign='left';}
+function drawGridRuler(M){
+  if(!S.grid)return;
+  const g=ctx,span=M.V.y1-M.V.y0,steps=[0.25,0.5,1,2,5,10],T=TH.cv;
+  const gs=steps.find(s=>span/s<=9)||10;g.lineWidth=1;
+  for(let x=Math.ceil(M.gx0/gs)*gs;x<=M.gx1;x+=gs){
+    g.strokeStyle=Math.abs(x%(gs*2))<1e-9?T.gridMaj:T.grid;
+    g.beginPath();g.moveTo(M.X(x),0);g.lineTo(M.X(x),stH);g.stroke();}
+  for(let y=Math.ceil(M.gy0/gs)*gs;y<=M.gy1;y+=gs){
+    g.strokeStyle=T.grid;g.beginPath();g.moveTo(0,M.Y(y));g.lineTo(stW,M.Y(y));g.stroke();}
+  g.font='600 9.5px '+MONO;g.fillStyle=T.text;g.strokeStyle=T.text;
+  for(let y=Math.ceil(M.gy0/gs)*gs;y<=M.gy1;y+=gs){const py=M.Y(y);if(py<12||py>stH-6)continue;
+    g.beginPath();g.moveTo(28,py);g.lineTo(36,py);g.stroke();g.fillText(fmt(y,gs<1?1:0)+' m',4,py+3);}
+}
+function drawMotes(dt){if(S.reduce||S.theme==='contrast')return;const g=ctx;
+  for(const m of S.motes){m.sy-=m.sp*dt;if(m.sy<-0.02){m.sy=1.02;m.sx=Math.random();}
+    g.fillStyle='rgba('+TH.cv.mote+','+m.a+')';g.beginPath();g.arc(m.sx*stW,m.sy*stH,m.r,0,TAU);g.fill();}}
+function drawTrail(M){
+  if(!S.trail||S.trailPts.length<2)return;
+  const g=ctx,sc=SCEN[S.scenario],n=S.trailPts.length;
+  if(sc.trailMode==='ghost'){
+    for(let i=0;i<n-1;i++){const p=S.trailPts[i],a=(i+1)/n*0.22;
+      g.fillStyle=hexA(TH.hex.pg,a);g.beginPath();g.arc(M.X(p.x),M.Y(p.y),(p.r||0.22)*M.s*0.85,0,TAU);g.fill();}
+  }else{g.lineCap='round';
+    for(let i=1;i<n;i++){const a=i/n*0.5;g.strokeStyle=hexA(TH.hex.pg,a);g.lineWidth=2;
+      g.beginPath();g.moveTo(M.X(S.trailPts[i-1].x),M.Y(S.trailPts[i-1].y));g.lineTo(M.X(S.trailPts[i].x),M.Y(S.trailPts[i].y));g.stroke();}}
+}
+function drawVector(M,sn){
+  if(!S.vectors||sn.spd<0.05)return;
+  const g=ctx,len=Math.min(1.6,sn.spd*0.14),nx=sn.vx/sn.spd,ny=sn.vy/sn.spd;
+  let ax=sn.x,ay=sn.y;
+  if(S.scenario==='ball'||S.scenario==='spring')ay+=sn.r;
+  if(S.scenario==='ramp')ay+=0.5;
+  const x1=M.X(ax),y1=M.Y(ay),x2=M.X(ax+nx*len),y2=M.Y(ay+ny*len),ang=Math.atan2(y2-y1,x2-x1);
+  g.save();g.strokeStyle=TH.hex.k;g.fillStyle=TH.hex.k;g.lineWidth=3;g.lineCap='round';g.shadowColor=TH.hex.k;g.shadowBlur=6;
+  g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();
+  g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-9*Math.cos(ang-0.45),y2-9*Math.sin(ang-0.45));g.lineTo(x2-9*Math.cos(ang+0.45),y2-9*Math.sin(ang+0.45));g.closePath();g.fill();g.restore();
+}
+function render(dt){
+  if(stW<10)return;
+  const g=ctx,T=TH.cv,bg=g.createLinearGradient(0,0,0,stH);
+  bg.addColorStop(0,T.bgTop);bg.addColorStop(0.75,T.bgMid);bg.addColorStop(1,T.bgBot);
+  g.fillStyle=bg;g.fillRect(0,0,stW,stH);
+  drawMotes(dt);
+  const sc=SCEN[S.scenario],V=sc.view(S),pad={l:44,r:16,t:14,b:26};
+  const s=Math.min((stW-pad.l-pad.r)/(V.x1-V.x0),(stH-pad.t-pad.b)/(V.y1-V.y0));
+  const cx=pad.l+(stW-pad.l-pad.r)/2,cy=pad.t+(stH-pad.t-pad.b)/2;
+  const wcx=(V.x0+V.x1)/2,wcy=(V.y0+V.y1)/2;
+  const M={s,V,X:x=>cx+(x-wcx)*s,Y:y=>cy-(y-wcy)*s,gx0:wcx-cx/s,gx1:wcx+(stW-cx)/s,gy0:wcy-(stH-cy)/s,gy1:wcy+cy/s};
+  drawGridRuler(M);
+  const sn=sc.snap(S);
+  sc.drawGround(M,S);drawTrail(M);sc.drawObj(M,S,sn);drawParticles(M);drawVector(M,sn);
+  const vg=g.createRadialGradient(stW/2,stH*0.45,Math.min(stW,stH)*0.35,stW/2,stH/2,Math.max(stW,stH)*0.78);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,T.vig);
+  g.fillStyle=vg;g.fillRect(0,0,stW,stH);
+}
+
+/* ---- Grafikler ---- */
+function drawGraph(){
+  if(gW<10)return;const g=gctx;g.clearRect(0,0,gW,gH);
+  const pl=40,pr=44,pt=10,pb=20,pw=gW-pl-pr,ph=gH-pt-pb;
+  g.font='600 9px '+MONO;g.lineWidth=1;
+  for(const f of[0,0.25,0.5,0.75,1]){const y=pt+ph*(1-f);
+    g.strokeStyle=hexA(TH.hex.tot,.14);g.beginPath();g.moveTo(pl,y);g.lineTo(pl+pw,y);g.stroke();
+    g.fillStyle=hexA(TH.hex.tot,.6);g.textAlign='right';g.fillText(fmt(S.E0*f,0),pl-5,y+3);}
+  g.textAlign='left';
+  const span=30,t1=Math.max(span,S.t),t0=t1-span;
+  const X=t=>pl+(t-t0)/span*pw,Y=v=>pt+ph*(1-clamp(v/S.E0,0,1));
+  g.fillStyle=hexA(TH.hex.tot,.55);
+  for(let tt=Math.ceil(t0/10)*10;tt<=t1+0.01;tt+=10){const x=X(tt);
+    g.fillText(fmt(tt,0)+'s',x-6,gH-6);g.strokeStyle=hexA(TH.hex.tot,.12);g.beginPath();g.moveTo(x,pt);g.lineTo(x,pt+ph);g.stroke();}
+  if(S.samples.length<2){g.fillStyle=hexA(TH.hex.tot,.6);g.font='600 11px '+MONO;g.fillText('Başlat ile veri toplanır…',pl+pw/2-62,pt+ph/2);return;}
+  const ss=[];for(const s of S.samples)if(s.t>=t0-0.15)ss.push(s);
+  if(ss.length<2)return;
+  const GB=[{k:'K',c:TH.hex.k,l:'Ek'},{k:'Pg',c:TH.hex.pg,l:'Ep'},{k:'Pe',c:TH.hex.pe,l:'Ee'},{k:'Q',c:TH.hex.heat,l:'Isı'}];
+  let base=new Array(ss.length).fill(0);const mids=[];
+  for(const b of GB){
+    const top=base.map((v,i)=>v+ss[i][b.k]);
+    g.beginPath();g.moveTo(X(ss[0].t),Y(top[0]));
+    for(let i=1;i<ss.length;i++)g.lineTo(X(ss[i].t),Y(top[i]));
+    for(let i=ss.length-1;i>=0;i--)g.lineTo(X(ss[i].t),Y(base[i]));
+    g.closePath();g.fillStyle=hexA(b.c,0.78);g.fill();
+    mids.push({l:b.l,c:b.c,mid:(top[top.length-1]+base[base.length-1])/2,th:top[top.length-1]-base[base.length-1]});
+    base=top;
+  }
+  g.strokeStyle=TH.hex.tot;g.lineWidth=1.6;g.beginPath();g.moveTo(X(ss[0].t),Y(base[0]));
+  for(let i=1;i<ss.length;i++)g.lineTo(X(ss[i].t),Y(base[i]));g.stroke();
+  g.font='700 9.5px '+MONO;
+  for(const m of mids){if(m.th/S.E0*ph<9)continue;g.fillStyle=m.c;g.fillText(m.l,pl+pw+5,Y(m.mid)+3);}
+  if(S.targetT>0&&S.targetT>=t0&&S.targetT<=t1){
+    g.save();g.strokeStyle=TH.hex.mech;g.lineWidth=1.4;g.setLineDash([4,3]);
+    g.beginPath();g.moveTo(X(S.targetT),pt);g.lineTo(X(S.targetT),pt+ph);g.stroke();g.restore();
+    g.fillStyle=TH.hex.mech;g.font='700 9px '+MONO;g.fillText('hedef',X(S.targetT)+3,pt+9);
+  }
+}
+function drawCompare(){
+  if(cW<10)return;const g=cctx;g.clearRect(0,0,cW,cH);
+  const A=S.trials.A,B=S.trials.B;
+  const pl=44,pr=14,pt=12,pb=22,pw=cW-pl-pr,ph=cH-pt-pb;
+  g.font='600 9px '+MONO;g.lineWidth=1;
+  if(!A&&!B){g.fillStyle=hexA(TH.hex.tot,.6);g.font='600 11px '+MONO;g.fillText('A ve B kaydedilince grafik burada çizilir.',pl+10,pt+ph/2);return;}
+  const Emax=Math.max(A?A.E0:0,B?B.E0:0)||1;
+  const Tmax=Math.max(A?A.tEnd:0,B?B.tEnd:0,10);
+  const X=t=>pl+t/Tmax*pw,Y=v=>pt+ph*(1-clamp(v/Emax,0,1));
+  for(const f of[0,0.5,1]){const y=Y(Emax*f);
+    g.strokeStyle=hexA(TH.hex.tot,.14);g.beginPath();g.moveTo(pl,y);g.lineTo(pl+pw,y);g.stroke();
+    g.fillStyle=hexA(TH.hex.tot,.6);g.textAlign='right';g.fillText(fmt(Emax*f,0)+' J',pl-5,y+3);}
+  g.textAlign='left';g.fillStyle=hexA(TH.hex.tot,.55);
+  const stepT=Math.max(5,Math.round(Tmax/6/5)*5);
+  for(let tt=0;tt<=Tmax;tt+=stepT){const x=X(tt);
+    g.fillText(fmt(tt,0)+'s',x-6,cH-7);g.strokeStyle=hexA(TH.hex.tot,.1);g.beginPath();g.moveTo(x,pt);g.lineTo(x,pt+ph);g.stroke();}
+  const line=(tr,color,dash,key)=>{
+    if(!tr)return;g.save();g.strokeStyle=color;g.lineWidth=2.2;if(dash)g.setLineDash([6,4]);
+    g.beginPath();let first=true;
+    for(const s of tr.samples){const v=key==='mech'?(s.K+s.Pg+s.Pe):s.Q;
+      const x=X(s.t),y=Y(v);if(first){g.moveTo(x,y);first=false;}else g.lineTo(x,y);}
+    g.stroke();g.restore();};
+  line(A,TH.hex.mech,false,'mech');line(B,TH.hex.k,true,'mech');
+  line(A,TH.hex.heat,false,'Q');line(B,TH.hex.heat,true,'Q');
+  g.save();g.strokeStyle=TH.hex.tot;g.lineWidth=1.4;g.setLineDash([2,3]);
+  if(A){g.beginPath();g.moveTo(pl,Y(A.E0));g.lineTo(pl+pw,Y(A.E0));g.stroke();}
+  if(B&&(!A||Math.abs(B.E0-A.E0)>0.01)){g.beginPath();g.moveTo(pl,Y(B.E0));g.lineTo(pl+pw,Y(B.E0));g.stroke();}
+  g.restore();
+  if(A&&B&&Math.abs(A.tEnd-B.tEnd)>0.05){
+    const tc=Math.min(A.tEnd,B.tEnd);
+    g.save();g.strokeStyle=TH.hex.warn||'#FFAF1F';g.lineWidth=1.3;g.setLineDash([3,3]);
+    g.beginPath();g.moveTo(X(tc),pt);g.lineTo(X(tc),pt+ph);g.stroke();g.restore();
+    g.fillStyle='#FFAF1F';g.font='700 9px '+MONO;g.fillText('eşit süre',X(tc)+3,pt+9);
+  }
+}
+
+/* ---- DOM ---- */
+const BARDEFS=[
+  {id:'k',label:'Kinetik Enerji',sym:'Ek',c:'var(--k)'},
+  {id:'pg',label:'Çekim Potansiyel Enerjisi',sym:'Ep',c:'var(--pg)'},
+  {id:'pe',label:'Esneklik Potansiyel Enerjisi',sym:'Ee',c:'var(--pe)'},
+  {id:'mech',label:'Mekanik Enerji',sym:'Ek+Ep',c:'var(--mech)',sub:'Kinetik + potansiyel toplamı'},
+  {id:'heat',label:'Isıya Dönüşen Enerji',sym:'Q',c:'var(--heat)',sub:'Birikmiş kayıp — sürtünme kapansa da silinmez'}
+];
+const barRefs={};
+function buildBars(){
+  const host=$('bars');
+  for(const b of BARDEFS){
+    const row=document.createElement('div');row.className='bar-row';row.id='row-'+b.id;
+    row.innerHTML='<div class="bar-head"><span class="dot" style="--c:'+b.c+'"></span><label>'+b.label+'</label><span class="sym" id="sym-'+b.id+'">'+b.sym+'</span><output style="--c:'+b.c+'">0,0 J</output></div><div class="track"><div class="fill f-'+b.id+'"></div></div>'+(b.sub?'<div class="bar-sub">'+b.sub+'</div>':'');
+    host.appendChild(row);
+    barRefs[b.id]={fill:row.querySelector('.fill'),out:row.querySelector('output')};
+  }
+}
+function setBar(id,v){const r=barRefs[id];if(!r)return;r.fill.style.width=clamp(v/S.E0*100,0,100)+'%';r.out.textContent=fmt(v)+' J';}
+const flowEls={pg:$('fv-pg'),k:$('fv-k'),pe:$('fv-pe'),q:$('fv-q'),aPK:$('ar-pg-k'),aKP:$('ar-k-pg'),aKE:$('ar-k-pe'),aEK:$('ar-pe-k'),aH:$('ar-heat'),cK:$('chip-k'),cPg:$('chip-pg'),cPe:$('chip-pe'),cQ:$('chip-q')};
+function updateDOM(){
+  const sc=SCEN[S.scenario],sn=sc.snap(S),mech=sn.K+sn.Pg+sn.Pe,tot=mech+S.Q;
+  setBar('k',sn.K);setBar('pg',sn.Pg);if(isSpring())setBar('pe',sn.Pe);
+  setBar('mech',mech);setBar('heat',S.Q);
+  $('tot-out').textContent=fmt(tot)+' J';
+  $('tot-seg-k').style.width=clamp(sn.K/S.E0*100,0,100)+'%';
+  $('tot-seg-pg').style.width=clamp(sn.Pg/S.E0*100,0,100)+'%';
+  $('tot-seg-pe').style.width=clamp(sn.Pe/S.E0*100,0,100)+'%';
+  $('tot-seg-q').style.width=clamp(S.Q/S.E0*100,0,100)+'%';
+  const ok=Math.abs(tot-S.E0)<0.06;
+  $('cons-ok').textContent=ok?'✓ sabit':'! kontrol';$('cons-ok').className=ok?'':'bad';
+  $('eq-line').innerHTML='Ek + Ep'+(isSpring()?' + Ee':'')+' + Q = E₀<br>'+fmt(sn.K)+' + '+fmt(sn.Pg)+(isSpring()?' + '+fmt(sn.Pe):'')+' + '+fmt(S.Q)+' = <b>'+fmt(tot)+' J</b>';
+  $('hud-t').textContent='t = '+fmt(S.t,2)+' s'+(S.targetT>0?(' / '+fmt(S.targetT,2)):'');
+  $('hud-v').textContent='v = '+fmt(sn.spd,1)+' m/s';
+  $('hud-h').textContent='h = '+fmt(sn.h,2)+' m';
+  $('hud-q').textContent='Q = '+fmt(S.Q,1)+' J · kalan '+fmt(S.E0-S.Q,1)+' J';
+  $('time-chip').textContent='t = '+fmt(S.t,2)+(S.targetT>0?(' / '+fmt(S.targetT,2)):'')+' s · '+fmt(S.speed,2)+'×';
+  $('formula-chip').textContent=sc.formula(sn);
+  flowEls.pg.textContent=fmt(sn.Pg)+' J';flowEls.k.textContent=fmt(sn.K)+' J';flowEls.pe.textContent=fmt(sn.Pe)+' J';flowEls.q.textContent=fmt(S.Q)+' J';
+  const thr=S.E0*0.0004,run=S.phase==='running';
+  const dPg=sn.Pg-S.prev.Pg,dPe=sn.Pe-S.prev.Pe,dK=sn.K-S.prev.K;
+  const pk=run&&dPg<-thr&&dK>thr,kp=run&&dPg>thr&&dK<-thr;
+  const ek=run&&isSpring()&&dPe<-thr&&dK>thr,ke=run&&isSpring()&&dPe>thr&&dK<-thr;
+  const hot=run&&S.fric&&(S.diss>0.02||S.t<S.heatFlash);
+  flowEls.aPK.classList.toggle('on',pk);flowEls.aKP.classList.toggle('on',kp);
+  flowEls.aEK.classList.toggle('on',ek);flowEls.aKE.classList.toggle('on',ke);flowEls.aH.classList.toggle('on',hot);
+  flowEls.cK.classList.toggle('recv',pk||ek);flowEls.cPg.classList.toggle('recv',kp);flowEls.cPe.classList.toggle('recv',ke);flowEls.cQ.classList.toggle('recv',hot);
+  if(run){
+    if(S.fric&&S.diss>0.05&&S.t-S.lastHeatMsg>6&&S.t>S.msgUntil){S.lastHeatMsg=S.t;S.msgUntil=S.t+1.2;
+      setNow('Sürtünme mekanik enerjiyi ısıya dönüştürüyor; toplam enerji sabit kalıyor.','heat',true);}
+    if(S.t>S.msgUntil){const pt=phaseText(sn);
+      if(pt&&pt!==S.lastPhaseTxt){S.lastPhaseTxt=pt;const lg=S.t-S.lastPhaseLog>3;if(lg)S.lastPhaseLog=S.t;setNow(pt,'convert',lg);}}
+  }
+  S.prev={K:sn.K,Pg:sn.Pg,Pe:sn.Pe};
+  drawGraph();
+}
+function updateStatic(){
+  $('cons-val').textContent=fmt(S.E0)+' J';
+  $('init-summary').innerHTML='Başlangıç: '+SCEN[S.scenario].summary(S)+'<br>Sıfırla, cismi bu konuma ve v₀ hızına geri getirir.';
+  $('hud-g').textContent='g = '+fmt(S.g,1)+' N/kg · '+(S.g===10?'Dünya':'Ay');
+  $('note-g').textContent=S.g===10?'g = 10 N/kg (Dünya). Ay modunda g = 1,6 N/kg.':'g = 1,6 N/kg (Ay). Dünya modunda g = 10 N/kg.';
+  $('sym-mech').textContent=isSpring()?'Ek+Ep+Ee':'Ek+Ep';
+  $('note-sound').classList.toggle('active',S.scenario==='ball');
+  const b=$('hud-fric');b.textContent='Sürtünme: '+(S.fric?'AÇIK':'KAPALI');b.classList.toggle('hot',S.fric);
+  $('fric-btn').setAttribute('aria-checked',S.fric);$('fric-state').textContent=S.fric?'AÇIK':'KAPALI';
+}
+function updateTransport(){
+  const btn=$('play-btn'),ico=$('play-ico'),lbl=$('play-lbl'),pill=$('stage-pill');
+  btn.classList.toggle('running',S.phase==='running');
+  $('step-btn').classList.toggle('off',S.phase==='settled');
+  if(S.phase==='running'){ico.innerHTML='<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';lbl.textContent='Durdur';pill.classList.add('hide');}
+  else if(S.phase==='paused'){ico.innerHTML='<path d="M8 5v14l11-7z"/>';lbl.textContent='Devam Et';
+    pill.textContent=(S.targetT>0&&S.t>=S.targetT-1e-9)?('🎯 '+fmt(S.targetT,2)+' s tamamlandı — kaydet veya devam et'):'⏸ Duraklatıldı — Başlat veya Adım (+0,1 s)';pill.classList.remove('hide');}
+  else if(S.phase==='settled'){ico.innerHTML='<path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/>';lbl.textContent='Yeniden Dene';pill.textContent='✓ Deneme tamamlandı — aynı koşullarla yeniden dene';pill.classList.remove('hide');}
+  else{ico.innerHTML='<path d="M8 5v14l11-7z"/>';lbl.textContent='Başlat';pill.textContent='▶ Başlat — sahneye de tıklayabilirsin';pill.classList.remove('hide');}
+}
+
+/* ---- Tema / hız / hedef süre ---- */
+function setTheme(k,silent){
+  if(!THEMES[k])k='night';
+  S.theme=k;TH=THEMES[k];document.body.dataset.theme=k;
+  document.querySelectorAll('#theme-seg button').forEach(b=>b.classList.toggle('on',b.dataset.th===k));
+  store.set('theme',k);
+  if(!silent){clickS();toast('Tema: '+TH.label);}
+  drawGraph();drawCompare();
+}
+function cycleTheme(){const ks=Object.keys(THEMES);setTheme(ks[(ks.indexOf(S.theme)+1)%ks.length]);}
+function rangeBg(el){const p=(el.value-el.min)/(el.max-el.min)*100;el.style.setProperty('--p',p+'%');}
+function setSpeed(v){
+  v=clamp(Math.round(v*100)/100,0.1,2);S.speed=v;
+  const sr=$('speed-range');sr.value=v;rangeBg(sr);
+  $('speed-out').textContent=fmt(v,2)+'×';
+  const slow=v<=0.3;
+  document.body.classList.toggle('slowmo',slow);
+  const sb=$('slow-btn');sb.setAttribute('aria-pressed',slow);sb.classList.toggle('on',slow);
+  $('slow-lbl').textContent=slow?'Normal Hız':'Yavaşlat';
+  $('hud-slow').textContent='🐢 AĞIR ÇEKİM '+fmt(v,2)+'×';
+  document.querySelectorAll('.spd-chip').forEach(c=>c.classList.toggle('on',Math.abs(+c.dataset.spd-v)<0.011));
+}
+function toggleSlow(){
+  ensureAudio();clickS();
+  if(S.speed>0.3){S.speedBeforeSlow=S.speed;setSpeed(0.25);toast('🐢 Ağır çekim 0,25× — dönüşümü adım adım izle.');}
+  else{setSpeed(S.speedBeforeSlow||1);toast('Normal hız: '+fmt(S.speed,2)+'×');}
+}
+function setTarget(v){
+  S.targetT=Math.max(0,Math.round(v*100)/100);
+  document.body.classList.toggle('has-target',S.targetT>0);
+  $('target-out').textContent=S.targetT>0?(fmt(S.targetT,2)+' s'):'sınırsız';
+  $('hud-target').textContent='🎯 HEDEF '+fmt(S.targetT,2)+' s';
+  document.querySelectorAll('#target-seg button').forEach(b=>b.classList.toggle('on',Math.abs(+b.dataset.t-S.targetT)<1e-9));
+  store.set('targetT',S.targetT);
+}
+function syncSliders(){
+  const sc=SCEN[S.scenario],mr=$('mass-range'),ir=$('init-range');
+  mr.min=sc.mCfg.min;mr.max=sc.mCfg.max;mr.step=sc.mCfg.step;mr.value=S.m;
+  ir.min=sc.iCfg.min;ir.max=sc.iCfg.max;ir.step=sc.iCfg.step;ir.value=S.iv;
+  $('init-label').textContent=sc.iCfg.label;
+  $('mass-out').textContent=fmt(S.m,sc.mCfg.step<1?1:0)+' kg';
+  $('init-out').textContent=sc.iCfg.out(S.iv);
+  rangeBg(mr);rangeBg(ir);
+}
+function setScenario(key){
+  S.scenario=key;document.body.dataset.sc=key;
+  document.querySelectorAll('.tab').forEach(t=>{const on=t.dataset.sc===key;t.classList.toggle('on',on);t.setAttribute('aria-selected',on);});
+  const sc=SCEN[key];S.m=sc.mCfg.def;S.iv=sc.iCfg.def;
+  syncSliders();reinit(true);
+}
+
+/* ---- Deneme karşılaştırma ---- */
+function metricsOf(samples,c,settled){
+  let maxSpd=0,maxH=0;for(const s of samples){if(s.spd>maxSpd)maxSpd=s.spd;if(s.h>maxH)maxH=s.h;}
+  const last=samples[samples.length-1]||{K:0,Pg:0,Pe:0,Q:0};
+  const mech=last.K+last.Pg+last.Pe;
+  return {maxSpd,maxH,Q:last.Q,mech,lossPct:c.E0>0?last.Q/c.E0*100:0,stopTime:settled?c.t:null,tEnd:c.t,power:c.t>0?last.Q/c.t:0};
+}
+function makeTrial(key,m,iv,g,fric,samples,c,settled){
+  return {key,name:SCEN[key].name,m,iv,g,fric,E0:c.E0,samples:samples.slice(),settled,metrics:metricsOf(samples,c,settled),tEnd:c.t,ivLabel:SCEN[key].iCfg.label};
+}
+function valueAt(tr,t,key){
+  const ss=tr.samples;if(!ss.length)return 0;
+  const get=s=>key==='Q'?s.Q:(s.K+s.Pg+s.Pe);
+  if(t<=ss[0].t)return get(ss[0]);
+  const last=ss[ss.length-1];
+  if(t>=last.t)return get(last);
+  for(let i=1;i<ss.length;i++){if(ss[i].t>=t){const a=ss[i-1],b=ss[i],f=(t-a.t)/((b.t-a.t)||1);return get(a)+(get(b)-get(a))*f;}}
+  return get(last);
+}
+function saveTrial(slot){
+  ensureAudio();
+  if(S.samples.length<2){toast('Önce denemeyi çalıştır — en az birkaç örnek toplansın.');return;}
+  const settled=S.phase==='settled';
+  S.trials[slot]=makeTrial(S.scenario,S.m,S.iv,S.g,S.fric,S.samples,S,settled);
+  clickS();renderCompare();
+  toast('Deneme '+slot+' kaydedildi: '+SCEN[S.scenario].name+' · '+fmt(S.t,2)+' s · sürtünme '+(S.fric?'AÇIK':'KAPALI')+' · Q = '+fmt(S.Q)+' J');
+}
+function loadTrial(slot){
+  const t=S.trials[slot];if(!t)return;
+  ensureAudio();clickS();
+  S.scenario=t.key;document.body.dataset.sc=t.key;
+  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.sc===t.key;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);});
+  S.m=t.m;S.iv=t.iv;S.g=t.g;S.fric=t.fric;
+  $('g-earth').classList.toggle('on',S.g===10);$('g-earth').setAttribute('aria-pressed',S.g===10);
+  $('g-moon').classList.toggle('on',S.g!==10);$('g-moon').setAttribute('aria-pressed',S.g!==10);
+  syncSliders();reinit(true);
+  toast('Deneme '+slot+' koşulları yüklendi (hedef süre '+fmt(t.tEnd,2)+' s ayarlandı) — Başlat!');
+  setTarget(t.tEnd);
+}
+function compareData(A,B){
+  const rows=[];
+  const add=(label,a,b,d,hl)=>rows.push({label,a,b,d,hl:!!hl});
+  const durTol=Math.max(0.05,0.01*Math.max(A.tEnd,B.tEnd));
+  const durSame=Math.abs(A.tEnd-B.tEnd)<=durTol;
+  const tc=Math.min(A.tEnd,B.tEnd);
+  const qAc=valueAt(A,tc,'Q'),qBc=valueAt(B,tc,'Q');
+  const mAc=valueAt(A,tc,'mech'),mBc=valueAt(B,tc,'mech');
+  add('Senaryo',A.name,B.name,A.key===B.key?'aynı':'farklı');
+  add('Kütle m',fmt(A.m,2)+' kg',fmt(B.m,2)+' kg',fmt(B.m-A.m,2)+' kg');
+  add(A.ivLabel.replace(/\s*\(.*\)/,''),fmt(A.iv,2),fmt(B.iv,2),fmt(B.iv-A.iv,2));
+  add('g',fmt(A.g,1),fmt(B.g,1),fmt(B.g-A.g,1));
+  add('Sürtünme',A.fric?'AÇIK':'KAPALI',B.fric?'AÇIK':'KAPALI',A.fric===B.fric?'aynı':'farklı');
+  add('Deneme süresi',fmt(A.tEnd,2)+' s',fmt(B.tEnd,2)+' s',fmt(B.tEnd-A.tEnd,2)+' s',true);
+  add('E₀',fmt(A.E0)+' J',fmt(B.E0)+' J',fmt(B.E0-A.E0)+' J');
+  add('Maks hız',fmt(A.metrics.maxSpd,2)+' m/s',fmt(B.metrics.maxSpd,2)+' m/s',fmt(B.metrics.maxSpd-A.metrics.maxSpd,2)+' m/s');
+  add('Ulaşılan en yüksek h',fmt(A.metrics.maxH,2)+' m',fmt(B.metrics.maxH,2)+' m',fmt(B.metrics.maxH-A.metrics.maxH,2)+' m');
+  add('Toplam ısı Q (süre sonu)',fmt(A.metrics.Q,2)+' J',fmt(B.metrics.Q,2)+' J',fmt(B.metrics.Q-A.metrics.Q,2)+' J');
+  add('Ortalama ısı gücü Q/t',fmt(A.metrics.power,2)+' J/s',fmt(B.metrics.power,2)+' J/s',fmt(B.metrics.power-A.metrics.power,2)+' J/s');
+  add('Eşit sürede ısı (t='+fmt(tc,2)+' s)',fmt(qAc,2)+' J',fmt(qBc,2)+' J',fmt(qBc-qAc,2)+' J',true);
+  add('Eşit sürede mekanik',fmt(mAc,2)+' J',fmt(mBc,2)+' J',fmt(mBc-mAc,2)+' J');
+  add('Mekanik kayıp (süre sonu)',fmt(A.metrics.lossPct,1)+' %',fmt(B.metrics.lossPct,1)+' %',fmt(B.metrics.lossPct-A.metrics.lossPct,1)+' %');
+  add('Durma süresi',A.metrics.stopTime===null?'durmadı':fmt(A.metrics.stopTime,2)+' s',B.metrics.stopTime===null?'durmadı':fmt(B.metrics.stopTime,2)+' s',(A.metrics.stopTime!==null&&B.metrics.stopTime!==null)?fmt(B.metrics.stopTime-A.metrics.stopTime,2)+' s':'—');
+  add('Son toplam',fmt(A.metrics.mech+A.metrics.Q)+' J',fmt(B.metrics.mech+B.metrics.Q)+' J',fmt((B.metrics.mech+B.metrics.Q)-(A.metrics.mech+A.metrics.Q))+' J');
+  const same=A.key===B.key&&Math.abs(A.m-B.m)<1e-9&&Math.abs(A.iv-B.iv)<1e-9&&Math.abs(A.g-B.g)<1e-9;
+  const durWarn='⚠ Süreler farklı: A '+fmt(A.tEnd,2)+' s, B '+fmt(B.tEnd,2)+' s. Isı biriken bir büyüklüktür; süre sonu değerleri doğrudan kıyaslanamaz. Eşit sürede (t = '+fmt(tc,2)+' s) ısı: A '+fmt(qAc,2)+' J, B '+fmt(qBc,2)+' J. “Süreyi Eşitle” ile hedef süreyi '+fmt(tc,2)+' s yapıp tekrar dene.';
+  let verdict;
+  if(same&&A.fric===B.fric){
+    if(durSame&&Math.abs(A.metrics.Q-B.metrics.Q)<Math.max(0.05,A.E0*0.002)){
+      verdict='Aynı koşullar ve eşit süre ('+fmt(A.tEnd,2)+' s ≈ '+fmt(B.tEnd,2)+' s): iki deneme birebir aynı sonucu verdi. Isı farkı '+fmt(Math.abs(A.metrics.Q-B.metrics.Q),3)+' J, ortalama ısı gücü '+fmt(A.metrics.power,2)+' J/s. Model deterministiktir — Sıfırla her zaman aynı başlangıç durumunu geri getirir ✓';
+    }else if(durSame){
+      verdict='Aynı koşullar ve eşit süre, ancak ısı değerleri farklı ('+fmt(A.metrics.Q,2)+' J / '+fmt(B.metrics.Q,2)+' J). Başlangıç koşullarını ve sürtünme ayarını yeniden kontrol et.';
+    }else{
+      verdict='Aynı koşullar, FARKLI SÜRELER: A '+fmt(A.tEnd,2)+' s sonunda Q = '+fmt(A.metrics.Q,2)+' J; B '+fmt(B.tEnd,2)+' s sonunda Q = '+fmt(B.metrics.Q,2)+' J. Bu fark sürtünmeden değil süreden kaynaklanır — sürtünme her saniye enerji dönüştürür. Ortalama ısı gücü A: '+fmt(A.metrics.power,2)+' J/s, B: '+fmt(B.metrics.power,2)+' J/s. İlk '+fmt(tc,2)+' s\'de her ikisinde de ısı ≈ '+fmt(qAc,2)+' J / '+fmt(qBc,2)+' J (fark '+fmt(Math.abs(qBc-qAc),3)+' J). Eşit süreli karşılaştırma için hedef süreyi '+fmt(tc,2)+' s yap.';
+    }
+  }else if(same&&A.fric!==B.fric){
+    const fr=A.fric?A:B,no=A.fric?B:A;
+    verdict='Aynı başlangıç koşulları ('+A.name+', m = '+fmt(A.m,2)+' kg, '+A.ivLabel.replace(/\s*\(.*\)/,'')+' = '+fmt(A.iv,2)+', g = '+fmt(A.g,1)+'). Sürtünmeli denemede mekanik enerjinin %'+fmt(fr.metrics.lossPct,1)+'\'i ısıya dönüştü ('+fmt(fr.metrics.Q,2)+' J)'+(fr.metrics.stopTime!==null?' ve cisim '+fmt(fr.metrics.stopTime,1)+' s sonunda durdu':'')+'. Sürtünmesiz denemede mekanik enerji '+fmt(no.metrics.mech,2)+' J\'de sabit kaldı. İki denemede de toplam enerji E₀ = '+fmt(A.E0)+' J ✓';
+    if(!durSame)verdict+=' '+durWarn;
+  }else{
+    const d=[];if(A.key!==B.key)d.push('senaryo');if(Math.abs(A.m-B.m)>1e-9)d.push('kütle');if(Math.abs(A.iv-B.iv)>1e-9)d.push('başlangıç değeri');if(Math.abs(A.g-B.g)>1e-9)d.push('g');if(A.fric!==B.fric)d.push('sürtünme');
+    verdict='Koşullar farklı ('+d.join(', ')+'). Fark sütunu birden çok değişkenin etkisini birlikte gösterir. Kontrollü karşılaştırma için tek değişkeni değiştir (öneri: yalnızca sürtünme) ve süreleri eşitle. Her iki denemede de toplam enerji kendi E₀ değerinde korundu ✓';
+    if(!durSame)verdict+=' '+durWarn;
+  }
+  return {rows,verdict,same,durSame,durWarn,tc,qAc,qBc};
+}
+function renderCompare(){
+  const A=S.trials.A,B=S.trials.B;
+  const fill=(slot,t)=>{
+    const el=$('slot-'+slot.toLowerCase());
+    el.classList.toggle('empty',!t);
+    $('meta-'+slot.toLowerCase()).innerHTML=t?(t.name+'<br>m='+fmt(t.m,2)+' kg · '+t.ivLabel.replace(/\s*\(.*\)/,'')+'='+fmt(t.iv,2)+'<br>g='+fmt(t.g,1)+' · sürtünme '+(t.fric?'AÇIK':'KAPALI')+'<br><b>süre '+fmt(t.tEnd,2)+' s</b> · '+(t.settled?'durdu':'sürüyor')):'Boş. Bir deneme çalıştırıp kaydet.';
+    $('big-'+slot.toLowerCase()).textContent=t?('E₀ '+fmt(t.E0)+' J · Q '+fmt(t.metrics.Q)+' J'):'—';
+    $('load-'+slot.toLowerCase()).disabled=!t;
+  };
+  fill('A',A);fill('B',B);
+  $('cmp-sync').disabled=!(A&&B);
+  const body=$('cmp-body'),gb=$('cmp-graph-block');
+  if(!A||!B){
+    body.innerHTML='<div class="cmp-empty">'+(A||B?'Bir deneme daha kaydet: karşılaştırma için A ve B dolu olmalı. Öneri: aynı koşullarla sürtünmeyi değiştirip <b>aynı hedef sürede</b> tekrar çalıştır.':'Öneri: <b>hedef süreyi 5 s</b> yap, aynı başlangıç koşullarıyla bir <b>sürtünmesiz</b>, bir <b>sürtünmeli</b> deneme kaydet. Süreler eşit olmazsa uygulama uyarır ve eşit süredeki değerleri ayrıca gösterir.')+'</div>';
+    gb.style.display='none';drawCompare();return;
+  }
+  const cd=compareData(A,B);
+  let html='';
+  if(!cd.durSame)html+='<div class="cmp-warn">'+cd.durWarn+'</div>';
+  html+='<div id="cmp-verdict">'+cd.verdict+'</div><table class="cmp-table"><thead><tr><th>Ölçüt</th><th>A</th><th>B</th><th>Fark (B−A)</th></tr></thead><tbody>';
+  for(const r of cd.rows)html+='<tr'+(r.hl?' class="hl"':'')+'><td>'+r.label+'</td><td class="va">'+r.a+'</td><td class="vb">'+r.b+'</td><td class="df">'+r.d+'</td></tr>';
+  html+='</tbody></table>';
+  body.innerHTML=html;gb.style.display='block';
+  requestAnimationFrame(()=>{[cW,cH]=fit(cmpCv,cctx,cmpWrap);drawCompare();});
+}
+function syncDurations(){
+  const A=S.trials.A,B=S.trials.B;if(!A||!B)return;
+  ensureAudio();clickS();
+  const tc=Math.min(A.tEnd,B.tEnd);
+  setTarget(tc);
+  toast('🎯 Hedef süre '+fmt(tc,2)+' s yapıldı. Koşulları yükle → Başlat → kaydet: artık süreler eşit.');
+}
+function cmpCSV(){
+  const A=S.trials.A,B=S.trials.B;
+  if(!A||!B){toast('Rapor için A ve B denemelerini kaydet.');return;}
+  const cd=compareData(A,B);
+  let out='\uFEFFolcut;deneme_A;deneme_B;fark_B_eksi_A\n';
+  for(const r of cd.rows)out+=[r.label,r.a,r.b,r.d].map(v=>String(v).replace(/;/g,',')).join(';')+'\n';
+  out+='\nsure_esit;'+(cd.durSame?'evet':'hayir')+';;\n';
+  out+='sonuc;'+cd.verdict.replace(/;/g,',')+';;\n';
+  const blob=new Blob([out],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='enerji-lab-karsilastirma.csv';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);clickS();toast('⬇ Karşılaştırma raporu indirildi.');
+}
+function csvBuild(samples){
+  const f=v=>v.toFixed(2).replace('.',',');
+  let out='\uFEFFzaman_s;kinetik_J;cekim_potansiyel_J;esneklik_potansiyel_J;mekanik_J;isiya_donusen_J;toplam_J;hiz_m_s;yukseklik_m\n';
+  for(const s of samples){const mek=s.K+s.Pg+s.Pe;out+=[f(s.t),f(s.K),f(s.Pg),f(s.Pe),f(mek),f(s.Q),f(mek+s.Q),f(s.spd),f(s.h)].join(';')+'\n';}
+  return out;
+}
+
+/* ---- Sözlü kartlar ---- */
+const ORAL=[
+ ['Sürtünmeyi kapatınca birikmiş ısı çubuğu neden sıfırlanmaz?','Isıya dönüşen enerji çevreye dağılmıştır, kendiliğinden mekanik enerjiye geri dönmez. Sürtünmeyi kapatmak yalnızca yeni kaybı durdurur. Cisim kalan mekanik enerjiyle (E₀ − Q) hareket eder; toplam E₀ = mekanik + Q sabit kalır.'],
+ ['Aynı sarkacı 2 s ve 10 s çalıştırınca ısı neden farklı çıkar?','Sürtünme her saniye enerji dönüştürür; ısı biriken bir büyüklüktür: Q ≈ ortalama güç × süre. Karşılaştırmada süreleri eşitle ya da J/s cinsinden ısı gücüne bak.'],
+ ['Sürtünmesiz ortamda top neden hep aynı yüksekliğe çıkar?','Mekanik enerji korunur. Tepe noktasında Ek = 0 olduğundan Ep = E₀ olur; Ep = m·g·h bağıntısında m, g ve E₀ değişmediği için h de değişmez.'],
+ ['Yaylı fırlatıcıda hangi enerji türleri var? Tepe noktasında hangileri sıfır?','Esneklik potansiyel (Ee = ½kx²), çekim potansiyel (Ep = mgh), kinetik (Ek = ½mv²) ve ısı (Q). Tepe noktasında Ek = 0; top yaydan ayrıldıktan sonra Ee = 0.'],
+ ['Kaykay rampasında en alt noktada enerji nasıl dağılır?','Referans yüksekliği en alt nokta olduğu için Ep en küçük, Ek en büyüktür. Sürtünme varsa bir kısım Q\'ya dönüşmüştür: Ep + Ek + Q = E₀.'],
+ ['Toplam enerji çubuğu neden hiç kısalmıyor?','Enerjinin korunumu: enerji yoktan var edilmez, vardan yok edilmez; yalnızca bir türden başka bir türe dönüşür. "Kaybolan" enerji ısıya dönüşmüştür ve çubukta gösterilir.']
+];
+let oralOpen=false;
+function buildOral(order){
+  const host=$('oral-cards');host.innerHTML='';
+  (order||ORAL.map((_,i)=>i)).forEach((idx,n)=>{
+    const q=ORAL[idx][0],a=ORAL[idx][1];
+    const b=document.createElement('button');b.className='ocard'+(oralOpen?' open':'');b.type='button';
+    b.innerHTML='<span class="oq"><b>'+(n+1)+'.</b><span>'+q+'</span></span><span class="oa">'+a+'</span><span class="oh">'+(oralOpen?'yanıt açık · gizlemek için tıkla':'yanıtı görmek için tıkla')+'</span>';
+    b.addEventListener('click',()=>{ensureAudio();clickS();b.classList.toggle('open');
+      b.querySelector('.oh').textContent=b.classList.contains('open')?'yanıt açık · gizlemek için tıkla':'yanıtı görmek için tıkla';});
+    host.appendChild(b);
+  });
+}
+
+/* ---- Doğrulama testleri ---- */
+const RUBRIC=[['Bilimsel doğruluk',25],['Enerjinin korunumu',20],['Etkileşim',15],['Görsel düzen ve anlaşılırlık',10],['Komut yazma ve geliştirme',10],['Denemeleri karşılaştırma',15],['Teslim kurallarına uyma',5]];
+const TOL=1e-5;
+function conservationTest(key,fric,secs){
+  const sc=SCEN[key],c=makeCtx(key,sc.mCfg.def,sc.iCfg.def,10,fric),h=sc.hstep,n=Math.round(secs/h);
+  let maxErr=0,qMono=true,mechMono=true,prevQ=0,prevM=c.E0;
+  for(let i=0;i<n;i++){
+    sc.step(c,h);c.t+=h;
+    const sn=sc.snap(c),mech=sn.K+sn.Pg+sn.Pe,tot=mech+c.Q;
+    maxErr=Math.max(maxErr,Math.abs(tot-c.E0));
+    if(c.Q<prevQ-1e-7)qMono=false;
+    if(mech>prevM+1e-6)mechMono=false;
+    prevQ=c.Q;prevM=mech;
+  }
+  return {maxErr,qMono,mechMono,Q:c.Q};
+}
+const TESTS=[
+ {n:'Rampa varsayılan yükseklikten harekete başlıyor',cr:0,w:6,f(){const r=runHeadless('ramp',40,2.5,10,false,0.6);const sn=SCEN.ramp.snap(r.c);return{ok:sn.spd>0.5,d:'v(0,6 s)='+fmt(sn.spd,2)+' m/s'};}},
+ {n:'Sürtünmesiz top çarpışmadan sonra aynı yüksekliğe dönüyor (tepe doğrudan yakalandı)',cr:0,w:5,f(){const r=runHeadless('ball',1,5,10,false,5);const e=Math.abs(r.peakHlate-5);return{ok:e<TOL,d:'tepe='+fmt(r.peakHlate,5)+' m · hedef 5 · fark '+e.toExponential(1)};}},
+ {n:'Yaylı fırlatıcı ideal tepe = E₀/(m·g) (tepe doğrudan yakalandı)',cr:0,w:5,f(){const r=runHeadless('spring',0.5,0.4,10,false,4);const ideal=r.c.E0/(0.5*10);const e=Math.abs(r.peakHlate-ideal);return{ok:e<TOL,d:'tepe='+fmt(r.peakHlate,5)+' m · hedef '+fmt(ideal,5)+' · fark '+e.toExponential(1)};}},
+ {n:'Sürtünmesiz sarkaç başlangıç açısına geri dönüyor (açı doğrudan yakalandı)',cr:0,w:5,f(){const r=runHeadless('pendulum',2,60,10,false,6);const th0=60*Math.PI/180;const e=Math.abs(r.peakAlate-th0);return{ok:e<TOL,d:'maks θ='+fmt(r.peakAlate*180/Math.PI,5)+'° · hedef 60 · fark '+e.toExponential(1)};}},
+ {n:'Sürtünmeli rampada kaykaycı en alt noktada duruyor, Q = E₀',cr:0,w:4,f(){const r=runHeadless('ramp',40,2.5,10,true,26);const sn=SCEN.ramp.snap(r.c);return{ok:Math.abs(r.c.Q-r.c.E0)<1e-6&&Math.abs(sn.x)<0.05&&sn.spd<0.01,d:'Q='+fmt(r.c.Q,2)+' J · x='+fmt(sn.x,3)+' m · v='+fmt(sn.spd,3)};}},
+ {n:'Sarkaç: toplam enerji sabit (sürtünme açık/kapalı)',cr:1,w:4,f(){const a=conservationTest('pendulum',false,6),b=conservationTest('pendulum',true,14);return{ok:a.maxErr<1e-6&&b.maxErr<1e-6&&a.Q===0&&b.qMono&&b.mechMono,d:'ΔE≤'+Math.max(a.maxErr,b.maxErr).toExponential(1)+' J · Q='+fmt(b.Q,1)+' J'};}},
+ {n:'Zıplayan top: toplam sabit, ısı monoton artıyor',cr:1,w:4,f(){const a=conservationTest('ball',false,6),b=conservationTest('ball',true,16);return{ok:a.maxErr<1e-6&&b.maxErr<1e-6&&a.Q===0&&b.qMono&&b.mechMono,d:'ΔE≤'+Math.max(a.maxErr,b.maxErr).toExponential(1)+' J · Q='+fmt(b.Q,1)+' J'};}},
+ {n:'Yaylı fırlatıcı: Ek + Ep + Ee + Q = E₀',cr:1,w:4,f(){const a=conservationTest('spring',false,4),b=conservationTest('spring',true,12);return{ok:a.maxErr<1e-6&&b.maxErr<1e-6&&a.Q===0&&b.qMono&&b.mechMono,d:'ΔE≤'+Math.max(a.maxErr,b.maxErr).toExponential(1)+' J · Q='+fmt(b.Q,1)+' J'};}},
+ {n:'Kaykay rampası: Ek + Ep + Q = E₀',cr:1,w:4,f(){const a=conservationTest('ramp',false,8),b=conservationTest('ramp',true,20);return{ok:a.maxErr<1e-6&&b.maxErr<1e-6&&a.Q===0&&b.qMono&&b.mechMono,d:'ΔE≤'+Math.max(a.maxErr,b.maxErr).toExponential(1)+' J · Q='+fmt(b.Q,1)+' J'};}},
+ {n:'REGRESYON: sürtünmeyi kapatınca birikmiş ısı silinmiyor',cr:1,w:4,f(){
+   const sc=SCEN.ramp,c=makeCtx('ramp',40,2.5,10,true),h=sc.hstep;
+   for(let i=0;i<Math.round(5/h);i++){sc.step(c,h);c.t+=h;}
+   const Q1=c.Q,M1=c.E0-Q1;
+   c.fric=false;
+   let maxErr=0,minM=1e9,maxM=0;
+   for(let i=0;i<Math.round(4/h);i++){sc.step(c,h);c.t+=h;const sn=sc.snap(c),m=sn.K+sn.Pg+sn.Pe;
+     maxErr=Math.max(maxErr,Math.abs(m+c.Q-c.E0));minM=Math.min(minM,m);maxM=Math.max(maxM,m);}
+   const ok=Math.abs(c.Q-Q1)<1e-9&&Math.abs(maxM-M1)<1e-6&&Math.abs(minM-M1)<1e-6&&maxM<c.E0-1&&maxErr<1e-6;
+   return{ok,d:'Q '+fmt(Q1,1)+'→'+fmt(c.Q,1)+' J · mekanik '+fmt(maxM,1)+' J (E₀='+fmt(c.E0,0)+')'};}},
+ {n:'Sürtünme, yavaşlat, adım ve sıfırla kontrolleri çalışıyor',cr:2,w:5,f(){const o=snapshotLive();const f0=S.fric,s0=S.speed;$('fric-btn').click();$('fric-btn').click();$('slow-btn').click();$('slow-btn').click();$('step-btn').click();$('reset-btn').click();const ok=S.fric===f0&&Math.abs(S.speed-s0)<1e-9&&S.phase==='armed';restoreLive(o);return{ok,d:'sürtünme/hız geri yüklendi · faz='+S.phase};}},
+ {n:'Senaryo değiştirme çubukları ve akış oklarını güncelliyor',cr:2,w:5,f(){const o=snapshotLive();setScenario('spring');const vis=getComputedStyle($('row-pe')).display!=='none'&&getComputedStyle($('flow-pe')).display!=='none'&&S.E0>0;restoreLive(o);return{ok:vis,d:'esneklik çubuğu + akış oku görünür'};}},
+ {n:'Hedef süre otomatik duraklatıyor (tam 2,00 s)',cr:2,w:5,f(){const o=snapshotLive();setTarget(2);reinit(true);S.phase='running';const h=SCEN[S.scenario].hstep;let guard=0;while(S.phase==='running'&&guard<20000){stepSim(h);guard++;}const ok=S.phase==='paused'&&Math.abs(S.t-2)<1e-6;const d='t='+fmt(S.t,4)+' s · faz='+S.phase;restoreLive(o);return{ok,d};}},
+ {n:'Sahne, grafik ve karşılaştırma tuvali doğru boyutlanıyor',cr:3,w:5,f(){fitAll();const ok=stW>60&&stH>60&&gW>60&&gH>40&&stage.width>0&&graph.width>0;return{ok,d:'sahne '+Math.round(stW)+'×'+Math.round(stH)+' · grafik '+Math.round(gW)+'×'+Math.round(gH)};}},
+ {n:'Yatay taşma yok; tüm ana kontroller erişilebilir',cr:3,w:5,f(){const de=document.documentElement;const noOv=de.scrollWidth<=de.clientWidth+2;const ids=['play-btn','reset-btn','step-btn','fric-btn','slow-btn','mass-range','init-range','speed-range'];const vis=ids.every(id=>{const e=$(id);return e&&e.offsetParent!==null;});const bars=$('bars').children.length>=5;return{ok:noOv&&vis&&bars,d:'taşma='+(noOv?'yok':'VAR')+' · kontrol='+ids.length+' · çubuk='+$('bars').children.length};}},
+ {n:'Klavye komutları (F, S, T, R) tanımlı ve çalışıyor',cr:4,w:5,f(){const o=snapshotLive();const f0=S.fric,t0=S.theme;
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',bubbles:true}));const t1=S.fric!==f0;
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'f',bubbles:true}));
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'s',bubbles:true}));const t2=S.speed<=0.3;
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'s',bubbles:true}));
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'t',bubbles:true}));const t3=S.theme!==t0;
+   document.dispatchEvent(new KeyboardEvent('keydown',{key:'r',bubbles:true}));const t4=S.phase==='armed';
+   restoreLive(o);return{ok:t1&&t2&&t3&&t4,d:'F='+t1+' S='+t2+' T='+t3+' R='+t4};}},
+ {n:'CSV ve PNG çıktısı geçerli içerik üretiyor',cr:4,w:5,f(){const r=runHeadless('ramp',40,2.5,10,true,4);const csv=csvBuild(r.samples);const png=stage.toDataURL('image/png');const ok=csv.charCodeAt(0)===0xFEFF&&csv.split('\n').length>10&&png.indexOf('data:image/png')===0&&png.length>2000;return{ok,d:'CSV '+csv.split('\n').length+' satır · PNG '+Math.round(png.length/1024)+' KB'};}},
+ {n:'Deneme kaydı ve metrikler hesaplanıyor',cr:5,w:4,f(){const r=runHeadless('ramp',40,2.5,10,true,26);const t=makeTrial('ramp',40,2.5,10,true,r.samples,r.c,r.c.Q>=r.c.E0-1e-6);const ok=t.metrics.maxSpd>1&&t.metrics.Q>0&&t.metrics.stopTime!==null&&t.metrics.power>0;return{ok,d:'v_maks='+fmt(t.metrics.maxSpd,2)+' · Q='+fmt(t.metrics.Q,1)+' J · güç='+fmt(t.metrics.power,2)+' J/s'};}},
+ {n:'REGRESYON: A/B yorumu süre farkını yakalıyor (2 s vs 10 s)',cr:5,w:4,f(){
+   const a=runHeadless('pendulum',2,60,10,true,2),b=runHeadless('pendulum',2,60,10,true,10);
+   const A=makeTrial('pendulum',2,60,10,true,a.samples,a.c,false),B=makeTrial('pendulum',2,60,10,true,b.samples,b.c,false);
+   const cd=compareData(A,B);
+   const ok=!cd.durSame&&cd.verdict.indexOf('FARKLI SÜRELER')>=0&&cd.verdict.indexOf('birebir aynı')<0&&Math.abs(cd.qBc-cd.qAc)<0.05;
+   return{ok,d:'Q '+fmt(A.metrics.Q,2)+'/'+fmt(B.metrics.Q,2)+' J · eşit sürede fark '+fmt(Math.abs(cd.qBc-cd.qAc),3)+' J'};}},
+ {n:'Eşit süreli iki deneme “birebir aynı” olarak yorumlanıyor',cr:5,w:3,f(){
+   const a=runHeadless('pendulum',2,60,10,true,5),b=runHeadless('pendulum',2,60,10,true,5);
+   const A=makeTrial('pendulum',2,60,10,true,a.samples,a.c,false),B=makeTrial('pendulum',2,60,10,true,b.samples,b.c,false);
+   const cd=compareData(A,B);
+   const ok=cd.durSame&&cd.verdict.indexOf('birebir aynı')>=0&&Math.abs(A.metrics.Q-B.metrics.Q)<1e-9;
+   return{ok,d:'süre 5,00 s · Q farkı '+Math.abs(A.metrics.Q-B.metrics.Q).toExponential(1)+' J'};}},
+ {n:'Karşılaştırma tablosu, süre satırı ve grafiği üretiliyor',cr:5,w:4,f(){
+   const o={A:S.trials.A,B:S.trials.B};
+   const a=runHeadless('ball',1,5,10,false,6),b=runHeadless('ball',1,5,10,true,6);
+   S.trials.A=makeTrial('ball',1,5,10,false,a.samples,a.c,false);S.trials.B=makeTrial('ball',1,5,10,true,b.samples,b.c,true);
+   renderCompare();$('cmp-graph-block').style.display='block';[cW,cH]=fit(cmpCv,cctx,cmpWrap);drawCompare();
+   const hasDur=$('cmp-body').textContent.indexOf('Deneme süresi')>=0;
+   const hasEq=$('cmp-body').textContent.indexOf('Eşit sürede ısı')>=0;
+   const px=cctx.getImageData(0,0,cmpCv.width,cmpCv.height).data;let drawn=false;
+   for(let i=3;i<px.length;i+=4)if(px[i]>0){drawn=true;break;}
+   const ok=hasDur&&hasEq&&cW>40&&drawn;
+   S.trials.A=o.A;S.trials.B=o.B;renderCompare();
+   return{ok,d:'süre satırı='+hasDur+' · eşit süre satırı='+hasEq+' · tuval '+Math.round(cW)+'×'+Math.round(cH)};}},
+ {n:'Tek dosya, dış kaynak yok, çevrimdışı çalışıyor',cr:6,w:5,f(){const ext=document.querySelectorAll('script[src],link[rel="stylesheet"][href],img[src^="http"]').length;let res=0;try{res=performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length;}catch(e){}const ok=ext===0&&res===0;return{ok,d:'dış başvuru='+ext+' · ağ kaydı='+res};}}
+];
+function snapshotLive(){return {sc:S.scenario,m:S.m,iv:S.iv,g:S.g,fric:S.fric,speed:S.speed,theme:S.theme,targetT:S.targetT};}
+function restoreLive(o){
+  S.scenario=o.sc;document.body.dataset.sc=o.sc;
+  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.sc===o.sc;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);});
+  S.m=o.m;S.iv=o.iv;S.g=o.g;S.fric=o.fric;
+  $('g-earth').classList.toggle('on',S.g===10);$('g-earth').setAttribute('aria-pressed',S.g===10);
+  $('g-moon').classList.toggle('on',S.g!==10);$('g-moon').setAttribute('aria-pressed',S.g!==10);
+  syncSliders();setSpeed(o.speed);setTheme(o.theme,true);setTarget(o.targetT);reinit(true);
+}
+function runTests(){
+  S.testing=true;
+  const results=[];const earn=RUBRIC.map(()=>0);
+  for(const t of TESTS){
+    let r;try{r=t.f();}catch(e){r={ok:false,d:'hata: '+(e&&e.message?e.message:e)};}
+    results.push({t,r});if(r.ok)earn[t.cr]+=t.w;
+  }
+  S.testing=false;
+  const total=earn.reduce((a,b)=>a+b,0);
+  const sc=$('ver-score');sc.textContent=total+'/100';
+  sc.className=total===100?'':(total>=80?'part':'bad');
+  const chip=$('test-chip');$('test-chip-val').textContent=total===100?'✓ 100/100':(total+'/100');
+  chip.className='chip '+(total===100?'pass':'fail');
+  const rub=$('rubric');rub.innerHTML='';
+  RUBRIC.forEach((r,i)=>{
+    const d=document.createElement('div');d.className='rub '+(earn[i]===r[1]?'full':earn[i]>0?'part':'zero');
+    d.innerHTML='<div class="rn">'+r[0]+'</div><div class="rv">'+earn[i]+' / '+r[1]+'</div>';rub.appendChild(d);
+  });
+  const list=$('ver-list');list.innerHTML='';
+  results.forEach(({t,r})=>{
+    const d=document.createElement('div');d.className='vt'+(r.ok?'':' bad');
+    d.innerHTML='<span class="vi">'+(r.ok?'✓':'✗')+'</span><span class="vn">'+t.n+'</span><span class="vd">'+r.d+'</span>';
+    list.appendChild(d);
+  });
+  return total;
+}
+
+/* ---- Bağlantılar ---- */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ensureAudio();clickS();setScenario(t.dataset.sc);}));
+$('play-btn').addEventListener('click',togglePlay);
+$('reset-btn').addEventListener('click',reset);
+$('step-btn').addEventListener('click',stepOnce);
+stageBox.addEventListener('click',togglePlay);
+$('slow-btn').addEventListener('click',toggleSlow);
+document.querySelectorAll('.spd-chip').forEach(c=>c.addEventListener('click',()=>{ensureAudio();clickS();const v=+c.dataset.spd;if(v>0.3)S.speedBeforeSlow=v;setSpeed(v);}));
+$('speed-range').addEventListener('input',e=>{const v=+e.target.value;if(v>0.3)S.speedBeforeSlow=v;setSpeed(v);});
+document.querySelectorAll('#target-seg button').forEach(b=>b.addEventListener('click',()=>{ensureAudio();clickS();setTarget(+b.dataset.t);
+  toast(S.targetT>0?('🎯 Hedef süre '+fmt(S.targetT,2)+' s — otomatik duraklar.'):'Süre sınırı kaldırıldı.');}));
+$('fric-btn').addEventListener('click',()=>{
+  ensureAudio();clickS();S.fric=!S.fric;
+  $('fric-btn').setAttribute('aria-checked',S.fric);$('fric-state').textContent=S.fric?'AÇIK':'KAPALI';
+  const b=$('hud-fric');b.textContent='Sürtünme: '+(S.fric?'AÇIK':'KAPALI');b.classList.toggle('hot',S.fric);
+  if(S.fric){setNow('Sürtünme AÇIK: mekanik enerji azalacak, ısı çubuğu büyüyecek. Toplam enerji sabit!','heat',true);S.lastHeatMsg=S.t;}
+  else if(S.phase==='settled')setNow('Isıya dönüşen enerji kendiliğinden geri dönmez. Yeni deneme için Sıfırla\'ya bas.','warn',true);
+  else if(S.Q>0.005)setNow('Sürtünme KAPALI: birikmiş ısı Q = '+fmt(S.Q)+' J korunur ve geri dönmez. Kalan mekanik enerji E₀ − Q = '+fmt(S.E0-S.Q)+' J artık sabit; cisim bu enerjiyle hareketini sürdürür.','info',true);
+  else setNow('Sürtünme KAPALI: mekanik enerji (Ek + Ep) sabit kalır, hareket ideal modelde sürer.','info',true);
+});
+$('mass-range').addEventListener('input',e=>{S.m=+e.target.value;rangeBg(e.target);
+  $('mass-out').textContent=fmt(S.m,SCEN[S.scenario].mCfg.step<1?1:0)+' kg';reinit(false);});
+$('mass-range').addEventListener('change',()=>toast('Kütle değişti — deneme yeni koşullarla başa sarıldı.'));
+$('init-range').addEventListener('input',e=>{S.iv=+e.target.value;rangeBg(e.target);
+  $('init-out').textContent=SCEN[S.scenario].iCfg.out(S.iv);reinit(false);});
+$('init-range').addEventListener('change',()=>toast('Başlangıç koşulu değişti — deneme başa sarıldı.'));
+function wireSwitch(id,key){$(id).addEventListener('click',()=>{ensureAudio();clickS();S[key]=!S[key];$(id).setAttribute('aria-checked',S[key]);if(key==='trail'&&!S.trail)S.trailPts.length=0;if(key==='particles'&&!S.particles)S.parts.length=0;store.set(key,S[key]);});}
+wireSwitch('trail-sw','trail');wireSwitch('vec-sw','vectors');wireSwitch('grid-sw','grid');wireSwitch('part-sw','particles');
+document.querySelectorAll('#theme-seg button').forEach(b=>b.addEventListener('click',()=>{ensureAudio();setTheme(b.dataset.th);}));
+function setG(g){if(S.g===g)return;ensureAudio();clickS();S.g=g;
+  $('g-earth').classList.toggle('on',g===10);$('g-earth').setAttribute('aria-pressed',g===10);
+  $('g-moon').classList.toggle('on',g!==10);$('g-moon').setAttribute('aria-pressed',g!==10);
+  reinit(false);toast(g===10?'Yerçekimi: Dünya · g = 10 N/kg':'Yerçekimi: Ay · g = 1,6 N/kg — aynı kütle, daha küçük ağırlık!');}
+$('g-earth').addEventListener('click',()=>setG(10));
+$('g-moon').addEventListener('click',()=>setG(1.6));
+$('rand-btn').addEventListener('click',()=>{ensureAudio();clickS();const sc=SCEN[S.scenario];
+  const rnd=c=>+(Math.round((c.min+Math.random()*(c.max-c.min))/c.step)*c.step).toFixed(3);
+  S.m=rnd(sc.mCfg);S.iv=rnd(sc.iCfg);syncSliders();reinit(true);
+  toast('🎲 Rastgele başlangıç koşulları yüklendi — Başlat ile dene!');});
+$('sound-btn').addEventListener('click',()=>{
+  ensureAudio();S.sound=!S.sound;store.set('sound',S.sound);
+  if(AC&&master)master.gain.setTargetAtTime(S.sound?0.5:0,AC.currentTime,0.02);
+  $('sound-btn').setAttribute('aria-pressed',S.sound);
+  $('sound-btn').setAttribute('aria-label',S.sound?'Sesi kapat':'Sesi aç');
+  $('sound-btn').classList.toggle('muted',!S.sound);
+  $('sound-on-ico').classList.toggle('hide',!S.sound);
+  $('sound-off-ico').classList.toggle('hide',S.sound);
+  $('sound-lbl').textContent=S.sound?'Ses Açık':'Ses Kapalı';
+  if(S.sound)clickS();
+});
+$('csv-btn').addEventListener('click',()=>{
+  ensureAudio();
+  if(S.samples.length<2){toast('Önce denemeyi başlat — enerji verisi toplansın.');return;}
+  const blob=new Blob([csvBuild(S.samples)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='enerji-lab-'+S.scenario+'.csv';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);clickS();toast('⬇ '+S.samples.length+' örnek indirildi — Excel\'de grafik çizebilirsin.');
+});
+$('png-btn').addEventListener('click',()=>{ensureAudio();const a=document.createElement('a');
+  a.href=stage.toDataURL('image/png');a.download='enerji-lab-'+S.scenario+'-t'+S.t.toFixed(1)+'.png';
+  document.body.appendChild(a);a.click();a.remove();clickS();toast('⬇ Sahne görüntüsü indirildi.');});
+$('save-a').addEventListener('click',()=>saveTrial('A'));
+$('save-b').addEventListener('click',()=>saveTrial('B'));
+$('load-a').addEventListener('click',()=>loadTrial('A'));
+$('load-b').addEventListener('click',()=>loadTrial('B'));
+$('cmp-sync').addEventListener('click',syncDurations);
+$('cmp-clear').addEventListener('click',()=>{ensureAudio();clickS();S.trials.A=null;S.trials.B=null;renderCompare();toast('Karşılaştırma temizlendi.');});
+$('cmp-csv').addEventListener('click',cmpCSV);
+$('ver-run').addEventListener('click',()=>{ensureAudio();const t=runTests();toast(t===100?'✓ Tüm doğrulama testleri geçti: 100/100':'Doğrulama: '+t+'/100 — ayrıntılar panelde.');});
+$('test-chip').addEventListener('click',()=>{$('verify').scrollIntoView({behavior:'smooth',block:'start'});});
+$('oral-toggle').addEventListener('click',()=>{ensureAudio();clickS();oralOpen=!oralOpen;
+  $('oral-toggle').textContent=oralOpen?'Tüm Yanıtları Gizle':'Tüm Yanıtları Göster';
+  document.querySelectorAll('.ocard').forEach(c=>{c.classList.toggle('open',oralOpen);
+    c.querySelector('.oh').textContent=oralOpen?'yanıt açık · gizlemek için tıkla':'yanıtı görmek için tıkla';});});
+$('oral-shuffle').addEventListener('click',()=>{ensureAudio();clickS();
+  const idx=ORAL.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=idx[i];idx[i]=idx[j];idx[j]=t;}
+  buildOral(idx);toast('Sözlü kartları karıştırıldı.');});
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toUpperCase();
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if(e.code==='Space'){if(tag==='BUTTON')return;e.preventDefault();if(!e.repeat)togglePlay();}
+  else if(e.key==='r'||e.key==='R'){if(!e.repeat)reset();}
+  else if(e.key==='f'||e.key==='F'){if(!e.repeat)$('fric-btn').click();}
+  else if(e.key==='s'||e.key==='S'){if(!e.repeat)toggleSlow();}
+  else if(e.key==='t'||e.key==='T'){if(!e.repeat)cycleTheme();}
+  else if(e.key==='.'){if(!e.repeat)stepOnce();}
+});
+document.addEventListener('pointerdown',()=>ensureAudio(),{once:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)last=performance.now();});
+
+/* ---- Ana döngü ---- */
+let last=performance.now();
+function frame(ts){
+  const dt=Math.min(0.05,Math.max(0,(ts-last)/1000));last=ts;
+  if(S.phase==='running'){
+    S.acc=Math.min(S.acc+dt*S.speed,0.12);
+    const h=SCEN[S.scenario].hstep;let guard=0;
+    while(S.acc>=h&&S.phase==='running'&&guard<400){stepSim(h);S.acc-=h;guard++;}
+  }
+  updateParticles(dt);render(dt);updateDOM();
+  requestAnimationFrame(frame);
+}
+
+/* ---- Başlat ---- */
+buildBars();buildOral();
+for(let i=0;i<14;i++)S.motes.push({sx:Math.random(),sy:Math.random(),sp:0.008+Math.random()*0.014,r:1+Math.random()*1.3,a:0.05+Math.random()*0.09});
+S.trail=store.get('trail',true);S.vectors=store.get('vectors',true);S.grid=store.get('grid',true);S.particles=store.get('particles',true);S.sound=store.get('sound',true);
+$('trail-sw').setAttribute('aria-checked',S.trail);$('vec-sw').setAttribute('aria-checked',S.vectors);
+$('grid-sw').setAttribute('aria-checked',S.grid);$('part-sw').setAttribute('aria-checked',S.particles);
+$('sound-btn').setAttribute('aria-pressed',S.sound);$('sound-btn').classList.toggle('muted',!S.sound);
+$('sound-on-ico').classList.toggle('hide',!S.sound);$('sound-off-ico').classList.toggle('hide',S.sound);
+$('sound-lbl').textContent=S.sound?'Ses Açık':'Ses Kapalı';
+setTheme(store.get('theme','night'),true);
+syncSliders();setSpeed(1);setTarget(store.get('targetT',0));reinit(true);renderCompare();
+fitAll();
+if('ResizeObserver' in window){
+  const ro=new ResizeObserver(()=>fitAll());
+  ro.observe(stageBox);ro.observe(graphWrap);ro.observe(cmpWrap);
+}else{window.addEventListener('resize',fitAll);}
+requestAnimationFrame(frame);
+setTimeout(()=>{try{runTests();}catch(e){$('test-chip-val').textContent='hata';$('test-chip').className='chip fail';}},450);
+})();
+</script>
+</body>
+</html>
