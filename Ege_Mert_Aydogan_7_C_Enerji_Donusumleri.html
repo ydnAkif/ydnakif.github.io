@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potansiyel ve Kinetik Enerji Laboratuvarı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at 50% 0%, #0b1936 0%, #030712 100%);
+            color: #f8fafc;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        /* Özel Kaydırma Çubuğu */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #040814; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Özel Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 2px;
+        }
+
+        /* Enerji Parlama Efektleri (P.E. Mavi, K.E. Yeşil, Isı Kırmızı, Mekanik Gökkuşağı) */
+        .glow-pe { box-shadow: 0 0 20px rgba(59, 130, 246, 0.55); }
+        .glow-ke { box-shadow: 0 0 20px rgba(34, 197, 94, 0.55); }
+        .glow-thermal { box-shadow: 0 0 16px rgba(239, 68, 68, 0.45); }
+
+        @keyframes rainbowShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .rainbow-bar {
+            background: linear-gradient(180deg, #a855f7, #ef4444, #eab308, #22c55e, #3b82f6);
+            background-size: 200% 200%;
+            animation: rainbowShift 4s ease infinite;
+            box-shadow: 0 0 22px rgba(168, 85, 247, 0.5), 0 0 12px rgba(34, 197, 94, 0.4);
+        }
+        .rainbow-text {
+            background: linear-gradient(90deg, #60a5fa, #4ade80, #facc15, #f87171, #c084fc);
+            background-size: 200% auto;
+            animation: rainbowShift 4s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .rainbow-badge {
+            background: linear-gradient(90deg, rgba(59,130,246,0.18), rgba(34,197,94,0.18), rgba(234,179,8,0.18), rgba(239,68,68,0.18), rgba(168,85,247,0.18));
+            border: 1px solid rgba(192, 132, 252, 0.45);
+        }
+        canvas { touch-action: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Üst Başlık ve Mod Sekmeleri -->
+    <header class="bg-slate-950/75 border-b border-slate-800/70 backdrop-blur-xl sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-3">
+            <!-- Marka & Başlık -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl p-[2px] shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #22c55e, #eab308, #ef4444, #a855f7);">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <span class="text-lg">🌌</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight rainbow-text">
+                            ENERJİ KORUNUMU LABORATUVARI
+                        </h1>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            ✨ %100 Sürtünmesiz İdeal Ortam
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400">Gece Gölü Atmosferinde Potansiyel (<span class="text-blue-400 font-semibold">P.E.</span>) ↔ Kinetik (<span class="text-green-400 font-semibold">K.E.</span>) Dönüşümü</p>
+                </div>
+            </div>
+
+            <!-- Parkur / Mod Seçici Sekmeler -->
+            <nav class="flex flex-wrap justify-center gap-1.5 bg-slate-900/75 p-1.5 rounded-xl border border-slate-800/80 backdrop-blur-md" id="modeTabs">
+                <button data-mode="skate" class="mode-btn active px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm">
+                    🛹 Kaykay Pisti
+                </button>
+                <button data-mode="coaster" class="mode-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+                    🎢 Roller Coaster
+                </button>
+                <button data-mode="pendulum" class="mode-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+                    🕰️ Basit Sarkaç
+                </button>
+                <button data-mode="freefall" class="mode-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent">
+                    🏀 Serbest Düşüş
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Izgarası -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-4 grid grid-cols-1 xl:grid-cols-12 gap-4">
+        
+        <!-- SOL & ORTA: Simülasyon Sahnesi ve Zaman Grafiği (8 Kolon) -->
+        <div class="xl:col-span-8 flex flex-col gap-4">
+            
+            <!-- Ana Simülasyon Canvas Kartı -->
+            <div class="relative bg-slate-950/85 rounded-2xl border border-slate-800/80 overflow-hidden shadow-2xl flex flex-col backdrop-blur-md">
+                <!-- Üst Bilgi Şeridi (Canlı Telemetri HUD) -->
+                <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-950/90 border-b border-slate-800/80 text-xs font-mono">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                            <span id="hudModeTitle" class="font-sans font-semibold">Parabolik Kaykay Pisti</span>
+                        </span>
+                        <span class="hidden sm:inline text-slate-700">|</span>
+                        <span class="text-blue-300 font-bold bg-blue-500/15 px-2 py-0.5 rounded border border-blue-500/30">h = <span id="hudHeight">0.00</span> m</span>
+                        <span class="text-green-300 font-bold bg-green-500/15 px-2 py-0.5 rounded border border-green-500/30">v = <span id="hudSpeed">0.00</span> m/s</span>
+                    </div>
+                    <!-- Hızlı Konum Butonları (Tam 0 Testleri İçin) -->
+                    <div class="flex items-center gap-1.5 font-sans">
+                        <button id="btnPlaceTop" title="Tepeye Koy: P.E. Maksimum, K.E. = 0" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/35 transition-all">
+                            ⛰️ Tepeye Koy (K.E.=0)
+                        </button>
+                        <button id="btnPlaceBottom" title="En Alta Durdur: Hem P.E.=0 Hem K.E.=0" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 transition-all">
+                            🌊 Sıfır Noktası (P.E.=0 & K.E.=0)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Kapsayıcı -->
+                <div class="relative w-full h-[400px] sm:h-[460px] bg-[#030712]" id="simContainer">
+                    <canvas id="simCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+                    
+                    <!-- Yüzen Oynatma Kontrolleri (Alt Orta) -->
+                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-slate-950/85 backdrop-blur-xl px-3 py-1.5 rounded-full border border-slate-700/70 shadow-2xl">
+                        <button id="btnPlayPause" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold text-xs transition-all">
+                            <span id="playIcon">⏸ Duraklat</span>
+                        </button>
+                        <button id="btnStep" title="Adım İlerle" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+                        </button>
+                        <button id="btnReset" title="Sıfırla" class="p-1.5 rounded-full hover:bg-slate-800 text-slate-300 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                        <div class="h-4 w-[1px] bg-slate-700 mx-1"></div>
+                        <button id="btnSlowMo" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 transition-all">
+                            🐢 Ağır Çekim (1x)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alt Bölüm: Canlı Zaman-Enerji Dalga Grafiği ve Anlık Fizik Yorumcusu -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Zaman-Enerji Grafiği (7 Kolon) -->
+                <div class="md:col-span-7 bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-800/80 p-3.5 flex flex-col justify-between shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                            <span>📈 Zaman-Enerji Dalga Grafiği</span>
+                        </h3>
+                        <div class="flex items-center gap-2.5 text-[11px] font-semibold">
+                            <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500"></span>P.E.</span>
+                            <span class="flex items-center gap-1 text-green-400"><span class="w-2.5 h-2.5 rounded-sm bg-green-500"></span>K.E.</span>
+                            <span class="flex items-center gap-1 text-red-400"><span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span>Isı (0)</span>
+                            <span class="flex items-center gap-1 rainbow-text font-bold"><span class="w-2.5 h-2.5 rounded-sm" style="background: linear-gradient(90deg,#3b82f6,#22c55e,#eab308,#ef4444,#a855f7)"></span>Mekanik</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-36 bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden">
+                        <canvas id="graphCanvas" class="w-full h-full block"></canvas>
+                    </div>
+                </div>
+
+                <!-- Anlık Fizik Analizi & Formül Kartı (5 Kolon) -->
+                <div class="md:col-span-5 bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-800/80 p-3.5 flex flex-col justify-between shadow-lg">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                                <span>🧠 Anlık Fizik Analizi</span>
+                            </h3>
+                            <span id="stateBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/35">
+                                MAKSİMUM YÜKSEKLİK
+                            </span>
+                        </div>
+                        <p id="physicsExplanation" class="text-xs text-slate-300 leading-relaxed bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 min-h-[74px]">
+                            Tepe noktasında cisim anlık olarak durur (<strong>v = 0 m/s</strong>, <strong>K.E. = 0 J</strong>). Tüm mekanik enerji <strong>Potansiyel Enerji</strong> olarak depolanmıştır.
+                        </p>
+                    </div>
+
+                    <!-- Canlı Formül Hesaplama Kutusu -->
+                    <div id="formulaBox" class="mt-2.5 pt-2.5 border-t border-slate-800/80 grid grid-cols-2 gap-2 font-mono text-[11px]">
+                        <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2">
+                            <div class="text-blue-400 font-bold">P.E. = m · g · h</div>
+                            <div id="formulaPE" class="text-slate-200 mt-0.5 truncate">5 × 9.81 × 6.0 = 294 J</div>
+                        </div>
+                        <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                            <div class="text-green-400 font-bold">K.E. = ½ · m · v²</div>
+                            <div id="formulaKE" class="text-slate-200 mt-0.5 truncate">0.5 × 5 × 0.0² = 0 J</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAĞ KOLON: Canlı Enerji Barları ve Fizik Parametre Kontrolleri (4 Kolon) -->
+        <div class="xl:col-span-4 flex flex-col gap-4">
+            
+            <!-- Canlı Enerji Göstergeleri (Enerji Barları) -->
+            <div class="bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4 shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <span>⚡ Canlı Enerji Dağılımı (Joule)</span>
+                    </h2>
+                    <span class="text-xs font-mono font-bold rainbow-badge px-2.5 py-0.5 rounded-lg">
+                        <span class="rainbow-text">E<sub>mekanik</sub> = <span id="valTotal">0.0</span> J</span>
+                    </span>
+                </div>
+
+                <!-- Dikey Enerji Sütunları -->
+                <div class="grid grid-cols-4 gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/80 h-56 items-end">
+                    <!-- Potansiyel Enerji (MAVİ) -->
+                    <div class="flex flex-col items-center h-full justify-end">
+                        <span id="valPE" class="text-[11px] font-mono font-bold text-blue-400 mb-1">0.0 J</span>
+                        <div class="w-full max-w-[46px] h-36 bg-slate-900/95 rounded-t-lg border border-blue-950 relative overflow-hidden flex items-end">
+                            <div id="barPE" class="w-full bg-gradient-to-t from-blue-700 via-blue-500 to-sky-400 transition-all duration-75 glow-pe rounded-t-sm" style="height: 0%"></div>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-blue-400 mt-2">P.E.</span>
+                        <span class="text-[9px] text-slate-400">Potansiyel</span>
+                    </div>
+
+                    <!-- Kinetik Enerji (YEŞİL) -->
+                    <div class="flex flex-col items-center h-full justify-end">
+                        <span id="valKE" class="text-[11px] font-mono font-bold text-green-400 mb-1">0.0 J</span>
+                        <div class="w-full max-w-[46px] h-36 bg-slate-900/95 rounded-t-lg border border-green-950 relative overflow-hidden flex items-end">
+                            <div id="barKE" class="w-full bg-gradient-to-t from-green-700 via-green-500 to-emerald-300 transition-all duration-75 glow-ke rounded-t-sm" style="height: 0%"></div>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-green-400 mt-2">K.E.</span>
+                        <span class="text-[9px] text-slate-400">Kinetik</span>
+                    </div>
+
+                    <!-- Isı Enerjisi (KIRMIZI - DAİMA 0.0 J) -->
+                    <div class="flex flex-col items-center h-full justify-end">
+                        <span id="valThermal" class="text-[11px] font-mono font-bold text-red-400 mb-1">0.0 J</span>
+                        <div class="w-full max-w-[46px] h-36 bg-slate-900/95 rounded-t-lg border border-red-950/80 relative overflow-hidden flex items-end">
+                            <div id="barThermal" class="w-full bg-gradient-to-t from-red-700 to-red-400 transition-all duration-75 glow-thermal rounded-t-sm" style="height: 0%"></div>
+                            <span class="w-full text-center text-[9px] font-mono text-red-400/70 pb-1">0.0 J</span>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-red-400 mt-2">Isı</span>
+                        <span class="text-[9px] text-slate-400">Sürtünmesiz</span>
+                    </div>
+
+                    <!-- Mekanik Enerji (RENGARENK GÖKKUŞAĞI) -->
+                    <div class="flex flex-col items-center h-full justify-end">
+                        <span id="valTotalBar" class="text-[11px] font-mono font-bold rainbow-text mb-1">0.0 J</span>
+                        <div class="w-full max-w-[46px] h-36 bg-slate-900/95 rounded-t-lg border border-purple-900/60 relative overflow-hidden flex items-end">
+                            <div id="barTotal" class="w-full rainbow-bar transition-all duration-75 rounded-t-sm" style="height: 0%"></div>
+                        </div>
+                        <span class="text-[11px] font-extrabold rainbow-text mt-2">Mekanik</span>
+                        <span class="text-[9px] text-slate-400">P.E. + K.E.</span>
+                    </div>
+                </div>
+
+                <!-- Yüzdelik Oran Çubuğu -->
+                <div class="mt-3.5">
+                    <div class="flex justify-between text-[11px] font-mono font-semibold mb-1.5">
+                        <span class="text-blue-400">P.E: %<span id="pctPE">0</span></span>
+                        <span class="text-green-400">K.E: %<span id="pctKE">0</span></span>
+                        <span class="text-red-400">Isı: %0</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden flex border border-slate-800">
+                        <div id="splitPE" class="bg-blue-500 h-full transition-all duration-75" style="width: 50%"></div>
+                        <div id="splitKE" class="bg-green-500 h-full transition-all duration-75" style="width: 50%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fizik Parametreleri ve Ortam Kontrolleri (Sürtünme Tamamen Kaldırıldı) -->
+            <div class="bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4 shadow-xl flex-1 flex flex-col justify-between gap-4">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                            <span>🎛️ Ortam ve Cisim Parametreleri</span>
+                        </h2>
+                        <span class="text-[10px] font-mono font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/25">
+                            μ = 0 (Sürtünmesiz)
+                        </span>
+                    </div>
+
+                    <!-- Kütle (m) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="font-medium text-slate-300">Cisim Kütlesi (<span class="font-mono text-green-400">m</span>)</span>
+                            <span class="font-mono font-bold text-green-300 bg-slate-950/90 px-2 py-0.5 rounded border border-slate-800"><span id="lblMass">5.0</span> kg</span>
+                        </div>
+                        <input type="range" id="sliderMass" min="1" max="20" step="0.5" value="5" class="w-full">
+                    </div>
+
+                    <!-- Yerçekimi İvmesi (g) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="font-medium text-slate-300">Yerçekimi İvmesi (<span class="font-mono text-blue-400">g</span>)</span>
+                            <span class="font-mono font-bold text-blue-300 bg-slate-950/90 px-2 py-0.5 rounded border border-slate-800"><span id="lblGravity">9.81</span> m/s²</span>
+                        </div>
+                        <input type="range" id="sliderGravity" min="1.5" max="25" step="0.01" value="9.81" class="w-full mb-2">
+                        <!-- Gezegen Kısayolları -->
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button data-g="1.62" class="planet-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-slate-950/90 border border-slate-800 hover:border-slate-600 text-slate-300 transition-all">
+                                🌙 Ay (1.62)
+                            </button>
+                            <button data-g="9.81" class="planet-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-blue-500/20 border border-blue-500/45 text-blue-300 transition-all">
+                                🌍 Dünya (9.81)
+                            </button>
+                            <button data-g="24.79" class="planet-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-slate-950/90 border border-slate-800 hover:border-slate-600 text-slate-300 transition-all">
+                                🪐 Jüpiter (24.8)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- İdeal Korunum Bilgi Kartı -->
+                    <div class="bg-slate-950/85 border border-slate-800/90 rounded-xl p-3 text-xs space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-200">🌈 Mekanik Enerji Korunumu</span>
+                            <span class="font-mono text-[11px] text-emerald-400">E<sub>mek</sub> = Sabit</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Bu laboratuvarda sürtünme <strong class="text-red-400">hiç yoktur (0 J)</strong>. Cisim en yukarı çıktığında hızı tam <strong class="text-green-400">0.00 m/s</strong> olur, en aşağı indiğinde <strong class="text-blue-400">P.E. = 0 J</strong> olur ve hızı zirveye çıkar.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Görsel Katman Anahtarları (Toggles) -->
+                <div class="pt-3 border-t border-slate-800/80">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Görsel Yardımcılar</span>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-2 bg-slate-950/85 p-2 rounded-lg border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="chkVector" checked class="rounded text-green-500 focus:ring-0 bg-slate-800 border-slate-600">
+                            <span>Hız Vektörü (<span class="text-green-400 font-mono">v</span>)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/85 p-2 rounded-lg border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="chkHeightLine" checked class="rounded text-blue-500 focus:ring-0 bg-slate-800 border-slate-600">
+                            <span>Yükseklik (<span class="text-blue-400 font-mono">h</span>)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/85 p-2 rounded-lg border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="chkTrail" checked class="rounded text-purple-500 focus:ring-0 bg-slate-800 border-slate-600">
+                            <span>Işıltılı Enerji İzi</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950/85 p-2 rounded-lg border border-slate-800 cursor-pointer hover:border-slate-700">
+                            <input type="checkbox" id="chkFormulas" checked class="rounded text-amber-500 focus:ring-0 bg-slate-800 border-slate-600">
+                            <span>Canlı Formüller</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * POTANSİYEL VE KİNETİK ENERJİ FİZİK MOTORU (SÜRTÜNMESİZ İDEAL ORTAM)
+         * Renk Şeması:
+         * - P.E. (Potansiyel Enerji): Canlı Parlak Mavi (#3b82f6)
+         * - K.E. (Kinetik Enerji): Canlı Parlak Yeşil (#22c55e)
+         * - Isı Enerjisi: Kırmızı (#ef4444) - Daima 0.0 J (Sürtünme hiç yok)
+         * - Mekanik Enerji: Rengarenk Gökkuşağı Gradyanı
+         */
+        const simCanvas = document.getElementById('simCanvas');
+        const ctx = simCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const gCtx = graphCanvas.getContext('2d');
+
+        // Gece Gölü Atmosferi Parçacıkları (Yıldızlar, Kayan Yıldızlar ve Ateşböcekleri)
+        const nightScene = {
+            stars: Array.from({ length: 110 }, () => ({
+                x: Math.random(),
+                y: Math.random() * 0.62,
+                size: Math.random() * 1.7 + 0.4,
+                phase: Math.random() * Math.PI * 2,
+                speed: Math.random() * 2.2 + 0.8
+            })),
+            fireflies: Array.from({ length: 24 }, () => ({
+                x: Math.random(),
+                y: 0.42 + Math.random() * 0.50,
+                vx: (Math.random() - 0.5) * 0.016,
+                vy: (Math.random() - 0.5) * 0.012,
+                phase: Math.random() * Math.PI * 2,
+                size: Math.random() * 2.2 + 1.4
+            })),
+            shootingStars: [],
+            nextShootingStar: 2.0,
+            time: 0
+        };
+
+        // Fizik Durumu (State - Sürtünmesiz İdeal Sistem)
+        const state = {
+            mode: 'skate', // 'skate', 'coaster', 'pendulum', 'freefall'
+            isPlaying: true,
+            slowMo: false,
+            mass: 5.0,       // kg
+            gravity: 9.81,   // m/s^2
+            
+            // Uzay Ölçeklendirme (Metre cinsinden sanal dünya)
+            worldWidth: 16,  // -8m ile +8m arası
+            worldHeight: 10, // 0m ile 10m arası
+            
+            // Cismin anlık fiziksel büyüklükleri
+            x: -5.5,         // metre
+            y: 6.05,         // metre (yerden yükseklik h)
+            vx: 0,           // m/s
+            vy: 0,           // m/s
+            v: 0,            // skaler sürat (m/s)
+            dir: 1,          // hareket yönü (+1 sağa, -1 sola)
+            
+            // Sarkaç özel parametreleri
+            pendulumLength: 6.2, // metre
+            pendulumPivotY: 8.4, // metre
+            theta: -Math.PI / 3.2, // radyan (düşeyle yapılan açı)
+            omega: 0,            // açısal hız (rad/s)
+            
+            // Enerji Değerleri (Joule) - Sürtünme ve Isı DAİMA 0.0 J!
+            pe: 0,
+            ke: 0,
+            thermal: 0,
+            mechEnergy: 0,
+            initialTotalEnergy: 0,
+            
+            // Görsel Efektler
+            isDragging: false,
+            trail: [],         // {x, y, keRatio}
+            energyHistory: [], // grafik verileri
+            peakFlash: 0,      // tepe noktası ışıltısı
+            bottomFlash: 0,    // dip noktası ışıltısı
+            
+            // Görsel Seçenekler
+            showVector: true,
+            showHeightLine: true,
+            showTrail: true,
+            showFormulas: true
+        };
+
+        // Mod Başlıkları
+        const modeTitles = {
+            skate: 'Parabolik Kaykay Pisti (U-Rampa)',
+            coaster: 'İnişli Çıkışlı Roller Coaster Pisti',
+            pendulum: 'Basit Sarkaç Sistemi',
+            freefall: 'Tam Esnek Serbest Düşüş'
+        };
+
+        // Pist Fonksiyonları y(x) (Metre cinsinden, en dip nokta tam y = 0.00m)
+        function getTrackY(x, mode = state.mode) {
+            if (mode === 'skate') {
+                return 0.2 * x * x;
+            } else if (mode === 'coaster') {
+                const clampedX = Math.max(-7.2, Math.min(7.2, x));
+                const val = 0.016 * Math.pow(clampedX, 4) - 0.38 * Math.pow(clampedX, 2) - 0.22 * clampedX + 4.6492;
+                return Math.max(0, val);
+            }
+            return 0;
+        }
+
+        function getTrackSlope(x, mode = state.mode) {
+            const dx = 0.0005;
+            return (getTrackY(x + dx, mode) - getTrackY(x - dx, mode)) / (2 * dx);
+        }
+
+        // Dünya Koordinatlarını (metre) Canvas Piksellerine Çevirme
+        function worldToScreen(wx, wy) {
+            const padX = 55;
+            const padTop = 35;
+            const padBottom = 56;
+            const usableW = simCanvas.width - padX * 2;
+            const usableH = simCanvas.height - padTop - padBottom;
+
+            const sx = padX + ((wx + state.worldWidth / 2) / state.worldWidth) * usableW;
+            const sy = simCanvas.height - padBottom - (wy / state.worldHeight) * usableH;
+            return { x: sx, y: sy };
+        }
+
+        // Canvas Piksellerini Dünya Koordinatlarına (metre) Çevirme
+        function screenToWorld(sx, sy) {
+            const padX = 55;
+            const padTop = 35;
+            const padBottom = 56;
+            const usableW = simCanvas.width - padX * 2;
+            const usableH = simCanvas.height - padTop - padBottom;
+
+            const wx = ((sx - padX) / usableW) * state.worldWidth - state.worldWidth / 2;
+            const wy = ((simCanvas.height - padBottom - sy) / usableH) * state.worldHeight;
+            return { x: wx, y: wy };
+        }
+
+        // Simülasyonu Başlangıç Durumuna Sıfırla
+        function resetSimulation() {
+            state.trail = [];
+            state.energyHistory = [];
+            state.thermal = 0;
+            state.peakFlash = 0;
+            state.bottomFlash = 0;
+
+            if (state.mode === 'skate') {
+                state.x = -5.5;
+                state.y = getTrackY(state.x);
+                state.vx = 0;
+                state.vy = 0;
+                state.v = 0;
+                state.dir = 1;
+            } else if (state.mode === 'coaster') {
+                state.x = -6.5;
+                state.y = getTrackY(state.x);
+                state.vx = 0;
+                state.vy = 0;
+                state.v = 0;
+                state.dir = 1;
+            } else if (state.mode === 'pendulum') {
+                state.pendulumLength = 6.2;
+                state.pendulumPivotY = 8.4;
+                state.theta = -Math.PI / 3.2;
+                state.omega = 0;
+                state.dir = 1;
+                updatePendulumCartesian();
+            } else if (state.mode === 'freefall') {
+                state.x = 0;
+                state.y = 8.0;
+                state.vx = 0;
+                state.vy = 0;
+                state.v = 0;
+            }
+
+            recalculateEnergies(true);
+        }
+
+        // Hızlı Konum: Tepeye Koy (K.E. = 0, P.E. Maksimum)
+        function placeAtTop() {
+            state.trail = [];
+            state.energyHistory = [];
+            state.vx = 0;
+            state.vy = 0;
+            state.v = 0;
+            state.omega = 0;
+            state.dir = 1;
+            state.peakFlash = 1.0;
+
+            if (state.mode === 'skate') {
+                state.x = -5.5;
+                state.y = getTrackY(state.x);
+            } else if (state.mode === 'coaster') {
+                state.x = -6.5;
+                state.y = getTrackY(state.x);
+            } else if (state.mode === 'pendulum') {
+                state.theta = -Math.PI / 3.0;
+                updatePendulumCartesian();
+            } else if (state.mode === 'freefall') {
+                state.x = 0;
+                state.y = 8.5;
+            }
+            recalculateEnergies(true);
+        }
+
+        // Hızlı Konum: Sıfır Noktası (Hem P.E. = 0 Hem K.E. = 0!)
+        function placeAtZeroZero() {
+            state.trail = [];
+            state.energyHistory = [];
+            state.vx = 0;
+            state.vy = 0;
+            state.v = 0;
+            state.omega = 0;
+            state.bottomFlash = 1.0;
+
+            if (state.mode === 'skate') {
+                state.x = 0;
+                state.y = 0;
+            } else if (state.mode === 'coaster') {
+                state.x = 3.575; // Vadinin en dip noktası (y = 0)
+                state.y = 0;
+            } else if (state.mode === 'pendulum') {
+                state.theta = 0;
+                updatePendulumCartesian();
+            } else if (state.mode === 'freefall') {
+                state.x = 0;
+                state.y = 0;
+            }
+            recalculateEnergies(true);
+        }
+
+        function updatePendulumCartesian() {
+            state.x = state.pendulumLength * Math.sin(state.theta);
+            state.y = state.pendulumPivotY - state.pendulumLength * Math.cos(state.theta);
+            const speed = Math.abs(state.omega * state.pendulumLength);
+            state.v = speed;
+            state.vx = state.omega * state.pendulumLength * Math.cos(state.theta);
+            state.vy = state.omega * state.pendulumLength * Math.sin(state.theta);
+        }
+
+        function getEffectiveHeight() {
+            if (state.mode === 'pendulum') {
+                const lowestY = state.pendulumPivotY - state.pendulumLength;
+                const h = state.y - lowestY;
+                return h < 0.002 ? 0 : h;
+            }
+            return state.y < 0.002 ? 0 : state.y;
+        }
+
+        // Enerjileri Hesapla ve Senkronize Et (Isı = 0, Mekanik Enerji = P.E. + K.E.)
+        function recalculateEnergies(resetTotal = false) {
+            const effectiveHeight = getEffectiveHeight();
+
+            state.pe = state.mass * state.gravity * effectiveHeight;
+            state.ke = 0.5 * state.mass * state.v * state.v;
+            state.thermal = 0; // Sürtünme hiç yok!
+
+            if (state.pe < 0.01) state.pe = 0;
+            if (state.ke < 0.01) state.ke = 0;
+
+            if (resetTotal) {
+                state.mechEnergy = state.pe + state.ke;
+                state.initialTotalEnergy = Math.max(state.mechEnergy, 1);
+            } else {
+                // Kusursuz enerji korunumu garantisi
+                if (state.mechEnergy > 0.001) {
+                    state.ke = Math.max(0, state.mechEnergy - state.pe);
+                } else {
+                    state.pe = 0;
+                    state.ke = 0;
+                }
+            }
+        }
+
+        // Fizik Adımı (Sürtünmesiz Analitik Enerji Korunumu)
+        function stepPhysics(dt) {
+            nightScene.time += dt;
+            updateAtmosphere(dt);
+
+            state.peakFlash = Math.max(0, state.peakFlash - dt * 1.8);
+            state.bottomFlash = Math.max(0, state.bottomFlash - dt * 1.8);
+
+            if (state.isDragging) return;
+
+            const prevY = getEffectiveHeight();
+            const subSteps = 24;
+            const subDt = dt / subSteps;
+
+            for (let i = 0; i < subSteps; i++) {
+                if (state.mode === 'skate' || state.mode === 'coaster') {
+                    stepTrackPhysics(subDt);
+                } else if (state.mode === 'pendulum') {
+                    stepPendulumPhysics(subDt);
+                } else if (state.mode === 'freefall') {
+                    stepFreeFallPhysics(subDt);
+                }
+            }
+
+            recalculateEnergies(false);
+
+            // En alt noktadan geçişte görsel ışıltı tetikle
+            const currY = getEffectiveHeight();
+            if (prevY > 0.05 && currY <= 0.05 && state.mechEnergy > 1) {
+                state.bottomFlash = 1.0;
+            }
+
+            // Işıltılı Enerji İzi (Trail) Kaydı
+            if (state.showTrail && (state.v > 0.02 || state.trail.length === 0)) {
+                const keRatio = state.mechEnergy > 0.01 ? state.ke / state.mechEnergy : 0;
+                state.trail.push({ x: state.x, y: state.y, ratio: keRatio });
+                if (state.trail.length > 90) state.trail.shift();
+            }
+
+            // Grafik Geçmişi Kaydı
+            state.energyHistory.push({
+                pe: state.pe,
+                ke: state.ke,
+                thermal: 0,
+                total: state.mechEnergy
+            });
+            if (state.energyHistory.length > 220) {
+                state.energyHistory.shift();
+            }
+        }
+
+        function updateAtmosphere(dt) {
+            // Ateşböcekleri
+            for (const f of nightScene.fireflies) {
+                f.x += f.vx * dt;
+                f.y += f.vy * dt;
+                f.phase += dt * 3.4;
+                if (f.x < 0.04 || f.x > 0.96) f.vx *= -1;
+                if (f.y < 0.35 || f.y > 0.92) f.vy *= -1;
+            }
+
+            // Kayan Yıldızlar (Shooting Stars)
+            nightScene.nextShootingStar -= dt;
+            if (nightScene.nextShootingStar <= 0) {
+                nightScene.shootingStars.push({
+                    x: 0.15 + Math.random() * 0.65,
+                    y: 0.05 + Math.random() * 0.22,
+                    vx: 0.25 + Math.random() * 0.15,
+                    vy: 0.12 + Math.random() * 0.08,
+                    life: 1.0
+                });
+                nightScene.nextShootingStar = 4.5 + Math.random() * 5.0;
+            }
+
+            for (let i = nightScene.shootingStars.length - 1; i >= 0; i--) {
+                const ss = nightScene.shootingStars[i];
+                ss.x += ss.vx * dt;
+                ss.y += ss.vy * dt;
+                ss.life -= dt * 1.4;
+                if (ss.life <= 0) nightScene.shootingStars.splice(i, 1);
+            }
+        }
+
+        // Pist Üzerinde Sürtünmesiz Analitik Enerji Korumalı Hareket
+        function stepTrackPhysics(dt) {
+            const limitX = state.mode === 'skate' ? 6.8 : 7.1;
+            if (state.mechEnergy <= 0.001) {
+                state.v = 0;
+                state.vx = 0;
+                state.vy = 0;
+                return;
+            }
+
+            const slope = getTrackSlope(state.x);
+            const cosTheta = 1 / Math.sqrt(1 + slope * slope);
+            const sinTheta = slope * cosTheta;
+
+            const currentPE = state.mass * state.gravity * Math.max(0, state.y);
+            const availableKE = state.mechEnergy - currentPE;
+
+            // Tepe noktasına ulaşıldı -> Hız TAM 0 olur, yön tersine döner!
+            if (availableKE <= 0) {
+                state.dir = Math.abs(slope) > 0.001 ? (slope > 0 ? -1 : 1) : -state.dir;
+                state.v = 0;
+                state.vx = 0;
+                state.vy = 0;
+                state.peakFlash = 1.0;
+
+                const accel = Math.abs(state.gravity * sinTheta);
+                const ds = 0.5 * accel * dt * dt;
+                state.x += state.dir * ds * cosTheta;
+                state.x = Math.max(-limitX, Math.min(limitX, state.x));
+                state.y = getTrackY(state.x);
+                return;
+            }
+
+            state.v = Math.sqrt((2 * availableKE) / state.mass);
+            const ds = state.dir * state.v * dt;
+            let nextX = state.x + ds * cosTheta;
+
+            if (nextX <= -limitX) {
+                nextX = -limitX;
+                state.dir = 1;
+                state.v = 0;
+                state.peakFlash = 1.0;
+            } else if (nextX >= limitX) {
+                nextX = limitX;
+                state.dir = -1;
+                state.v = 0;
+                state.peakFlash = 1.0;
+            }
+
+            const nextY = getTrackY(nextX);
+            const nextPE = state.mass * state.gravity * nextY;
+
+            // Tepe noktasını aşma kontrolü: Tam dönüm noktasına kenetle ve hızı 0.00 yap
+            if (nextPE >= state.mechEnergy) {
+                let lo = state.x;
+                let hi = nextX;
+                for (let k = 0; k < 12; k++) {
+                    const mid = 0.5 * (lo + hi);
+                    const midPE = state.mass * state.gravity * getTrackY(mid);
+                    if (midPE < state.mechEnergy) lo = mid;
+                    else hi = mid;
+                }
+                state.x = lo;
+                state.y = getTrackY(state.x);
+                state.v = 0;
+                state.vx = 0;
+                state.vy = 0;
+                state.dir *= -1;
+                state.peakFlash = 1.0;
+                return;
+            }
+
+            state.x = nextX;
+            state.y = nextY;
+
+            const finalSlope = getTrackSlope(state.x);
+            const finalCos = 1 / Math.sqrt(1 + finalSlope * finalSlope);
+            const finalSin = finalSlope * finalCos;
+            const finalKE = Math.max(0, state.mechEnergy - state.mass * state.gravity * state.y);
+            state.v = Math.sqrt((2 * finalKE) / state.mass);
+            state.vx = state.dir * state.v * finalCos;
+            state.vy = state.dir * state.v * finalSin;
+        }
+
+        // Basit Sarkaç Fiziği (Sürtünmesiz Analitik Enerji Korumalı)
+        function stepPendulumPhysics(dt) {
+            const L = state.pendulumLength;
+            const g = state.gravity;
+            const lowestY = state.pendulumPivotY - L;
+
+            if (state.mechEnergy <= 0.001) {
+                state.theta = 0;
+                state.omega = 0;
+                updatePendulumCartesian();
+                state.v = 0;
+                return;
+            }
+
+            const currentH = Math.max(0, state.y - lowestY);
+            const currentPE = state.mass * g * currentH;
+            const availableKE = state.mechEnergy - currentPE;
+
+            if (availableKE <= 0) {
+                state.dir = state.theta > 0 ? -1 : 1;
+                state.omega = 0;
+                state.peakFlash = 1.0;
+                const angularAccel = -(g / L) * Math.sin(state.theta);
+                state.theta += 0.5 * angularAccel * dt * dt;
+                updatePendulumCartesian();
+                state.v = 0;
+                return;
+            }
+
+            const speed = Math.sqrt((2 * availableKE) / state.mass);
+            state.omega = state.dir * (speed / L);
+            const nextTheta = state.theta + state.omega * dt;
+            const nextH = L * (1 - Math.cos(nextTheta));
+            const nextPE = state.mass * g * nextH;
+
+            if (nextPE >= state.mechEnergy) {
+                const maxCos = Math.max(-1, Math.min(1, 1 - state.mechEnergy / (state.mass * g * L)));
+                const maxTheta = Math.acos(maxCos);
+                state.theta = Math.sign(nextTheta) * maxTheta;
+                state.omega = 0;
+                updatePendulumCartesian();
+                state.v = 0;
+                state.vx = 0;
+                state.vy = 0;
+                state.dir *= -1;
+                state.peakFlash = 1.0;
+                return;
+            }
+
+            state.theta = nextTheta;
+            updatePendulumCartesian();
+
+            const exactH = Math.max(0, state.y - lowestY);
+            const exactKE = Math.max(0, state.mechEnergy - state.mass * g * exactH);
+            const exactV = Math.sqrt((2 * exactKE) / state.mass);
+            state.omega = state.dir * (exactV / L);
+            updatePendulumCartesian();
+        }
+
+        // Serbest Düşüş ve Tam Esnek Zıplama (Kayıpsız Enerji Korunumu)
+        function stepFreeFallPhysics(dt) {
+            if (state.mechEnergy <= 0.001) {
+                state.y = 0;
+                state.v = 0;
+                state.vx = 0;
+                state.vy = 0;
+                return;
+            }
+
+            const prevVy = state.vy;
+            state.vy -= state.gravity * dt;
+            state.x += state.vx * dt;
+            state.y += 0.5 * (prevVy + state.vy) * dt;
+
+            // Tepe noktasından geçişte hız tam 0.00 olur!
+            if (prevVy > 0 && state.vy <= 0) {
+                state.vy = 0;
+                state.y = Math.min(9.5, state.mechEnergy / (state.mass * state.gravity));
+                state.peakFlash = 1.0;
+            }
+
+            // Yan duvarlardan tam esnek sekme
+            if (state.x < -7.2) { state.x = -7.2; state.vx = Math.abs(state.vx); }
+            if (state.x > 7.2) { state.x = 7.2; state.vx = -Math.abs(state.vx); }
+
+            // Zemine çarpma (y = 0) -> Tam esnek (e = 1.0), sıfır enerji kaybı!
+            if (state.y <= 0) {
+                state.y = 0;
+                const impactSpeed = Math.sqrt((2 * state.mechEnergy) / state.mass);
+                state.vy = impactSpeed;
+                state.bottomFlash = 1.0;
+            } else {
+                const currentPE = state.mass * state.gravity * state.y;
+                const currentKE = Math.max(0, state.mechEnergy - currentPE);
+                const totalSpeed = Math.sqrt((2 * currentKE) / state.mass);
+                const signY = state.vy >= 0 ? 1 : -1;
+                const vyMag = Math.sqrt(Math.max(0, totalSpeed * totalSpeed - state.vx * state.vx));
+                state.vy = signY * vyMag;
+            }
+
+            state.v = Math.hypot(state.vx, state.vy);
+        }
+
+        // ==========================================
+        // ÇİZİM FONKSİYONLARI (BÜYÜLEYİCİ GECE GÖLÜ)
+        // ==========================================
+        function drawSimulation() {
+            const w = simCanvas.width;
+            const h = simCanvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Gece Gökyüzü, Dolunay, Kayan Yıldızlar, Dağlar, İskele Feneri ve Yansımalı Göl
+            drawNightLakeScenery();
+
+            // 2. Hafif Ölçüm Izgarası ve Yükseklik Cetveli
+            drawGridAndRuler();
+
+            // 3. Pist / Sarkaç İpi Çizimi
+            if (state.mode === 'skate' || state.mode === 'coaster') {
+                drawTrack();
+            } else if (state.mode === 'pendulum') {
+                drawPendulumRig();
+            }
+
+            // 4. Yükseklik Referans Çizgisi (h - Mavi)
+            if (state.showHeightLine) {
+                drawHeightIndicator();
+            }
+
+            // 5. Renk Geçişli Işıltılı Enerji İzi (Mavi -> Yeşil -> Mavi)
+            if (state.showTrail && state.trail.length > 1) {
+                drawEnergyTrail();
+            }
+
+            // 6. Ana Cisim, Göl Yansıması ve Üzerindeki Canlı P.E./K.E. Halkası
+            drawObject();
+
+            // 7. Hız Vektörü Oku (v - Yeşil)
+            if (state.showVector && state.v > 0.08) {
+                drawVelocityVector();
+            }
+
+            // 8. Tepe (K.E.=0) / Dip (P.E.=0) Anlık İşaretçileri
+            drawMilestoneBadges();
+        }
+
+        function drawNightLakeScenery() {
+            const w = simCanvas.width;
+            const h = simCanvas.height;
+            const groundPt = worldToScreen(0, 0);
+            const lakeTopY = groundPt.y;
+
+            ctx.save();
+
+            // 1. Derin Gece Gökyüzü Gradyanı
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, lakeTopY);
+            skyGrad.addColorStop(0, '#020617');
+            skyGrad.addColorStop(0.45, '#07132c');
+            skyGrad.addColorStop(0.85, '#0f2347');
+            skyGrad.addColorStop(1, '#163361');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, lakeTopY);
+
+            // 2. Parıldayan Yıldızlar
+            for (const s of nightScene.stars) {
+                const sx = s.x * w;
+                const sy = s.y * lakeTopY;
+                const twinkle = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(nightScene.time * s.speed + s.phase));
+                ctx.fillStyle = `rgba(241, 245, 249, ${twinkle})`;
+                ctx.beginPath();
+                ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 3. Kayan Yıldızlar (Shooting Stars)
+            for (const ss of nightScene.shootingStars) {
+                const sx = ss.x * w;
+                const sy = ss.y * lakeTopY;
+                const tailX = sx - ss.vx * 110;
+                const tailY = sy - ss.vy * 110;
+                const grad = ctx.createLinearGradient(sx, sy, tailX, tailY);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${ss.life})`);
+                grad.addColorStop(1, 'rgba(147, 197, 253, 0)');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(tailX, tailY);
+                ctx.stroke();
+            }
+
+            // 4. Dolunay ve Yumuşak Halesi
+            const moonX = w * 0.82;
+            const moonY = lakeTopY * 0.23;
+            const moonR = Math.min(w, h) * 0.056;
+
+            const moonHalo = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 4.8);
+            moonHalo.addColorStop(0, 'rgba(254, 249, 195, 0.32)');
+            moonHalo.addColorStop(0.45, 'rgba(147, 197, 253, 0.09)');
+            moonHalo.addColorStop(1, 'rgba(147, 197, 253, 0)');
+            ctx.fillStyle = moonHalo;
+            ctx.beginPath();
+            ctx.arc(moonX, moonY, moonR * 4.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fefce8';
+            ctx.beginPath();
+            ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ay krater detayları
+            ctx.fillStyle = 'rgba(203, 213, 225, 0.25)';
+            ctx.beginPath();
+            ctx.arc(moonX - moonR * 0.26, moonY - moonR * 0.14, moonR * 0.22, 0, Math.PI * 2);
+            ctx.arc(moonX + moonR * 0.22, moonY + moonR * 0.24, moonR * 0.16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5. Uzak Dağ Silüetleri
+            ctx.fillStyle = '#081226';
+            ctx.beginPath();
+            ctx.moveTo(0, lakeTopY);
+            ctx.lineTo(0, lakeTopY * 0.66);
+            ctx.lineTo(w * 0.16, lakeTopY * 0.45);
+            ctx.lineTo(w * 0.34, lakeTopY * 0.65);
+            ctx.lineTo(w * 0.54, lakeTopY * 0.42);
+            ctx.lineTo(w * 0.74, lakeTopY * 0.62);
+            ctx.lineTo(w * 0.90, lakeTopY * 0.45);
+            ctx.lineTo(w, lakeTopY * 0.60);
+            ctx.lineTo(w, lakeTopY);
+            ctx.closePath();
+            ctx.fill();
+
+            // 6. Ön Plan Dağ ve Çam Ormanı Silüetleri
+            ctx.fillStyle = '#040a17';
+            ctx.beginPath();
+            ctx.moveTo(0, lakeTopY);
+            ctx.lineTo(0, lakeTopY * 0.79);
+            ctx.lineTo(w * 0.24, lakeTopY * 0.67);
+            ctx.lineTo(w * 0.48, lakeTopY * 0.81);
+            ctx.lineTo(w * 0.70, lakeTopY * 0.69);
+            ctx.lineTo(w * 0.92, lakeTopY * 0.80);
+            ctx.lineTo(w, lakeTopY * 0.72);
+            ctx.lineTo(w, lakeTopY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Çam Ağaçları
+            const treePositions = [0.03, 0.07, 0.11, 0.23, 0.37, 0.62, 0.75, 0.85, 0.92, 0.96];
+            ctx.fillStyle = '#030712';
+            for (let i = 0; i < treePositions.length; i++) {
+                const tx = treePositions[i] * w;
+                const th = 24 + (i % 3) * 11;
+                const tw = th * 0.46;
+                ctx.beginPath();
+                ctx.moveTo(tx, lakeTopY - th);
+                ctx.lineTo(tx - tw, lakeTopY);
+                ctx.lineTo(tx + tw, lakeTopY);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Sol Kıyıda Küçük Ahşap İskele ve Sıcak Fener Işığı
+            const pierX = w * 0.14;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(pierX - 28, lakeTopY + 3);
+            ctx.lineTo(pierX + 18, lakeTopY + 3);
+            ctx.moveTo(pierX + 12, lakeTopY - 14);
+            ctx.lineTo(pierX + 12, lakeTopY + 12);
+            ctx.stroke();
+
+            // İskele Feneri Sıcak Parıltısı
+            const lanternPulse = 0.85 + 0.15 * Math.sin(nightScene.time * 4);
+            const lanternGrad = ctx.createRadialGradient(pierX + 12, lakeTopY - 14, 1, pierX + 12, lakeTopY - 14, 24 * lanternPulse);
+            lanternGrad.addColorStop(0, 'rgba(253, 224, 71, 0.95)');
+            lanternGrad.addColorStop(0.4, 'rgba(251, 146, 60, 0.35)');
+            lanternGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+            ctx.fillStyle = lanternGrad;
+            ctx.beginPath();
+            ctx.arc(pierX + 12, lakeTopY - 14, 24 * lanternPulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 7. Sakin Göl Suyu (h = 0 Seviyesi ve Altı)
+            const lakeH = h - lakeTopY;
+            const lakeGrad = ctx.createLinearGradient(0, lakeTopY, 0, h);
+            lakeGrad.addColorStop(0, '#0b1f3b');
+            lakeGrad.addColorStop(0.5, '#061226');
+            lakeGrad.addColorStop(1, '#020612');
+            ctx.fillStyle = lakeGrad;
+            ctx.fillRect(0, lakeTopY, w, lakeH);
+
+            // Göldeki Dolunay Işığı Yansıması (Yakamoz)
+            for (let row = 0; row < 14; row++) {
+                const progress = row / 14;
+                const ry = lakeTopY + 4 + progress * (lakeH - 6);
+                const waveOffset = Math.sin(nightScene.time * 2.4 + row * 1.25) * (5 + progress * 11);
+                const barW = moonR * (1.9 - progress * 1.15);
+                const alpha = (1 - progress) * 0.3;
+
+                ctx.fillStyle = `rgba(254, 249, 195, ${alpha})`;
+                ctx.beginPath();
+                ctx.roundRect(moonX + waveOffset - barW / 2, ry, barW, 2.2, 2);
+                ctx.fill();
+            }
+
+            // Su Yüzeyi İnce Parıltı Çizgisi (h = 0m Göl Yüzeyi)
+            ctx.beginPath();
+            ctx.moveTo(0, lakeTopY);
+            ctx.lineTo(w, lakeTopY);
+            ctx.strokeStyle = 'rgba(96, 165, 250, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 8. Süzülen Ateşböcekleri
+            for (const f of nightScene.fireflies) {
+                const fx = f.x * w;
+                const fy = f.y * h;
+                const glow = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(f.phase));
+                const ffGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, f.size * 4.2);
+                ffGrad.addColorStop(0, `rgba(74, 222, 128, ${glow})`);
+                ffGrad.addColorStop(1, 'rgba(74, 222, 128, 0)');
+                ctx.fillStyle = ffGrad;
+                ctx.beginPath();
+                ctx.arc(fx, fy, f.size * 4.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawGridAndRuler() {
+            const origin = worldToScreen(-state.worldWidth / 2, 0);
+            const topEdge = worldToScreen(-state.worldWidth / 2, state.worldHeight);
+            const rightEdge = worldToScreen(state.worldWidth / 2, 0);
+
+            ctx.save();
+            ctx.font = '600 11px "JetBrains Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+
+            for (let hm = 0; hm <= 10; hm += 2) {
+                const pt = worldToScreen(-state.worldWidth / 2, hm);
+                ctx.beginPath();
+                ctx.moveTo(origin.x, pt.y);
+                ctx.lineTo(rightEdge.x, pt.y);
+                ctx.strokeStyle = hm === 0 ? 'rgba(96, 165, 250, 0.4)' : 'rgba(148, 163, 184, 0.11)';
+                ctx.lineWidth = hm === 0 ? 1.5 : 1;
+                ctx.stroke();
+
+                ctx.fillStyle = hm === 0 ? '#60a5fa' : 'rgba(148, 163, 184, 0.7)';
+                ctx.fillText(`${hm}m`, origin.x - 10, pt.y);
+            }
+
+            for (let xm = -8; xm <= 8; xm += 2) {
+                const pt = worldToScreen(xm, 0);
+                ctx.beginPath();
+                ctx.moveTo(pt.x, topEdge.y);
+                ctx.lineTo(pt.x, origin.y);
+                ctx.strokeStyle = xm === 0 ? 'rgba(96, 165, 250, 0.14)' : 'rgba(148, 163, 184, 0.07)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function drawTrack() {
+            const limitX = state.mode === 'skate' ? 6.8 : 7.1;
+            ctx.save();
+
+            // İskele Direkleri
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.16)';
+            ctx.lineWidth = 1.5;
+            for (let x = -limitX + 0.6; x <= limitX - 0.6; x += 1.2) {
+                const y = getTrackY(x);
+                if (y > 0.25) {
+                    const topPt = worldToScreen(x, y);
+                    const botPt = worldToScreen(x, 0);
+                    ctx.beginPath();
+                    ctx.moveTo(topPt.x, topPt.y);
+                    ctx.lineTo(botPt.x, botPt.y);
+                    ctx.stroke();
+                }
+            }
+
+            // Ana Sürtünmesiz Kristal Ray
+            ctx.beginPath();
+            const steps = 180;
+            for (let i = 0; i <= steps; i++) {
+                const wx = -limitX + (i / steps) * (limitX * 2);
+                const wy = getTrackY(wx);
+                const pt = worldToScreen(wx, wy);
+                if (i === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            }
+
+            ctx.shadowColor = '#3b82f6';
+            ctx.shadowBlur = 16;
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#eff6ff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawPendulumRig() {
+            const pivot = worldToScreen(0, state.pendulumPivotY);
+            const bob = worldToScreen(state.x, state.y);
+            const lowestPt = worldToScreen(0, state.pendulumPivotY - state.pendulumLength);
+
+            ctx.save();
+
+            // Sarkaç Yörünge Yayı
+            const radiusPx = Math.hypot(bob.x - pivot.x, bob.y - pivot.y);
+            ctx.beginPath();
+            ctx.arc(pivot.x, pivot.y, radiusPx, Math.PI * 0.15, Math.PI * 0.85);
+            ctx.strokeStyle = 'rgba(147, 197, 253, 0.25)';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Referans h=0 seviyesi çizgisi (Mavi)
+            ctx.beginPath();
+            ctx.moveTo(lowestPt.x - 140, lowestPt.y);
+            ctx.lineTo(lowestPt.x + 140, lowestPt.y);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#60a5fa';
+            ctx.font = '600 10px "JetBrains Mono", monospace';
+            ctx.fillText('h = 0.00m (Referans)', lowestPt.x + 145, lowestPt.y + 3);
+
+            // Sarkaç İpi
+            ctx.beginPath();
+            ctx.moveTo(pivot.x, pivot.y);
+            ctx.lineTo(bob.x, bob.y);
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Tavan Bağlantı Noktası
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#60a5fa';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(pivot.x, pivot.y, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawHeightIndicator() {
+            const refY = state.mode === 'pendulum' ? (state.pendulumPivotY - state.pendulumLength) : 0;
+            const currentH = Math.max(0, state.y - refY);
+            if (currentH < 0.02) return;
+
+            const objPt = worldToScreen(state.x, state.y);
+            const groundPt = worldToScreen(state.x, refY);
+
+            ctx.save();
+            // Dikey Kesikli Mavi Çizgi (P.E. Yükseklik Göstergesi)
+            ctx.beginPath();
+            ctx.moveTo(objPt.x, objPt.y);
+            ctx.lineTo(groundPt.x, groundPt.y);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.85)';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Yükseklik Etiketi Kutusu (Mavi)
+            const midY = (objPt.y + groundPt.y) / 2;
+            const label = `h = ${currentH.toFixed(2)}m`;
+            ctx.font = 'bold 11px "JetBrains Mono", monospace';
+            const textW = ctx.measureText(label).width;
+
+            ctx.fillStyle = 'rgba(4, 10, 24, 0.88)';
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(objPt.x + 12, midY - 10, textW + 12, 20, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#60a5fa';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, objPt.x + 18, midY);
+
+            ctx.restore();
+        }
+
+        function drawEnergyTrail() {
+            ctx.save();
+            for (let i = 1; i < state.trail.length; i++) {
+                const p1 = worldToScreen(state.trail[i - 1].x, state.trail[i - 1].y);
+                const p2 = worldToScreen(state.trail[i].x, state.trail[i].y);
+                const alpha = (i / state.trail.length) * 0.9;
+                const ratio = state.trail[i].ratio; // 0 = Tam P.E. (Mavi: 59,130,246), 1 = Tam K.E. (Yeşil: 34,197,94)
+
+                const r = Math.round(59 + (34 - 59) * ratio);
+                const g = Math.round(130 + (197 - 130) * ratio);
+                const b = Math.round(246 + (94 - 246) * ratio);
+
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                ctx.lineWidth = 3.5 + (i / state.trail.length) * 4.5;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function drawObject() {
+            const pt = worldToScreen(state.x, state.y);
+            const lakePt = worldToScreen(state.x, 0);
+            const radius = 14 + (state.mass / 20) * 12;
+
+            const keRatio = state.mechEnergy > 0.01 ? state.ke / state.mechEnergy : 0;
+            const peRatio = state.mechEnergy > 0.01 ? 1 - keRatio : 0;
+
+            ctx.save();
+
+            // 1. Göl Suyundaki Yumuşak Yansıma (Cismin su altındaki aksi)
+            const distAboveLake = Math.max(0, lakePt.y - pt.y);
+            const reflY = lakePt.y + distAboveLake * 0.55;
+            if (reflY < simCanvas.height) {
+                const reflAlpha = Math.max(0.05, 0.25 - (distAboveLake / simCanvas.height) * 0.22);
+                const reflGrad = ctx.createRadialGradient(pt.x, reflY, 1, pt.x, reflY, radius * 1.6);
+                if (keRatio > 0.5) {
+                    reflGrad.addColorStop(0, `rgba(34, 197, 94, ${reflAlpha})`);
+                } else {
+                    reflGrad.addColorStop(0, `rgba(59, 130, 246, ${reflAlpha})`);
+                }
+                reflGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = reflGrad;
+                ctx.beginPath();
+                ctx.ellipse(pt.x, reflY, radius * 1.5, radius * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 2. Dış Enerji Aurası (P.E. Mavi / K.E. Yeşil)
+            const auraGrad = ctx.createRadialGradient(pt.x, pt.y, radius * 0.5, pt.x, pt.y, radius * 2.4);
+            if (state.mechEnergy <= 0.01) {
+                auraGrad.addColorStop(0, 'rgba(168, 85, 247, 0.35)');
+                auraGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+            } else if (keRatio > 0.5) {
+                auraGrad.addColorStop(0, 'rgba(34, 197, 94, 0.55)');
+                auraGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+            } else {
+                auraGrad.addColorStop(0, 'rgba(59, 130, 246, 0.55)');
+                auraGrad.addColorStop(1, 'rgba(59, 130, 246, 0)');
+            }
+            ctx.fillStyle = auraGrad;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, radius * 2.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3. Küre Gövdesi
+            const bodyGrad = ctx.createRadialGradient(pt.x - radius * 0.3, pt.y - radius * 0.3, 2, pt.x, pt.y, radius);
+            bodyGrad.addColorStop(0, '#f8fafc');
+            bodyGrad.addColorStop(0.45, '#1e293b');
+            bodyGrad.addColorStop(1, '#090f1d');
+
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. Cisim Çevresinde Canlı P.E. (Mavi) / K.E. (Yeşil) Halka Göstergesi
+            ctx.lineWidth = 4.2;
+            if (state.mechEnergy <= 0.01) {
+                // Hem P.E. = 0 hem K.E. = 0 durumu
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#a855f7';
+                ctx.stroke();
+            } else {
+                // P.E. Yayı (Canlı Mavi)
+                if (peRatio > 0.005) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, radius, -Math.PI / 2, -Math.PI / 2 + peRatio * Math.PI * 2);
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.stroke();
+                }
+                // K.E. Yayı (Canlı Yeşil)
+                if (keRatio > 0.005) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, radius, -Math.PI / 2 + peRatio * Math.PI * 2, -Math.PI / 2 + Math.PI * 2);
+                    ctx.strokeStyle = '#22c55e';
+                    ctx.stroke();
+                }
+            }
+
+            // Kütle Etiketi (Ortada)
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${state.mass.toFixed(0)}kg`, pt.x, pt.y);
+
+            ctx.restore();
+        }
+
+        function drawVelocityVector() {
+            const pt = worldToScreen(state.x, state.y);
+            const speed = state.v;
+            if (speed < 0.08) return;
+
+            const dirX = state.vx / speed;
+            const dirY = -state.vy / speed;
+
+            const arrowLen = Math.min(135, 22 + speed * 7.8);
+            const endX = pt.x + dirX * arrowLen;
+            const endY = pt.y + dirY * arrowLen;
+
+            ctx.save();
+            // K.E. ile uyumlu Parlak Yeşil Hız Vektörü
+            ctx.strokeStyle = '#22c55e';
+            ctx.fillStyle = '#22c55e';
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = '#22c55e';
+            ctx.shadowBlur = 12;
+
+            ctx.beginPath();
+            ctx.moveTo(pt.x, pt.y);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            const angle = Math.atan2(dirY, dirX);
+            const headLen = 11;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headLen * Math.cos(angle - Math.PI / 6), endY - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(endX - headLen * Math.cos(angle + Math.PI / 6), endY - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.font = 'bold 11px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(`v=${speed.toFixed(2)}m/s`, endX + dirX * 16, endY + dirY * 16);
+
+            ctx.restore();
+        }
+
+        function drawMilestoneBadges() {
+            const pt = worldToScreen(state.x, state.y);
+            ctx.save();
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+
+            // Tepe Noktası (v = 0, K.E. = 0) Görsel İşaretçisi
+            if (state.peakFlash > 0.05 && state.mechEnergy > 0.5) {
+                ctx.globalAlpha = Math.min(1, state.peakFlash);
+                const text = 'TEPE: v = 0 | K.E. = 0 J';
+                const w = ctx.measureText(text).width + 14;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.roundRect(pt.x - w / 2, pt.y - 44, w, 20, 6);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#93c5fd';
+                ctx.fillText(text, pt.x, pt.y - 31);
+            }
+
+            // En Alt Nokta (h = 0, P.E. = 0) Görsel İşaretçisi
+            if (state.bottomFlash > 0.05 && state.mechEnergy > 0.5) {
+                ctx.globalAlpha = Math.min(1, state.bottomFlash);
+                const text = 'DİP: h = 0 | P.E. = 0 J (Maks Hız)';
+                const w = ctx.measureText(text).width + 14;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.roundRect(pt.x - w / 2, pt.y - 44, w, 20, 6);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#86efac';
+                ctx.fillText(text, pt.x, pt.y - 31);
+            }
+
+            ctx.restore();
+        }
+
+        // ==========================================
+        // ZAMAN-ENERJİ DALGA GRAFİĞİ (CHART CANVAS)
+        // ==========================================
+        function drawEnergyGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            gCtx.clearRect(0, 0, w, h);
+
+            // Izgara çizgileri
+            gCtx.strokeStyle = 'rgba(51, 65, 85, 0.35)';
+            gCtx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+                const y = (h / 4) * i;
+                gCtx.beginPath();
+                gCtx.moveTo(0, y);
+                gCtx.lineTo(w, y);
+                gCtx.stroke();
+            }
+
+            if (state.energyHistory.length < 2) return;
+
+            const maxE = Math.max(state.initialTotalEnergy * 1.15, 10);
+            const stepX = w / 220;
+
+            const plotLine = (key, style, width = 2) => {
+                gCtx.beginPath();
+                for (let i = 0; i < state.energyHistory.length; i++) {
+                    const val = state.energyHistory[i][key];
+                    const px = i * stepX;
+                    const py = h - 8 - (val / maxE) * (h - 16);
+                    if (i === 0) gCtx.moveTo(px, py);
+                    else gCtx.lineTo(px, py);
+                }
+                gCtx.strokeStyle = style;
+                gCtx.lineWidth = width;
+                gCtx.stroke();
+            };
+
+            // Rengarenk Gökkuşağı Gradyanı (Mekanik Enerji)
+            const rainbowGrad = gCtx.createLinearGradient(0, 0, w, 0);
+            rainbowGrad.addColorStop(0, '#3b82f6');
+            rainbowGrad.addColorStop(0.25, '#22c55e');
+            rainbowGrad.addColorStop(0.5, '#eab308');
+            rainbowGrad.addColorStop(0.75, '#ef4444');
+            rainbowGrad.addColorStop(1, '#a855f7');
+            plotLine('total', rainbowGrad, 2.5);
+
+            // Isı Enerjisi (Kırmızı 0 Çizgisi)
+            plotLine('thermal', '#ef4444', 1.5);
+
+            // Potansiyel Enerji (Parlak Mavi)
+            plotLine('pe', '#3b82f6', 2.4);
+
+            // Kinetik Enerji (Parlak Yeşil)
+            plotLine('ke', '#22c55e', 2.4);
+        }
+
+        // ==========================================
+        // KULLANICI ARAYÜZÜ (UI) GÜNCELLEMELERİ
+        // ==========================================
+        function updateUI() {
+            const currentH = getEffectiveHeight();
+
+            // HUD
+            document.getElementById('hudHeight').textContent = currentH.toFixed(2);
+            document.getElementById('hudSpeed').textContent = state.v.toFixed(2);
+
+            const pe = state.pe;
+            const ke = state.ke;
+            const tot = state.mechEnergy;
+            const scaleMax = Math.max(state.initialTotalEnergy, tot, 1);
+
+            document.getElementById('valPE').textContent = `${pe.toFixed(1)} J`;
+            document.getElementById('valKE').textContent = `${ke.toFixed(1)} J`;
+            document.getElementById('valThermal').textContent = `0.0 J`;
+            document.getElementById('valTotal').textContent = `${tot.toFixed(1)}`;
+            document.getElementById('valTotalBar').textContent = `${tot.toFixed(1)} J`;
+
+            // Dikey Bar Yükseklikleri
+            document.getElementById('barPE').style.height = `${tot > 0.01 ? Math.min(100, (pe / scaleMax) * 100) : 0}%`;
+            document.getElementById('barKE').style.height = `${tot > 0.01 ? Math.min(100, (ke / scaleMax) * 100) : 0}%`;
+            document.getElementById('barThermal').style.height = `0%`;
+            document.getElementById('barTotal').style.height = `${tot > 0.01 ? Math.min(100, (tot / scaleMax) * 100) : 0}%`;
+
+            // Yüzdeler
+            const pPE = tot > 0.01 ? Math.round((pe / tot) * 100) : 0;
+            const pKE = tot > 0.01 ? Math.max(0, 100 - pPE) : 0;
+
+            document.getElementById('pctPE').textContent = pPE;
+            document.getElementById('pctKE').textContent = pKE;
+
+            document.getElementById('splitPE').style.width = `${pPE}%`;
+            document.getElementById('splitKE').style.width = `${pKE}%`;
+
+            // Canlı Formüller
+            const fBox = document.getElementById('formulaBox');
+            if (state.showFormulas) {
+                fBox.classList.remove('hidden');
+                document.getElementById('formulaPE').textContent = `${state.mass.toFixed(1)} × ${state.gravity.toFixed(1)} × ${currentH.toFixed(2)} = ${pe.toFixed(1)} J`;
+                document.getElementById('formulaKE').textContent = `0.5 × ${state.mass.toFixed(1)} × ${state.v.toFixed(2)}² = ${ke.toFixed(1)} J`;
+            } else {
+                fBox.classList.add('hidden');
+            }
+
+            // Anlık Fizik Analizi Yorumcusu
+            updatePhysicsCommentary(pPE, pKE, currentH, tot);
+        }
+
+        function updatePhysicsCommentary(pPE, pKE, h, tot) {
+            const badge = document.getElementById('stateBadge');
+            const text = document.getElementById('physicsExplanation');
+
+            if (tot <= 0.01) {
+                badge.textContent = 'SIFIR ENERJİ DURUMU (P.E.=0, K.E.=0)';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/35';
+                text.innerHTML = `Cisim tam zeminde (<strong class="text-blue-400">h = 0.00 m</strong>) ve hareketsiz (<strong class="text-green-400">v = 0.00 m/s</strong>). Bu nedenle hem <strong class="text-blue-400">P.E. = 0.0 J</strong> hem de <strong class="text-green-400">K.E. = 0.0 J</strong>'dir.`;
+                return;
+            }
+
+            if (state.isDragging) {
+                badge.textContent = 'İŞ YAPILIYOR (DIŞ KUVVET)';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/35';
+                text.innerHTML = `Cismi yukarı kaldırarak yerçekimine karşı <strong>iş yapıyorsunuz</strong>. Kazandırılan bu enerji sisteme <strong class="text-blue-400">Potansiyel Enerji (Mavi)</strong> olarak depolanıyor.`;
+                return;
+            }
+
+            if (state.ke <= 0.05 || pPE >= 98) {
+                badge.textContent = 'TEPE NOKTASI: K.E. = 0 J';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/35';
+                text.innerHTML = `Cisim maksimum yüksekliğe (<strong class="text-blue-400">h = ${h.toFixed(2)}m</strong>) ulaştı ve anlık durdu (<strong class="text-green-400">v = 0.00 m/s, K.E. = 0.0 J</strong>). Enerjinin tamamı <strong class="text-blue-400">P.E.</strong> halindedir.`;
+            } else if (state.pe <= 0.05 || pKE >= 98) {
+                badge.textContent = 'EN ALT NOKTA: P.E. = 0 J';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/20 text-green-300 border border-green-500/35';
+                text.innerHTML = `En alt seviyede yükseklik sıfırlandı (<strong class="text-blue-400">h = 0.00m, P.E. = 0.0 J</strong>). Cisim <strong class="text-green-400">maksimum sürate (${state.v.toFixed(2)} m/s)</strong> ulaştı; şimdi yukarı çıktıkça tekrar yavaşlayacak!`;
+            } else {
+                badge.textContent = 'SÜRTÜNMESİZ DÖNÜŞÜM';
+                badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold rainbow-badge text-slate-100';
+                const trend = state.vy > 0 ? 'Yukarı çıkarken hız azalıyor (K.E. → P.E.).' : 'Aşağı inerken hız artıyor (P.E. → K.E.).';
+                text.innerHTML = `${trend} Şu an enerjinin <strong class="text-blue-400">%${pPE}</strong>'i Potansiyel, <strong class="text-green-400">%${pKE}</strong>'i Kinetik Enerji.`;
+            }
+        }
+
+        // ==========================================
+        // ETKİLEŞİM (FARE / DOKUNMATİK SÜRÜKLEME)
+        // ==========================================
+        function getPointerWorldPos(e) {
+            const rect = simCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const sx = (clientX - rect.left) * (simCanvas.width / rect.width);
+            const sy = (clientY - rect.top) * (simCanvas.height / rect.height);
+            return { sx, sy, world: screenToWorld(sx, sy) };
+        }
+
+        function onPointerDown(e) {
+            const { sx, sy } = getPointerWorldPos(e);
+            const objScreen = worldToScreen(state.x, state.y);
+            const dist = Math.hypot(sx - objScreen.x, sy - objScreen.y);
+
+            if (dist < 58) {
+                state.isDragging = true;
+                state.vx = 0;
+                state.vy = 0;
+                state.v = 0;
+                state.omega = 0;
+                state.trail = [];
+                onPointerMove(e);
+            }
+        }
+
+        function onPointerMove(e) {
+            if (!state.isDragging) return;
+            e.preventDefault();
+            const { world } = getPointerWorldPos(e);
+
+            if (state.mode === 'skate' || state.mode === 'coaster') {
+                const limitX = state.mode === 'skate' ? 6.8 : 7.1;
+                state.x = Math.max(-limitX, Math.min(limitX, world.x));
+                if (state.mode === 'skate' && Math.abs(state.x) < 0.16) state.x = 0;
+                if (state.mode === 'coaster' && Math.abs(state.x - 3.575) < 0.16) state.x = 3.575;
+                state.y = getTrackY(state.x);
+            } else if (state.mode === 'pendulum') {
+                const dx = world.x - 0;
+                const dy = state.pendulumPivotY - world.y;
+                let angle = Math.atan2(dx, dy);
+                if (Math.abs(angle) < 0.03) angle = 0;
+                const maxAngle = (85 * Math.PI) / 180;
+                state.theta = Math.max(-maxAngle, Math.min(maxAngle, angle));
+                updatePendulumCartesian();
+            } else if (state.mode === 'freefall') {
+                state.x = Math.max(-7.0, Math.min(7.0, world.x));
+                state.y = world.y < 0.16 ? 0 : Math.min(9.5, world.y);
+            }
+
+            recalculateEnergies(true);
+            state.energyHistory = [];
+        }
+
+        function onPointerUp() {
+            if (state.isDragging) {
+                state.isDragging = false;
+                recalculateEnergies(true);
+            }
+        }
+
+        simCanvas.addEventListener('mousedown', onPointerDown);
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+
+        simCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+
+        // ==========================================
+        // KONTROL PANELİ OLAY DİNLEYİCİLERİ
+        // ==========================================
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    b.className = 'mode-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent';
+                });
+                btn.className = 'mode-btn active px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm';
+                
+                state.mode = btn.dataset.mode;
+                document.getElementById('hudModeTitle').textContent = modeTitles[state.mode];
+                resetSimulation();
+            });
+        });
+
+        document.getElementById('btnPlaceTop').addEventListener('click', placeAtTop);
+        document.getElementById('btnPlaceBottom').addEventListener('click', placeAtZeroZero);
+
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        btnPlayPause.addEventListener('click', () => {
+            state.isPlaying = !state.isPlaying;
+            document.getElementById('playIcon').textContent = state.isPlaying ? '⏸ Duraklat' : '▶ Başlat';
+            btnPlayPause.className = state.isPlaying
+                ? 'flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold text-xs transition-all'
+                : 'flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold text-xs transition-all';
+        });
+
+        document.getElementById('btnStep').addEventListener('click', () => {
+            if (state.isPlaying) btnPlayPause.click();
+            stepPhysics(0.025);
+        });
+
+        document.getElementById('btnReset').addEventListener('click', resetSimulation);
+
+        const btnSlowMo = document.getElementById('btnSlowMo');
+        btnSlowMo.addEventListener('click', () => {
+            state.slowMo = !state.slowMo;
+            btnSlowMo.textContent = state.slowMo ? '🐢 Ağır Çekim (0.25x)' : '🐢 Ağır Çekim (1x)';
+            btnSlowMo.className = state.slowMo
+                ? 'px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/40 transition-all'
+                : 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800/90 text-slate-300 hover:bg-slate-700 transition-all';
+        });
+
+        document.getElementById('sliderMass').addEventListener('input', (e) => {
+            state.mass = parseFloat(e.target.value);
+            document.getElementById('lblMass').textContent = state.mass.toFixed(1);
+            recalculateEnergies(true);
+        });
+
+        const sliderGravity = document.getElementById('sliderGravity');
+        const updateGravityUI = (val) => {
+            state.gravity = val;
+            sliderGravity.value = val;
+            document.getElementById('lblGravity').textContent = val.toFixed(2);
+            document.querySelectorAll('.planet-btn').forEach(b => {
+                if (Math.abs(parseFloat(b.dataset.g) - val) < 0.05) {
+                    b.className = 'planet-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-blue-500/20 border border-blue-500/45 text-blue-300 transition-all';
+                } else {
+                    b.className = 'planet-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-slate-950/90 border border-slate-800 hover:border-slate-600 text-slate-300 transition-all';
+                }
+            });
+            recalculateEnergies(true);
+        };
+
+        sliderGravity.addEventListener('input', (e) => updateGravityUI(parseFloat(e.target.value)));
+        document.querySelectorAll('.planet-btn').forEach(btn => {
+            btn.addEventListener('click', () => updateGravityUI(parseFloat(btn.dataset.g)));
+        });
+
+        document.getElementById('chkVector').addEventListener('change', e => state.showVector = e.target.checked);
+        document.getElementById('chkHeightLine').addEventListener('change', e => state.showHeightLine = e.target.checked);
+        document.getElementById('chkTrail').addEventListener('change', e => {
+            state.showTrail = e.target.checked;
+            if (!state.showTrail) state.trail = [];
+        });
+        document.getElementById('chkFormulas').addEventListener('change', e => state.showFormulas = e.target.checked);
+
+        // ==========================================
+        // RESPONSIVE CANVAS BOYUTLANDIRMA VE DÖNGÜ
+        // ==========================================
+        function resizeCanvases() {
+            const simRect = simCanvas.parentElement.getBoundingClientRect();
+            simCanvas.width = simRect.width;
+            simCanvas.height = simRect.height;
+
+            const graphRect = graphCanvas.parentElement.getBoundingClientRect();
+            graphCanvas.width = graphRect.width;
+            graphCanvas.height = graphRect.height;
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        let lastTime = 0;
+        function mainLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const rawDt = Math.min((timestamp - lastTime) / 1000, 0.05);
+            lastTime = timestamp;
+
+            if (state.isPlaying) {
+                const timeScale = state.slowMo ? 0.25 : 1.0;
+                stepPhysics(rawDt * timeScale);
+            } else {
+                nightScene.time += rawDt * 0.4;
+                updateAtmosphere(rawDt * 0.4);
+            }
+
+            drawSimulation();
+            drawEnergyGraph();
+            updateUI();
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        window.onload = function () {
+            resizeCanvases();
+            resetSimulation();
+            requestAnimationFrame(mainLoop);
+        };
+    </script>
+</body>
+</html>
