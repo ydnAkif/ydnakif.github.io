@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enerji Dönüşümü Deney Oyunu</title>
+<style>
+body{font-family:Arial;background:#f2f7ff;color:#29364d;padding:15px}
+.container{max-width:850px;margin:auto;background:white;padding:20px;border-radius:20px}
+h1,h2{text-align:center;color:#4169e1}
+.ramp{display:block;width:100%;height:auto;background:#f8fbff;border-radius:12px}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:15px}
+button{padding:12px;border:0;border-radius:10px;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+#start{background:#4caf50;color:white}
+#stop{background:#ff9800;color:white}
+#reset{background:#e57373;color:white}
+.energy-row{margin:15px 0}
+.label{display:flex;justify-content:space-between;font-weight:bold;margin-bottom:5px}
+.bg{background:#e8edf5;height:22px;border-radius:20px;overflow:hidden}
+.bar{height:100%;border-radius:20px}
+.info,.guide{padding:15px;background:#fff8df;border-radius:12px;margin-top:15px}
+.guide{background:#eef5ff;line-height:1.6}
+.guide h2{font-size:21px}
+.guide h3{color:#4569ba}
+.guide textarea{width:100%;min-height:65px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font:inherit;resize:vertical}
+.check{padding:10px;background:white;border-radius:8px;margin:7px 0}
+.result{background:#e9f8ed;padding:12px;border-radius:10px;margin-top:12px}
+.speed-box{background:#eef4ff;padding:15px;border-radius:12px;text-align:center;margin:12px 0}
+#speedControl{width:85%;accent-color:#4169e1}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🛹 Enerji Dönüşümü</h1>
+<p style="text-align:center">U şeklindeki rampada enerji dönüşümünü keşfet!</p>
+<svg class="ramp" viewBox="0 0 800 370" width="800" height="370" role="img" aria-label="U şeklindeki rampada kaykay ve kaykaycı">
+  <path d="M0 320H800" stroke="#cbd5e1" stroke-width="2"/>
+  <path d="M100 80Q400 560 700 80" fill="none" stroke="#85a9e8" stroke-width="12" stroke-linecap="round"/>
+  <g id="skater" transform="translate(100 80) rotate(57.9946167919165)">
+    <path d="M-17 -50l-15 -5m17 5 24 -7m-25 11 11 16 -14 12m3 -28 -13 16 3 12" fill="none" stroke="#25417c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-17 -55l-2 12" stroke="#5275bd" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="-17" cy="-68" r="10" fill="#ffd5ad" stroke="#25417c" stroke-width="2"/>
+    <path d="M-28 -69a11 11 0 0 1 22 0Z" fill="#4169e1"/>
+    <path d="M-40 -20q5 7 11 7h18q6 0 11 -7" fill="none" stroke="#8a3c04" stroke-width="9" stroke-linecap="round"/>
+    <path d="M-40 -20q5 7 11 7h18q6 0 11 -7" fill="none" stroke="#ff9d45" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-30" cy="-6" r="5" fill="#29364d"/>
+    <circle cx="-10" cy="-6" r="5" fill="#29364d"/>
+  </g>
+</svg>
+<div class="controls">
+<button type="button" id="start" disabled>▶️ Başlat</button>
+<button type="button" id="stop" disabled>⏸ Durdur</button>
+<button type="button" id="reset" disabled>↻ Sıfırla</button>
+</div>
+<div class="speed-box">
+<strong>⚡ Kaykay Hızı</strong>
+<br>
+<input type="range" id="speedControl" min="0.2" max="1.5" step="0.1" value="0.4">
+<br>
+<strong id="speedValue">%40</strong>
+</div>
+<div style="text-align:center;background:#eef4ff;padding:12px;border-radius:10px">
+<label><input type="checkbox" id="friction">
+<strong>Sürtünmeyi aç</strong></label>
+</div>
+<div id="energy"></div>
+<div class="info" id="info" role="status">Düğmeleri kullanmak için HTML dosyasını indirip JavaScript çalıştıran bir tarayıcıda aç.</div>
+<div class="guide">
+<h2>🔬 Deney ve Gözlem Rehberi</h2>
+<h3>Deneyin Amacı</h3>
+<p>Sürtünmenin enerji dönüşümüne etkisini incelemek ve kinetik, potansiyel ve mekanik enerji arasındaki ilişkiyi gözlemlemek.</p>
+<h3>Deneyin Tahmini</h3>
+<p>Sürtünme açıkken ve kapalıyken kaykayın hareketi nasıl değişir?</p>
+<textarea placeholder="Tahminini buraya yaz..."></textarea>
+<h3>1. Deney: Sürtünme Kapalı</h3>
+<ol>
+<li>Sürtünmeyi kapalı tut.</li>
+<li>Sıfırla düğmesine bas.</li>
+<li>Başlat düğmesine bas.</li>
+<li>Enerji çubuklarını incele.</li>
+</ol>
+<div class="check"><input type="checkbox"> Kaykay aşağı inerken kinetik enerji arttı.</div>
+<div class="check"><input type="checkbox"> Potansiyel enerji azaldı.</div>
+<div class="check"><input type="checkbox"> Mekanik enerji sabit kaldı.</div>
+<p>Gözlemlerim:</p>
+<textarea placeholder="Birinci deneyde gördüklerini yaz..."></textarea>
+<h3>2. Deney: Sürtünme Açık</h3>
+<ol>
+<li>Sıfırla düğmesine bas.</li>
+<li>Sürtünmeyi aç.</li>
+<li>Başlat düğmesine bas.</li>
+<li>Kaykayın hareketini ve enerji çubuklarını incele.</li>
+</ol>
+<div class="check"><input type="checkbox"> Kaykay zamanla yavaşladı.</div>
+<div class="check"><input type="checkbox"> Mekanik enerji azaldı.</div>
+<div class="check"><input type="checkbox"> Isıya dönüşen enerji arttı.</div>
+<div class="check"><input type="checkbox"> Toplam enerji sabit kaldı.</div>
+<p>Gözlemlerim:</p>
+<textarea placeholder="İkinci deneyde gördüklerini yaz..."></textarea>
+<h3>📋 Deneylerin Karşılaştırılması</h3>
+<p>İki deney arasındaki fark nedir?</p>
+<textarea placeholder="Karşılaştırmanı yaz..."></textarea>
+<h3>🎯 Sonuç</h3>
+<p>Enerji yok olmaz, başka enerji türlerine dönüşür. Sürtünme, mekanik enerjinin bir kısmının ısı enerjisine dönüşmesine neden olur.</p>
+<div class="result">
+<strong>Unutma!</strong>
+<p>Toplam enerji = Kinetik + Potansiyel + Isıya dönüşen enerji</p>
+</div>
+</div>
+</div>
+<script>
+const skater=document.getElementById("skater");
+const frictionBox=document.getElementById("friction");
+const info=document.getElementById("info");
+const speedControl=document.getElementById("speedControl");
+const startButton=document.getElementById("start");
+const stopButton=document.getElementById("stop");
+const resetButton=document.getElementById("reset");
+let x=-1,v=0,heat=0,frameId=null,lastTime=null;
+const maxEnergy=30;
+function height(x){return 3*x*x}
+function PE(x){return 10*height(x)}
+function KE(v){return .5*v*v}
+speedControl.addEventListener("input",()=>{
+document.getElementById("speedValue").textContent=
+"%"+Math.round(Number(speedControl.value)*100);
+});
+const energyNames=[
+["Kinetik Enerji","k","#4da6ff"],
+["Potansiyel Enerji","p","#a47aff"],
+["Mekanik Enerji","m","#31b78b"],
+["Isıya Dönüşen Enerji","h","#ff914d"],
+["Toplam Enerji","t","#f3c63e"]
+];
+document.getElementById("energy").innerHTML=energyNames.map(a=>`
+<div class="energy-row">
+<div class="label"><span>${a[0]}</span><span id="${a[1]}Text"></span></div>
+<div class="bg"><div class="bar" id="${a[1]}Bar" style="background:${a[2]}"></div></div>
+</div>`).join("");
+function draw(){
+const screenX=400+x*300;
+const screenY=320-height(x)*80;
+const angle=Math.atan(-1.6*x)*180/Math.PI;
+skater.setAttribute("transform",`translate(${screenX} ${screenY}) rotate(${angle})`);
+}
+function updateEnergy(){
+let k=KE(v),p=PE(x),m=k+p,t=m+heat;
+let values=[k,p,m,heat,t];
+let ids=["k","p","m","h","t"];
+ids.forEach((id,i)=>{
+document.getElementById(id+"Text").textContent=values[i].toFixed(2)+" J";
+document.getElementById(id+"Bar").style.width=
+Math.max(0,Math.min(100,values[i]/maxEnergy*100))+"%";
+});
+}
+function stop(){
+if(frameId!==null)cancelAnimationFrame(frameId);
+frameId=null;
+lastTime=null;
+startButton.disabled=false;
+stopButton.disabled=true;
+}
+
+function reset(){
+stop();
+x=-1;
+v=0;
+heat=0;
+draw();
+updateEnergy();
+info.textContent="Kaykay başlangıç noktasında. Başlat'a bas!";
+}
+function animate(time){
+if(lastTime===null)lastTime=time;
+let dt=Math.min((time-lastTime)/1000,.02)*
+Number(speedControl.value);
+lastTime=time;
+let oldM=KE(v)+PE(x);
+let a1=-60*x;
+let newX=x+v*dt+.5*a1*dt*dt;
+newX=Math.max(-1,Math.min(1,newX));
+let a2=-60*newX;
+let newV=v+.5*(a1+a2)*dt;
+if(frictionBox.checked){
+newV*=Math.exp(-1.2*dt);
+}
+x=newX;
+v=newV;
+let newM=KE(v)+PE(x);
+if(frictionBox.checked){
+heat+=Math.max(0,oldM-newM);
+}
+draw();
+updateEnergy();
+info.textContent=frictionBox.checked
+?"Sürtünme nedeniyle mekanik enerji ısı enerjisine dönüşüyor. Kaykay yavaşlıyor."
+:"Potansiyel ve kinetik enerji birbirine dönüşüyor. Mekanik enerji korunuyor.";
+frameId=requestAnimationFrame(animate);
+}
+
+startButton.addEventListener("click",()=>{
+if(frameId!==null)return;
+startButton.disabled=true;
+stopButton.disabled=false;
+frameId=requestAnimationFrame(animate);
+});
+stopButton.addEventListener("click",()=>{
+stop();
+info.textContent="Deney duraklatıldı. Devam etmek için Başlat'a bas.";
+});
+resetButton.addEventListener("click",reset);
+reset();
+resetButton.disabled=false;
+</script>
+</body>
+</html>
