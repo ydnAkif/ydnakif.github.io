@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hız Treni - Enerji Dönüşümü</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #eef5fc;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+h1 { color: #234b70; }
+.container {
+    max-width: 850px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+}
+canvas {
+    width: 100%;
+    background: #dceeff;
+    border-radius: 10px;
+}
+button {
+    padding: 12px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    background: #2679c9;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+button:hover { background: #15599c; }
+.info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+.box {
+    flex: 1;
+    min-width: 130px;
+    background: #edf4fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+input { accent-color: #2679c9; }
+#explain {
+    background: #e5f1ff;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>🎢 Hız Treni Enerji Simülasyonu</h1>
+<p>Hız treninin hareketini ve enerji dönüşümlerini keşfet!</p>
+
+<canvas id="canvas" width="800" height="320"></canvas>
+
+<br>
+
+<button onclick="play()">▶ Oynat</button>
+<button onclick="pause()">Ⅱ Duraklat</button>
+<button onclick="reset()">↺ Başa Sar</button>
+
+<div class="info">
+<div class="box">
+<h3>🚀 Kinetik Enerji</h3>
+<strong id="ke">0 J</strong>
+</div>
+<div class="box">
+<h3>⛰️ Potansiyel Enerji</h3>
+<strong id="pe">1000 J</strong>
+</div>
+<div class="box">
+<h3>⚡ Toplam Enerji</h3>
+<strong id="total">1000 J</strong>
+</div>
+</div>
+
+<div id="explain">
+Tren başlangıç noktasında. Potansiyel enerji yüksektir.
+</div>
+
+<br>
+
+<label>Yavaşlatma:</label>
+<input type="range" id="speed" min="1" max="4" value="2">
+
+<br><br>
+
+<label>
+<input type="checkbox" id="friction">
+Sürtünmeyi etkinleştir
+</label>
+
+<p id="frictionInfo">Sürtünme kapalı.</p>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let progress = 0;
+let running = false;
+let energy = 1000;
+let animation;
+
+function getPosition(t) {
+    let x = 20 + t * 760;
+    let y;
+
+    if (x <= 220) {
+        y = 250 - 180 * Math.sin((x-20)/200 * Math.PI/2);
+    } else if (x <= 420) {
+        y = 70 + 180 * (1-Math.cos((x-220)/200 * Math.PI/2));
+    } else if (x <= 610) {
+        y = 250 - 150 * Math.sin((x-420)/190 * Math.PI/2);
+    } else {
+        y = 100 + 150 * (1-Math.cos((x-610)/170 * Math.PI/2));
+    }
+
+    return {x,y};
+}
+
+function draw() {
+    ctx.clearRect(0,0,800,320);
+
+    // Ray
+    ctx.beginPath();
+    for(let i=0;i<=200;i++){
+        let p=getPosition(i/200);
+        if(i===0) ctx.moveTo(p.x,p.y);
+        else ctx.lineTo(p.x,p.y);
+    }
+
+    ctx.strokeStyle="#455a64";
+    ctx.lineWidth=7;
+    ctx.stroke();
+
+    // Destekler
+    for(let i=0;i<=10;i++){
+        let p=getPosition(i/10);
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(p.x,300);
+        ctx.strokeStyle="#8999a5";
+        ctx.lineWidth=3;
+        ctx.stroke();
+    }
+
+    // Tren
+    let p=getPosition(progress);
+
+    ctx.fillStyle="#e74c3c";
+    ctx.fillRect(p.x-20,p.y-25,40,20);
+
+    ctx.fillStyle="#263747";
+    ctx.beginPath();
+    ctx.arc(p.x-10,p.y,6,0,Math.PI*2);
+    ctx.arc(p.x+10,p.y,6,0,Math.PI*2);
+    ctx.fill();
+}
+
+function update() {
+    let p=getPosition(progress);
+
+    let height=Math.max(0,Math.min(1,(250-p.y)/180));
+
+    let potential=energy*height;
+    let kinetic=energy-potential;
+
+    document.getElementById("ke").innerText=
+        Math.round(kinetic)+" J";
+
+    document.getElementById("pe").innerText=
+        Math.round(potential)+" J";
+
+    document.getElementById("total").innerText=
+        Math.round(energy)+" J";
+
+    let explanation="";
+
+    if(p.y<110){
+        explanation="Tren yüksek noktada. Potansiyel enerji yüksek, kinetik enerji düşüktür.";
+    }
+    else if(p.y>200){
+        explanation="Tren alçak noktada. Potansiyel enerji azalır, kinetik enerji artar.";
+    }
+    else {
+        explanation="Tren hareket ediyor. Potansiyel ve kinetik enerji birbirine dönüşüyor.";
+    }
+
+    document.getElementById("explain").innerText=explanation;
+
+    if(document.getElementById("friction").checked){
+        document.getElementById("frictionInfo").innerText=
+        "Sürtünme açık: Mekanik enerjinin bir kısmı ısıya dönüşür.";
+    } else {
+        document.getElementById("frictionInfo").innerText=
+        "Sürtünme kapalı: Mekanik enerji korunur.";
+    }
+
+    draw();
+}
+
+function play(){
+    if(running) return;
+
+    if(progress>=1){
+        progress=0;
+        energy=1000;
+    }
+
+    running=true;
+    animate();
+}
+
+function animate(){
+    if(!running) return;
+
+    let speed=Number(document.getElementById("speed").value);
+
+    progress+=0.0005*speed;
+
+    if(document.getElementById("friction").checked){
+        energy=Math.max(400,energy-0.3);
+    }
+
+    if(progress>=1){
+        progress=1;
+        running=false;
+    }
+
+    update();
+
+    if(running){
+        animation=requestAnimationFrame(animate);
+    }
+}
+
+function pause(){
+    running=false;
+    cancelAnimationFrame(animation);
+}
+
+function reset(){
+    pause();
+    progress=0;
+    energy=1000;
+    update();
+}
+
+update();
+</script>
+
+</body>
+</html>
