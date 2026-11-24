@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gece Lunaparkı - Hız Treni ve Enerji</title>
+<style>
+:root{--gold:#ffe59a;--violet:#b78aff;--pink:#ff72d2;--panel:#171735ee}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:radial-gradient(ellipse at 50% 0%,#30346f,#11152f 55%,#080b1d);color:#fff;font-family:Arial,sans-serif}
+main{max-width:940px;margin:auto}
+header{padding:18px 12px;text-align:center;border:2px solid #a77aff;border-radius:20px;background:linear-gradient(130deg,#201b50,#4b286c);box-shadow:0 0 24px #9b63ff66}
+h1{margin:0;color:var(--gold);font-size:clamp(26px,5vw,39px);text-shadow:0 0 12px #ff8edb}
+header p{margin:7px 0 0;color:#e9dcff;font-weight:bold}
+.panel{margin-top:12px;padding:14px;background:var(--panel);border:1px solid #806ac0;border-radius:16px;box-shadow:0 0 15px #8052c533}
+h2{margin:0 0 10px;color:var(--gold);font-size:20px}
+.score{text-align:center;color:var(--gold);font-weight:bold;font-size:20px}
+.scene{position:relative;margin-top:12px;overflow:hidden;border-radius:18px;border:2px solid #a77aff;background:linear-gradient(#080d2a,#191b48 65%,#28204c);box-shadow:inset 0 0 35px #8c55dc66}
+.scene svg{display:block;width:100%;height:auto}
+.controls{display:flex;gap:9px;justify-content:center;align-items:center;flex-wrap:wrap;margin:12px 0}
+button{border:0;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:bold;cursor:pointer}
+.start{background:#28d477;color:#062b19}.pause{background:#2998f3;color:white}.reset{background:#9856ed;color:white}
+.toggle{padding:10px 12px;background:#302653;border:1px solid #9273ce;border-radius:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.energy{padding:11px;background:#27234b;border:1px solid #7763ad;border-radius:12px}
+.energy b{display:flex;justify-content:space-between;gap:5px;font-size:14px}
+.bar{height:12px;background:#10132b;border-radius:20px;overflow:hidden;margin-top:8px}
+.fill{height:100%;width:0%;border-radius:20px;background:linear-gradient(90deg,#8d5cff,#ff78d5)}
+#totalbox{grid-column:1/-1}
+.info{padding:13px;margin-top:12px;background:#29234e;border-left:4px solid var(--gold);border-radius:10px;line-height:1.5}
+.quiz{margin-top:13px;padding:16px;background:#211b45;border:2px solid #a77aff;border-radius:18px;box-shadow:0 0 16px #9b63ff44}
+.quiz h2{text-align:center;font-size:23px}
+#question{font-size:19px;line-height:1.45;text-align:center;font-weight:bold;margin:14px 0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.answer{min-height:54px;text-align:left;background:#eee7ff;color:#28194b;border:2px solid #b99aff;font-size:16px}
+.answer:disabled{opacity:1}
+#feedback{min-height:44px;margin-top:12px;text-align:center;color:var(--gold);font-size:15px;line-height:1.45;font-weight:bold}
+#next{display:block;margin:8px auto 0;background:#a05cf1;color:white}
+.hidden{display:none!important}
+.modal{position:fixed;inset:0;z-index:5;background:#06091beF;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-card{position:relative;width:min(540px,100%);padding:22px;border:2px solid #c28aff;border-radius:22px;background:linear-gradient(145deg,#282052,#4b286e);box-shadow:0 0 35px #b55cff88}
+.modal-card h2{text-align:center;font-size:25px}
+.modal-card li{line-height:1.6;margin:5px 0}
+.close{position:absolute;right:10px;top:10px;width:40px;height:40px;padding:0;border-radius:50%;background:#ff619e;color:white;font-size:24px}
+.enter{display:block;margin:16px auto 0;background:#28d477;color:#062b19;font-size:17px}
+.foot{font-size:12px;color:#c9c1e4;line-height:1.5;margin:12px 2px}
+@media(max-width:560px){body{padding:7px}.answers{grid-template-columns:1fr}.answer{min-height:49px}.quiz{padding:12px}#question{font-size:18px}.energy b{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="modal" id="rules">
+ <div class="modal-card">
+  <button class="close" onclick="closeRules()" aria-label="Kapat">×</button>
+  <h2>🌙 Gece Lunaparkına Hoş Geldin!</h2>
+  <p><b>🎢 Hız Treni: Enerji Dönüşümleri</b></p>
+  <ol>
+   <li>Başlat düğmesine bas. Vagon, kıvrımlı hız treni rayında ilerlesin.</li>
+   <li>Sürtünmeyi açıp kapatarak iki deneme yap.</li>
+   <li>Kinetik, potansiyel, mekanik ve ısı enerjisi göstergelerini izle.</li>
+   <li>Alttaki soruları cevaplayarak puan kazan.</li>
+   <li>Bir tam turdan sonra Bilgi Köşesi açılır.</li>
+  </ol>
+  <p style="color:#ffe59a"><b>Hazırsan × işaretine veya Oyuna Başla düğmesine bas!</b></p>
+  <button class="enter" onclick="closeRules()">Oyuna Başla ✨</button>
+ </div>
+</div>
+<main>
+<header>
+ <h1>🎢 HIZ TRENİ</h1>
+ <div style="font-size:21px;color:#f4d8ff;font-weight:bold;margin-top:5px">Enerji Dönüşümleri • Gece Lunaparkı</div>
+ <p>7. Sınıf Fen Bilimleri</p>
+</header>
+<div class="panel"><h2>🏆 Oyun puanın</h2><div class="score"><span id="score">0</span> puan ⭐</div></div>
+
+<div class="scene">
+<svg id="coaster" viewBox="0 0 900 390" role="img" aria-label="Ay ışığında, ışıklı kıvrımlı hız treni rayı ve hareket eden boş vagon">
+ <defs>
+  <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#080d2a"/><stop offset="1" stop-color="#29204d"/></linearGradient>
+  <linearGradient id="railGlow"><stop stop-color="#ff70d8"/><stop offset=".5" stop-color="#ffd18a"/><stop offset="1" stop-color="#9e8cff"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ </defs>
+ <rect width="900" height="390" fill="url(#night)"/>
+ <g fill="#fff" opacity=".9">
+  <circle cx="65" cy="42" r="2"/><circle cx="132" cy="89" r="1.7"/><circle cx="230" cy="35" r="2"/><circle cx="330" cy="76" r="1.5"/><circle cx="430" cy="31" r="2"/><circle cx="540" cy="72" r="1.5"/><circle cx="650" cy="35" r="2"/><circle cx="790" cy="80" r="1.7"/><circle cx="855" cy="35" r="2"/><circle cx="740" cy="130" r="1.5"/><circle cx="180" cy="145" r="1.5"/>
+ </g>
+ <circle cx="755" cy="75" r="37" fill="#fff0b8" filter="url(#glow)"/>
+ <circle cx="770" cy="63" r="35" fill="#171943"/>
+ <path d="M0 315 Q110 265 220 310 T450 300 T680 315 T900 295 V390 H0Z" fill="#17152f"/>
+ <g stroke="#9271c8" stroke-width="8" opacity=".9">
+  <path d="M90 200V340 M205 250V340 M340 290V340 M465 105V340 M590 225V340 M730 210V340 M830 270V340"/>
+ </g>
+ <path id="railShadow" d="M35 190 C95 190 100 70 190 70 S275 300 385 300 S475 90 565 90 S655 250 745 250 S825 150 875 150" fill="none" stroke="#09091c" stroke-width="25" stroke-linecap="round"/>
+ <path id="rail" d="M35 190 C95 190 100 70 190 70 S275 300 385 300 S475 90 565 90 S655 250 745 250 S825 150 875 150" fill="none" stroke="url(#railGlow)" stroke-width="13" stroke-linecap="round" filter="url(#glow)"/>
+ <path d="M35 190 C95 190 100 70 190 70 S275 300 385 300 S475 90 565 90 S655 250 745 250 S825 150 875 150" fill="none" stroke="#fff2c7" stroke-width="3" stroke-dasharray="3 19" stroke-linecap="round"/>
+ <g id="cart" transform="translate(35 190)">
+  <rect x="-22" y="-18" width="45" height="24" rx="7" fill="#ed3d91" stroke="#ffd2ed" stroke-width="3"/>
+  <rect x="-13" y="-28" width="26" height="13" rx="5" fill="#8dd9ff" stroke="#fff" stroke-width="2"/>
+  <circle cx="-12" cy="9" r="6" fill="#22223d" stroke="#ffe39a" stroke-width="2"/>
+  <circle cx="13" cy="9" r="6" fill="#22223d" stroke="#ffe39a" stroke-width="2"/>
+ </g>
+ <text x="28" y="30" fill="#ffe59a" font-size="17" font-weight="bold">BAŞLANGIÇ</text>
+ <text x="790" y="125" fill="#ffe59a" font-size="17" font-weight="bold">BİTİŞ</text>
+ <text x="22" y="370" fill="#d8c9ff" font-size="13">Ay ışığında enerji dönüşümlerini keşfet!</text>
+</svg>
+</div>
+<div class="controls">
+ <button class="start" onclick="start()">▶ Başlat</button>
+ <button class="pause" onclick="pause()">⏸ Duraklat</button>
+ <button class="reset" onclick="reset()">↻ Sıfırla</button>
+ <label class="toggle"><input type="checkbox" id="friction" onchange="updateEnergy()"> 🔥 Sürtünme açık</label>
+</div>
+
+<div class="panel">
+ <h2>⚡ Enerji Göstergeleri</h2>
+ <div class="grid">
+  <div class="energy"><b>Kinetik enerji <span id="ke">0 J</span></b><div class="bar"><div class="fill" id="keb"></div></div></div>
+  <div class="energy"><b>Çekim potansiyel <span id="pe">75 J</span></b><div class="bar"><div class="fill" id="peb"></div></div></div>
+  <div class="energy"><b>Mekanik enerji <span id="me">100 J</span></b><div class="bar"><div class="fill" id="meb"></div></div></div>
+  <div class="energy"><b>Isıya dönüşen <span id="heat">0 J</span></b><div class="bar"><div class="fill" id="heatb"></div></div></div>
+  <div class="energy" id="totalbox"><b>Toplam enerji <span id="total">100 J</span></b><div class="bar"><div class="fill" id="totalb"></div></div></div>
+ </div>
+ <div class="info" id="liveInfo">💡 Vagon en yüksek noktaya yakınken çekim potansiyel enerjisi fazladır.</div>
+</div>
+
+<section class="quiz">
+ <h2>🧠 SORU ZAMANI!</h2>
+ <div id="question">Vagon aşağı inerken hangi enerji türü artar?</div>
+ <div class="answers" id="answers"></div>
+ <div id="feedback">Doğru cevabı seç ve 10 puan kazan!</div>
+ <button id="next" onclick="nextQuestion()">Sonraki Soru ➜</button>
+</section>
+
+<div class="panel hidden" id="knowledge">
+ <h2>📚 Bilgi Köşesi – Tur Tamamlandı!</h2>
+ <p><b>1. Kinetik enerji:</b> Hareket eden cisimlerin enerjisidir. Cismin sürati arttıkça kinetik enerjisi artar.</p>
+ <p><b>2. Çekim potansiyel enerjisi:</b> Cismin bulunduğu yüksekliğe ve kütlesine bağlıdır. Aynı yerde daha yüksekte olan cismin çekim potansiyel enerjisi daha fazladır.</p>
+ <p><b>3. Mekanik enerji:</b> Kinetik enerji ile potansiyel enerjinin toplamıdır.</p>
+ <p><b>4. Sürtünme:</b> Sürtünme, mekanik enerjinin bir kısmının ısı enerjisine dönüşmesine neden olur. Enerji yok olmaz.</p>
+ <p><b>5. Enerjinin korunumu:</b> Enerji bir türden başka bir türe dönüşebilir. Sistemdeki toplam enerji korunur.</p>
+ <p><b>6. Hız treni örneği:</b> Vagon tepeden inerken potansiyel enerji azalır, kinetik enerji artar. Yeniden yükselirken kinetik enerji azalır, potansiyel enerji artar.</p>
+</div>
+<p class="foot">Bilimsel model notu: Bu oyun, enerji dönüşümlerini öğretmek için basitleştirilmiştir. Sürtünme kapalıyken mekanik enerji sabit kabul edilir. Sürtünme açıkken mekanik enerjinin bir bölümü ısıya dönüşür; toplam enerji hesabına ısı da dahildir.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const rail=$('rail'),cart=$('cart'),railLength=rail.getTotalLength();
+let progress=0,running=false,raf=0,last=0,score=0,lapCount=0,knowledgeShown=false;
+const quiz=[
+ {q:"1. Vagon tepeden aşağı inerken, sürati artıyorsa hangi enerji artar?",a:["Kinetik enerji","Çekim potansiyel enerjisi","Kimyasal enerji","Elektrik enerjisi"],c:0,e:"Kinetik enerji hareket enerjisidir; sürat arttıkça kinetik enerji de artar."},
+ {q:"2. Aynı kütledeki iki vagondan hangisinin çekim potansiyel enerjisi daha fazladır?",a:["Daha alçakta olan","Daha yüksekte olan","İkisi de daima eşittir","Hareket etmeyen"],c:1,e:"Kütleleri aynıysa daha yüksekte olan vagonun çekim potansiyel enerjisi daha fazladır."},
+ {q:"3. Mekanik enerji hangi iki enerji türünün toplamıdır?",a:["Isı ve ışık","Ses ve elektrik","Kinetik ve potansiyel","Kimyasal ve nükleer"],c:2,e:"Mekanik enerji, kinetik enerji ile potansiyel enerjinin toplamıdır."},
+ {q:"4. Sürtünme nedeniyle mekanik enerjinin bir kısmı genellikle hangi enerjiye dönüşür?",a:["Kütle enerjisine","Isı enerjisine","Potansiyel enerjiye","Besin enerjisine"],c:1,e:"Sürtünme sırasında mekanik enerjinin bir kısmı ısı enerjisine dönüşür."},
+ {q:"5. Sürtünmenin olmadığı kabul edilen bir hız treninde toplam mekanik enerji için hangisi doğrudur?",a:["Sürekli artar","Sürekli azalır","Sabit kalır","Tamamen yok olur"],c:2,e:"Sürtünme yok sayıldığında kinetik ve potansiyel enerjinin toplamı, yani mekanik enerji sabit kalır."},
+ {q:"6. Vagon yeniden tepeye çıkarken, yavaşlıyorsa hangi dönüşüm gerçekleşir?",a:["Kinetik enerji potansiyel enerjiye dönüşür","Potansiyel enerji ısıya dönüşür","Isı enerjisi yok olur","Kütle enerjiye dönüşür"],c:0,e:"Vagon yükselirken kinetik enerjinin bir kısmı çekim potansiyel enerjisine dönüşür."}
+];
+let qIndex=0,answered=false;
+function closeRules(){$('rules').classList.add('hidden')}
+function energyAt(p){
+ const pt=rail.getPointAtLength(p*railLength);
+ // Rayın SVG içindeki yüksekliği: üst nokta daha yüksek, alt nokta daha alçak.
+ const height=Math.max(0,Math.min(1,(300-pt.y)/230));
+ const friction=$('friction').checked;
+ const mechanical=friction?100-18*p:100;
+ const pe=75*height;
+ const kinetic=Math.max(0,mechanical-pe);
+ const heat=100-mechanical;
+ return {pt,mechanical,pe,kinetic,heat,total:kinetic+pe+heat};
+}
+function updateEnergy(){
+ const d=energyAt(progress);
+ cart.setAttribute('transform',`translate(${d.pt.x} ${d.pt.y-2})`);
+ const values={ke:d.kinetic,pe:d.pe,me:d.mechanical,heat:d.heat,total:d.total};
+ for(const [id,val] of Object.entries(values)){
+  $(id).textContent=val.toFixed(1)+' J';
+  $(id+'b').style.width=Math.max(0,Math.min(100,val))+'%';
+ }
+ if($('friction').checked){
+  $('liveInfo').textContent='🔥 Sürtünme açık: Vagon ilerledikçe mekanik enerjinin bir kısmı ısı enerjisine dönüşür.';
+ }else{
+  $('liveInfo').textContent='✨ Sürtünme kapalı: Kinetik ve çekim potansiyel enerjisinin toplamı olan mekanik enerji sabit kabul edilir.';
+ }
+}
+function frame(now){
+ if(!running)return;
+ const dt=Math.min((now-last)/1000,.05);last=now;
+ progress+=dt*0.23; // yaklaşık 4.3 saniyede bir tur
+ if(progress>=1){
+  progress=0;lapCount++;
+  if(!knowledgeShown){knowledgeShown=true;$('knowledge').classList.remove('hidden')}
+ }
+ updateEnergy();
+ raf=requestAnimationFrame(frame);
+}
+function start(){if(!running){running=true;last=performance.now();raf=requestAnimationFrame(frame)}}
+function pause(){running=false;cancelAnimationFrame(raf)}
+function reset(){pause();progress=0;updateEnergy()}
+function showQuestion(){
+ answered=false;const q=quiz[qIndex];
+ $('question').textContent=q.q;$('feedback').textContent='Cevabını seç!';
+ $('answers').innerHTML='';
+ q.a.forEach((answer,i)=>{
+  const b=document.createElement('button');b.className='answer';
+  b.textContent=String.fromCharCode(65+i)+') '+answer;
+  b.onclick=()=>chooseAnswer(i);$('answers').appendChild(b);
+ });
+}
+function chooseAnswer(i){
+ if(answered)return;answered=true;
+ const q=quiz[qIndex];
+ if(i===q.c){score+=10;$('score').textContent=score;$('feedback').textContent='🎉 Doğru! +10 puan. '+q.e}
+ else $('feedback').textContent='❌ Doğru cevap: '+q.a[q.c]+'. '+q.e;
+ [...$('answers').children].forEach((b,j)=>{b.disabled=true;if(j===q.c)b.style.background='#c9ffdc'});
+}
+function nextQuestion(){qIndex=(qIndex+1)%quiz.length;showQuestion()}
+updateEnergy();showQuestion();
+</script>
+</body>
+</html>
