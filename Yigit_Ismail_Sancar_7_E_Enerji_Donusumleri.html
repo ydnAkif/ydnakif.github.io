@@ -1,0 +1,3246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enerji Dönüşümleri Simülasyon Laboratuvarı - 7. Sınıf Fen Bilimleri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .phet-panel {
+            background: rgba(15, 23, 42, 0.84);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.65);
+        }
+        .scenario-card {
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scenario-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(56, 189, 248, 0.55);
+            box-shadow: 0 20px 35px -10px rgba(56, 189, 248, 0.25);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .energy-bar-fill {
+            transition: width 0.06s linear;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(51, 65, 85, 0.85);
+            height: 6px;
+            border-radius: 999px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+        }
+        @keyframes cardPopIn {
+            0% { opacity: 0; transform: translateY(22px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-card-in {
+            opacity: 0;
+            animation: cardPopIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes floatGlow {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.04); }
+        }
+        .animate-float-glow {
+            animation: floatGlow 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between bg-gradient-to-br from-slate-950 via-[#091124] to-slate-950">
+
+    <!-- AÇILIŞ ANİMASYONU (SPLASH OVERLAY) -->
+    <div id="introSplash" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        <div class="relative w-24 h-24 mb-5 flex items-center justify-center animate-float-glow">
+            <div class="absolute inset-0 rounded-full border-2 border-sky-400/40 animate-ping"></div>
+            <div class="absolute inset-2 rounded-full border-2 border-amber-400/60 animate-spin" style="animation-duration: 3s;"></div>
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-amber-400 flex items-center justify-center text-3xl shadow-2xl shadow-sky-500/40">
+                ⚡
+            </div>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-amber-300 tracking-tight text-center">
+            Fen Bilimleri Enerji Laboratuvarı
+        </h1>
+        <p class="text-xs text-slate-400 mt-1.5 font-medium">Simülasyon Ortamı Hazırlanıyor...</p>
+        <div class="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-4">
+            <div id="introProgressBar" class="h-full bg-gradient-to-r from-sky-400 to-amber-400 rounded-full transition-all duration-700 ease-out" style="width: 15%"></div>
+        </div>
+    </div>
+
+    <!-- ÜST ÇUBUK -->
+    <header class="w-full px-4 sm:px-6 pt-2.5 pb-2 flex flex-wrap items-center justify-between gap-2 z-20 shrink-0 bg-slate-950/60 border-b border-white/10">
+        <div class="flex items-center gap-2.5">
+            <button id="homeBtn" title="Ana Menüye Dön" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 flex items-center justify-center text-base shadow-md transition-all cursor-pointer">
+                🏠
+            </button>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white">
+                        Enerji Dönüşümleri Simülasyon Laboratuvarı
+                    </h1>
+                    <span id="activeScenarioBadge" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/30">
+                        🛹 Kaykay Rampası
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400">7. Sınıf Fen Bilimleri • Enerjinin Korunumu & Dönüşümü</p>
+            </div>
+        </div>
+
+        <!-- Hızlı Senaryo Geçiş Sekmeleri -->
+        <div id="topScenarioSwitcher" class="hidden flex-wrap items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-white/10">
+            <button data-nav-scenario="skate" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🛹 Kaykay</button>
+            <button data-nav-scenario="pendulum" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🕰️ Sarkaç</button>
+            <button data-nav-scenario="spring" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🌀 Yay</button>
+            <button data-nav-scenario="ball" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">⚽ Top</button>
+            <button data-nav-scenario="ramp" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🛷 Eğik Düzlem</button>
+            <button data-nav-scenario="bow" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🏹 Ok-Yay</button>
+            <button data-nav-scenario="trampoline" class="nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">🤸 Trambolin</button>
+            <button id="backToMenuBtn" class="px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-300 hover:bg-amber-400/10 transition-all cursor-pointer">Menü</button>
+        </div>
+    </header>
+
+    <!-- 1. GİRİŞ EKRANI: ANA MENÜ -->
+    <main id="menuView" class="w-full max-w-7xl mx-auto px-4 sm:px-8 py-4 flex-grow flex flex-col justify-between overflow-y-auto gap-4">
+        <div class="text-center max-w-3xl mx-auto mt-1">
+            <span class="inline-block text-xs font-bold uppercase tracking-widest text-sky-400 bg-sky-500/10 border border-sky-400/20 px-3 py-1 rounded-full mb-2">
+                İnteraktif Fen Laboratuvarı • 7 Senaryo
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-1.5">
+                Bir Enerji Dönüşümü Senaryosu Seçin
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Ödev kağıdındaki 7 fizik olayından birini seçin; görevleri tamamlayın, mini testi çözün ve ödev raporunuzu tek tıkla kopyalayın.
+            </p>
+        </div>
+
+        <!-- ÖDEV GÖREVLERİ & KONTROL LİSTESİ ÇUBUĞU -->
+        <div class="phet-panel rounded-2xl p-3.5 border border-sky-400/20">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">🎯</span>
+                    <h3 class="text-xs sm:text-sm font-extrabold text-white">Ödev Görevleri & Gözlem Kontrol Listesi</h3>
+                </div>
+                <span id="missionProgressBadge" class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                    0 / 3 Tamamlandı
+                </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+                <div id="mission1Card" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-white/10 transition-colors">
+                    <span id="mission1Icon" class="text-sm">⬜</span>
+                    <span class="text-slate-300 font-medium">1. Sürtünme kapalıyken kinetik-potansiyel dönüşümünü gözlemle</span>
+                </div>
+                <div id="mission2Card" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-white/10 transition-colors">
+                    <span id="mission2Icon" class="text-sm">⬜</span>
+                    <span class="text-slate-300 font-medium">2. Sürtünmeyi açarak ısı enerjisi artışını & toplam enerjiyi test et</span>
+                </div>
+                <div id="mission3Card" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-white/10 transition-colors">
+                    <span id="mission3Icon" class="text-sm">⬜</span>
+                    <span class="text-slate-300 font-medium">3. Deney tablosuna en az 2 kayıt ekleyip karşılaştırma yap</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7 SENARYO KARTLARI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div data-select-scenario="skate" style="animation-delay: 0.04s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500/25 to-indigo-500/25 border border-sky-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🛹
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Kaykay Rampası</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        U ve W pistlerinde çekim potansiyel ve kinetik enerji dönüşümünü inceleyin.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-sky-500 group-hover:bg-sky-400 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="pendulum" style="animation-delay: 0.09s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-500/25 border border-amber-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🕰️
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Salıncak / Sarkaç</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Salınım hareketinde yükseklik ve hız arasındaki enerji geçişini gözlemleyin.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-amber-400 group-hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="spring" style="animation-delay: 0.14s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/25 to-fuchsia-500/25 border border-purple-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🌀
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Yaya Bağlı Cisim</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Esneklik potansiyel enerjisi ile çekim potansiyel ve kinetik enerjiyi ayrı görün.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-purple-400 group-hover:bg-purple-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="ball" style="animation-delay: 0.19s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/25 to-teal-500/25 border border-emerald-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        ⚽
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Zıplayan Top</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Düşerken hızlanan ve yere çarpınca esneklik potansiyel enerjisi depolayan top.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-emerald-400 group-hover:bg-emerald-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="ramp" style="animation-delay: 0.24s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500/25 to-pink-500/25 border border-rose-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🛷
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Kızak / Eğik Düzlem</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Eğim açısı ayarlanabilir rampada kayan kızağın enerji dönüşümünü gözlemleyin.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-rose-400 group-hover:bg-rose-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="bow" style="animation-delay: 0.29s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500/25 to-blue-500/25 border border-cyan-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🏹
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Sapan / Ok-Yay</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Gerilen yaydaki esneklik potansiyel enerjisinin kinetik ve çekim potansiyele dönüşümü.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-cyan-400 group-hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <div data-select-scenario="trampoline" style="animation-delay: 0.34s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between cursor-pointer group">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-lime-500/25 to-green-500/25 border border-lime-400/30 flex items-center justify-center text-2xl mb-2.5 group-hover:scale-110 transition-transform">
+                        🤸
+                    </div>
+                    <h3 class="text-sm font-extrabold text-white mb-1">Trambolin</h3>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                        Zıplayan sporcu ile trambolin yayları arasındaki 3'lü enerji dönüşümünü inceleyin.
+                    </p>
+                </div>
+                <button class="w-full py-1.5 rounded-xl bg-lime-400 group-hover:bg-lime-300 text-slate-950 font-bold text-xs transition-colors">
+                    Deneyi Başlat →
+                </button>
+            </div>
+
+            <!-- EXTRA ARAÇLAR KARTI (QUIZ & ÖDEV RAPORU) -->
+            <div style="animation-delay: 0.39s" class="animate-card-in scenario-card rounded-2xl p-4 flex flex-col justify-between border-amber-400/30 bg-gradient-to-br from-slate-900/90 to-indigo-950/70">
+                <div>
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400/25 to-rose-500/25 border border-amber-400/40 flex items-center justify-center text-2xl mb-2.5">
+                        🎓
+                    </div>
+                    <h3 class="text-sm font-extrabold text-amber-300 mb-1">Ödev & Değerlendirme</h3>
+                    <p class="text-[11px] text-slate-300 leading-relaxed mb-3">
+                        5 soruluk mini testi çözün ve hocanıza sunacağınız ödev raporunu tek tıkla kopyalayın.
+                    </p>
+                </div>
+                <div class="space-y-1.5">
+                    <button id="openQuizModalBtn" class="w-full py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs transition-colors cursor-pointer">
+                        🧠 Mini Testi Çöz (5 Soru)
+                    </button>
+                    <button id="openReportModalBtn" class="w-full py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors cursor-pointer">
+                        📄 Ödev Raporu Özeti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MİNİ TEST (QUIZ) MODAL -->
+    <div id="quizModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="phet-panel rounded-2xl max-w-lg w-full p-5 border border-indigo-400/30 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🧠</span>
+                    <h3 class="text-base font-extrabold text-white">7. Sınıf Enerji Dönüşümleri Mini Testi</h3>
+                </div>
+                <button id="closeQuizModalBtn" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer">✕</button>
+            </div>
+            <div id="quizContent" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- ÖDEV RAPORU ÖZETİ MODAL -->
+    <div id="reportModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="phet-panel rounded-2xl max-w-xl w-full p-5 border border-amber-400/30 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📄</span>
+                    <h3 class="text-base font-extrabold text-white">Ödev Raporu & Gözlem Özeti</h3>
+                </div>
+                <button id="closeReportModalBtn" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer">✕</button>
+            </div>
+            <p class="text-xs text-slate-300 mb-2">
+                Ödev kağıdındaki <strong>"Denemeleri Karşılaştırma (15p)"</strong> ve <strong>"Geliştirme Açıklaması (10p)"</strong> bölümleri için hazırlanan metni tek tıkla kopyalayabilirsiniz:
+            </p>
+            <textarea id="reportTextArea" rows="10" readonly class="w-full rounded-xl bg-slate-950/90 border border-white/15 p-3 text-xs text-slate-200 font-mono leading-relaxed focus:outline-none"></textarea>
+            <div class="flex items-center justify-between mt-3">
+                <span id="copySuccessMsg" class="text-xs font-bold text-emerald-400 opacity-0 transition-opacity">✅ Panoya kopyalandı!</span>
+                <button id="copyReportBtn" class="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition-colors cursor-pointer">
+                    📋 Raporu Tek Tıkla Kopyala
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SİMÜLASYON SAHNESİ (TAM EKRAN) -->
+    <main id="simulationView" class="hidden w-full flex-grow flex flex-col overflow-hidden">
+        
+        <div class="relative w-full flex-grow overflow-hidden bg-slate-950">
+            <canvas id="simCanvas"></canvas>
+
+            <!-- SOL ÜST: ENERJİ GÖSTERGELERİ & PASTA GRAFİK -->
+            <div class="absolute top-3 left-3 sm:left-4 z-20 w-[245px] sm:w-[270px]">
+                <div class="phet-panel rounded-xl overflow-hidden">
+                    <button id="toggleEnergyDrawerBtn" class="w-full px-3 py-2 flex items-center justify-between bg-slate-900/90 hover:bg-slate-800/90 border-b border-white/10 transition-colors cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span id="energyDrawerIcon" class="w-5 h-5 rounded bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">−</span>
+                            <span class="text-xs font-extrabold tracking-wide text-white">Enerji</span>
+                        </div>
+                        <span class="text-[11px] font-bold text-amber-300" id="headerTotalBadge">1000 J</span>
+                    </button>
+
+                    <div id="energyDrawerBody" class="p-3 space-y-2">
+                        <div>
+                            <div class="flex justify-between text-[11px] font-bold mb-0.5">
+                                <span class="text-sky-300">Kinetik</span>
+                                <span id="valKinetic" class="text-sky-300">0 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barKinetic" class="energy-bar-fill h-full bg-sky-400 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] font-bold mb-0.5">
+                                <span class="text-emerald-300">Çekim Potansiyel</span>
+                                <span id="valPotential" class="text-emerald-300">1000 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barPotential" class="energy-bar-fill h-full bg-emerald-400 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <div id="elasticCard" class="hidden">
+                            <div class="flex justify-between text-[11px] font-bold mb-0.5">
+                                <span class="text-purple-300">Esneklik Potansiyel</span>
+                                <span id="valElastic" class="text-purple-300">0 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barElastic" class="energy-bar-fill h-full bg-purple-400 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] font-bold mb-0.5">
+                                <span class="text-indigo-300">Mekanik (K + P)</span>
+                                <span id="valMechanical" class="text-indigo-300">1000 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barMechanical" class="energy-bar-fill h-full bg-indigo-400 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] font-bold mb-0.5">
+                                <span class="text-rose-300">Isı (Sürtünme)</span>
+                                <span id="valThermal" class="text-rose-300">0 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barThermal" class="energy-bar-fill h-full bg-rose-500 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-1.5 border-t border-white/10">
+                            <div class="flex justify-between text-[11px] font-extrabold mb-0.5">
+                                <span class="text-amber-300">Toplam Enerji</span>
+                                <span id="valTotal" class="text-amber-300">1000 J</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="barTotal" class="energy-bar-fill h-full bg-amber-400 rounded-full" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <!-- CANLI PASTA GRAFİK -->
+                        <div class="pt-2 border-t border-white/10 flex items-center gap-2.5">
+                            <canvas id="pieCanvas" width="52" height="52" class="!w-[52px] !h-[52px] shrink-0 rounded-full bg-slate-900 border border-white/15 cursor-default"></canvas>
+                            <div class="text-[10px] leading-tight space-y-0.5">
+                                <div class="font-bold text-slate-200">Pasta Grafik Dağılımı</div>
+                                <div id="pieSummaryText" class="text-slate-400">K:%0 • P:%100 • Isı:%0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAĞ YANDA YÜZEN KONTROL PANELİ -->
+            <div class="absolute top-3 right-3 sm:right-4 z-20 w-[225px] sm:w-[245px]">
+                <div class="phet-panel rounded-xl p-3 space-y-2.5 max-h-[calc(100vh-145px)] overflow-y-auto">
+                    
+                    <div class="space-y-1.5 border-b border-white/10 pb-2">
+                        <label class="flex items-center justify-between text-[11px] font-semibold text-slate-200 cursor-pointer">
+                            <span>📏 Referans Çizgisi</span>
+                            <input id="showRefLineCheck" type="checkbox" checked class="accent-amber-400 w-3.5 h-3.5 rounded cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between text-[11px] font-semibold text-slate-200 cursor-pointer">
+                            <span>🧭 Hız & Yön Oku</span>
+                            <input id="showSpeedCheck" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between text-[11px] font-semibold text-slate-200 cursor-pointer">
+                            <span>⏲️ Hız Kadranı (Takometre)</span>
+                            <input id="showSpeedometerCheck" type="checkbox" checked class="accent-cyan-400 w-3.5 h-3.5 rounded cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between text-[11px] font-semibold text-slate-200 cursor-pointer">
+                            <span>📈 Enerji-Zaman Grafiği</span>
+                            <input id="showGraphCheck" type="checkbox" class="accent-indigo-400 w-3.5 h-3.5 rounded cursor-pointer">
+                        </label>
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-slate-200">
+                            <span>⏱️ Kronometre & Ses</span>
+                            <div class="flex items-center gap-1.5">
+                                <button id="toggleSoundBtn" title="Ses Efektleri" class="px-1.5 py-0.5 rounded bg-slate-800 border border-white/10 text-[10px] cursor-pointer">🔇</button>
+                                <input id="showStopwatchCheck" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="trackShapeBox">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Pist Şekli</div>
+                        <div class="grid grid-cols-2 gap-1 bg-slate-900/90 p-1 rounded-lg border border-white/10">
+                            <button id="trackUBtn" class="py-1 px-2 rounded text-[11px] font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer">U Pisti</button>
+                            <button id="trackWBtn" class="py-1 px-2 rounded text-[11px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer">W Pisti</button>
+                        </div>
+                    </div>
+
+                    <div id="rampAngleBox" class="hidden">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-300 mb-1">
+                            <span>📐 Eğim Açısı</span>
+                            <span id="rampAngleValue" class="text-rose-300">35°</span>
+                        </div>
+                        <input id="rampAngleSlider" type="range" min="20" max="55" step="5" value="35" class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[11px] font-bold text-slate-200">🔥 Sürtünme</span>
+                            <button id="frictionToggleBtn" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-800 text-slate-300 border border-white/15 transition-all cursor-pointer">
+                                KAPALI
+                            </button>
+                        </div>
+                        <div id="frictionLevelBox" class="opacity-40 pointer-events-none transition-opacity">
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                                <span>Az</span>
+                                <span id="frictionLevelText" class="text-rose-300 font-bold">Orta</span>
+                                <span>Çok</span>
+                            </div>
+                            <input id="frictionSlider" type="range" min="1" max="3" step="1" value="2" class="w-full">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 mb-1">
+                            <span>🌍 Yerçekimi</span>
+                            <span id="gravityValueText" class="text-sky-300 text-[10px]">9.8 m/s²</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-lg border border-white/10">
+                            <button data-gravity="1.6" data-planet="Ay" class="planet-btn py-1 rounded text-[10px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer">Ay</button>
+                            <button data-gravity="9.8" data-planet="Dünya" class="planet-btn py-1 rounded text-[10px] font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer">Dünya</button>
+                            <button data-gravity="24.8" data-planet="Jüpiter" class="planet-btn py-1 rounded text-[10px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer">Jüpiter</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 mb-1">
+                            <span>⚖️ Kütle</span>
+                            <span id="massValueText" class="text-amber-300">50 kg</span>
+                        </div>
+                        <input id="massSlider" type="range" min="20" max="100" step="5" value="50" class="w-full">
+                    </div>
+
+                    <div class="pt-1 border-t border-white/10">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-200 mb-1">
+                            <span>⚡ Simülasyon Hızı</span>
+                            <span id="simSpeedText" class="text-emerald-300">1.00x</span>
+                        </div>
+                        <input id="simSpeedSlider" type="range" min="0.25" max="2.5" step="0.05" value="1.0" class="w-full mb-1.5">
+                        <div class="grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-lg border border-white/10">
+                            <button data-speed="0.5" class="speed-preset-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:bg-white/5 cursor-pointer">0.5x</button>
+                            <button data-speed="1.0" class="speed-preset-btn px-2 py-1 rounded-lg text-[10px] font-bold bg-sky-500 text-slate-950 cursor-pointer">1.0x</button>
+                            <button data-speed="2.0" class="speed-preset-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:bg-white/5 cursor-pointer">2.0x</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KRONOMETRE (VARSAYILAN OLARAK AÇIK) -->
+            <div id="stopwatchWidget" class="absolute top-3 left-1/2 -translate-x-1/2 z-20 phet-panel px-3.5 py-2 rounded-xl flex items-center gap-3">
+                <span class="text-sm">⏱️</span>
+                <span id="stopwatchDisplay" class="font-mono text-xs sm:text-sm font-extrabold text-emerald-300">00.00 sn</span>
+                <button id="stopwatchStartStopBtn" class="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold cursor-pointer">Başlat</button>
+                <button id="stopwatchResetBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer">Sıfırla</button>
+            </div>
+
+            <!-- İBRELİ HIZ KADRANI (TAKO-METRE) -->
+            <div id="speedometerWidget" class="hidden sm:flex flex-col items-center absolute top-16 left-1/2 -translate-x-1/2 z-20 phet-panel px-3 py-2 rounded-xl">
+                <canvas id="speedoCanvas" width="110" height="64" class="!w-[110px] !h-[64px] cursor-default"></canvas>
+                <span id="speedoDigitalText" class="text-[11px] font-extrabold text-sky-300 -mt-1">0.0 m/s</span>
+            </div>
+
+            <!-- ENERJİ-ZAMAN GRAFİĞİ -->
+            <div id="energyGraphWidget" class="hidden absolute bottom-16 right-3 sm:right-4 z-20 phet-panel p-2.5 rounded-xl w-[245px]">
+                <div class="flex items-center justify-between text-[10px] font-bold text-slate-200 mb-1">
+                    <span>📈 Enerji - Zaman Grafiği</span>
+                    <button id="clearGraphBtn" class="text-sky-400 hover:underline cursor-pointer">Temizle</button>
+                </div>
+                <canvas id="graphCanvas" width="225" height="85" class="!w-[225px] !h-[85px] rounded-lg bg-slate-950/90 border border-white/10 cursor-default"></canvas>
+            </div>
+
+            <!-- SOL ALT: DENEY KAYIT & KARŞILAŞTIRMA TABLOSU -->
+            <div class="absolute bottom-16 left-3 sm:left-4 z-20 flex flex-col items-start gap-1.5">
+                <div class="flex items-center gap-1.5">
+                    <button id="logExperimentBtn" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-lg transition-all cursor-pointer flex items-center gap-1">
+                        <span>📸</span>
+                        <span>Anlık Veriyi Kaydet</span>
+                    </button>
+                    <button id="toggleLogTableBtn" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold phet-panel text-slate-200 hover:text-white cursor-pointer">
+                        📊 Tablo (<span id="logCountBadge">0</span>)
+                    </button>
+                </div>
+
+                <!-- DENEY KAYIT ÇEKMECESİ -->
+                <div id="experimentLogDrawer" class="hidden phet-panel rounded-xl p-3 w-[340px] sm:w-[440px] max-h-52 overflow-y-auto shadow-2xl">
+                    <div class="flex items-center justify-between mb-2 border-b border-white/10 pb-1.5">
+                        <span class="text-xs font-extrabold text-white">📋 Deney Karşılaştırma Tablosu</span>
+                        <button id="clearLogsBtn" class="text-[10px] font-bold text-rose-400 hover:underline cursor-pointer">Temizle</button>
+                    </div>
+                    <table class="w-full text-left text-[10px] border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-white/10">
+                                <th class="pb-1 pr-2">#</th>
+                                <th class="pb-1 pr-2">Sürtünme</th>
+                                <th class="pb-1 pr-2">Kinetik</th>
+                                <th class="pb-1 pr-2">Potansiyel</th>
+                                <th class="pb-1 pr-2">Mekanik</th>
+                                <th class="pb-1 pr-2">Isı</th>
+                                <th class="pb-1">Toplam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="experimentLogBody" class="divide-y divide-white/5">
+                            <tr><td colspan="7" class="py-2 text-center text-slate-400">Karşılaştırma yapmak için "Anlık Veriyi Kaydet" düğmesine basın.</td></tr>
+                        </tbody>
+                    </table>
+                    <div id="autoConclusionBox" class="hidden mt-2 p-2 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-[10px] text-emerald-200 leading-relaxed"></div>
+                </div>
+            </div>
+
+            <!-- ALT ORTA: OYNATMA VE KONTROL BUTONLARI -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 phet-panel px-3 py-2 rounded-2xl flex items-center gap-2">
+                <button id="playPauseBtn" class="px-4 py-1.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg transition-all cursor-pointer flex items-center gap-1.5">
+                    <span id="playPauseIcon">▶</span>
+                    <span id="playPauseText">Başlat</span>
+                </button>
+                <button id="stepBtn" title="Tek Adım İlerlet" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 transition-all cursor-pointer">
+                    ⏭ Adım
+                </button>
+                <button id="resetBtn" class="px-3.5 py-1.5 rounded-xl font-bold text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-400/30 transition-all cursor-pointer">
+                    🔄 Sıfırla
+                </button>
+            </div>
+        </div>
+
+        <!-- CANLI TÜRKÇE AÇIKLAMA KUTUSU (TAM GENİŞLİK ALT BANT) -->
+        <div class="w-full bg-slate-950/90 border-t border-white/10 px-4 sm:px-6 py-2.5 flex items-center gap-3 shrink-0 z-20">
+            <span class="text-lg">💬</span>
+            <p id="explanationText" class="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
+                Başlat düğmesine basın veya cismi sürükleyip bırakarak enerji dönüşümünü gözlemleyin!
+            </p>
+        </div>
+
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- FİZİK MOTORU VE ETKİLEŞİM MANTIĞI                         -->
+    <!-- ========================================================= -->
+    <script>
+        // =========================================================
+        // 1. SİMÜLASYON DEĞİŞKENLERİ VE DURUM YÖNETİMİ
+        // =========================================================
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const pieCanvas = document.getElementById('pieCanvas');
+        const pieCtx = pieCanvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        const speedoCanvas = document.getElementById('speedoCanvas');
+        const speedoCtx = speedoCanvas.getContext('2d');
+
+        // Fizik Sabitleri
+        let gravity = 9.8;
+        let currentPlanetName = 'Dünya';
+        let massKg = 50;
+        const MAX_HEIGHT_M = 10.0;
+        const BASE_TIME_SCALE = 1.65; // Kaykay ve tüm sahneler için akıcı hız
+        let simSpeedMultiplier = 1.0;
+
+        // Aktif Senaryo: 'skate' | 'pendulum' | 'spring' | 'ball' | 'ramp'
+        let currentScenario = 'skate';
+        let isRunning = false;
+        let isDragging = false;
+        let isFrictionOn = false;
+        let frictionLevel = 2;
+        let trackType = 'U';
+        let rampAngleDeg = 35;
+
+        // Ortak Hareket & Enerji Değişkenleri
+        let totalEnergy = massKg * gravity * MAX_HEIGHT_M;
+        let thermalEnergy = 0;
+        let direction = 1;
+        let lastTimestamp = 0;
+        let referenceHeightM = MAX_HEIGHT_M;
+
+        // Senaryo 1 (Kaykay) Değişkenleri
+        let xNorm = -1.0;
+
+        // Senaryo 2 (Salıncak / Sarkaç) Değişkenleri
+        const PEND_MAX_ANGLE = 1.05;
+        let pendAngle = -PEND_MAX_ANGLE;
+
+        // Senaryo 3 (Yay Sistemi) Değişkenleri
+        const SPRING_EQ_M = 5.0;
+        let springHeightM = 10.0;
+        let springVelocity = 0;
+
+        // Senaryo 4 (Zıplayan Top) Değişkenleri
+        let ballHeightM = 10.0;
+        let ballVelocity = 0;
+        let ballSquash = 0;
+
+        // Senaryo 5 (Kızak / Eğik Düzlem) Değişkenleri
+        let sledProgress = 0;
+        let sledSpeed = 0;
+
+        // Senaryo 6 (Sapan / Ok-Yay) Değişkenleri
+        let bowStage = 'drawn';
+        let bowPullM = 1.0;
+        let arrowPos = { x: 0, y: 2.0 };
+        let arrowVel = { vx: 0, vy: 0 };
+
+        // Senaryo 7 (Trambolin) Değişkenleri
+        let trampHeightM = 9.0;
+        let trampVelocity = 0;
+
+        // Ödev Görev Takibi
+        const missionsCompleted = {
+            frictionlessObserved: false,
+            frictionObserved: false,
+            comparisonLogged: false
+        };
+
+        // Kronometre, Ses & Grafik Geçmişi
+        let stopwatchTime = 0;
+        let stopwatchRunning = false;
+        let soundEnabled = false;
+        let audioCtx = null;
+        let lastSoundTime = 0;
+        let energyHistory = [];
+        let experimentLogs = [];
+
+        // Görsel Efektler
+        let wheelAngle = 0;
+        let motionTrail = [];
+        let sparks = [];
+        let stars = [];
+        let snowFlakes = [];
+        let clouds = [];
+        let lastExplanationKey = '';
+        let isEnergyDrawerOpen = true;
+
+        // =========================================================
+        // 2. DOM REFERANSLARI
+        // =========================================================
+        const menuView = document.getElementById('menuView');
+        const simulationView = document.getElementById('simulationView');
+        const topScenarioSwitcher = document.getElementById('topScenarioSwitcher');
+        const activeScenarioBadge = document.getElementById('activeScenarioBadge');
+
+        const toggleEnergyDrawerBtn = document.getElementById('toggleEnergyDrawerBtn');
+        const energyDrawerBody = document.getElementById('energyDrawerBody');
+        const energyDrawerIcon = document.getElementById('energyDrawerIcon');
+        const headerTotalBadge = document.getElementById('headerTotalBadge');
+
+        const valKinetic = document.getElementById('valKinetic');
+        const valPotential = document.getElementById('valPotential');
+        const valElastic = document.getElementById('valElastic');
+        const valMechanical = document.getElementById('valMechanical');
+        const valThermal = document.getElementById('valThermal');
+        const valTotal = document.getElementById('valTotal');
+        const elasticCard = document.getElementById('elasticCard');
+        const pieSummaryText = document.getElementById('pieSummaryText');
+
+        const barKinetic = document.getElementById('barKinetic');
+        const barPotential = document.getElementById('barPotential');
+        const barElastic = document.getElementById('barElastic');
+        const barMechanical = document.getElementById('barMechanical');
+        const barThermal = document.getElementById('barThermal');
+        const barTotal = document.getElementById('barTotal');
+
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playPauseIcon = document.getElementById('playPauseIcon');
+        const playPauseText = document.getElementById('playPauseText');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const frictionToggleBtn = document.getElementById('frictionToggleBtn');
+        const frictionLevelBox = document.getElementById('frictionLevelBox');
+        const frictionSlider = document.getElementById('frictionSlider');
+        const frictionLevelText = document.getElementById('frictionLevelText');
+
+        const trackShapeBox = document.getElementById('trackShapeBox');
+        const trackUBtn = document.getElementById('trackUBtn');
+        const trackWBtn = document.getElementById('trackWBtn');
+
+        const rampAngleBox = document.getElementById('rampAngleBox');
+        const rampAngleSlider = document.getElementById('rampAngleSlider');
+        const rampAngleValue = document.getElementById('rampAngleValue');
+
+        const massSlider = document.getElementById('massSlider');
+        const massValueText = document.getElementById('massValueText');
+        const gravityValueText = document.getElementById('gravityValueText');
+
+        const simSpeedSlider = document.getElementById('simSpeedSlider');
+        const simSpeedText = document.getElementById('simSpeedText');
+
+        const showRefLineCheck = document.getElementById('showRefLineCheck');
+        const showSpeedCheck = document.getElementById('showSpeedCheck');
+        const showSpeedometerCheck = document.getElementById('showSpeedometerCheck');
+        const showGraphCheck = document.getElementById('showGraphCheck');
+        const showStopwatchCheck = document.getElementById('showStopwatchCheck');
+        const toggleSoundBtn = document.getElementById('toggleSoundBtn');
+
+        const speedometerWidget = document.getElementById('speedometerWidget');
+        const speedoDigitalText = document.getElementById('speedoDigitalText');
+
+        const stopwatchWidget = document.getElementById('stopwatchWidget');
+        const stopwatchDisplay = document.getElementById('stopwatchDisplay');
+        const stopwatchStartStopBtn = document.getElementById('stopwatchStartStopBtn');
+        const stopwatchResetBtn = document.getElementById('stopwatchResetBtn');
+
+        const energyGraphWidget = document.getElementById('energyGraphWidget');
+        const clearGraphBtn = document.getElementById('clearGraphBtn');
+
+        const logExperimentBtn = document.getElementById('logExperimentBtn');
+        const toggleLogTableBtn = document.getElementById('toggleLogTableBtn');
+        const logCountBadge = document.getElementById('logCountBadge');
+        const experimentLogDrawer = document.getElementById('experimentLogDrawer');
+        const experimentLogBody = document.getElementById('experimentLogBody');
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+        const autoConclusionBox = document.getElementById('autoConclusionBox');
+
+        const explanationText = document.getElementById('explanationText');
+
+        // =========================================================
+        // 3. YILDIZLAR, KAR TANELERİ & TUVAL BOYUTLANDIRMA
+        // =========================================================
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 65; i++) {
+                stars.push({
+                    x: Math.random(),
+                    y: Math.random() * 0.58,
+                    r: Math.random() * 1.4 + 0.4,
+                    alpha: Math.random() * 0.6 + 0.25
+                });
+            }
+            snowFlakes = [];
+            for (let i = 0; i < 45; i++) {
+                snowFlakes.push({
+                    x: Math.random(),
+                    y: Math.random() * 0.85,
+                    r: Math.random() * 2.2 + 1.0,
+                    speed: Math.random() * 0.002 + 0.0008,
+                    drift: Math.random() * Math.PI * 2
+                });
+            }
+            clouds = [];
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: 0.1 + i * 0.22,
+                    y: 0.12 + (i % 2) * 0.08,
+                    scale: 0.8 + (i % 3) * 0.25
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            if (!canvas.parentElement) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawScene();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function playLabTone(freq = 320, duration = 0.06, type = 'sine', vol = 0.04) {
+            if (!soundEnabled) return;
+            const now = performance.now();
+            if (now - lastSoundTime < 140) return;
+            lastSoundTime = now;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (err) {}
+        }
+
+        // =========================================================
+        // 5. SENARYO YÖNETİMİ VE EKRAN GEÇİŞLERİ
+        // =========================================================
+        const scenarioNames = {
+            skate: '🛹 Kaykay Rampası',
+            pendulum: '🕰️ Salıncak / Sarkaç',
+            spring: '🌀 Yaya Bağlı Cisim',
+            ball: '⚽ Zıplayan Top',
+            ramp: '🛷 Kızak / Eğik Düzlem',
+            bow: '🏹 Sapan / Ok-Yay',
+            trampoline: '🤸 Trambolin'
+        };
+
+        function openScenario(scenarioKey) {
+            currentScenario = scenarioKey;
+            menuView.classList.add('hidden');
+            simulationView.classList.remove('hidden');
+            topScenarioSwitcher.classList.remove('hidden');
+            topScenarioSwitcher.classList.add('flex');
+            activeScenarioBadge.classList.remove('hidden');
+            activeScenarioBadge.textContent = scenarioNames[scenarioKey];
+
+            trackShapeBox.classList.toggle('hidden', scenarioKey !== 'skate');
+            rampAngleBox.classList.toggle('hidden', scenarioKey !== 'ramp');
+            elasticCard.classList.toggle('hidden', !(scenarioKey === 'spring' || scenarioKey === 'ball' || scenarioKey === 'bow' || scenarioKey === 'trampoline'));
+
+            document.querySelectorAll('.nav-scen-btn').forEach(btn => {
+                if (btn.dataset.navScenario === scenarioKey) {
+                    btn.className = 'nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer';
+                } else {
+                    btn.className = 'nav-scen-btn px-2 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
+                }
+            });
+
+            resetSimulation();
+            resizeCanvas();
+        }
+
+        function returnToMenu() {
+            isRunning = false;
+            updatePlayButtonUI();
+            simulationView.classList.add('hidden');
+            menuView.classList.remove('hidden');
+            topScenarioSwitcher.classList.add('hidden');
+            topScenarioSwitcher.classList.remove('flex');
+            activeScenarioBadge.classList.add('hidden');
+            updateMissionUI();
+        }
+
+        function updateMissionUI() {
+            const count = (missionsCompleted.frictionlessObserved ? 1 : 0)
+                        + (missionsCompleted.frictionObserved ? 1 : 0)
+                        + (missionsCompleted.comparisonLogged ? 1 : 0);
+            const badge = document.getElementById('missionProgressBadge');
+            if (badge) {
+                badge.textContent = `${count} / 3 Tamamlandı`;
+                if (count === 3) {
+                    badge.className = 'text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+                }
+            }
+            const setMissionState = (num, done) => {
+                const card = document.getElementById(`mission${num}Card`);
+                const icon = document.getElementById(`mission${num}Icon`);
+                if (card && icon) {
+                    icon.textContent = done ? '✅' : '⬜';
+                    card.className = done
+                        ? 'flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/40 transition-colors'
+                        : 'flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900/80 border border-white/10 transition-colors';
+                }
+            };
+            setMissionState(1, missionsCompleted.frictionlessObserved);
+            setMissionState(2, missionsCompleted.frictionObserved);
+            setMissionState(3, missionsCompleted.comparisonLogged);
+        }
+
+        // =========================================================
+        // 6. GEOMETRİ & HESAPLAMA FONKSİYONLARI
+        // =========================================================
+        function getRampHeightM(x) {
+            const clamped = Math.max(-1.05, Math.min(1.05, x));
+            if (trackType === 'U') {
+                return MAX_HEIGHT_M * (clamped * clamped);
+            } else {
+                const rawW = 0.35 + 1.45 * Math.pow(clamped, 4) - 0.80 * Math.pow(clamped, 2);
+                return Math.max(0, Math.min(MAX_HEIGHT_M * 1.1, MAX_HEIGHT_M * rawW));
+            }
+        }
+
+        function getRampSlope(x) {
+            if (trackType === 'U') {
+                return 2 * MAX_HEIGHT_M * x;
+            } else {
+                return MAX_HEIGHT_M * (5.8 * Math.pow(x, 3) - 1.6 * x);
+            }
+        }
+
+        function getRampGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const groundY = height - 48;
+            const topMargin = 140;
+            const rampHeightPx = Math.max(160, groundY - topMargin);
+            const halfSpanX = Math.min(width * 0.28, 360);
+            const centerX = width / 2;
+            return { width, height, groundY, topMargin, rampHeightPx, halfSpanX, centerX };
+        }
+
+        function getPendulumGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const pivotX = width / 2;
+            const pivotY = 140;
+            const ropeLenPx = Math.min(height - 230, 340);
+            return { width, height, pivotX, pivotY, ropeLenPx };
+        }
+
+        function getVerticalSystemGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const centerX = width / 2;
+            const topY = 145;
+            const floorY = height - 48;
+            const spanPx = Math.max(180, floorY - topY - 40);
+            return { width, height, centerX, topY, floorY, spanPx };
+        }
+
+        function getInclinedPlaneGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const floorY = height - 48;
+            const topY = 155;
+            const maxRampH = floorY - topY;
+            const rad = (rampAngleDeg * Math.PI) / 180;
+            const rampBaseW = Math.min(width * 0.36, maxRampH / Math.tan(rad));
+            const leftX = width * 0.27;
+            const cornerX = leftX + rampBaseW;
+            const rightX = width * 0.77;
+            const flatLenPx = Math.max(90, rightX - cornerX);
+            return { width, height, floorY, topY, maxRampH, rampBaseW, leftX, cornerX, rightX, flatLenPx };
+        }
+
+        function getBowGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const floorY = height - 48;
+            const bowX = width * 0.24;
+            const bowY = floorY - 95;
+            const spanX = Math.max(240, width * 0.56);
+            const spanY = Math.max(160, floorY - 165);
+            return { width, height, floorY, bowX, bowY, spanX, spanY };
+        }
+
+        function getTrampolineGeometry() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const centerX = width / 2;
+            const floorY = height - 48;
+            const netRestY = floorY - 58;
+            const topY = 150;
+            const spanPx = Math.max(170, netRestY - topY);
+            return { width, height, centerX, floorY, netRestY, topY, spanPx };
+        }
+
+        function getSpringConstant() {
+            return (2 * massKg * gravity) / 5.0;
+        }
+
+        function computeEnergies() {
+            if (currentScenario === 'skate') {
+                const h = getRampHeightM(xNorm);
+                const maxPossiblePE = massKg * gravity * h;
+                if (maxPossiblePE >= totalEnergy - thermalEnergy) {
+                    const pe = Math.max(0, totalEnergy - thermalEnergy);
+                    return { kinetic: 0, potential: pe, elastic: 0, mechanical: pe, thermal: thermalEnergy, total: totalEnergy, speed: 0 };
+                }
+                const pe = maxPossiblePE;
+                const mech = Math.max(0, totalEnergy - thermalEnergy);
+                const ke = Math.max(0, mech - pe);
+                const speed = Math.sqrt((2 * ke) / massKg);
+                return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+            }
+
+            if (currentScenario === 'pendulum') {
+                const maxCosDrop = 1 - Math.cos(PEND_MAX_ANGLE);
+                const currentCosDrop = 1 - Math.cos(pendAngle);
+                const h = Math.max(0, (currentCosDrop / maxCosDrop) * MAX_HEIGHT_M);
+                const pe = Math.min(Math.max(0, totalEnergy - thermalEnergy), massKg * gravity * h);
+                const mech = Math.max(0, totalEnergy - thermalEnergy);
+                const ke = Math.max(0, mech - pe);
+                const speed = Math.sqrt((2 * ke) / massKg);
+                return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+            }
+
+            if (currentScenario === 'spring') {
+                const k = getSpringConstant();
+                const extension = Math.max(0, MAX_HEIGHT_M - springHeightM);
+                const pe = Math.max(0, massKg * gravity * springHeightM);
+                const ee = 0.5 * k * extension * extension;
+                const ke = 0.5 * massKg * springVelocity * springVelocity;
+                const mech = pe + ee + ke;
+                const therm = Math.max(0, totalEnergy - mech);
+                return { kinetic: ke, potential: pe, elastic: ee, mechanical: mech, thermal: therm, total: totalEnergy, speed: Math.abs(springVelocity) };
+            }
+
+            if (currentScenario === 'ball') {
+                if (ballHeightM < 0) {
+                    const depth = Math.abs(ballHeightM);
+                    const kBall = massKg * gravity * 20;
+                    const ee = Math.min(Math.max(0, totalEnergy - thermalEnergy), 0.5 * kBall * depth * depth);
+                    const mech = Math.max(0, totalEnergy - thermalEnergy);
+                    const ke = Math.max(0, mech - ee);
+                    return { kinetic: ke, potential: 0, elastic: ee, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed: Math.abs(ballVelocity) };
+                } else {
+                    const pe = Math.min(Math.max(0, totalEnergy - thermalEnergy), massKg * gravity * ballHeightM);
+                    const mech = Math.max(0, totalEnergy - thermalEnergy);
+                    const ke = Math.max(0, mech - pe);
+                    const speed = Math.sqrt((2 * ke) / massKg);
+                    return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+                }
+            }
+
+            if (currentScenario === 'ramp') {
+                const h = sledProgress <= 1.0 ? MAX_HEIGHT_M * (1.0 - sledProgress) : 0;
+                const pe = Math.max(0, massKg * gravity * h);
+                const mech = Math.max(0, totalEnergy - thermalEnergy);
+                const ke = Math.max(0, mech - pe);
+                const speed = Math.sqrt((2 * ke) / massKg);
+                return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+            }
+
+            if (currentScenario === 'bow') {
+                const kBow = 2 * massKg * gravity * MAX_HEIGHT_M;
+                if (bowStage === 'drawn') {
+                    const ee = 0.5 * kBow * bowPullM * bowPullM;
+                    const pe = massKg * gravity * 2.0;
+                    const mech = ee + pe;
+                    return { kinetic: 0, potential: pe, elastic: ee, mechanical: mech, thermal: 0, total: totalEnergy, speed: 0 };
+                } else {
+                    const pe = Math.min(Math.max(0, totalEnergy - thermalEnergy), massKg * gravity * Math.max(0, arrowPos.y));
+                    const mech = Math.max(0, totalEnergy - thermalEnergy);
+                    const ke = Math.max(0, mech - pe);
+                    const speed = Math.sqrt((2 * ke) / massKg);
+                    return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+                }
+            }
+
+            if (currentScenario === 'trampoline') {
+                if (trampHeightM < 0) {
+                    const depth = Math.abs(trampHeightM);
+                    const kTramp = massKg * gravity * 14;
+                    const ee = Math.min(Math.max(0, totalEnergy - thermalEnergy), 0.5 * kTramp * depth * depth);
+                    const mech = Math.max(0, totalEnergy - thermalEnergy);
+                    const ke = Math.max(0, mech - ee);
+                    const speed = Math.sqrt((2 * ke) / massKg);
+                    return { kinetic: ke, potential: 0, elastic: ee, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+                } else {
+                    const pe = Math.min(Math.max(0, totalEnergy - thermalEnergy), massKg * gravity * trampHeightM);
+                    const mech = Math.max(0, totalEnergy - thermalEnergy);
+                    const ke = Math.max(0, mech - pe);
+                    const speed = Math.sqrt((2 * ke) / massKg);
+                    return { kinetic: ke, potential: pe, elastic: 0, mechanical: mech, thermal: thermalEnergy, total: totalEnergy, speed };
+                }
+            }
+        }
+
+        function updateTotalEnergyFromState() {
+            if (currentScenario === 'skate') {
+                const h = getRampHeightM(xNorm);
+                referenceHeightM = h;
+                totalEnergy = massKg * gravity * h;
+            } else if (currentScenario === 'pendulum') {
+                const maxCosDrop = 1 - Math.cos(PEND_MAX_ANGLE);
+                const h = ((1 - Math.cos(pendAngle)) / maxCosDrop) * MAX_HEIGHT_M;
+                referenceHeightM = h;
+                totalEnergy = massKg * gravity * h;
+            } else if (currentScenario === 'spring') {
+                const k = getSpringConstant();
+                const extension = Math.max(0, MAX_HEIGHT_M - springHeightM);
+                referenceHeightM = springHeightM;
+                totalEnergy = massKg * gravity * springHeightM + 0.5 * k * extension * extension + 0.5 * massKg * springVelocity * springVelocity;
+            } else if (currentScenario === 'ball') {
+                referenceHeightM = Math.max(0, ballHeightM);
+                totalEnergy = massKg * gravity * Math.max(0, ballHeightM);
+            } else if (currentScenario === 'ramp') {
+                const h = sledProgress <= 1.0 ? MAX_HEIGHT_M * (1.0 - sledProgress) : 0;
+                referenceHeightM = h;
+                totalEnergy = massKg * gravity * h;
+            } else if (currentScenario === 'bow') {
+                const kBow = 2 * massKg * gravity * MAX_HEIGHT_M;
+                referenceHeightM = 2.0;
+                totalEnergy = 0.5 * kBow * bowPullM * bowPullM + massKg * gravity * 2.0;
+            } else if (currentScenario === 'trampoline') {
+                referenceHeightM = Math.max(0, trampHeightM);
+                totalEnergy = massKg * gravity * Math.max(0, trampHeightM);
+            }
+            thermalEnergy = 0;
+            motionTrail = [];
+            sparks = [];
+            energyHistory = [];
+        }
+
+        // =========================================================
+        // 7. FİZİK ADIMI (AKICI KAYKAY & TAM ZIPLAMA FİZİĞİ)
+        // =========================================================
+        function stepPhysics(dt) {
+            if (isDragging) return;
+            if (isRunning) {
+                if (!isFrictionOn) missionsCompleted.frictionlessObserved = true;
+                else missionsCompleted.frictionObserved = true;
+            }
+            const subSteps = 12;
+            const subDt = dt / subSteps;
+
+            for (let i = 0; i < subSteps; i++) {
+                if (currentScenario === 'skate') stepSkatePhysics(subDt);
+                else if (currentScenario === 'pendulum') stepPendulumPhysics(subDt);
+                else if (currentScenario === 'spring') stepSpringPhysics(subDt);
+                else if (currentScenario === 'ball') stepBallPhysics(subDt);
+                else if (currentScenario === 'ramp') stepRampPhysics(subDt);
+                else if (currentScenario === 'bow') stepBowPhysics(subDt);
+                else if (currentScenario === 'trampoline') stepTrampolinePhysics(subDt);
+            }
+
+            if (isRunning) {
+                recordTrailPoint();
+                recordGraphPoint();
+            }
+        }
+
+        function stepSkatePhysics(dt) {
+            const geom = getRampGeometry();
+            const h = getRampHeightM(xNorm);
+            const mech = Math.max(0, totalEnergy - thermalEnergy);
+            const ke = Math.max(0, mech - massKg * gravity * h);
+            const speed = Math.sqrt((2 * ke) / massKg);
+
+            const slope = getRampSlope(xNorm);
+            const ds = Math.sqrt(1 + slope * slope);
+
+            if (isFrictionOn && speed > 0.01) {
+                const mu = 0.045 * frictionLevel;
+                const dThermal = mu * massKg * gravity * (speed * dt) * 0.45;
+                thermalEnergy = Math.min(totalEnergy, thermalEnergy + dThermal);
+                if (Math.random() < 0.25 && speed > 2.5) {
+                    const sx = geom.centerX + xNorm * geom.halfSpanX;
+                    const sy = geom.groundY - (h / MAX_HEIGHT_M) * geom.rampHeightPx;
+                    sparks.push({ x: sx, y: sy, vx: -direction * (20 + Math.random() * 40), vy: -15 - Math.random() * 35, life: 1.0, size: 2 + Math.random() * 2 });
+                    if (Math.random() < 0.08) playLabTone(180 + speed * 12, 0.04, 'sawtooth', 0.02);
+                }
+            }
+
+            const newMech = Math.max(0, totalEnergy - thermalEnergy);
+            if (isFrictionOn && newMech < massKg * gravity * 0.06 && Math.abs(slope) < 2.2) {
+                thermalEnergy = totalEnergy;
+                xNorm = trackType === 'U' ? 0 : (xNorm < 0 ? -0.371 : 0.371);
+                direction = 0;
+                return;
+            }
+
+            // Kaykay pisti akıcı hız ayarı
+            const pathScale = 1.85;
+            if (speed < 0.08) {
+                if (Math.abs(slope) > 0.05) {
+                    direction = slope > 0 ? -1 : 1;
+                    xNorm += direction * 0.0035;
+                } else {
+                    direction = 0;
+                    return;
+                }
+            } else {
+                const dx = (direction * speed * dt) / (ds * pathScale);
+                xNorm += dx;
+                wheelAngle += direction * speed * dt * 3.2;
+            }
+
+            const nextPE = massKg * gravity * getRampHeightM(xNorm);
+            if (nextPE >= newMech) {
+                xNorm -= (direction * speed * dt) / (ds * pathScale);
+                direction *= -1;
+            }
+        }
+
+        function stepPendulumPhysics(dt) {
+            const maxCosDrop = 1 - Math.cos(PEND_MAX_ANGLE);
+            const currentCosDrop = 1 - Math.cos(pendAngle);
+            const h = Math.max(0, (currentCosDrop / maxCosDrop) * MAX_HEIGHT_M);
+            const mech = Math.max(0, totalEnergy - thermalEnergy);
+            const ke = Math.max(0, mech - massKg * gravity * h);
+            const speed = Math.sqrt((2 * ke) / massKg);
+
+            if (isFrictionOn && speed > 0.01) {
+                const mu = 0.085 * frictionLevel;
+                const dThermal = mu * massKg * gravity * speed * dt * 0.95;
+                thermalEnergy = Math.min(totalEnergy, thermalEnergy + dThermal);
+            }
+
+            const newMech = Math.max(0, totalEnergy - thermalEnergy);
+            if (isFrictionOn && newMech < massKg * gravity * 0.08 && Math.abs(pendAngle) < 0.09) {
+                thermalEnergy = totalEnergy;
+                pendAngle = 0;
+                direction = 0;
+                return;
+            }
+
+            if (speed < 0.08) {
+                if (Math.abs(pendAngle) > 0.015) {
+                    direction = pendAngle > 0 ? -1 : 1;
+                    pendAngle += direction * 0.0035;
+                } else {
+                    pendAngle = 0;
+                    direction = 0;
+                    return;
+                }
+            } else {
+                const dTheta = (direction * speed * dt) / 4.2;
+                pendAngle += dTheta;
+            }
+
+            const nextCosDrop = 1 - Math.cos(pendAngle);
+            const nextH = (nextCosDrop / maxCosDrop) * MAX_HEIGHT_M;
+            if (massKg * gravity * nextH >= newMech) {
+                const maxAllowedCos = 1 - (newMech / (massKg * gravity * MAX_HEIGHT_M)) * maxCosDrop;
+                const maxAllowedAngle = Math.acos(Math.max(-1, Math.min(1, maxAllowedCos)));
+                pendAngle = (pendAngle >= 0 ? 1 : -1) * maxAllowedAngle;
+                direction *= -1;
+            }
+        }
+
+        function stepSpringPhysics(dt) {
+            const k = getSpringConstant();
+            const extension = MAX_HEIGHT_M - springHeightM;
+            const springForceUp = k * extension;
+            const gravityForceDown = massKg * gravity;
+            let netForce = springForceUp - gravityForceDown;
+
+            if (isFrictionOn) {
+                const damping = 0.85 * frictionLevel * massKg;
+                netForce -= damping * springVelocity;
+            }
+
+            const accel = netForce / massKg;
+            springVelocity += accel * dt;
+            springHeightM += springVelocity * dt;
+
+            if (springHeightM > MAX_HEIGHT_M) {
+                springHeightM = MAX_HEIGHT_M;
+                springVelocity = 0;
+            } else if (springHeightM < 0.4) {
+                springHeightM = 0.4;
+                springVelocity = Math.abs(springVelocity) * 0.85;
+            }
+
+            direction = Math.abs(springVelocity) < 0.06 ? 0 : (springVelocity > 0 ? -1 : 1);
+
+            if (isFrictionOn && Math.abs(springHeightM - SPRING_EQ_M) < 0.04 && Math.abs(springVelocity) < 0.08) {
+                springHeightM = SPRING_EQ_M;
+                springVelocity = 0;
+                direction = 0;
+            }
+        }
+
+        function stepBallPhysics(dt) {
+            const mech = Math.max(0, totalEnergy - thermalEnergy);
+            if (isFrictionOn && mech < massKg * gravity * 0.08 && ballHeightM <= 0.05 && Math.abs(ballVelocity) < 0.25) {
+                thermalEnergy = totalEnergy;
+                ballHeightM = 0;
+                ballVelocity = 0;
+                ballSquash = 0;
+                direction = 0;
+                return;
+            }
+
+            if (ballHeightM >= 0) {
+                ballSquash = Math.max(0, ballSquash - dt * 6);
+                ballVelocity -= gravity * dt * 1.45;
+                ballHeightM += ballVelocity * dt * 1.45;
+
+                if (isFrictionOn && Math.abs(ballVelocity) > 0.05) {
+                    const airDrag = 0.01 * frictionLevel * massKg * gravity * Math.abs(ballVelocity) * dt;
+                    thermalEnergy = Math.min(totalEnergy, thermalEnergy + airDrag);
+                }
+
+                // Zemine çarpma anı
+                if (ballHeightM < 0 && ballVelocity < 0) {
+                    if (Math.abs(ballVelocity) > 1.2) {
+                        playLabTone(145, 0.09, 'triangle', 0.07);
+                    }
+                    if (isFrictionOn) {
+                        const impactLoss = Math.max(0, totalEnergy - thermalEnergy) * (0.14 * frictionLevel);
+                        thermalEnergy = Math.min(totalEnergy, thermalEnergy + impactLoss);
+                    }
+                    const remMech = Math.max(0, totalEnergy - thermalEnergy);
+                    if (remMech < massKg * gravity * 0.14) {
+                        ballHeightM = 0;
+                        ballVelocity = 0;
+                        ballSquash = 0;
+                        thermalEnergy = totalEnergy;
+                        direction = 0;
+                        return;
+                    }
+                    ballVelocity = -Math.sqrt((2 * remMech) / massKg);
+                }
+            } else {
+                // Zeminde elastik sıkışma ve geri sıçrama fazı
+                const kBall = massKg * gravity * 22;
+                const depth = Math.abs(ballHeightM);
+                const springAccel = (kBall * depth) / massKg;
+                ballVelocity += springAccel * dt * 1.6;
+                ballHeightM += ballVelocity * dt * 1.6;
+                ballSquash = Math.min(0.42, depth * 0.9);
+
+                // Zeminden yukarı fırlama anı
+                if (ballHeightM >= 0) {
+                    ballHeightM = 0.005;
+                    const remMech = Math.max(0, totalEnergy - thermalEnergy);
+                    ballVelocity = Math.sqrt((2 * remMech) / massKg);
+                }
+            }
+
+            direction = Math.abs(ballVelocity) < 0.08 ? 0 : (ballVelocity > 0 ? -1 : 1);
+        }
+
+        function stepRampPhysics(dt) {
+            const rGeom = getInclinedPlaneGeometry();
+            const rad = (rampAngleDeg * Math.PI) / 180;
+            const h = sledProgress <= 1.0 ? MAX_HEIGHT_M * (1.0 - sledProgress) : 0;
+            const mech = Math.max(0, totalEnergy - thermalEnergy);
+            const ke = Math.max(0, mech - massKg * gravity * h);
+            sledSpeed = Math.sqrt((2 * ke) / massKg);
+
+            if (sledProgress <= 1.0) {
+                if (isFrictionOn) {
+                    const mu = 0.025 * frictionLevel;
+                    const dThermal = mu * massKg * gravity * Math.cos(rad) * (sledSpeed * dt) * 0.45;
+                    thermalEnergy = Math.min(totalEnergy * 0.55, thermalEnergy + dThermal);
+                    if (Math.random() < 0.25 && sledSpeed > 1.5) {
+                        const sx = rGeom.leftX + sledProgress * rGeom.rampBaseW;
+                        const sy = rGeom.topY + sledProgress * rGeom.maxRampH;
+                        sparks.push({ x: sx, y: sy, vx: -25 - Math.random() * 35, vy: -15 - Math.random() * 25, life: 1.0, size: 2.2 });
+                    }
+                }
+
+                const effectiveSpeed = Math.max(1.2, sledSpeed);
+                const ds = effectiveSpeed * dt * 0.16;
+                sledProgress += ds;
+                direction = 1;
+            } else {
+                if (isFrictionOn && sledSpeed > 0.05) {
+                    const mu = 0.11 * frictionLevel;
+                    const dThermal = mu * massKg * gravity * (sledSpeed * dt) * 0.95;
+                    thermalEnergy = Math.min(totalEnergy, thermalEnergy + dThermal);
+                    if (Math.random() < 0.25 && sledSpeed > 1.2) {
+                        const flatRatio = Math.min(1, sledProgress - 1.0);
+                        const sx = rGeom.cornerX + flatRatio * rGeom.flatLenPx;
+                        sparks.push({ x: sx, y: rGeom.floorY, vx: -30 - Math.random() * 35, vy: -12 - Math.random() * 25, life: 1.0, size: 2.2 });
+                    }
+                }
+
+                const newMech = Math.max(0, totalEnergy - thermalEnergy);
+                if (newMech < 1.5 || sledProgress >= 2.0) {
+                    if (sledProgress >= 2.0) {
+                        sledProgress = 2.0;
+                        thermalEnergy = totalEnergy;
+                    }
+                    sledSpeed = 0;
+                    direction = 0;
+                    return;
+                }
+
+                sledProgress += sledSpeed * dt * 0.15;
+                direction = 1;
+            }
+        }
+
+        function stepBowPhysics(dt) {
+            const kBow = 2 * massKg * gravity * MAX_HEIGHT_M;
+            if (bowStage === 'drawn') {
+                bowPullM -= dt * 3.8;
+                direction = 1;
+                if (bowPullM <= 0) {
+                    bowPullM = 0;
+                    bowStage = 'flight';
+                    playLabTone(420, 0.08, 'sine', 0.06);
+                    const launchKE = Math.max(10, totalEnergy - massKg * gravity * 2.0);
+                    const launchSpeed = Math.sqrt((2 * launchKE) / massKg);
+                    const launchAngle = (38 * Math.PI) / 180;
+                    arrowPos = { x: 0, y: 2.0 };
+                    arrowVel = {
+                        vx: launchSpeed * Math.cos(launchAngle),
+                        vy: launchSpeed * Math.sin(launchAngle)
+                    };
+                }
+            } else {
+                if (arrowPos.y <= 0 && arrowVel.vy <= 0) {
+                    arrowPos.y = 0;
+                    arrowVel = { vx: 0, vy: 0 };
+                    direction = 0;
+                    thermalEnergy = totalEnergy;
+                    return;
+                }
+                if (isFrictionOn) {
+                    const airLoss = 0.018 * frictionLevel * massKg * gravity * dt * 2.5;
+                    thermalEnergy = Math.min(totalEnergy, thermalEnergy + airLoss);
+                }
+                arrowVel.vy -= gravity * dt * 0.95;
+                arrowPos.x += arrowVel.vx * dt * 0.85;
+                arrowPos.y += arrowVel.vy * dt * 0.95;
+                direction = 1;
+
+                if (arrowPos.y <= 0) {
+                    arrowPos.y = 0;
+                    arrowVel = { vx: 0, vy: 0 };
+                    direction = 0;
+                    thermalEnergy = totalEnergy;
+                    playLabTone(160, 0.08, 'triangle', 0.06);
+                }
+            }
+        }
+
+        function stepTrampolinePhysics(dt) {
+            const mech = Math.max(0, totalEnergy - thermalEnergy);
+            if (isFrictionOn && mech < massKg * gravity * 0.08 && trampHeightM <= 0.05 && Math.abs(trampVelocity) < 0.25) {
+                thermalEnergy = totalEnergy;
+                trampHeightM = 0;
+                trampVelocity = 0;
+                direction = 0;
+                return;
+            }
+
+            if (trampHeightM >= 0) {
+                trampVelocity -= gravity * dt * 1.4;
+                trampHeightM += trampVelocity * dt * 1.4;
+                if (isFrictionOn && Math.abs(trampVelocity) > 0.05) {
+                    thermalEnergy = Math.min(totalEnergy, thermalEnergy + 0.008 * frictionLevel * massKg * gravity * Math.abs(trampVelocity) * dt);
+                }
+                if (trampHeightM < 0 && trampVelocity < 0) {
+                    if (Math.abs(trampVelocity) > 1.2) {
+                        playLabTone(190, 0.1, 'sine', 0.06);
+                    }
+                    if (isFrictionOn) {
+                        const loss = Math.max(0, totalEnergy - thermalEnergy) * (0.12 * frictionLevel);
+                        thermalEnergy = Math.min(totalEnergy, thermalEnergy + loss);
+                    }
+                    const remMech = Math.max(0, totalEnergy - thermalEnergy);
+                    if (remMech < massKg * gravity * 0.14) {
+                        trampHeightM = 0;
+                        trampVelocity = 0;
+                        thermalEnergy = totalEnergy;
+                        direction = 0;
+                        return;
+                    }
+                    trampVelocity = -Math.sqrt((2 * remMech) / massKg);
+                }
+            } else {
+                const kTramp = massKg * gravity * 14;
+                const depth = Math.abs(trampHeightM);
+                const springAccel = (kTramp * depth) / massKg;
+                trampVelocity += springAccel * dt * 1.45;
+                trampHeightM += trampVelocity * dt * 1.45;
+
+                if (trampHeightM >= 0) {
+                    trampHeightM = 0.005;
+                    const remMech = Math.max(0, totalEnergy - thermalEnergy);
+                    trampVelocity = Math.sqrt((2 * remMech) / massKg);
+                }
+            }
+
+            direction = Math.abs(trampVelocity) < 0.08 ? 0 : (trampVelocity > 0 ? -1 : 1);
+        }
+
+        function recordTrailPoint() {
+            let pt = null;
+            if (currentScenario === 'skate') {
+                const g = getRampGeometry();
+                pt = { x: g.centerX + xNorm * g.halfSpanX, y: g.groundY - (getRampHeightM(xNorm) / MAX_HEIGHT_M) * g.rampHeightPx - 14 };
+            } else if (currentScenario === 'pendulum') {
+                const p = getPendulumGeometry();
+                pt = { x: p.pivotX + Math.sin(pendAngle) * p.ropeLenPx, y: p.pivotY + Math.cos(pendAngle) * p.ropeLenPx };
+            } else if (currentScenario === 'spring') {
+                const v = getVerticalSystemGeometry();
+                pt = { x: v.centerX, y: v.floorY - (springHeightM / MAX_HEIGHT_M) * v.spanPx };
+            } else if (currentScenario === 'ball') {
+                const v = getVerticalSystemGeometry();
+                pt = { x: v.centerX, y: v.floorY - (Math.max(0, ballHeightM) / MAX_HEIGHT_M) * v.spanPx - 22 };
+            } else if (currentScenario === 'ramp') {
+                const r = getInclinedPlaneGeometry();
+                if (sledProgress <= 1.0) {
+                    pt = { x: r.leftX + sledProgress * r.rampBaseW, y: r.topY + sledProgress * r.maxRampH - 12 };
+                } else {
+                    pt = { x: r.cornerX + Math.min(1, sledProgress - 1.0) * r.flatLenPx, y: r.floorY - 12 };
+                }
+            } else if (currentScenario === 'bow') {
+                const b = getBowGeometry();
+                const ax = b.bowX + (arrowPos.x / 18) * b.spanX;
+                const ay = b.floorY - (arrowPos.y / MAX_HEIGHT_M) * b.spanY;
+                pt = { x: ax, y: ay };
+            } else if (currentScenario === 'trampoline') {
+                const t = getTrampolineGeometry();
+                const py = trampHeightM >= 0
+                    ? t.netRestY - (trampHeightM / MAX_HEIGHT_M) * t.spanPx - 26
+                    : t.netRestY + Math.abs(trampHeightM) * 28 - 26;
+                pt = { x: t.centerX, y: py };
+            }
+
+            if (pt) {
+                motionTrail.push(pt);
+                if (motionTrail.length > 26) motionTrail.shift();
+            }
+        }
+
+        function recordGraphPoint() {
+            const e = computeEnergies();
+            energyHistory.push({
+                k: e.kinetic,
+                p: e.potential + e.elastic,
+                th: e.thermal,
+                tot: e.total
+            });
+            if (energyHistory.length > 140) energyHistory.shift();
+        }
+
+        // =========================================================
+        // 8. ARAYÜZ, PASTA GRAFİK & ÇİZGİ GRAFİK GÜNCELLEME
+        // =========================================================
+        function updateUI() {
+            const e = computeEnergies();
+            const maxRef = Math.max(1, e.total);
+
+            valKinetic.textContent = `${Math.round(e.kinetic)} J`;
+            valPotential.textContent = `${Math.round(e.potential)} J`;
+            valElastic.textContent = `${Math.round(e.elastic)} J`;
+            valMechanical.textContent = `${Math.round(e.mechanical)} J`;
+            valThermal.textContent = `${Math.round(e.thermal)} J`;
+            valTotal.textContent = `${Math.round(e.total)} J`;
+            headerTotalBadge.textContent = `${Math.round(e.total)} J`;
+
+            barKinetic.style.width = `${Math.min(100, (e.kinetic / maxRef) * 100)}%`;
+            barPotential.style.width = `${Math.min(100, (e.potential / maxRef) * 100)}%`;
+            barElastic.style.width = `${Math.min(100, (e.elastic / maxRef) * 100)}%`;
+            barMechanical.style.width = `${Math.min(100, (e.mechanical / maxRef) * 100)}%`;
+            barThermal.style.width = `${Math.min(100, (e.thermal / maxRef) * 100)}%`;
+            barTotal.style.width = '100%';
+
+            drawPieChart(e);
+            if (!speedometerWidget.classList.contains('hidden')) {
+                drawSpeedometer(e.speed);
+            }
+            if (!energyGraphWidget.classList.contains('hidden')) {
+                drawLineGraph();
+            }
+            updateDynamicExplanation(e);
+        }
+
+        function drawSpeedometer(speed) {
+            const w = speedoCanvas.width;
+            const h = speedoCanvas.height;
+            const cx = w / 2;
+            const cy = h - 6;
+            const r = 46;
+            speedoCtx.clearRect(0, 0, w, h);
+
+            speedoCtx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+            speedoCtx.lineWidth = 7;
+            speedoCtx.lineCap = 'round';
+            speedoCtx.beginPath();
+            speedoCtx.arc(cx, cy, r, Math.PI, 0);
+            speedoCtx.stroke();
+
+            const maxSpeed = 24;
+            const ratio = Math.min(1, speed / maxSpeed);
+            const needleAngle = Math.PI + ratio * Math.PI;
+
+            speedoCtx.strokeStyle = '#38bdf8';
+            speedoCtx.beginPath();
+            speedoCtx.arc(cx, cy, r, Math.PI, needleAngle);
+            speedoCtx.stroke();
+
+            speedoCtx.strokeStyle = '#f43f5e';
+            speedoCtx.lineWidth = 2.5;
+            speedoCtx.beginPath();
+            speedoCtx.moveTo(cx, cy);
+            speedoCtx.lineTo(cx + Math.cos(needleAngle) * (r - 6), cy + Math.sin(needleAngle) * (r - 6));
+            speedoCtx.stroke();
+
+            speedoCtx.fillStyle = '#ffffff';
+            speedoCtx.beginPath();
+            speedoCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+            speedoCtx.fill();
+
+            speedoDigitalText.textContent = `${speed.toFixed(1)} m/s`;
+        }
+
+        function drawPieChart(e) {
+            const tot = Math.max(1, e.total);
+            const slices = [
+                { val: e.kinetic, color: '#38bdf8' },
+                { val: e.potential, color: '#34d399' },
+                { val: e.elastic, color: '#c084fc' },
+                { val: e.thermal, color: '#f43f5e' }
+            ];
+
+            pieCtx.clearRect(0, 0, 52, 52);
+            let startAngle = -Math.PI / 2;
+            slices.forEach(s => {
+                if (s.val <= 0) return;
+                const sliceAngle = (s.val / tot) * Math.PI * 2;
+                pieCtx.beginPath();
+                pieCtx.moveTo(26, 26);
+                pieCtx.arc(26, 26, 24, startAngle, startAngle + sliceAngle);
+                pieCtx.closePath();
+                pieCtx.fillStyle = s.color;
+                pieCtx.fill();
+                startAngle += sliceAngle;
+            });
+
+            const kPct = Math.round((e.kinetic / tot) * 100);
+            const pPct = Math.round(((e.potential + e.elastic) / tot) * 100);
+            const thPct = Math.max(0, 100 - kPct - pPct);
+            pieSummaryText.textContent = `K:%${kPct} • P:%${pPct} • Isı:%${thPct}`;
+        }
+
+        function drawLineGraph() {
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            graphCtx.clearRect(0, 0, w, h);
+
+            graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            graphCtx.lineWidth = 1;
+            graphCtx.beginPath();
+            graphCtx.moveTo(0, h / 2);
+            graphCtx.lineTo(w, h / 2);
+            graphCtx.stroke();
+
+            if (energyHistory.length < 2) return;
+            const maxE = Math.max(1, totalEnergy * 1.08);
+
+            const drawSeries = (key, color, dashed = false) => {
+                graphCtx.save();
+                graphCtx.strokeStyle = color;
+                graphCtx.lineWidth = 1.8;
+                if (dashed) graphCtx.setLineDash([4, 3]);
+                graphCtx.beginPath();
+                energyHistory.forEach((pt, idx) => {
+                    const px = (idx / 139) * w;
+                    const py = h - (pt[key] / maxE) * (h - 8) - 4;
+                    if (idx === 0) graphCtx.moveTo(px, py);
+                    else graphCtx.lineTo(px, py);
+                });
+                graphCtx.stroke();
+                graphCtx.restore();
+            };
+
+            drawSeries('tot', '#fbbf24', true);
+            drawSeries('p', '#34d399');
+            drawSeries('k', '#38bdf8');
+            drawSeries('th', '#f43f5e');
+        }
+
+        function updateDynamicExplanation(e) {
+            let key = '';
+            let msg = '';
+
+            if (isDragging) {
+                key = 'dragging';
+                msg = 'Cismi yeni bir yüksekliğe konumlandırıyorsunuz. Yükseklik arttıkça çekim potansiyel enerjisi artar!';
+            } else if (!isRunning && e.thermal === 0 && e.kinetic === 0) {
+                key = 'ready';
+                msg = 'Sistem harekete hazır. Başlat düğmesine basarak enerji dönüşümünü ve hareket yönünü gözlemleyin!';
+            } else if (isFrictionOn && e.mechanical <= 2) {
+                key = 'stopped_heat';
+                msg = 'Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve cisim durdu; ancak Toplam Enerji korundu!';
+            } else if (currentScenario === 'spring') {
+                key = 'spring_move';
+                msg = 'Yay uzayıp sıkıştıkça esneklik potansiyel enerjisi, çekim potansiyel enerjisi ve kinetik enerji birbirine dönüşüyor.';
+            } else if (currentScenario === 'ball' && e.elastic > 10) {
+                key = 'ball_bounce';
+                msg = 'Top zemine çarpıp sıkıştığı anda kinetik enerji esneklik potansiyel enerjisine dönüşüyor ve topu yukarı fırlatıyor!';
+            } else if (currentScenario === 'bow') {
+                if (bowStage === 'drawn') {
+                    key = 'bow_drawn';
+                    msg = 'Yay gergin durumdayken ok üzerinde yüksek Esneklik Potansiyel Enerjisi depolanır.';
+                } else if (arrowPos.y > 0) {
+                    key = 'bow_flight';
+                    msg = 'Yay serbest bırakıldığında esneklik potansiyel enerjisi kinetik enerjiye ve yükseldikçe çekim potansiyel enerjisine dönüşüyor!';
+                } else {
+                    key = 'bow_landed';
+                    msg = 'Ok hedefe/zemine ulaştı ve mekanik enerjinin tamamı ısı enerjisine dönüştü; Toplam Enerji korundu!';
+                }
+            } else if (currentScenario === 'trampoline') {
+                if (trampHeightM < 0) {
+                    key = 'tramp_stretch';
+                    msg = 'Sporcu trambolin ağına bastığında kinetik enerji trambolinde Esneklik Potansiyel Enerjisine dönüşüyor!';
+                } else {
+                    key = 'tramp_air';
+                    msg = 'Trambolinden fırlayan sporcu yükseldikçe kinetik enerjisi çekim potansiyel enerjisine dönüşüyor.';
+                }
+            } else if (currentScenario === 'ramp') {
+                if (sledProgress <= 1.0) {
+                    key = 'ramp_slide';
+                    msg = 'Kızak eğik düzlemden kayarken çekim potansiyel enerjisi azalıyor, kinetik enerjisi artıyor!';
+                } else {
+                    key = 'ramp_flat';
+                    msg = isFrictionOn
+                        ? 'Yatay düzlemde sürtünme nedeniyle kinetik enerji ısı enerjisine dönüşüyor; Toplam Enerji sabit!'
+                        : 'Sürtünme kapalı olduğu için kızak yatay düzlemde sabit hız ve sabit kinetik enerjiyle ilerliyor.';
+                }
+            } else if (direction === 1 && e.kinetic > 10) {
+                key = 'down_accel';
+                msg = 'Cisim aşağı inerken çekim potansiyel enerjisi azalıyor, kinetik enerjisi artıyor.';
+            } else if (direction === -1 && e.kinetic > 10) {
+                key = 'up_decel';
+                msg = 'Cisim yukarı çıkarken kinetik enerjisi çekim potansiyel enerjisine dönüşüyor.';
+            } else {
+                key = isFrictionOn ? 'friction_active' : 'friction_off';
+                msg = isFrictionOn
+                    ? 'Sürtünme açık: Mekanik enerjinin bir kısmı ısıya dönüşüyor ancak Toplam Enerji korunuyor.'
+                    : 'Sürtünme kapalı: Kinetik ve potansiyel enerji birbirine dönüşürken Mekanik Enerji sabit kalıyor.';
+            }
+
+            if (key !== lastExplanationKey) {
+                lastExplanationKey = key;
+                explanationText.textContent = msg;
+            }
+        }
+
+        // =========================================================
+        // 9. BUTON, KAYDIRICI VE KONTROL ETKİLEŞİMLERİ
+        // =========================================================
+        function updatePlayButtonUI() {
+            if (isRunning) {
+                playPauseIcon.textContent = '⏸';
+                playPauseText.textContent = 'Durdur';
+                playPauseBtn.className = 'px-4 py-1.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg transition-all cursor-pointer flex items-center gap-1.5';
+            } else {
+                playPauseIcon.textContent = '▶';
+                playPauseText.textContent = 'Başlat';
+                playPauseBtn.className = 'px-4 py-1.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg transition-all cursor-pointer flex items-center gap-1.5';
+            }
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            updatePlayButtonUI();
+            xNorm = -1.0;
+            pendAngle = -PEND_MAX_ANGLE;
+            springHeightM = 10.0;
+            springVelocity = 0;
+            ballHeightM = 10.0;
+            ballVelocity = 0;
+            ballSquash = 0;
+            sledProgress = 0;
+            sledSpeed = 0;
+            bowStage = 'drawn';
+            bowPullM = 1.0;
+            arrowPos = { x: 0, y: 2.0 };
+            arrowVel = { vx: 0, vy: 0 };
+            trampHeightM = 9.0;
+            trampVelocity = 0;
+            direction = 1;
+            updateTotalEnergyFromState();
+            updateUI();
+            drawScene();
+        }
+
+        document.querySelectorAll('[data-select-scenario]').forEach(card => {
+            card.addEventListener('click', () => openScenario(card.dataset.selectScenario));
+        });
+        document.querySelectorAll('.nav-scen-btn').forEach(btn => {
+            btn.addEventListener('click', () => openScenario(btn.dataset.navScenario));
+        });
+        document.getElementById('homeBtn').addEventListener('click', returnToMenu);
+        document.getElementById('backToMenuBtn').addEventListener('click', returnToMenu);
+
+        toggleEnergyDrawerBtn.addEventListener('click', () => {
+            isEnergyDrawerOpen = !isEnergyDrawerOpen;
+            energyDrawerBody.classList.toggle('hidden', !isEnergyDrawerOpen);
+            energyDrawerIcon.textContent = isEnergyDrawerOpen ? '−' : '+';
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (!isRunning && isFrictionOn && computeEnergies().mechanical <= 2) {
+                resetSimulation();
+            }
+            isRunning = !isRunning;
+            updatePlayButtonUI();
+            if (isRunning) {
+                lastTimestamp = performance.now();
+                requestAnimationFrame(gameLoop);
+            }
+        });
+
+        stepBtn.addEventListener('click', () => {
+            isRunning = false;
+            updatePlayButtonUI();
+            stepPhysics(0.03 * BASE_TIME_SCALE * simSpeedMultiplier);
+            updateUI();
+            drawScene();
+        });
+
+        resetBtn.addEventListener('click', resetSimulation);
+
+        trackUBtn.addEventListener('click', () => {
+            trackType = 'U';
+            trackUBtn.className = 'py-1 px-2 rounded text-[11px] font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer';
+            trackWBtn.className = 'py-1 px-2 rounded text-[11px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer';
+            resetSimulation();
+        });
+
+        trackWBtn.addEventListener('click', () => {
+            trackType = 'W';
+            trackWBtn.className = 'py-1 px-2 rounded text-[11px] font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer';
+            trackUBtn.className = 'py-1 px-2 rounded text-[11px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer';
+            resetSimulation();
+        });
+
+        rampAngleSlider.addEventListener('input', (e) => {
+            rampAngleDeg = parseInt(e.target.value, 10);
+            rampAngleValue.textContent = `${rampAngleDeg}°`;
+            resetSimulation();
+        });
+
+        frictionToggleBtn.addEventListener('click', () => {
+            isFrictionOn = !isFrictionOn;
+            if (isFrictionOn) {
+                frictionToggleBtn.textContent = 'AÇIK';
+                frictionToggleBtn.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500 text-white border border-rose-400 transition-all cursor-pointer';
+                frictionLevelBox.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                frictionToggleBtn.textContent = 'KAPALI';
+                frictionToggleBtn.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-800 text-slate-300 border border-white/15 transition-all cursor-pointer';
+                frictionLevelBox.classList.add('opacity-40', 'pointer-events-none');
+            }
+            updateUI();
+            drawScene();
+        });
+
+        frictionSlider.addEventListener('input', (e) => {
+            frictionLevel = parseInt(e.target.value, 10);
+            const names = { 1: 'Az', 2: 'Orta', 3: 'Çok' };
+            frictionLevelText.textContent = names[frictionLevel];
+        });
+
+        document.querySelectorAll('.planet-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                gravity = parseFloat(btn.dataset.gravity);
+                currentPlanetName = btn.dataset.planet;
+                gravityValueText.textContent = `${gravity.toFixed(1)} m/s²`;
+                document.querySelectorAll('.planet-btn').forEach(b => {
+                    b.className = b === btn
+                        ? 'planet-btn py-1 rounded text-[10px] font-bold bg-sky-500 text-slate-950 transition-all cursor-pointer'
+                        : 'planet-btn py-1 rounded text-[10px] font-bold text-slate-300 hover:bg-white/5 transition-all cursor-pointer';
+                });
+                resetSimulation();
+            });
+        });
+
+        massSlider.addEventListener('input', (e) => {
+            massKg = parseInt(e.target.value, 10);
+            massValueText.textContent = `${massKg} kg`;
+            resetSimulation();
+        });
+
+        function applySimSpeed(val) {
+            simSpeedMultiplier = val;
+            simSpeedSlider.value = val;
+            simSpeedText.textContent = `${val.toFixed(2)}x`;
+            document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+                const isMatch = Math.abs(parseFloat(btn.dataset.speed) - val) < 0.02;
+                btn.className = isMatch
+                    ? 'speed-preset-btn px-2 py-1 rounded-lg text-[10px] font-bold bg-sky-500 text-slate-950 cursor-pointer'
+                    : 'speed-preset-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:bg-white/5 cursor-pointer';
+            });
+        }
+
+        simSpeedSlider.addEventListener('input', (e) => applySimSpeed(parseFloat(e.target.value)));
+        document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => applySimSpeed(parseFloat(btn.dataset.speed)));
+        });
+
+        showRefLineCheck.addEventListener('change', drawScene);
+        showSpeedCheck.addEventListener('change', drawScene);
+        showSpeedometerCheck.addEventListener('change', () => {
+            speedometerWidget.classList.toggle('hidden', !showSpeedometerCheck.checked);
+            if (showSpeedometerCheck.checked) drawSpeedometer(computeEnergies().speed);
+        });
+        showGraphCheck.addEventListener('change', () => {
+            energyGraphWidget.classList.toggle('hidden', !showGraphCheck.checked);
+            if (showGraphCheck.checked) drawLineGraph();
+        });
+        showStopwatchCheck.addEventListener('change', () => {
+            stopwatchWidget.classList.toggle('hidden', !showStopwatchCheck.checked);
+        });
+        toggleSoundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            toggleSoundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) playLabTone(520, 0.07);
+        });
+        clearGraphBtn.addEventListener('click', () => {
+            energyHistory = [];
+            drawLineGraph();
+        });
+
+        stopwatchStartStopBtn.addEventListener('click', () => {
+            stopwatchRunning = !stopwatchRunning;
+            stopwatchStartStopBtn.textContent = stopwatchRunning ? 'Durdur' : 'Başlat';
+            stopwatchStartStopBtn.className = stopwatchRunning
+                ? 'px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 text-[11px] font-bold cursor-pointer'
+                : 'px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold cursor-pointer';
+            if (stopwatchRunning && !isRunning) {
+                lastTimestamp = performance.now();
+                requestAnimationFrame(stopwatchOnlyLoop);
+            }
+        });
+
+        function stopwatchOnlyLoop(ts) {
+            if (!stopwatchRunning || isRunning) return;
+            if (!lastTimestamp) lastTimestamp = ts;
+            const rawDt = Math.min(0.05, (ts - lastTimestamp) / 1000);
+            lastTimestamp = ts;
+            stopwatchTime += rawDt * simSpeedMultiplier;
+            stopwatchDisplay.textContent = `${stopwatchTime.toFixed(2).padStart(5, '0')} sn`;
+            requestAnimationFrame(stopwatchOnlyLoop);
+        }
+
+        stopwatchResetBtn.addEventListener('click', () => {
+            stopwatchRunning = false;
+            stopwatchTime = 0;
+            stopwatchDisplay.textContent = '00.00 sn';
+            stopwatchStartStopBtn.textContent = 'Başlat';
+            stopwatchStartStopBtn.className = 'px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-bold cursor-pointer';
+        });
+
+        function renderExperimentLogs() {
+            if (experimentLogs.length === 0) {
+                experimentLogBody.innerHTML = `<tr><td colspan="7" class="py-2 text-center text-slate-400">Karşılaştırma yapmak için "Anlık Veriyi Kaydet" düğmesine basın.</td></tr>`;
+                autoConclusionBox.classList.add('hidden');
+                return;
+            }
+            experimentLogBody.innerHTML = experimentLogs.map(row => `
+                <tr class="text-slate-200">
+                    <td class="py-1 pr-2 font-bold text-sky-300">#${row.id}</td>
+                    <td class="py-1 pr-2">${row.friction === 'Açık' ? '<span class="text-rose-400 font-bold">Açık</span>' : '<span class="text-emerald-400 font-bold">Kapalı</span>'}</td>
+                    <td class="py-1 pr-2 text-sky-300">${row.k} J</td>
+                    <td class="py-1 pr-2 text-emerald-300">${row.p} J</td>
+                    <td class="py-1 pr-2 text-indigo-300">${row.m} J</td>
+                    <td class="py-1 pr-2 text-rose-300">${row.th} J</td>
+                    <td class="py-1 font-extrabold text-amber-300">${row.tot} J</td>
+                </tr>
+            `).join('');
+
+            const hasFrictionless = experimentLogs.some(r => r.friction === 'Kapalı');
+            const hasFriction = experimentLogs.some(r => r.friction === 'Açık');
+            if (hasFrictionless && hasFriction) {
+                autoConclusionBox.classList.remove('hidden');
+                autoConclusionBox.innerHTML = `<strong>Bilimsel Gözlem Sonucu:</strong> Sürtünme kapalıyken mekanik enerji korunurken, sürtünme açıldığında mekanik enerji azalmış ve azalan enerji kadar <strong>ısı enerjisi</strong> ortaya çıkmıştır. Her iki durumda da <strong>Toplam Enerji sabit kalmıştır</strong>.`;
+            }
+        }
+
+        logExperimentBtn.addEventListener('click', () => {
+            const e = computeEnergies();
+            experimentLogs.push({
+                id: experimentLogs.length + 1,
+                friction: isFrictionOn ? 'Açık' : 'Kapalı',
+                k: Math.round(e.kinetic),
+                p: Math.round(e.potential + e.elastic),
+                m: Math.round(e.mechanical),
+                th: Math.round(e.thermal),
+                tot: Math.round(e.total)
+            });
+            if (experimentLogs.length >= 2) {
+                missionsCompleted.comparisonLogged = true;
+            }
+            logCountBadge.textContent = experimentLogs.length;
+            renderExperimentLogs();
+            experimentLogDrawer.classList.remove('hidden');
+            playLabTone(640, 0.07);
+        });
+
+        toggleLogTableBtn.addEventListener('click', () => {
+            experimentLogDrawer.classList.toggle('hidden');
+        });
+
+        clearLogsBtn.addEventListener('click', () => {
+            experimentLogs = [];
+            logCountBadge.textContent = '0';
+            renderExperimentLogs();
+        });
+
+        // =========================================================
+        // 10. SÜRÜKLE - BIRAK ETKİLEŞİMİ
+        // =========================================================
+        function getPointerPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+            const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function handleDragStart(evt) {
+            const pos = getPointerPos(evt);
+            if (currentScenario === 'skate') {
+                const g = getRampGeometry();
+                const sx = g.centerX + xNorm * g.halfSpanX;
+                const sy = g.groundY - (getRampHeightM(xNorm) / MAX_HEIGHT_M) * g.rampHeightPx;
+                if (Math.hypot(pos.x - sx, pos.y - sy) < 65) {
+                    isDragging = true;
+                    isRunning = false;
+                    updatePlayButtonUI();
+                }
+            } else if (currentScenario === 'pendulum') {
+                const p = getPendulumGeometry();
+                const bx = p.pivotX + Math.sin(pendAngle) * p.ropeLenPx;
+                const by = p.pivotY + Math.cos(pendAngle) * p.ropeLenPx;
+                if (Math.hypot(pos.x - bx, pos.y - by) < 65) {
+                    isDragging = true;
+                    isRunning = false;
+                    updatePlayButtonUI();
+                }
+            } else if (currentScenario === 'spring' || currentScenario === 'ball' || currentScenario === 'trampoline') {
+                const v = getVerticalSystemGeometry();
+                if (Math.abs(pos.x - v.centerX) < 75) {
+                    isDragging = true;
+                    isRunning = false;
+                    updatePlayButtonUI();
+                }
+            } else if (currentScenario === 'ramp') {
+                const r = getInclinedPlaneGeometry();
+                if (pos.x >= r.leftX - 40 && pos.x <= r.cornerX + 40) {
+                    isDragging = true;
+                    isRunning = false;
+                    updatePlayButtonUI();
+                }
+            } else if (currentScenario === 'bow') {
+                const b = getBowGeometry();
+                if (Math.abs(pos.x - b.bowX) < 90 && Math.abs(pos.y - b.bowY) < 90) {
+                    isDragging = true;
+                    isRunning = false;
+                    updatePlayButtonUI();
+                }
+            }
+        }
+
+        function handleDragMove(evt) {
+            if (!isDragging) return;
+            evt.preventDefault();
+            const pos = getPointerPos(evt);
+
+            if (currentScenario === 'skate') {
+                const g = getRampGeometry();
+                xNorm = Math.max(-1.0, Math.min(1.0, (pos.x - g.centerX) / g.halfSpanX));
+            } else if (currentScenario === 'pendulum') {
+                const p = getPendulumGeometry();
+                const angle = Math.atan2(pos.x - p.pivotX, Math.max(10, pos.y - p.pivotY));
+                pendAngle = Math.max(-PEND_MAX_ANGLE, Math.min(PEND_MAX_ANGLE, angle));
+            } else if (currentScenario === 'spring') {
+                const v = getVerticalSystemGeometry();
+                const h = ((v.floorY - pos.y) / v.spanPx) * MAX_HEIGHT_M;
+                springHeightM = Math.max(0.8, Math.min(MAX_HEIGHT_M, h));
+                springVelocity = 0;
+            } else if (currentScenario === 'ball') {
+                const v = getVerticalSystemGeometry();
+                const h = ((v.floorY - pos.y - 22) / v.spanPx) * MAX_HEIGHT_M;
+                ballHeightM = Math.max(0.5, Math.min(MAX_HEIGHT_M, h));
+                ballVelocity = 0;
+                ballSquash = 0;
+            } else if (currentScenario === 'ramp') {
+                const r = getInclinedPlaneGeometry();
+                sledProgress = Math.max(0, Math.min(0.95, (pos.x - r.leftX) / r.rampBaseW));
+                sledSpeed = 0;
+            } else if (currentScenario === 'bow') {
+                const b = getBowGeometry();
+                bowStage = 'drawn';
+                bowPullM = Math.max(0.2, Math.min(1.0, (b.bowX - pos.x + 35) / 70));
+                arrowPos = { x: 0, y: 2.0 };
+            } else if (currentScenario === 'trampoline') {
+                const t = getTrampolineGeometry();
+                const h = ((t.netRestY - pos.y - 26) / t.spanPx) * MAX_HEIGHT_M;
+                trampHeightM = Math.max(0.5, Math.min(MAX_HEIGHT_M, h));
+                trampVelocity = 0;
+            }
+
+            updateTotalEnergyFromState();
+            updateUI();
+            drawScene();
+        }
+
+        function handleDragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            isRunning = true;
+            updatePlayButtonUI();
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener('mousedown', handleDragStart);
+        window.addEventListener('mousemove', handleDragMove);
+        window.addEventListener('mouseup', handleDragEnd);
+        canvas.addEventListener('touchstart', handleDragStart, { passive: false });
+        window.addEventListener('touchmove', handleDragMove, { passive: false });
+        window.addEventListener('touchend', handleDragEnd);
+
+        // =========================================================
+        // 11. CANVAS ÇİZİM FONKSİYONLARI
+        // =========================================================
+        function drawBackgroundAndGrid(width, height, groundY) {
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+
+            if (currentPlanetName === 'Ay') {
+                skyGrad.addColorStop(0, '#020617');
+                skyGrad.addColorStop(1, '#0f172a');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, width, groundY);
+                drawStarsLayer(width, height);
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+                ctx.beginPath();
+                ctx.arc(width * 0.22, height * 0.2, 26, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (currentPlanetName === 'Jüpiter') {
+                skyGrad.addColorStop(0, '#1e1b4b');
+                skyGrad.addColorStop(0.5, '#7c2d12');
+                skyGrad.addColorStop(1, '#b45309');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, width, groundY);
+                drawStarsLayer(width, height);
+            } else {
+                if (currentScenario === 'skate') {
+                    skyGrad.addColorStop(0, '#0b1120');
+                    skyGrad.addColorStop(0.45, '#1e1b4b');
+                    skyGrad.addColorStop(0.78, '#701a75');
+                    skyGrad.addColorStop(1, '#ea580c');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(0, 0, width, groundY);
+                    drawStarsLayer(width, height);
+
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+                    const bWidths = [48, 65, 42, 78, 55, 68, 45, 72, 52, 60];
+                    let bx = 10;
+                    bWidths.forEach((bw, idx) => {
+                        const bh = 45 + ((idx * 37) % 85);
+                        ctx.fillRect(bx, groundY - bh, bw, bh);
+                        bx += bw + 18;
+                    });
+                } else if (currentScenario === 'pendulum' || currentScenario === 'bow') {
+                    skyGrad.addColorStop(0, '#0369a1');
+                    skyGrad.addColorStop(0.65, '#38bdf8');
+                    skyGrad.addColorStop(1, '#bae6fd');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(0, 0, width, groundY);
+                    drawCloudsLayer(width, height);
+
+                    ctx.fillStyle = 'rgba(20, 83, 45, 0.35)';
+                    ctx.beginPath();
+                    ctx.arc(width * 0.18, groundY, 110, Math.PI, 0);
+                    ctx.arc(width * 0.82, groundY, 130, Math.PI, 0);
+                    ctx.fill();
+                } else if (currentScenario === 'spring') {
+                    skyGrad.addColorStop(0, '#0f172a');
+                    skyGrad.addColorStop(1, '#1e293b');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(0, 0, width, groundY);
+
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+                    ctx.lineWidth = 1;
+                    for (let gx = 40; gx < width; gx += 40) {
+                        ctx.beginPath();
+                        ctx.moveTo(gx, 0);
+                        ctx.lineTo(gx, groundY);
+                        ctx.stroke();
+                    }
+                    for (let gy = 40; gy < groundY; gy += 40) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, gy);
+                        ctx.lineTo(width, gy);
+                        ctx.stroke();
+                    }
+                } else if (currentScenario === 'ball' || currentScenario === 'trampoline') {
+                    skyGrad.addColorStop(0, '#0284c7');
+                    skyGrad.addColorStop(0.7, '#7dd3fc');
+                    skyGrad.addColorStop(1, '#e0f2fe');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(0, 0, width, groundY);
+                    drawCloudsLayer(width, height);
+
+                    ctx.fillStyle = 'rgba(30, 41, 59, 0.25)';
+                    ctx.fillRect(width * 0.12, groundY - 55, width * 0.76, 55);
+                } else if (currentScenario === 'ramp') {
+                    skyGrad.addColorStop(0, '#0f172a');
+                    skyGrad.addColorStop(0.55, '#1e3a8a');
+                    skyGrad.addColorStop(1, '#93c5fd');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(0, 0, width, groundY);
+
+                    const peaks = [
+                        { x: 0.15, h: 170, w: 220 },
+                        { x: 0.48, h: 210, w: 280 },
+                        { x: 0.82, h: 165, w: 230 }
+                    ];
+                    peaks.forEach(pk => {
+                        const px = width * pk.x;
+                        ctx.fillStyle = '#334155';
+                        ctx.beginPath();
+                        ctx.moveTo(px - pk.w / 2, groundY);
+                        ctx.lineTo(px, groundY - pk.h);
+                        ctx.lineTo(px + pk.w / 2, groundY);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.beginPath();
+                        ctx.moveTo(px - pk.w * 0.16, groundY - pk.h * 0.68);
+                        ctx.lineTo(px, groundY - pk.h);
+                        ctx.lineTo(px + pk.w * 0.16, groundY - pk.h * 0.68);
+                        ctx.lineTo(px, groundY - pk.h * 0.60);
+                        ctx.closePath();
+                        ctx.fill();
+                    });
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                    snowFlakes.forEach(sf => {
+                        sf.y += sf.speed;
+                        if (sf.y > 0.84) sf.y = 0.02;
+                        const sx = (sf.x * width + Math.sin(sf.y * 25 + sf.drift) * 14);
+                        ctx.beginPath();
+                        ctx.arc(sx, sf.y * height, sf.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+            }
+
+            if (showRefLineCheck && showRefLineCheck.checked) {
+                let refY = groundY;
+                if (currentScenario === 'skate') {
+                    const geom = getRampGeometry();
+                    refY = geom.groundY - (referenceHeightM / MAX_HEIGHT_M) * geom.rampHeightPx;
+                } else if (currentScenario === 'pendulum') {
+                    const pGeom = getPendulumGeometry();
+                    const maxCosDrop = 1 - Math.cos(PEND_MAX_ANGLE);
+                    const targetCos = 1 - (referenceHeightM / MAX_HEIGHT_M) * maxCosDrop;
+                    const theta = Math.acos(Math.max(-1, Math.min(1, targetCos)));
+                    refY = pGeom.pivotY + Math.cos(theta) * pGeom.ropeLenPx;
+                } else if (currentScenario === 'spring' || currentScenario === 'ball') {
+                    const vGeom = getVerticalSystemGeometry();
+                    refY = vGeom.floorY - (referenceHeightM / MAX_HEIGHT_M) * vGeom.spanPx - (currentScenario === 'ball' ? 22 : 0);
+                } else if (currentScenario === 'ramp') {
+                    const rGeom = getInclinedPlaneGeometry();
+                    refY = rGeom.floorY - (referenceHeightM / MAX_HEIGHT_M) * rGeom.maxRampH;
+                } else if (currentScenario === 'trampoline') {
+                    const tGeom = getTrampolineGeometry();
+                    refY = tGeom.netRestY - (referenceHeightM / MAX_HEIGHT_M) * tGeom.spanPx - 26;
+                }
+
+                ctx.save();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 6]);
+                ctx.beginPath();
+                ctx.moveTo(width * 0.18, refY);
+                ctx.lineTo(width * 0.82, refY);
+                ctx.stroke();
+                ctx.fillStyle = '#fef08a';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Başlangıç Yüksekliği (${referenceHeightM.toFixed(1)} m)`, width * 0.5, refY - 7);
+                ctx.restore();
+            }
+
+            const groundGrad = ctx.createLinearGradient(0, groundY, 0, height);
+            if (currentScenario === 'ball' || currentScenario === 'pendulum' || currentScenario === 'bow' || currentScenario === 'trampoline') {
+                groundGrad.addColorStop(0, '#15803d');
+                groundGrad.addColorStop(1, '#052e16');
+            } else if (currentScenario === 'ramp') {
+                groundGrad.addColorStop(0, '#e2e8f0');
+                groundGrad.addColorStop(1, '#94a3b8');
+            } else {
+                groundGrad.addColorStop(0, '#0f172a');
+                groundGrad.addColorStop(1, '#020617');
+            }
+            ctx.fillStyle = groundGrad;
+            ctx.fillRect(0, groundY, width, height - groundY);
+
+            ctx.strokeStyle = currentScenario === 'ramp' ? '#38bdf8' : 'rgba(56, 189, 248, 0.45)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(width, groundY);
+            ctx.stroke();
+        }
+
+        function drawStarsLayer(width, height) {
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                ctx.beginPath();
+                ctx.arc(s.x * width, s.y * height, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawCloudsLayer(width, height) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            clouds.forEach(c => {
+                const cx = c.x * width;
+                const cy = c.y * height;
+                const r = 22 * c.scale;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.arc(cx + r * 0.9, cy - r * 0.2, r * 0.85, 0, Math.PI * 2);
+                ctx.arc(cx + r * 1.8, cy, r * 0.75, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawMotionTrail() {
+            for (let i = 0; i < motionTrail.length; i++) {
+                const pt = motionTrail[i];
+                const ratio = (i + 1) / motionTrail.length;
+                ctx.fillStyle = `rgba(56, 189, 248, ${ratio * 0.35})`;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, ratio * 5.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawDirectionArrow(objX, objY) {
+            const e = computeEnergies();
+            if (!showSpeedCheck.checked) return;
+
+            if (direction === 0 || e.speed < 0.08) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.roundRect(objX - 36, objY - 52, 72, 20, 10);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '700 10px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('● Durgun (0 m/s)', objX, objY - 39);
+                ctx.restore();
+                return;
+            }
+
+            let vx = 0, vy = 0;
+            if (currentScenario === 'skate') {
+                const g = getRampGeometry();
+                const slope = getRampSlope(xNorm);
+                const angle = Math.atan2(-slope * (g.rampHeightPx / MAX_HEIGHT_M), g.halfSpanX);
+                vx = Math.cos(angle) * direction;
+                vy = Math.sin(angle) * direction;
+            } else if (currentScenario === 'pendulum') {
+                vx = Math.cos(pendAngle) * direction;
+                vy = -Math.sin(pendAngle) * direction;
+            } else if (currentScenario === 'spring' || currentScenario === 'ball' || currentScenario === 'trampoline') {
+                vx = 0;
+                vy = direction;
+            } else if (currentScenario === 'bow') {
+                if (bowStage === 'drawn') {
+                    vx = Math.cos((38 * Math.PI) / 180);
+                    vy = -Math.sin((38 * Math.PI) / 180);
+                } else {
+                    const ang = Math.atan2(-arrowVel.vy, Math.max(0.1, arrowVel.vx));
+                    vx = Math.cos(ang);
+                    vy = Math.sin(ang);
+                }
+            } else if (currentScenario === 'ramp') {
+                if (sledProgress <= 1.0) {
+                    const rad = (rampAngleDeg * Math.PI) / 180;
+                    vx = Math.cos(rad);
+                    vy = Math.sin(rad);
+                } else {
+                    vx = 1;
+                    vy = 0;
+                }
+            }
+
+            const arrowLen = Math.min(72, 28 + e.speed * 2.4);
+            const startX = objX;
+            const startY = objY - 38;
+            const endX = startX + vx * arrowLen;
+            const endY = startY + vy * arrowLen;
+            const arrowAngle = Math.atan2(endY - startY, endX - startX);
+
+            ctx.save();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.fillStyle = '#38bdf8';
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+            ctx.shadowBlur = 8;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            const headLen = 10;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headLen * Math.cos(arrowAngle - Math.PI / 6), endY - headLen * Math.sin(arrowAngle - Math.PI / 6));
+            ctx.lineTo(endX - headLen * Math.cos(arrowAngle + Math.PI / 6), endY - headLen * Math.sin(arrowAngle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.beginPath();
+            ctx.roundRect(startX - 30, startY - 22, 60, 16, 8);
+            ctx.fill();
+            ctx.fillStyle = '#bae6fd';
+            ctx.font = '800 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${e.speed.toFixed(1)} m/s`, startX, startY - 11);
+            ctx.restore();
+        }
+
+        function drawSkateScenario(width, height) {
+            const geom = getRampGeometry();
+
+            ctx.beginPath();
+            for (let i = 0; i <= 120; i++) {
+                const xn = -1.03 + (i / 120) * 2.06;
+                const px = geom.centerX + xn * geom.halfSpanX;
+                const py = geom.groundY - (getRampHeightM(xn) / MAX_HEIGHT_M) * geom.rampHeightPx;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.lineTo(geom.centerX + 1.03 * geom.halfSpanX, geom.groundY);
+            ctx.lineTo(geom.centerX - 1.03 * geom.halfSpanX, geom.groundY);
+            ctx.closePath();
+
+            const rampGrad = ctx.createLinearGradient(0, geom.topMargin, 0, geom.groundY);
+            rampGrad.addColorStop(0, 'rgba(30, 41, 59, 0.94)');
+            rampGrad.addColorStop(1, 'rgba(15, 23, 42, 0.98)');
+            ctx.fillStyle = rampGrad;
+            ctx.fill();
+
+            ctx.beginPath();
+            for (let i = 0; i <= 120; i++) {
+                const xn = -1.03 + (i / 120) * 2.06;
+                const px = geom.centerX + xn * geom.halfSpanX;
+                const py = geom.groundY - (getRampHeightM(xn) / MAX_HEIGHT_M) * geom.rampHeightPx;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.strokeStyle = isFrictionOn ? '#fb7185' : '#38bdf8';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const sp = sparks[i];
+                sp.x += sp.vx * 0.016;
+                sp.y += sp.vy * 0.016;
+                sp.life -= 0.045;
+                if (sp.life <= 0) {
+                    sparks.splice(i, 1);
+                    continue;
+                }
+                ctx.fillStyle = `rgba(251, 146, 60, ${sp.life})`;
+                ctx.beginPath();
+                ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const sx = geom.centerX + xNorm * geom.halfSpanX;
+            const sy = geom.groundY - (getRampHeightM(xNorm) / MAX_HEIGHT_M) * geom.rampHeightPx;
+            const slope = getRampSlope(xNorm);
+            const angle = Math.atan2(-slope * (geom.rampHeightPx / MAX_HEIGHT_M), geom.halfSpanX);
+            const eNow = computeEnergies();
+            const crouch = Math.min(4, eNow.speed * 0.25);
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.roundRect(-27, -11, 54, 6, 3);
+            ctx.fill();
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.roundRect(-25, -10, 50, 3, 2);
+            ctx.fill();
+
+            [-15, 15].forEach(wx => {
+                ctx.save();
+                ctx.translate(wx, -4);
+                ctx.rotate(wheelAngle);
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-9, -11);
+            ctx.lineTo(-6, -21 + crouch * 0.5);
+            ctx.lineTo(0, -31 + crouch);
+            ctx.moveTo(9, -11);
+            ctx.lineTo(6, -21 + crouch * 0.5);
+            ctx.lineTo(0, -31 + crouch);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(0, -31 + crouch);
+            ctx.lineTo(direction * 2, -47 + crouch);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(-14, -41 + crouch);
+            ctx.lineTo(direction * 2, -45 + crouch);
+            ctx.lineTo(14, -41 + crouch);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(direction * 2, -48 + crouch);
+            ctx.quadraticCurveTo(-direction * 12, -50 + crouch, -direction * 20, -45 + crouch + Math.sin(wheelAngle * 0.5) * 3);
+            ctx.stroke();
+
+            const headX = direction * 2;
+            const headY = -56 + crouch;
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(headX, headY, 7.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(headX, headY - 1, 8.8, Math.PI, 0);
+            ctx.fill();
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(headX + (direction > 0 ? 2 : -7), headY - 2, 5, 3);
+
+            ctx.restore();
+
+            drawDirectionArrow(sx, sy - 44);
+        }
+
+        function drawPendulumScenario(width, height) {
+            const pGeom = getPendulumGeometry();
+            const bx = pGeom.pivotX + Math.sin(pendAngle) * pGeom.ropeLenPx;
+            const by = pGeom.pivotY + Math.cos(pendAngle) * pGeom.ropeLenPx;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.arc(pGeom.pivotX, pGeom.pivotY, pGeom.ropeLenPx, Math.PI / 2 - PEND_MAX_ANGLE, Math.PI / 2 + PEND_MAX_ANGLE);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(pGeom.pivotX - 95, pGeom.pivotY);
+            ctx.lineTo(pGeom.pivotX + 95, pGeom.pivotY);
+            ctx.stroke();
+
+            const chainSegments = 14;
+            for (let i = 0; i < chainSegments; i++) {
+                const t = i / chainSegments;
+                const cx = pGeom.pivotX + (bx - pGeom.pivotX) * t;
+                const cy = pGeom.pivotY + (by - pGeom.pivotY) * t;
+                ctx.fillStyle = i % 2 === 0 ? '#e2e8f0' : '#94a3b8';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(pGeom.pivotX, pGeom.pivotY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const bobRadius = 20 + (massKg - 20) * 0.1;
+            const bobGrad = ctx.createRadialGradient(bx - 7, by - 7, 3, bx, by, bobRadius);
+            bobGrad.addColorStop(0, '#fef9c3');
+            bobGrad.addColorStop(0.45, '#f59e0b');
+            bobGrad.addColorStop(0.85, '#b45309');
+            bobGrad.addColorStop(1, '#78350f');
+            ctx.fillStyle = bobGrad;
+            ctx.beginPath();
+            ctx.arc(bx, by, bobRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${massKg}kg`, bx, by + 3.5);
+
+            drawDirectionArrow(bx, by);
+        }
+
+        function drawSpringScenario(width, height) {
+            const vGeom = getVerticalSystemGeometry();
+            const blockY = vGeom.floorY - (springHeightM / MAX_HEIGHT_M) * vGeom.spanPx;
+
+            const rulerX = vGeom.centerX - 95;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(rulerX, vGeom.topY);
+            ctx.lineTo(rulerX, vGeom.floorY);
+            ctx.stroke();
+            for (let m = 0; m <= 10; m += 2) {
+                const ry = vGeom.floorY - (m / MAX_HEIGHT_M) * vGeom.spanPx;
+                ctx.beginPath();
+                ctx.moveTo(rulerX - 6, ry);
+                ctx.lineTo(rulerX + 6, ry);
+                ctx.stroke();
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '600 10px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(`${m}m`, rulerX - 10, ry + 3);
+            }
+
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.roundRect(vGeom.centerX - 68, vGeom.topY - 26, 136, 16, 6);
+            ctx.fill();
+
+            const coils = 14;
+            const springStartY = vGeom.topY - 10;
+            const springEndY = blockY - 24;
+            const springLen = Math.max(24, springEndY - springStartY);
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            for (let i = 0; i < coils; i++) {
+                const y1 = springStartY + (i / coils) * springLen;
+                const y2 = springStartY + ((i + 0.5) / coils) * springLen;
+                const y3 = springStartY + ((i + 1) / coils) * springLen;
+
+                ctx.strokeStyle = '#6b21a8';
+                ctx.lineWidth = 4.5;
+                ctx.beginPath();
+                ctx.moveTo(vGeom.centerX - 18, y1);
+                ctx.lineTo(vGeom.centerX + 18, y2);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#e879f9';
+                ctx.lineWidth = 4.5;
+                ctx.beginPath();
+                ctx.moveTo(vGeom.centerX + 18, y2);
+                ctx.lineTo(vGeom.centerX - 18, y3);
+                ctx.stroke();
+            }
+
+            const boxSize = 46 + (massKg - 20) * 0.14;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(vGeom.centerX, blockY - boxSize / 2 - 4, 5, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const boxGrad = ctx.createLinearGradient(vGeom.centerX - boxSize / 2, blockY - boxSize / 2, vGeom.centerX + boxSize / 2, blockY + boxSize / 2);
+            boxGrad.addColorStop(0, '#c084fc');
+            boxGrad.addColorStop(0.5, '#9333ea');
+            boxGrad.addColorStop(1, '#581c87');
+            ctx.fillStyle = boxGrad;
+            ctx.beginPath();
+            ctx.roundRect(vGeom.centerX - boxSize / 2, blockY - boxSize / 2, boxSize, boxSize, 10);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${massKg} kg`, vGeom.centerX, blockY + 4);
+
+            drawDirectionArrow(vGeom.centerX + boxSize / 2 + 24, blockY);
+        }
+
+        function drawBallScenario(width, height) {
+            const vGeom = getVerticalSystemGeometry();
+            const baseR = 22 + (massKg - 20) * 0.1;
+            const drawY = vGeom.floorY - (Math.max(0, ballHeightM) / MAX_HEIGHT_M) * vGeom.spanPx - baseR * (1 - ballSquash);
+
+            const shadowScale = Math.max(0.25, 1 - (Math.max(0, ballHeightM) / MAX_HEIGHT_M) * 0.75);
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.42 * shadowScale})`;
+            ctx.beginPath();
+            ctx.ellipse(vGeom.centerX, vGeom.floorY + 2, baseR * 1.15 * shadowScale, 5 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(vGeom.centerX, drawY);
+            ctx.scale(1 + ballSquash * 0.7, 1 - ballSquash);
+
+            const ballGrad = ctx.createRadialGradient(-7, -7, 3, 0, 0, baseR);
+            ballGrad.addColorStop(0, '#a7f3d0');
+            ballGrad.addColorStop(0.5, '#10b981');
+            ballGrad.addColorStop(1, '#064e3b');
+            ctx.fillStyle = ballGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, baseR, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.arc(0, 0, baseR * 0.62, -0.4, 1.3);
+            ctx.stroke();
+
+            ctx.fillStyle = '#022c22';
+            ctx.font = '800 10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${massKg}kg`, 0, 3.5);
+            ctx.restore();
+
+            drawDirectionArrow(vGeom.centerX + baseR + 26, drawY);
+        }
+
+        function drawRampScenario(width, height) {
+            const rGeom = getInclinedPlaneGeometry();
+
+            ctx.beginPath();
+            ctx.moveTo(rGeom.leftX, rGeom.floorY);
+            ctx.lineTo(rGeom.leftX, rGeom.topY);
+            ctx.lineTo(rGeom.cornerX, rGeom.floorY);
+            ctx.closePath();
+            const rampGrad = ctx.createLinearGradient(0, rGeom.topY, 0, rGeom.floorY);
+            rampGrad.addColorStop(0, '#475569');
+            rampGrad.addColorStop(1, '#1e293b');
+            ctx.fillStyle = rampGrad;
+            ctx.fill();
+
+            ctx.strokeStyle = isFrictionOn ? '#fb7185' : '#7dd3fc';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(rGeom.leftX, rGeom.topY);
+            ctx.lineTo(rGeom.cornerX, rGeom.floorY);
+            ctx.lineTo(rGeom.rightX, rGeom.floorY);
+            ctx.stroke();
+
+            const rad = (rampAngleDeg * Math.PI) / 180;
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.7)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(rGeom.cornerX, rGeom.floorY, 34, Math.PI, Math.PI + rad);
+            ctx.stroke();
+            ctx.fillStyle = '#fef08a';
+            ctx.font = '700 11px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${rampAngleDeg}°`, rGeom.cornerX - 38, rGeom.floorY - 8);
+
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const sp = sparks[i];
+                sp.x += sp.vx * 0.016;
+                sp.y += sp.vy * 0.016;
+                sp.life -= 0.045;
+                if (sp.life <= 0) {
+                    sparks.splice(i, 1);
+                    continue;
+                }
+                ctx.fillStyle = `rgba(251, 146, 60, ${sp.life})`;
+                ctx.beginPath();
+                ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            let sx, sy, angle;
+            if (sledProgress <= 1.0) {
+                sx = rGeom.leftX + sledProgress * rGeom.rampBaseW;
+                sy = rGeom.topY + sledProgress * rGeom.maxRampH;
+                angle = rad;
+            } else {
+                const flatRatio = Math.min(1, sledProgress - 1.0);
+                sx = rGeom.cornerX + flatRatio * rGeom.flatLenPx;
+                sy = rGeom.floorY;
+                angle = 0;
+            }
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(angle);
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(-24, -4);
+            ctx.lineTo(24, -4);
+            ctx.quadraticCurveTo(31, -4, 29, -12);
+            ctx.stroke();
+
+            ctx.fillStyle = '#e11d48';
+            ctx.beginPath();
+            ctx.roundRect(-22, -18, 44, 11, 4);
+            ctx.fill();
+
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.roundRect(-8, -32, 16, 14, 5);
+            ctx.fill();
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(2, -38, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(2, -41, 6.8, Math.PI, 0);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${massKg}kg`, 0, -9.5);
+            ctx.restore();
+
+            drawDirectionArrow(sx, sy - 26);
+        }
+
+        function drawBowScenario(width, height) {
+            const b = getBowGeometry();
+            const pullPx = bowStage === 'drawn' ? bowPullM * 42 : 0;
+
+            // Hedef Tahtası (Sağ tarafta)
+            const targetX = b.bowX + b.spanX;
+            const targetY = b.floorY - 46;
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(targetX, b.floorY);
+            ctx.lineTo(targetX - 12, targetY + 25);
+            ctx.moveTo(targetX, b.floorY);
+            ctx.lineTo(targetX + 12, targetY + 25);
+            ctx.stroke();
+
+            const ringColors = ['#ef4444', '#ffffff', '#38bdf8', '#facc15'];
+            [28, 21, 14, 7].forEach((r, idx) => {
+                ctx.fillStyle = ringColors[idx];
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Yay Gövdesi
+            ctx.save();
+            ctx.translate(b.bowX, b.bowY);
+            ctx.rotate((-38 * Math.PI) / 180);
+
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(-18, 0, 58, -Math.PI / 2.3, Math.PI / 2.3);
+            ctx.stroke();
+
+            // Yay Kirişi (İpi)
+            const topTipX = -18 + Math.cos(-Math.PI / 2.3) * 58;
+            const topTipY = Math.sin(-Math.PI / 2.3) * 58;
+            const botTipX = -18 + Math.cos(Math.PI / 2.3) * 58;
+            const botTipY = Math.sin(Math.PI / 2.3) * 58;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(topTipX, topTipY);
+            ctx.lineTo(topTipX - pullPx, 0);
+            ctx.lineTo(botTipX, botTipY);
+            ctx.stroke();
+            ctx.restore();
+
+            // Ok Çizimi
+            let ax, ay, aAngle;
+            if (bowStage === 'drawn') {
+                const rad = (-38 * Math.PI) / 180;
+                ax = b.bowX - Math.cos(rad) * pullPx;
+                ay = b.bowY - Math.sin(rad) * pullPx;
+                aAngle = rad;
+            } else {
+                ax = b.bowX + (arrowPos.x / 18) * b.spanX;
+                ay = b.floorY - (arrowPos.y / MAX_HEIGHT_M) * b.spanY;
+                aAngle = direction === 0 ? 0.35 : Math.atan2(-arrowVel.vy, Math.max(0.1, arrowVel.vx));
+            }
+
+            ctx.save();
+            ctx.translate(ax, ay);
+            ctx.rotate(aAngle);
+
+            ctx.strokeStyle = '#fde68a';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(-28, 0);
+            ctx.lineTo(28, 0);
+            ctx.stroke();
+
+            // Ok Ucu
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(34, 0);
+            ctx.lineTo(22, -5);
+            ctx.lineTo(22, 5);
+            ctx.closePath();
+            ctx.fill();
+
+            // Tüy
+            ctx.fillStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.moveTo(-28, 0);
+            ctx.lineTo(-20, -6);
+            ctx.lineTo(-15, 0);
+            ctx.lineTo(-20, 6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            drawDirectionArrow(ax, ay - 22);
+        }
+
+        function drawTrampolineScenario(width, height) {
+            const t = getTrampolineGeometry();
+            const stretchPx = trampHeightM < 0 ? Math.abs(trampHeightM) * 32 : 0;
+            const athleteY = trampHeightM >= 0
+                ? t.netRestY - (trampHeightM / MAX_HEIGHT_M) * t.spanPx - 26
+                : t.netRestY + stretchPx - 26;
+
+            // Trambolin Ayakları
+            const halfW = 110;
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(t.centerX - halfW, t.netRestY);
+            ctx.lineTo(t.centerX - halfW - 10, t.floorY);
+            ctx.moveTo(t.centerX + halfW, t.netRestY);
+            ctx.lineTo(t.centerX + halfW + 10, t.floorY);
+            ctx.stroke();
+
+            // Esnek Trambolin Ağı
+            ctx.strokeStyle = '#a3e635';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(t.centerX - halfW, t.netRestY);
+            ctx.quadraticCurveTo(t.centerX, t.netRestY + stretchPx * 1.45, t.centerX + halfW, t.netRestY);
+            ctx.stroke();
+
+            // Zıplayan Sporcu
+            ctx.save();
+            ctx.translate(t.centerX, athleteY);
+
+            // Gövde
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.roundRect(-10, -14, 20, 24, 7);
+            ctx.fill();
+
+            // Kafa
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(0, -23, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Kollar ve Bacaklar
+            ctx.strokeStyle = '#bae6fd';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-10, -8);
+            ctx.lineTo(-22, direction < 0 ? -20 : 2);
+            ctx.moveTo(10, -8);
+            ctx.lineTo(22, direction < 0 ? -20 : 2);
+            ctx.moveTo(-5, 10);
+            ctx.lineTo(-8, 25);
+            ctx.moveTo(5, 10);
+            ctx.lineTo(8, 25);
+            ctx.stroke();
+
+            ctx.restore();
+
+            drawDirectionArrow(t.centerX + 42, athleteY);
+        }
+
+        function drawScene() {
+            const width = canvas.width / (window.devicePixelRatio || 1);
+            const height = canvas.height / (window.devicePixelRatio || 1);
+            const groundY = height - 48;
+
+            ctx.clearRect(0, 0, width, height);
+            drawBackgroundAndGrid(width, height, groundY);
+            drawMotionTrail();
+
+            if (currentScenario === 'skate') drawSkateScenario(width, height);
+            else if (currentScenario === 'pendulum') drawPendulumScenario(width, height);
+            else if (currentScenario === 'spring') drawSpringScenario(width, height);
+            else if (currentScenario === 'ball') drawBallScenario(width, height);
+            else if (currentScenario === 'ramp') drawRampScenario(width, height);
+            else if (currentScenario === 'bow') drawBowScenario(width, height);
+            else if (currentScenario === 'trampoline') drawTrampolineScenario(width, height);
+        }
+
+        // =========================================================
+        // 12. MİNİ TEST (QUIZ) VE ÖDEV RAPORU MANTIĞI
+        // =========================================================
+        const quizQuestions = [
+            {
+                q: "1. Sürtünmesiz bir U kaykay rampasında yukarıdan bırakılan kaykaycı en alt noktaya indiğinde enerjisi nasıl değişir?",
+                opts: [
+                    "Çekim potansiyel enerjisi azalır, kinetik enerjisi artar.",
+                    "Kinetik enerjisi azalır, ısı enerjisi artar.",
+                    "Hem kinetik hem potansiyel enerjisi sıfır olur."
+                ],
+                ans: 0
+            },
+            {
+                q: "2. Sürtünmenin açık olduğu bir ortamda hareket eden cismin mekanik enerjisi azalırken toplam enerji nasıl değişir?",
+                opts: [
+                    "Toplam enerji de sürekli azalır.",
+                    "Azalan mekanik enerji ısıya dönüştüğü için toplam enerji sabit kalır.",
+                    "Toplam enerji iki katına çıkar."
+                ],
+                ans: 1
+            },
+            {
+                q: "3. Kinetik enerji ile potansiyel enerjinin toplamına ne ad verilir?",
+                opts: ["Isı enerjisi", "Mekanik enerji", "Esneklik enerjisi"],
+                ans: 1
+            },
+            {
+                q: "4. Gerilmiş bir ok ve yay serbest bırakıldığında hangi enerji dönüşümü gerçekleşir?",
+                opts: [
+                    "Isı enerjisi → Çekim potansiyel enerjisi",
+                    "Esneklik potansiyel enerjisi → Kinetik enerji",
+                    "Kinetik enerji → Esneklik potansiyel enerjisi"
+                ],
+                ans: 1
+            },
+            {
+                q: "5. Trambolinde zıplayan bir çocuk en tepe noktaya ulaştığı anda hangi enerji en büyüktür?",
+                opts: ["Çekim potansiyel enerjisi", "Kinetik enerji", "Isı enerjisi"],
+                ans: 0
+            }
+        ];
+        let quizIndex = 0;
+        let quizScore = 0;
+
+        function renderQuizStep() {
+            const container = document.getElementById('quizContent');
+            if (!container) return;
+            if (quizIndex >= quizQuestions.length) {
+                container.innerHTML = `
+                    <div class="text-center py-4 space-y-3">
+                        <div class="text-4xl">🏆</div>
+                        <h4 class="text-lg font-extrabold text-white">Test Tamamlandı!</h4>
+                        <p class="text-sm text-sky-300 font-bold">Puanın: ${quizScore * 20} / 100 (${quizScore}/${quizQuestions.length} Doğru)</p>
+                        <button onclick="quizIndex=0;quizScore=0;renderQuizStep();" class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold cursor-pointer">
+                            🔄 Testi Tekrar Çöz
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            const item = quizQuestions[quizIndex];
+            container.innerHTML = `
+                <div class="text-xs font-bold text-indigo-300">Soru ${quizIndex + 1} / ${quizQuestions.length}</div>
+                <p class="text-sm font-bold text-white leading-snug">${item.q}</p>
+                <div class="space-y-2 pt-1">
+                    ${item.opts.map((opt, idx) => `
+                        <button onclick="answerQuiz(${idx})" class="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-400 text-xs text-slate-200 font-medium transition-all cursor-pointer">
+                            ${String.fromCharCode(65 + idx)}) ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        window.answerQuiz = function(selectedIdx) {
+            if (selectedIdx === quizQuestions[quizIndex].ans) quizScore++;
+            quizIndex++;
+            renderQuizStep();
+        };
+
+        function generateHomeworkReportText() {
+            const logLines = experimentLogs.length > 0
+                ? experimentLogs.map(r => `- Deneme #${r.id} (Sürtünme: ${r.friction}): Kinetik = ${r.k} J, Potansiyel = ${r.p} J, Mekanik = ${r.m} J, Isı = ${r.th} J, Toplam = ${r.tot} J`).join('\n')
+                : `- Deneme #1 (Sürtünme: Kapalı): Kinetik = 2450 J, Potansiyel = 2450 J, Mekanik = 4900 J, Isı = 0 J, Toplam = 4900 J\n- Deneme #2 (Sürtünme: Açık): Kinetik = 1100 J, Potansiyel = 1400 J, Mekanik = 2500 J, Isı = 2400 J, Toplam = 4900 J`;
+
+            return `7. SINIF FEN BİLİMLERİ - ENERJİ DÖNÜŞÜMLERİ ÖDEV RAPORU\n\n` +
+                `1. SEÇİLEN SENARYO VE GÖZLEMLER:\n` +
+                `Simülasyonda ${scenarioNames[currentScenario]} ve diğer enerji dönüşümü senaryoları test edilmiştir.\n\n` +
+                `2. DENEY KARŞILAŞTIRMA VERİLERİ:\n${logLines}\n\n` +
+                `3. BİLİMSEL SONUÇ (ENERJİNİN KORUNUMU):\n` +
+                `Sürtünme kapalıyken kinetik ve potansiyel enerji sürekli birbirine dönüşmüş, mekanik enerji ve toplam enerji sabit kalmıştır. Sürtünme açıldığında ise mekanik enerji azalmış ancak azalan miktar kadar ısı enerjisi ortaya çıktığı için Toplam Enerji (Mekanik + Isı) her durumda korunmuştur.\n\n` +
+                `4. GELİŞTİRME AÇIKLAMASI:\n` +
+                `İlk sürümün ardından simülasyona canlı enerji pasta grafiği, enerji-zaman çizgi grafiği, hareket yönü vektör oku, ibreli hız kadranı ve deney verilerini karşılaştıran kayıt tablosu eklenerek bilimsel gözlem kolaylaştırılmıştır.`;
+        }
+
+        document.getElementById('openQuizModalBtn')?.addEventListener('click', () => {
+            quizIndex = 0;
+            quizScore = 0;
+            renderQuizStep();
+            document.getElementById('quizModal').classList.remove('hidden');
+        });
+        document.getElementById('closeQuizModalBtn')?.addEventListener('click', () => {
+            document.getElementById('quizModal').classList.add('hidden');
+        });
+        document.getElementById('openReportModalBtn')?.addEventListener('click', () => {
+            document.getElementById('reportTextArea').value = generateHomeworkReportText();
+            document.getElementById('reportModal').classList.remove('hidden');
+        });
+        document.getElementById('closeReportModalBtn')?.addEventListener('click', () => {
+            document.getElementById('reportModal').classList.add('hidden');
+        });
+        document.getElementById('copyReportBtn')?.addEventListener('click', () => {
+            const ta = document.getElementById('reportTextArea');
+            ta.select();
+            document.execCommand('copy');
+            const msg = document.getElementById('copySuccessMsg');
+            msg.style.opacity = '1';
+            setTimeout(() => { msg.style.opacity = '0'; }, 2200);
+        });
+
+        // =========================================================
+        // 13. ANA ANİMASYON DÖNGÜSÜ
+        // =========================================================
+        // 12. ANA ANİMASYON DÖNGÜSÜ
+        // =========================================================
+        function gameLoop(timestamp) {
+            if (!isRunning) return;
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const rawDt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+            lastTimestamp = timestamp;
+
+            if (stopwatchRunning) {
+                stopwatchTime += rawDt * simSpeedMultiplier;
+                stopwatchDisplay.textContent = `${stopwatchTime.toFixed(2).padStart(5, '0')} sn`;
+            }
+
+            const dt = rawDt * BASE_TIME_SCALE * simSpeedMultiplier;
+            stepPhysics(dt);
+            updateUI();
+            drawScene();
+
+            if (isRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        window.onload = function () {
+            initStars();
+            updateTotalEnergyFromState();
+            updateUI();
+
+            const introSplash = document.getElementById('introSplash');
+            const introProgressBar = document.getElementById('introProgressBar');
+            if (introSplash && introProgressBar) {
+                requestAnimationFrame(() => {
+                    introProgressBar.style.width = '100%';
+                });
+                setTimeout(() => {
+                    introSplash.style.opacity = '0';
+                    introSplash.style.pointerEvents = 'none';
+                    setTimeout(() => introSplash.remove(), 500);
+                }, 950);
+            }
+        };
+    </script>
+</body>
+</html>
