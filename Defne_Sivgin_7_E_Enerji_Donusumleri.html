@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>7. Sınıf Enerji Dönüşümleri Simülasyonu - Zıplayan Top</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-main: rgba(15, 23, 42, 0.88);
+            --card-bg: rgba(30, 41, 59, 0.72);
+            --card-border: rgba(148, 163, 184, 0.22);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --panel-inner: rgba(15, 23, 42, 0.52);
+        }
+
+        body.light-mode {
+            --bg-main: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --card-border: rgba(100, 116, 139, 0.25);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --panel-inner: rgba(241, 245, 249, 0.9);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.25s ease, color 0.25s ease;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .inner-panel {
+            background: var(--panel-inner);
+            border: 1px solid var(--card-border);
+        }
+
+        .muted-text {
+            color: var(--text-muted);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 sm:p-5 md:p-6">
+    <div class="max-w-6xl mx-auto space-y-5">
+        <!-- Üst Başlık ve Hızlı Görünüm Düğmeleri -->
+        <header class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">
+                    7. Sınıf Enerji Dönüşümleri Simülasyonu
+                </h1>
+                <p class="text-xs sm:text-sm muted-text mt-1">
+                    Voleybol topunun aşağı-yukarı hareketinde potansiyel, kinetik, esneklik ve ısı enerjisi dönüşümlerini incele.
+                </p>
+            </div>
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                    id="btnCourtToggle"
+                    type="button"
+                    class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 transition cursor-pointer"
+                >
+                    🏐 Voleybol Sahası
+                </button>
+                <button
+                    id="btnThemeToggle"
+                    type="button"
+                    class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-500/20 hover:bg-slate-500/30 border border-slate-400/35 transition cursor-pointer"
+                >
+                    ☀️ Beyaz Mod
+                </button>
+            </div>
+        </header>
+
+        <!-- Ana Simülasyon Alanı -->
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Sol: Animasyon Sahnesi ve Kontrol Düğmeleri -->
+            <section class="lg:col-span-7 glass-card rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+                <div class="relative w-full h-72 sm:h-80 md:h-96 rounded-xl overflow-hidden inner-panel">
+                    <canvas id="simCanvas"></canvas>
+                    <!-- Başarılı Görev Rozeti -->
+                    <div
+                        id="taskToast"
+                        class="hidden absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg"
+                    >
+                        Başarılı!
+                    </div>
+                </div>
+
+                <!-- Anlık Konum ve Hız Göstergeleri -->
+                <div class="grid grid-cols-3 gap-2.5 text-center">
+                    <div class="inner-panel rounded-xl p-2.5">
+                        <div class="text-[11px] muted-text">Yükseklik</div>
+                        <div id="valHeight" class="text-sm sm:text-base font-bold mt-0.5">10.00 m</div>
+                    </div>
+                    <div class="inner-panel rounded-xl p-2.5">
+                        <div class="text-[11px] muted-text">Sürat</div>
+                        <div id="valVelocity" class="text-sm sm:text-base font-bold mt-0.5">0.00 m/s</div>
+                    </div>
+                    <div class="inner-panel rounded-xl p-2.5">
+                        <div class="text-[11px] muted-text">Hız Modu</div>
+                        <div id="valSpeedMode" class="text-sm sm:text-base font-bold mt-0.5">1x</div>
+                    </div>
+                </div>
+
+                <!-- Kontrol Düğmeleri -->
+                <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+                    <button
+                        id="btnStartPause"
+                        type="button"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition cursor-pointer"
+                    >
+                        Başlat
+                    </button>
+                    <button
+                        id="btnReset"
+                        type="button"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold inner-panel hover:opacity-85 transition cursor-pointer"
+                    >
+                        Sıfırla
+                    </button>
+                    <button
+                        id="btnFriction"
+                        type="button"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 transition cursor-pointer"
+                    >
+                        Sürtünme: Kapalı
+                    </button>
+                    <button
+                        id="btnSound"
+                        type="button"
+                        class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-violet-500/20 hover:bg-violet-500/30 border border-violet-400/40 transition cursor-pointer"
+                    >
+                        Doing Sesi: Açık
+                    </button>
+                </div>
+
+                <!-- Sürtünme Kuvveti Şiddeti Seçenekleri -->
+                <div id="frictionLevelRow" class="hidden flex-wrap items-center justify-center gap-2">
+                    <span class="text-xs muted-text">Sürtünme Kuvveti:</span>
+                    <button
+                        type="button"
+                        data-friction-level="light"
+                        class="friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition cursor-pointer"
+                    >
+                        Hafif
+                    </button>
+                    <button
+                        type="button"
+                        data-friction-level="medium"
+                        class="friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer"
+                    >
+                        Orta
+                    </button>
+                    <button
+                        type="button"
+                        data-friction-level="heavy"
+                        class="friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer"
+                    >
+                        Yoğun
+                    </button>
+                </div>
+
+                <!-- Hız Seçenekleri -->
+                <div class="flex items-center justify-center gap-2">
+                    <span class="text-xs muted-text">Çekim Hızı:</span>
+                    <button
+                        type="button"
+                        data-speed="0.25"
+                        class="speed-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer"
+                    >
+                        0.25x
+                    </button>
+                    <button
+                        type="button"
+                        data-speed="1"
+                        class="speed-btn px-3 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white transition cursor-pointer"
+                    >
+                        1x
+                    </button>
+                    <button
+                        type="button"
+                        data-speed="2"
+                        class="speed-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer"
+                    >
+                        2x
+                    </button>
+                </div>
+
+                <!-- İstenilen Yükseklikten Bırakma Ayarı -->
+                <div class="inner-panel rounded-xl p-3 space-y-1.5">
+                    <div class="flex items-center justify-between text-xs sm:text-sm">
+                        <label for="dropHeightSlider" class="font-semibold">Bırakma Yüksekliği</label>
+                        <span id="dropHeightLabel" class="font-bold text-sky-400">10.0 m</span>
+                    </div>
+                    <input
+                        id="dropHeightSlider"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="0.5"
+                        value="10"
+                        class="w-full accent-sky-500 cursor-pointer"
+                    />
+                    <div class="flex justify-between text-[11px] muted-text">
+                        <span>1.0 m</span>
+                        <span>5.0 m</span>
+                        <span>10.0 m</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sağ: Enerji Çubukları ve Görevler -->
+            <section class="lg:col-span-5 flex flex-col gap-5">
+                <!-- Enerji Dağılımı -->
+                <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3.5">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base sm:text-lg font-bold">Enerji Dağılımı</h2>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400">
+                            Toplam Sabit: 100.0 J
+                        </span>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs sm:text-sm">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Çekim Potansiyel Enerjisi</span>
+                                <span id="eGravVal" class="font-bold">100.0 J</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
+                                <div id="eGravBar" class="h-full bg-sky-400 transition-all duration-75" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Kinetik Enerji</span>
+                                <span id="eKineticVal" class="font-bold">0.0 J</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
+                                <div id="eKineticBar" class="h-full bg-amber-400 transition-all duration-75" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Esneklik Potansiyel Enerjisi</span>
+                                <span id="eElasticVal" class="font-bold">0.0 J</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
+                                <div id="eElasticBar" class="h-full bg-fuchsia-400 transition-all duration-75" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Isı Enerjisi (Sürtünme)</span>
+                                <span id="eHeatVal" class="font-bold">0.0 J</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
+                                <div id="eHeatBar" class="h-full bg-rose-500 transition-all duration-75" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-500/25">
+                            <div class="flex justify-between mb-1 font-bold">
+                                <span>Toplam Enerji</span>
+                                <span id="eTotalVal" class="text-emerald-400">100.0 J</span>
+                            </div>
+                            <div class="w-full h-3 rounded-full inner-panel overflow-hidden">
+                                <div id="eTotalBar" class="h-full bg-emerald-400" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] sm:text-xs muted-text leading-relaxed">
+                        Not: Top yere çarptığında çıkan <strong>"doing"</strong> sesi görsel-işitsel bir efekttir; enerji korunumu hesabında <strong>ses enerjisi ihmal edilir</strong> ve toplam enerji her zaman <strong>100.0 J</strong> kalır.
+                    </p>
+                </div>
+
+                <!-- Keşif Görevleri -->
+                <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+                    <h2 class="text-base sm:text-lg font-bold">Keşif Görevleri</h2>
+                    <ul class="space-y-2.5 text-xs sm:text-sm">
+                        <li id="task1" class="inner-panel rounded-xl p-3 flex items-center justify-between gap-2">
+                            <span>1. Sürtünme kapalıyken topu bırak ve yere çarpıp yukarı sekmesini sağla.</span>
+                            <span id="task1Badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-500/20 muted-text shrink-0">
+                                Bekleniyor
+                            </span>
+                        </li>
+                        <li id="task2" class="inner-panel rounded-xl p-3 flex items-center justify-between gap-2">
+                            <span>2. Sürtünmeyi aç ve ısı enerjisinin arttığını gözlemle.</span>
+                            <span id="task2Badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-500/20 muted-text shrink-0">
+                                Bekleniyor
+                            </span>
+                        </li>
+                        <li id="task3" class="inner-panel rounded-xl p-3 flex items-center justify-between gap-2">
+                            <span>3. Çekim hızını 0.25x yapıp topun yere çarptığı anı yavaşça izle.</span>
+                            <span id="task3Badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-500/20 muted-text shrink-0">
+                                Bekleniyor
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- En Alt: Kolay Gözlem Testi -->
+        <section class="glass-card rounded-2xl p-4 sm:p-6 space-y-4">
+            <div>
+                <h2 class="text-lg sm:text-xl font-bold">Kısa Gözlem Testi</h2>
+                <p class="text-xs sm:text-sm muted-text mt-0.5">
+                    Topun aşağı-yukarı hareketini izledikten sonra aşağıdaki kolay soruları yanıtla.
+                </p>
+            </div>
+            <div id="quizContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </section>
+    </div>
+
+    <script>
+        // Sabit fizik ve sahne parametreleri (Toplam enerji her durumda 100.0 J)
+        const TOTAL_ENERGY = 100.0;
+        const INITIAL_HEIGHT = 10.0; // metre (sahne üst sınırı)
+        const GRAVITY = 9.8; // m/s^2
+        const MAX_COMPRESSION = 0.45;
+        const RESTITUTION_NO_FRICTION = 0.94;
+        const FRICTION_PRESETS = {
+            light: { label: 'Hafif', restitution: 0.84, dragCoeff: 0.025, heatGain: 2.4, bounceLossRatio: 0.35 },
+            medium: { label: 'Orta', restitution: 0.70, dragCoeff: 0.065, heatGain: 5.0, bounceLossRatio: 0.65 },
+            heavy: { label: 'Yoğun', restitution: 0.50, dragCoeff: 0.14, heatGain: 9.5, bounceLossRatio: 0.90 }
+        };
+
+        const state = {
+            running: false,
+            dropHeight: INITIAL_HEIGHT,
+            h: INITIAL_HEIGHT,
+            v: 0,
+            compression: 0,
+            eHeat: 0,
+            friction: false,
+            frictionLevel: 'light',
+            soundEnabled: true,
+            speedMultiplier: 1,
+            courtBg: false,
+            tasks: {
+                t1: false,
+                t2: false,
+                t3: false
+            }
+        };
+
+        function getActiveFrictionPreset() {
+            return FRICTION_PRESETS[state.frictionLevel] || FRICTION_PRESETS.light;
+        }
+
+        // DOM referansları
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const btnStartPause = document.getElementById('btnStartPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnFriction = document.getElementById('btnFriction');
+        const frictionLevelRow = document.getElementById('frictionLevelRow');
+        const btnSound = document.getElementById('btnSound');
+        const btnCourtToggle = document.getElementById('btnCourtToggle');
+        const btnThemeToggle = document.getElementById('btnThemeToggle');
+        const dropHeightSlider = document.getElementById('dropHeightSlider');
+        const dropHeightLabel = document.getElementById('dropHeightLabel');
+        const taskToast = document.getElementById('taskToast');
+
+        const valHeight = document.getElementById('valHeight');
+        const valVelocity = document.getElementById('valVelocity');
+        const valSpeedMode = document.getElementById('valSpeedMode');
+
+        const eGravVal = document.getElementById('eGravVal');
+        const eGravBar = document.getElementById('eGravBar');
+        const eKineticVal = document.getElementById('eKineticVal');
+        const eKineticBar = document.getElementById('eKineticBar');
+        const eElasticVal = document.getElementById('eElasticVal');
+        const eElasticBar = document.getElementById('eElasticBar');
+        const eHeatVal = document.getElementById('eHeatVal');
+        const eHeatBar = document.getElementById('eHeatBar');
+        const eTotalVal = document.getElementById('eTotalVal');
+        const eTotalBar = document.getElementById('eTotalBar');
+
+        // Çevrimdışı Web Audio "Doing" zıplama sesi
+        let audioCtx = null;
+        function playDoingSound(impactSpeed) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContextClass();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                const intensity = Math.min(1, Math.max(0.2, impactSpeed / 12));
+                const baseFreq = 135 + intensity * 65;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(baseFreq, now);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.1, now + 0.11);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.85, now + 0.28);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.22 * intensity, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.31);
+            } catch (err) {
+                // Ses çalınamazsa simülasyon akışı etkilenmez
+            }
+        }
+        <!-- Görev bildirimi -->
+        let toastTimer = null;
+        function showSuccessToast(message = 'Başarılı!') {
+            taskToast.textContent = message;
+            taskToast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                taskToast.classList.add('hidden');
+            }, 1500);
+        }
+
+        function completeTask(key) {
+            if (state.tasks[key]) return;
+            state.tasks[key] = true;
+
+            const map = {
+                t1: { li: 'task1', badge: 'task1Badge' },
+                t2: { li: 'task2', badge: 'task2Badge' },
+                t3: { li: 'task3', badge: 'task3Badge' }
+            };
+            const item = map[key];
+            if (item) {
+                const liEl = document.getElementById(item.li);
+                const badgeEl = document.getElementById(item.badge);
+                liEl.classList.add('border-sky-400/60');
+                badgeEl.textContent = '✓ Başarılı!';
+                badgeEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500 text-white shrink-0';
+            }
+            showSuccessToast();
+        }
+
+        // Canvas boyutlandırma (ekran taşmasını önleyerek yüksek DPI uyumlu)
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.max(200, Math.floor(rect.width * dpr));
+            canvas.height = Math.max(200, Math.floor(rect.height * dpr));
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawScene();
+        }
+
+        // Voleybol sahası arka planı
+        function drawVolleyballCourt(width, height, groundY, isLight) {
+            const wallGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+            if (isLight) {
+                wallGrad.addColorStop(0, '#dbeafe');
+                wallGrad.addColorStop(0.65, '#eff6ff');
+                wallGrad.addColorStop(1, '#e2e8f0');
+            } else {
+                wallGrad.addColorStop(0, '#0f172a');
+                wallGrad.addColorStop(0.6, '#1e293b');
+                wallGrad.addColorStop(1, '#1e3a8a');
+            }
+            ctx.fillStyle = wallGrad;
+            ctx.fillRect(0, 0, width, groundY);
+
+            // Salon duvar bandı ve pencereler
+            const bandY = Math.max(54, groundY * 0.44);
+            ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(15, 23, 42, 0.55)';
+            ctx.fillRect(0, bandY, width, groundY - bandY);
+
+            const winCount = 4;
+            const winSpacing = width / (winCount + 1);
+            for (let i = 1; i <= winCount; i++) {
+                const wx = winSpacing * i - 26;
+                const wy = 18;
+                const ww = 52;
+                const wh = Math.max(36, bandY - 32);
+
+                ctx.fillStyle = isLight ? 'rgba(186, 230, 253, 0.85)' : 'rgba(125, 211, 252, 0.16)';
+                ctx.fillRect(wx, wy, ww, wh);
+                ctx.strokeStyle = isLight ? 'rgba(51, 65, 85, 0.45)' : 'rgba(148, 163, 184, 0.35)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(wx, wy, ww, wh);
+            }
+
+            // Voleybol parke zemini ve çizgileri
+            ctx.fillStyle = isLight ? '#cbd5e1' : '#1e293b';
+            ctx.fillRect(0, groundY, width, height - groundY);
+
+            const courtTop = groundY + 3;
+            const courtHeight = Math.max(18, Math.min(44, height - groundY - 8));
+            const courtGrad = ctx.createLinearGradient(0, courtTop, 0, courtTop + courtHeight);
+            courtGrad.addColorStop(0, '#f97316');
+            courtGrad.addColorStop(1, '#ea580c');
+            ctx.fillStyle = courtGrad;
+            ctx.fillRect(12, courtTop, width - 24, courtHeight);
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(12, courtTop, width - 24, courtHeight);
+
+            const netX = width * 0.68;
+            const attackLeft = Math.max(24, netX - Math.min(115, width * 0.15));
+            const attackRight = Math.min(width - 24, netX + Math.min(115, width * 0.15));
+
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(netX, courtTop);
+            ctx.lineTo(netX, courtTop + courtHeight);
+            ctx.moveTo(attackLeft, courtTop);
+            ctx.lineTo(attackLeft, courtTop + courtHeight);
+            ctx.moveTo(attackRight, courtTop);
+            ctx.lineTo(attackRight, courtTop + courtHeight);
+            ctx.stroke();
+
+            // Voleybol direkleri ve file
+            const netTop = Math.max(48, groundY - Math.min(125, groundY * 0.46));
+            const netBottom = Math.min(groundY - 6, netTop + 56);
+            const netLeft = Math.max(36, netX - Math.min(155, width * 0.22));
+
+            ctx.strokeStyle = isLight ? '#1e293b' : '#f8fafc';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(netX, courtTop + 2);
+            ctx.lineTo(netX, netTop - 10);
+            ctx.moveTo(netLeft, groundY);
+            ctx.lineTo(netLeft, netTop - 6);
+            ctx.stroke();
+
+            // File üst bandı
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(netLeft, netTop, Math.max(10, netX - netLeft), 5);
+
+            // File ağ çizgileri
+            ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)';
+            ctx.lineWidth = 1.2;
+            for (let y = netTop + 5; y <= netBottom; y += 8) {
+                ctx.beginPath();
+                ctx.moveTo(netLeft, y);
+                ctx.lineTo(netX, y);
+                ctx.stroke();
+            }
+            for (let x = netLeft; x <= netX; x += 12) {
+                ctx.beginPath();
+                ctx.moveTo(x, netTop + 5);
+                ctx.lineTo(x, netBottom);
+                ctx.stroke();
+            }
+        }
+
+        // Yazısız klasik üç renkli voleybol topu çizimi
+        function drawVolleyball(cx, cy, rx, ry) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Dış daire (esnemeye göre yatay/dikey ölçeklenir)
+            ctx.beginPath();
+            ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+
+            // Kavisli sarı ve mavi voleybol panelleri
+            ctx.save();
+            ctx.clip();
+
+            // Sol-üst sarı panel
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.ellipse(-rx * 0.55, -ry * 0.25, rx * 0.85, ry * 0.7, -0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sağ-alt mavi panel
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath();
+            ctx.ellipse(rx * 0.58, ry * 0.32, rx * 0.85, ry * 0.72, -0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Orta beyaz şerit ve dikiş çizgileri
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1.6;
+
+            ctx.beginPath();
+            ctx.moveTo(-rx, -ry * 0.15);
+            ctx.quadraticCurveTo(0, -ry * 0.65, rx, ry * 0.05);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-rx * 0.85, ry * 0.45);
+            ctx.quadraticCurveTo(0, ry * 0.1, rx * 0.9, ry * 0.55);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-rx * 0.15, -ry);
+            ctx.quadraticCurveTo(rx * 0.25, 0, -rx * 0.1, ry);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // Dış kenar çizgisi
+            ctx.beginPath();
+            ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Sahneyi çiz (top her zaman görünür sınırlar içinde)
+        function drawScene() {
+            const dpr = window.devicePixelRatio || 1;
+            const width = canvas.width / dpr;
+            const height = canvas.height / dpr;
+            const isLight = document.body.classList.contains('light-mode');
+
+            ctx.clearRect(0, 0, width, height);
+
+            const groundY = Math.max(120, height - 54);
+            const topMargin = 26;
+
+            if (state.courtBg) {
+                drawVolleyballCourt(width, height, groundY, isLight);
+            } else {
+                ctx.fillStyle = isLight ? '#e2e8f0' : '#0f172a';
+                ctx.fillRect(0, 0, width, groundY);
+
+                // Yükseklik referans çizgileri (10 m üst sınır ve 5 m orta çizgi)
+                ctx.strokeStyle = isLight ? 'rgba(71, 85, 105, 0.22)' : 'rgba(148, 163, 184, 0.16)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+
+                const midY = topMargin + (groundY - topMargin) * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(16, topMargin);
+                ctx.lineTo(width - 16, topMargin);
+                ctx.moveTo(16, midY);
+                ctx.lineTo(width - 16, midY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.fillText('10 m', 20, topMargin + 13);
+                ctx.fillText('5 m', 20, midY - 4);
+
+                // Standart zemin
+                ctx.fillStyle = isLight ? '#94a3b8' : '#334155';
+                ctx.fillRect(0, groundY, width, height - groundY);
+                ctx.strokeStyle = isLight ? '#475569' : '#64748b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, groundY);
+                ctx.lineTo(width, groundY);
+                ctx.stroke();
+            }
+
+            // Top boyut ve konum hesapları (ekran dışına çıkmaması için sıkı sınırlandırma)
+            const safeH = Math.max(0, Math.min(INITIAL_HEIGHT, state.h));
+            const baseRadius = Math.max(16, Math.min(24, Math.min(width, groundY) * 0.085));
+            const squash = state.compression > 0 ? Math.min(0.32, state.compression * 0.72) : 0;
+            const rx = baseRadius * (1 + squash * 0.85);
+            const ry = Math.max(8, baseRadius * (1 - squash));
+
+            const ballX = Math.max(rx + 18, Math.min(width - rx - 18, state.courtBg ? width * 0.32 : width * 0.5));
+            const minCenterY = topMargin + ry;
+            const maxCenterY = groundY - ry;
+            const usableRange = Math.max(20, maxCenterY - minCenterY);
+
+            const ratio = safeH / INITIAL_HEIGHT;
+            const rawCenterY = maxCenterY - ratio * usableRange;
+            const ballCenterY = state.compression > 0
+                ? maxCenterY
+                : Math.max(minCenterY, Math.min(maxCenterY, rawCenterY));
+
+            // Zemindeki gölge (top yere yaklaştıkça belirginleşir)
+            const shadowScale = Math.max(0.25, 1 - ratio * 0.72);
+            ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.22)' : 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(ballX, groundY + 4, rx * shadowScale, Math.max(3, 5 * shadowScale), 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Voleybol topunu çiz
+            drawVolleyball(ballX, ballCenterY, rx, ry);
+        }
+
+        // Enerji çubuklarını ve değerleri güncelle (Toplam Enerji = 100.0 J sabit)
+        function updateUI() {
+            const safeH = Math.max(0, Math.min(INITIAL_HEIGHT, state.h));
+            const eHeat = Math.min(TOTAL_ENERGY, Math.max(0, state.eHeat));
+            const remainingMech = Math.max(0, TOTAL_ENERGY - eHeat);
+
+            // Potansiyel enerji yükseklik oranına göre belirlenir, toplam 100.0 J'yi aşmaz
+            const heightFraction = safeH / INITIAL_HEIGHT;
+            const eGrav = Math.min(remainingMech, remainingMech * heightFraction);
+            const afterGrav = Math.max(0, remainingMech - eGrav);
+
+            // Zemin temasındaki esneme sırasında esneklik potansiyel enerjisi oluşur
+            const compRatio = state.compression > 0 ? Math.min(1, state.compression / MAX_COMPRESSION) : 0;
+            const eElastic = Math.min(afterGrav, afterGrav * compRatio);
+
+            // Kalan mekanik enerji kinetik enerjiye aktarılır
+            const eKinetic = Math.max(0, afterGrav - eElastic);
+
+            valHeight.textContent = `${safeH.toFixed(2)} m`;
+            valVelocity.textContent = `${Math.abs(state.v).toFixed(2)} m/s`;
+            valSpeedMode.textContent = `${state.speedMultiplier.toFixed(2).replace(/\.00$/, '')}x`;
+
+            eGravVal.textContent = `${eGrav.toFixed(1)} J`;
+            eGravBar.style.width = `${(eGrav / TOTAL_ENERGY) * 100}%`;
+
+            eKineticVal.textContent = `${eKinetic.toFixed(1)} J`;
+            eKineticBar.style.width = `${(eKinetic / TOTAL_ENERGY) * 100}%`;
+
+            eElasticVal.textContent = `${eElastic.toFixed(1)} J`;
+            eElasticBar.style.width = `${(eElastic / TOTAL_ENERGY) * 100}%`;
+
+            eHeatVal.textContent = `${eHeat.toFixed(1)} J`;
+            eHeatBar.style.width = `${(eHeat / TOTAL_ENERGY) * 100}%`;
+
+            eTotalVal.textContent = `${TOTAL_ENERGY.toFixed(1)} J`;
+            eTotalBar.style.width = '100%';
+        }
+
+        // Fizik adımı
+        function stepPhysics(dt) {
+            const clampedDt = Math.min(0.035, Math.max(0, dt)) * state.speedMultiplier;
+            if (clampedDt <= 0) return;
+
+            if (state.compression > 0) {
+                // Yerde esneme ve geri sekme aşaması
+                state.compression += clampedDt * 3.4;
+                if (state.compression >= MAX_COMPRESSION) {
+                    const impactSpeed = Math.max(1.2, Math.abs(state.v));
+                    const preset = getActiveFrictionPreset();
+                    const rest = state.friction ? preset.restitution : RESTITUTION_NO_FRICTION;
+                    state.v = impactSpeed * rest;
+                    state.compression = 0;
+                    state.h = 0.02;
+
+                    playDoingSound(impactSpeed);
+
+                    if (!state.friction && state.v > 0.2) {
+                        completeTask('t1');
+                    }
+                    if (state.speedMultiplier === 0.25) {
+                        completeTask('t3');
+                    }
+                }
+            } else {
+                // Serbest düşüş veya yükseliş aşaması
+                const prevV = state.v;
+                const preset = getActiveFrictionPreset();
+                const dragAccel = state.friction ? -preset.dragCoeff * state.v * Math.abs(state.v) : 0;
+                const netAccel = -GRAVITY + dragAccel;
+
+                state.v += netAccel * clampedDt;
+                state.h += 0.5 * (prevV + state.v) * clampedDt;
+
+                // Topun üst sınırdan (10 m) çıkmasını engelle
+                if (state.h >= INITIAL_HEIGHT) {
+                    state.h = INITIAL_HEIGHT;
+                    if (state.v > 0) {
+                        state.v = 0;
+                    }
+                }
+
+                // Zemine temas kontrolü
+                if (state.h <= 0) {
+                    state.h = 0;
+                    const impactSpeed = Math.abs(state.v);
+                    if (impactSpeed > 0.45) {
+                        state.compression = 0.05;
+                        if (state.friction) {
+                            const lostFraction = Math.max(0, 1 - preset.restitution * preset.restitution);
+                            const remaining = Math.max(0, TOTAL_ENERGY - state.eHeat);
+                            state.eHeat = Math.min(TOTAL_ENERGY, state.eHeat + remaining * lostFraction * preset.bounceLossRatio);
+                        }
+                    } else {
+                        state.v = 0;
+                        if (state.friction) {
+                            state.eHeat = TOTAL_ENERGY;
+                        }
+                        state.running = false;
+                        btnStartPause.textContent = 'Başlat';
+                    }
+                }
+
+                // Sürtünme açıkken seçilen şiddete göre hava direncinin yaptığı iş ısı enerjisine aktarılır
+                if (state.friction && state.eHeat < TOTAL_ENERGY) {
+                    const dragHeatStep = Math.abs(dragAccel) * clampedDt * preset.heatGain;
+                    state.eHeat = Math.min(TOTAL_ENERGY, state.eHeat + dragHeatStep);
+                }
+            }
+
+            if (state.friction && state.eHeat > 0.5) {
+                completeTask('t2');
+            }
+        }
+
+        // Ana animasyon döngüsü
+        let lastTime = null;
+        function animate(timestamp) {
+            if (lastTime === null) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (state.running) {
+                stepPhysics(dt);
+            }
+
+            updateUI();
+            drawScene();
+            requestAnimationFrame(animate);
+        }
+
+        // Kontrol düğmeleri
+        btnStartPause.addEventListener('click', () => {
+            if (!state.running && state.h <= 0.02 && Math.abs(state.v) < 0.1) {
+                // Zemin üzerinde duruyorsa yeniden başlatırken seçilen yükseklikten bırak
+                state.h = state.dropHeight;
+                state.v = 0;
+                state.compression = 0;
+                state.eHeat = 0;
+            }
+            state.running = !state.running;
+            btnStartPause.textContent = state.running ? 'Duraklat' : 'Başlat';
+        });
+
+        btnReset.addEventListener('click', () => {
+            state.running = false;
+            state.h = state.dropHeight;
+            state.v = 0;
+            state.compression = 0;
+            state.eHeat = 0;
+            btnStartPause.textContent = 'Başlat';
+            updateUI();
+            drawScene();
+        });
+
+        dropHeightSlider.addEventListener('input', () => {
+            const chosenH = Math.max(1, Math.min(INITIAL_HEIGHT, parseFloat(dropHeightSlider.value) || INITIAL_HEIGHT));
+            state.dropHeight = chosenH;
+            dropHeightLabel.textContent = `${chosenH.toFixed(1)} m`;
+
+            // Simülasyon duruyorsa topu seçilen yükseklikten bırakmaya hazırla
+            if (!state.running) {
+                state.h = chosenH;
+                state.v = 0;
+                state.compression = 0;
+                state.eHeat = 0;
+                updateUI();
+                drawScene();
+            }
+        });
+
+        btnFriction.addEventListener('click', () => {
+            state.friction = !state.friction;
+            if (!state.friction) {
+                state.eHeat = 0;
+            }
+            const preset = getActiveFrictionPreset();
+            btnFriction.textContent = state.friction ? `Sürtünme: Açık (${preset.label})` : 'Sürtünme: Kapalı';
+            frictionLevelRow.classList.toggle('hidden', !state.friction);
+            frictionLevelRow.classList.toggle('flex', state.friction);
+            updateUI();
+        });
+
+        document.querySelectorAll('.friction-level-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const level = btn.dataset.frictionLevel;
+                if (!FRICTION_PRESETS[level]) return;
+                state.frictionLevel = level;
+
+                document.querySelectorAll('.friction-level-btn').forEach((b) => {
+                    b.className = 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer';
+                });
+                btn.className = 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition cursor-pointer';
+
+                if (!state.friction) {
+                    state.friction = true;
+                    frictionLevelRow.classList.remove('hidden');
+                    frictionLevelRow.classList.add('flex');
+                }
+                btnFriction.textContent = `Sürtünme: Açık (${FRICTION_PRESETS[level].label})`;
+                updateUI();
+            });
+        });
+
+        btnSound.addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            btnSound.textContent = state.soundEnabled ? 'Doing Sesi: Açık' : 'Doing Sesi: Kapalı';
+        });
+
+        btnCourtToggle.addEventListener('click', () => {
+            state.courtBg = !state.courtBg;
+            btnCourtToggle.classList.toggle('bg-amber-500/40', state.courtBg);
+            drawScene();
+        });
+
+        btnThemeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            btnThemeToggle.textContent = isLight ? '🌙 Gece Modu' : '☀️ Beyaz Mod';
+            drawScene();
+        });
+
+        document.querySelectorAll('.speed-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const spd = parseFloat(btn.dataset.speed);
+                state.speedMultiplier = spd;
+                document.querySelectorAll('.speed-btn').forEach((b) => {
+                    b.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer';
+                });
+                btn.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white transition cursor-pointer';
+                if (spd === 0.25) {
+                    completeTask('t3');
+                }
+                updateUI();
+            });
+        });
+
+        // Kolay Gözlem Testi
+        const quizQuestions = [
+            {
+                q: '1. Top en yüksekten aşağı inerken hangi enerji artar?',
+                options: ['Kinetik enerji', 'Çekim potansiyel enerjisi', 'Isı enerjisi'],
+                correct: 0,
+                feedback: 'Doğru! Top aşağı inerken sürati artar ve potansiyel enerjisi kinetik enerjiye dönüşür.'
+            },
+            {
+                q: '2. Top yere çarpıp esnediğinde hangi enerji ortaya çıkar?',
+                options: ['Esneklik potansiyel enerjisi', 'Kimyasal enerji', 'Elektrik enerjisi'],
+                correct: 0,
+                feedback: 'Harika! Topun şekli değiştiği an esneklik potansiyel enerjisi oluşur.'
+            },
+            {
+                q: '3. Sürtünme açıkken toplam enerjide ne olur?',
+                options: ['100.0 J sabit kalır, bir kısmı ısıya dönüşür', 'Sıfıra iner', 'Sürekli artar'],
+                correct: 0,
+                feedback: 'Doğru! Enerji yok olmaz; sürtünme nedeniyle bir kısmı ısı enerjisine dönüşür.'
+            }
+        ];
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = '';
+
+            quizQuestions.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'inner-panel rounded-xl p-4 flex flex-col justify-between gap-3';
+
+                const title = document.createElement('p');
+                title.className = 'text-xs sm:text-sm font-bold';
+                title.textContent = item.q;
+                card.appendChild(title);
+
+                const optsWrap = document.createElement('div');
+                optsWrap.className = 'space-y-2';
+
+                const feedbackEl = document.createElement('p');
+                feedbackEl.className = 'text-xs font-semibold hidden';
+
+                item.options.forEach((optText, idx) => {
+                    const optBtn = document.createElement('button');
+                    optBtn.type = 'button';
+                    optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-slate-500/15 hover:bg-slate-500/25 transition cursor-pointer';
+                    optBtn.textContent = optText;
+
+                    optBtn.addEventListener('click', () => {
+                        optsWrap.querySelectorAll('button').forEach((b) => {
+                            b.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-slate-500/15 transition cursor-pointer';
+                        });
+
+                        feedbackEl.classList.remove('hidden');
+                        if (idx === item.correct) {
+                            optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-white transition cursor-pointer';
+                            feedbackEl.className = 'text-xs font-semibold text-emerald-400';
+                            feedbackEl.textContent = item.feedback;
+                            showSuccessToast('Bravo!');
+                        } else {
+                            optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-bold bg-rose-500 text-white transition cursor-pointer';
+                            feedbackEl.className = 'text-xs font-semibold text-rose-400';
+                            feedbackEl.textContent = 'Tekrar dene! Topun hareketini ve enerji çubuklarını incele.';
+                        }
+                    });
+
+                    optsWrap.appendChild(optBtn);
+                });
+
+                card.appendChild(optsWrap);
+                card.appendChild(feedbackEl);
+                container.appendChild(card);
+            });
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', () => {
+            renderQuiz();
+            resizeCanvas();
+            updateUI();
+            requestAnimationFrame(animate);
+        });
+    </script>
+</body>
+</html>
