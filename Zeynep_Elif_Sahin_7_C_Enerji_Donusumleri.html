@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Salıncakta Enerji Dönüşümü</title>
+
+<style>
+
+* { box-sizing:border-box; }
+
+body {
+
+  margin:0;
+
+  padding:18px;
+
+  font-family:Arial,sans-serif;
+
+  background:#e9f5e8;
+
+  color:#294332;
+
+}
+
+.container { max-width:1050px; margin:auto; }
+
+h1 { text-align:center; color:#267348; }
+
+.subtitle { text-align:center; }
+
+.panel {
+
+  background:white;
+
+  padding:18px;
+
+  border-radius:16px;
+
+  margin-bottom:18px;
+
+  box-shadow:0 4px 14px #29433218;
+
+}
+
+canvas {
+
+  width:100%;
+
+  display:block;
+
+  border-radius:13px;
+
+}
+
+.controls {
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  justify-content:center;
+
+  gap:10px;
+
+  margin-top:15px;
+
+}
+
+button {
+
+  padding:12px 17px;
+
+  border:0;
+
+  border-radius:10px;
+
+  color:white;
+
+  font-size:15px;
+
+  font-weight:bold;
+
+  cursor:pointer;
+
+}
+
+button:hover { opacity:.85; }
+
+.start { background:#219653; }
+
+.stop { background:#dc5353; }
+
+.reset { background:#3679c9; }
+
+.speed { background:#8756bd; }
+
+.friction-area {
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  gap:12px;
+
+  margin-top:18px;
+
+  padding:13px;
+
+  background:#f0f7ee;
+
+  border-radius:12px;
+
+}
+
+.switch {
+
+  position:relative;
+
+  width:62px;
+
+  height:32px;
+
+}
+
+.switch input {
+
+  opacity:0;
+
+  width:0;
+
+  height:0;
+
+}
+
+.slider {
+
+  position:absolute;
+
+  inset:0;
+
+  background:#aeb9b1;
+
+  border-radius:30px;
+
+  cursor:pointer;
+
+  transition:.3s;
+
+}
+
+.slider:before {
+
+  content:"";
+
+  position:absolute;
+
+  height:24px;
+
+  width:24px;
+
+  left:4px;
+
+  bottom:4px;
+
+  background:white;
+
+  border-radius:50%;
+
+  transition:.3s;
+
+}
+
+.switch input:checked + .slider {
+
+  background:#e66a42;
+
+}
+
+.switch input:checked + .slider:before {
+
+  transform:translateX(30px);
+
+}
+
+.status {
+
+  text-align:center;
+
+  font-weight:bold;
+
+  margin-top:14px;
+
+}
+
+.energy-grid {
+
+  display:grid;
+
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+
+  gap:14px;
+
+}
+
+.energy-item {
+
+  padding:14px;
+
+  background:#f5f8f5;
+
+  border-radius:11px;
+
+}
+
+.energy-name {
+
+  font-weight:bold;
+
+  margin-bottom:9px;
+
+}
+
+.bar-bg {
+
+  height:23px;
+
+  background:#dce5df;
+
+  border-radius:20px;
+
+  overflow:hidden;
+
+}
+
+.bar {
+
+  height:100%;
+
+  width:0%;
+
+  border-radius:20px;
+
+  transition:width .06s linear;
+
+}
+
+.kinetic { background:#3498db; }
+
+.potential { background:#e5a323; }
+
+.mechanical { background:#9065c7; }
+
+.heat { background:#ed6545; }
+
+.total { background:#24a477; }
+
+.value {
+
+  margin-top:7px;
+
+  font-weight:bold;
+
+}
+
+.explanation {
+
+  padding:17px;
+
+  background:#eaf6ff;
+
+  border-left:5px solid #3288ce;
+
+  border-radius:9px;
+
+  line-height:1.6;
+
+  min-height:75px;
+
+}
+
+.info {
+
+  font-size:14px;
+
+  line-height:1.8;
+
+  color:#596c5d;
+
+}
+
+.speed-info {
+
+  text-align:center;
+
+  font-weight:bold;
+
+  color:#8756bd;
+
+  margin-top:8px;
+
+}
+
+@media(max-width:500px) {
+
+  body { padding:9px; }
+
+  h1 { font-size:23px; }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🌳 Parkta Salıncak</h1>
+
+<p class="subtitle">
+
+7. Sınıf Fen Bilimleri | Enerji Dönüşümleri
+
+</p>
+
+<div class="panel">
+
+<canvas id="scene" width="900" height="430"></canvas>
+
+<div class="controls">
+
+<button class="start" onclick="start()">▶ Başlat</button>
+
+<button class="stop" onclick="stop()">⏸ Durdur</button>
+
+<button class="reset" onclick="reset()">↻ Sıfırla</button>
+
+<button class="speed" onclick="changeSpeed()">⏩ Hızlandır</button>
+
+</div>
+
+<div class="speed-info" id="speedInfo">Hareket hızı: 1x</div>
+
+<div class="friction-area">
+
+<strong>Sürtünme</strong>
+
+<label class="switch">
+
+<input type="checkbox" id="friction">
+
+<span class="slider"></span>
+
+</label>
+
+<strong id="frictionStatus" style="color:#36834c">
+
+KAPALI
+
+</strong>
+
+</div>
+
+<div class="status" id="status">
+
+Hazır! Başlat düğmesine bas.
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h2>⚡ Enerji Göstergeleri</h2>
+
+<p class="info">
+
+Bütün enerji değerleri joule (J) cinsindendir.
+
+Çubuklar hareketle birlikte değişir.
+
+</p>
+
+<div class="energy-grid">
+
+<div class="energy-item">
+
+<div class="energy-name">🔵 Kinetik Enerji</div>
+
+<div class="bar-bg"><div class="bar kinetic" id="kineticBar"></div></div>
+
+<div class="value" id="kineticValue">0 J</div>
+
+</div>
+
+<div class="energy-item">
+
+<div class="energy-name">🟠 Çekim Potansiyel Enerjisi</div>
+
+<div class="bar-bg"><div class="bar potential"
+id="potentialBar"></div></div>
+
+<div class="value" id="potentialValue">0 J</div>
+
+</div>
+
+<div class="energy-item">
+
+<div class="energy-name">🟣 Mekanik Enerji</div>
+
+<div class="bar-bg"><div class="bar mechanical"
+id="mechanicalBar"></div></div>
+
+<div class="value" id="mechanicalValue">0 J</div>
+
+</div>
+
+<div class="energy-item">
+
+<div class="energy-name">🔴 Isıya Dönüşen Enerji</div>
+
+<div class="bar-bg"><div class="bar heat" id="heatBar"></div></div>
+
+<div class="value" id="heatValue">0 J</div>
+
+</div>
+
+<div class="energy-item">
+
+<div class="energy-name">🟢 Toplam Enerji</div>
+
+<div class="bar-bg"><div class="bar total" id="totalBar"></div></div>
+
+<div class="value" id="totalValue">0 J</div>
+
+</div>
+
+</div>
+
+<p class="info">
+
+<strong>Mekanik enerji = Kinetik enerji + Potansiyel enerji</strong><br>
+
+<strong>Toplam enerji = Mekanik enerji + Isı enerjisi</strong>
+
+</p>
+
+</div>
+
+<div class="panel">
+
+<h2>📖 Enerji Dönüşümü</h2>
+
+<div class="explanation" id="explanation">
+
+Kız çocuk salıncağın en yüksek noktasında bekliyor.
+
+Başlat düğmesine basarak enerji dönüşümünü gözlemle.
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h2>🔬 Deney Bilgileri</h2>
+
+<p class="info">
+
+• En yüksek noktada potansiyel enerji en büyük, kinetik enerji sıfıra
+yakındır.<br>
+
+• Aşağı inerken potansiyel enerji kinetik enerjiye dönüşür.<br>
+
+• En alt noktada kinetik enerji en büyüktür.<br>
+
+• Yukarı çıkarken kinetik enerji potansiyel enerjiye dönüşür.<br>
+
+• Sürtünme açıkken mekanik enerjinin bir kısmı ısı enerjisine dönüşür.<br>
+
+• Toplam enerji her iki durumda da sabit kalır.
+
+</p>
+
+</div>
+
+</div>
+
+<script>
+
+// SABİT DEĞERLER
+
+const canvas=document.getElementById("scene");
+
+const ctx=canvas.getContext("2d");
+
+const L=190;
+
+const g=9.81;
+
+const mass=10;
+
+const initialAngle=0.85;
+
+const damping=0.65;
+
+const initialEnergy=
+
+mass*g*L*(1-Math.cos(initialAngle));
+
+const maxEnergy=initialEnergy;
+
+// HAREKET DEĞİŞKENLERİ
+
+let angle=initialAngle;
+
+let omega=0;
+
+let running=false;
+
+let previousTime=0;
+
+let animationId=null;
+
+let speed=1;
+
+// Sürtünme kapatıldığında korunacak mekanik enerji
+
+let coastEnergy=initialEnergy;
+
+// PARK ARKA PLANI
+
+function drawPark() {
+
+  let sky=ctx.createLinearGradient(0,0,0,430);
+
+  sky.addColorStop(0,"#78cefa");
+
+  sky.addColorStop(1,"#e5f9ff");
+
+  ctx.fillStyle=sky;
+
+  ctx.fillRect(0,0,900,430);
+
+  // Güneş
+
+  ctx.fillStyle="#ffdc54";
+
+  ctx.beginPath();
+
+  ctx.arc(770,75,37,0,Math.PI*2);
+
+  ctx.fill();
+
+  // Bulutlar
+
+  function cloud(x,y) {
+
+    ctx.fillStyle="white";
+
+    ctx.beginPath();
+
+    ctx.arc(x,y,23,0,Math.PI*2);
+
+    ctx.arc(x+25,y-12,28,0,Math.PI*2);
+
+    ctx.arc(x+52,y,22,0,Math.PI*2);
+
+    ctx.fill();
+
+  }
+
+  cloud(120,85);
+
+  cloud(600,125);
+
+  // Tepeler
+
+  ctx.fillStyle="#a4dba3";
+
+  ctx.beginPath();
+
+  ctx.moveTo(0,260);
+
+  ctx.quadraticCurveTo(200,170,400,260);
+
+  ctx.quadraticCurveTo(650,170,900,260);
+
+  ctx.lineTo(900,430);
+
+  ctx.lineTo(0,430);
+
+  ctx.fill();
+
+  // Çimen
+
+  ctx.fillStyle="#65b95f";
+
+  ctx.fillRect(0,335,900,95);
+
+  // Ağaçlar
+
+  function tree(x,y) {
+
+    ctx.fillStyle="#80522e";
+
+    ctx.fillRect(x-10,y,20,90);
+
+    ctx.fillStyle="#2e9854";
+
+    ctx.beginPath();
+
+    ctx.arc(x,y-10,40,0,Math.PI*2);
+
+    ctx.arc(x-25,y+10,29,0,Math.PI*2);
+
+    ctx.arc(x+25,y+10,29,0,Math.PI*2);
+
+    ctx.fill();
+
+  }
+
+  tree(90,245);
+
+  tree(820,245);
+
+  // Çiçekler
+
+  function flower(x,y,color) {
+
+    ctx.strokeStyle="#277b3a";
+
+    ctx.lineWidth=3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(x,y);
+
+    ctx.lineTo(x,y+20);
+
+    ctx.stroke();
+
+    ctx.fillStyle=color;
+
+    for(let i=0;i<5;i++) {
+
+      let a=i*Math.PI*2/5;
+
+      ctx.beginPath();
+
+      ctx.arc(
+
+        x+7*Math.cos(a),
+
+        y+7*Math.sin(a),
+
+        5,0,Math.PI*2
+
+      );
+
+      ctx.fill();
+
+    }
+
+    ctx.fillStyle="#ffdc54";
+
+    ctx.beginPath();
+
+    ctx.arc(x,y,4,0,Math.PI*2);
+
+    ctx.fill();
+
+  }
+
+  flower(155,375,"#ff78a4");
+
+  flower(190,390,"white");
+
+  flower(735,380,"#f6a4d5");
+
+  flower(770,395,"white");
+
+}
+
+// KIZ ÇOCUK
+
+function drawGirl(x,y) {
+
+  // Saç
+
+  ctx.fillStyle="#573321";
+
+  ctx.beginPath();
+
+  ctx.arc(x,y-52,21,0,Math.PI*2);
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.ellipse(x+17,y-38,9,22,.4,0,Math.PI*2);
+
+  ctx.fill();
+
+  // Baş
+
+  ctx.fillStyle="#f3c49d";
+
+  ctx.beginPath();
+
+  ctx.arc(x,y-53,17,0,Math.PI*2);
+
+  ctx.fill();
+
+  // Saç üstü
+
+  ctx.fillStyle="#573321";
+
+  ctx.beginPath();
+
+  ctx.arc(x,y-61,18,Math.PI,Math.PI*2);
+
+  ctx.fill();
+
+  // Gözler
+
+  ctx.fillStyle="#342b27";
+
+  ctx.beginPath();
+
+  ctx.arc(x-6,y-54,2,0,Math.PI*2);
+
+  ctx.arc(x+6,y-54,2,0,Math.PI*2);
+
+  ctx.fill();
+
+  // Gülümseme
+
+  ctx.strokeStyle="#a94f45";
+
+  ctx.lineWidth=1.5;
+
+  ctx.beginPath();
+
+  ctx.arc(x,y-48,6,.2,Math.PI-.2);
+
+  ctx.stroke();
+
+  // Elbise
+
+  ctx.fillStyle="#ed78a9";
+
+  ctx.beginPath();
+
+  ctx.moveTo(x-12,y-36);
+
+  ctx.lineTo(x+12,y-36);
+
+  ctx.lineTo(x+23,y+8);
+
+  ctx.lineTo(x-23,y+8);
+
+  ctx.closePath();
+
+  ctx.fill();
+
+  // Kollar
+
+  ctx.strokeStyle="#f3c49d";
+
+  ctx.lineWidth=8;
+
+  ctx.lineCap="round";
+
+  ctx.beginPath();
+
+  ctx.moveTo(x-12,y-29);
+
+  ctx.lineTo(x-31,y-5);
+
+  ctx.moveTo(x+12,y-29);
+
+  ctx.lineTo(x+31,y-5);
+
+  ctx.stroke();
+
+  // Bacaklar
+
+  ctx.lineWidth=9;
+
+  ctx.beginPath();
+
+  ctx.moveTo(x-10,y+7);
+
+  ctx.lineTo(x-21,y+33);
+
+  ctx.moveTo(x+10,y+7);
+
+  ctx.lineTo(x+21,y+33);
+
+  ctx.stroke();
+
+  // Ayakkabılar
+
+  ctx.fillStyle="#6841a2";
+
+  ctx.beginPath();
+
+  ctx.ellipse(x-22,y+34,9,5,-.2,0,Math.PI*2);
+
+  ctx.ellipse(x+22,y+34,9,5,.2,0,Math.PI*2);
+
+  ctx.fill();
+
+}
+
+// SAHNEYİ ÇİZ
+
+function draw() {
+
+  drawPark();
+
+  const px=450;
+
+  const py=55;
+
+  // Direk
+
+  ctx.strokeStyle="#80512f";
+
+  ctx.lineWidth=13;
+
+  ctx.lineCap="round";
+
+  ctx.beginPath();
+
+  ctx.moveTo(280,65);
+
+  ctx.lineTo(620,65);
+
+  ctx.moveTo(450,65);
+
+  ctx.lineTo(450,355);
+
+  ctx.moveTo(280,65);
+
+  ctx.lineTo(450,355);
+
+  ctx.moveTo(620,65);
+
+  ctx.lineTo(450,355);
+
+  ctx.stroke();
+
+  const x=px+L*Math.sin(angle);
+
+  const y=py+L*Math.cos(angle);
+
+  // İp
+
+  ctx.strokeStyle="#555";
+
+  ctx.lineWidth=4;
+
+  ctx.beginPath();
+
+  ctx.moveTo(px,py);
+
+  ctx.lineTo(x,y);
+
+  ctx.stroke();
+
+  // Oturak
+
+  ctx.fillStyle="#a45c30";
+
+  ctx.fillRect(x-42,y+7,84,13);
+
+  // Çocuk
+
+  drawGirl(x,y);
+
+  // Hareket yolu
+
+  ctx.strokeStyle="white";
+
+  ctx.lineWidth=2;
+
+  ctx.setLineDash([7,7]);
+
+  ctx.beginPath();
+
+  ctx.arc(px,py,L,.15,Math.PI-.15);
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  ctx.fillStyle="#24543b";
+
+  ctx.font="bold 19px Arial";
+
+  ctx.fillText("PARKTA SALINCAK",25,35);
+
+}
+
+// ENERJİ HESABI
+
+function calculateEnergy() {
+
+  const pe=mass*g*L*(1-Math.cos(angle));
+
+  const ke=.5*mass*L*L*omega*omega;
+
+  const mechanical=pe+ke;
+
+  // Isı, başlangıç enerjisinden kalan mekanik enerji çıkarılarak bulunur.
+
+  const heat=Math.max(0,initialEnergy-mechanical);
+
+  const total=mechanical+heat;
+
+  return {pe,ke,mechanical,heat,total};
+
+}
+
+function setBar(name,value) {
+
+  const percentage=Math.max(
+
+    0,Math.min(100,value/maxEnergy*100)
+
+  );
+
+  document.getElementById(name+"Bar").style.width=
+
+  percentage+"%";
+
+}
+
+function updateEnergy() {
+
+  const e=calculateEnergy();
+
+  setBar("kinetic",e.ke);
+
+  setBar("potential",e.pe);
+
+  setBar("mechanical",e.mechanical);
+
+  setBar("heat",e.heat);
+
+  setBar("total",e.total);
+
+  document.getElementById("kineticValue").textContent=
+
+  e.ke.toFixed(2)+" J";
+
+  document.getElementById("potentialValue").textContent=
+
+  e.pe.toFixed(2)+" J";
+
+  document.getElementById("mechanicalValue").textContent=
+
+  e.mechanical.toFixed(2)+" J";
+
+  document.getElementById("heatValue").textContent=
+
+  e.heat.toFixed(2)+" J";
+
+  document.getElementById("totalValue").textContent=
+
+  e.total.toFixed(2)+" J";
+
+  explain(e);
+
+}
+
+// ENERJİ AÇIKLAMALARI
+
+function explain(e) {
+
+  const box=document.getElementById("explanation");
+
+  if(e.heat>.5) {
+
+    box.textContent=
+
+    "Sürtünme nedeniyle mekanik enerjinin bir kısmı ısı enerjisine dönüşüyor. Kinetik ve potansiyel enerjinin toplamı azalırken ısı enerjisi artıyor. Toplam enerji korunuyor.";
+
+  }
+
+  else if(Math.abs(angle)>.5) {
+
+    box.textContent=
+
+    "Salıncak yüksek konumda. Çekim potansiyel enerjisi fazla, kinetik enerjisi az.";
+
+  }
+
+  else if(Math.abs(angle)<.18) {
+
+    box.textContent=
+
+    "Salıncak en alt noktada. Kinetik enerji en büyük, çekim potansiyel enerjisi en küçüktür.";
+
+  }
+
+  else if(angle*omega<0) {
+
+    box.textContent=
+
+    "Salıncak aşağı iniyor. Çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.";
+
+  }
+
+  else {
+
+    box.textContent=
+
+    "Salıncak yukarı çıkıyor. Kinetik enerji çekim potansiyel enerjisine dönüşüyor.";
+
+  }
+
+}
+
+// FİZİKSEL HAREKET
+
+function acceleration(a,v,friction) {
+
+  return -g/L*Math.sin(a)-
+
+  (friction?damping*v:0);
+
+}
+
+// RK4 SAYISAL ÇÖZÜM
+
+function integrate(dt) {
+
+  const friction=
+
+  document.getElementById("friction").checked;
+
+  const a1=omega;
+
+  const b1=acceleration(angle,omega,friction);
+
+  const a2=omega+b1*dt/2;
+
+  const b2=acceleration(
+
+    angle+a1*dt/2,
+
+    omega+b1*dt/2,
+
+    friction
+
+  );
+
+  const a3=omega+b2*dt/2;
+
+  const b3=acceleration(
+
+    angle+a2*dt/2,
+
+    omega+b2*dt/2,
+
+    friction
+
+  );
+
+  const a4=omega+b3*dt;
+
+  const b4=acceleration(
+
+    angle+a3*dt,
+
+    omega+b3*dt,
+
+    friction
+
+  );
+
+  angle+=dt/6*(a1+2*a2+2*a3+a4);
+
+  omega+=dt/6*(b1+2*b2+2*b3+b4);
+
+  // Sürtünme kapalıysa mekanik enerjiyi sabit tut.
+
+  if(!friction) {
+
+    const pe=mass*g*L*(1-Math.cos(angle));
+
+    const remaining=Math.max(0,coastEnergy-pe);
+
+    omega=Math.sign(omega)*
+
+    Math.sqrt(2*remaining/(mass*L*L));
+
+  }
+
+  // Sayısal yuvarlama nedeniyle enerji artışını önle.
+
+  else {
+
+    const pe=mass*g*L*(1-Math.cos(angle));
+
+    const ke=.5*mass*L*L*omega*omega;
+
+    const mechanical=pe+ke;
+
+    if(mechanical>coastEnergy) {
+
+      const allowed=Math.max(0,coastEnergy-pe);
+
+      omega=Math.sign(omega)*
+
+      Math.sqrt(2*allowed/(mass*L*L));
+
+    } else {
+
+      coastEnergy=mechanical;
+
+    }
+
+  }
+
+}
+
+// ANİMASYON DÖNGÜSÜ
+
+function loop(time) {
+
+  if(!running) return;
+
+  if(!previousTime) previousTime=time;
+
+  let dt=Math.min((time-previousTime)/1000,.04);
+
+  previousTime=time;
+
+  // Hızlandırma yalnızca simülasyon zamanını değiştirir.
+
+  dt*=speed;
+
+  const steps=Math.max(1,Math.ceil(dt/.002));
+
+  const step=dt/steps;
+
+  for(let i=0;i<steps;i++) {
+
+    integrate(step);
+
+  }
+
+  draw();
+
+  updateEnergy();
+
+  if(
+
+    document.getElementById("friction").checked &&
+
+    Math.abs(omega)<.003 &&
+
+    Math.abs(angle)<.01
+
+  ) {
+
+    angle=0;
+
+    omega=0;
+
+    running=false;
+
+    document.getElementById("status").textContent=
+
+    "Salıncak durdu. Mekanik enerji ısıya dönüştü.";
+
+    draw();
+
+    updateEnergy();
+
+    return;
+
+  }
+
+  animationId=requestAnimationFrame(loop);
+
+}
+
+// BAŞLAT
+
+function start() {
+
+  if(running) return;
+
+  running=true;
+
+  previousTime=0;
+
+  document.getElementById("status").textContent=
+
+  "Salıncak hareket ediyor.";
+
+  animationId=requestAnimationFrame(loop);
+
+}
+
+// DURDUR
+
+function stop() {
+
+  running=false;
+
+  previousTime=0;
+
+  if(animationId) {
+
+    cancelAnimationFrame(animationId);
+
+  }
+
+  document.getElementById("status").textContent=
+
+  "Hareket duraklatıldı.";
+
+}
+
+// SIFIRLA
+
+function reset() {
+
+  stop();
+
+  angle=initialAngle;
+
+  omega=0;
+
+  coastEnergy=initialEnergy;
+
+  speed=1;
+
+  document.getElementById("speedInfo").textContent=
+
+  "Hareket hızı: 1x";
+
+  draw();
+
+  updateEnergy();
+
+  document.getElementById("status").textContent=
+
+  "Başlangıç konumuna dönüldü. Yeni denemeye hazır!";
+
+}
+
+// HIZLANDIR
+
+function changeSpeed() {
+
+  speed=speed===1?2:speed===2?3:1;
+
+  document.getElementById("speedInfo").textContent=
+
+  "Hareket hızı: "+speed+"x";
+
+  document.getElementById("status").textContent=
+
+  "Animasyon hızı "+speed+" kat olarak ayarlandı.";
+
+}
+
+// SÜRTÜNME AYARI
+
+document.getElementById("friction").addEventListener(
+
+"change",function() {
+
+  const label=document.getElementById("frictionStatus");
+
+  if(this.checked) {
+
+    label.textContent="AÇIK";
+
+    label.style.color="#df603e";
+
+    document.getElementById("status").textContent=
+
+    "Sürtünme açıldı. Mekanik enerji ısıya dönüşüyor.";
+
+  } else {
+
+    // Sürtünme kapandığı anda mevcut mekanik enerji korunur.
+
+    const e=calculateEnergy();
+
+    coastEnergy=e.mechanical;
+
+    label.textContent="KAPALI";
+
+    label.style.color="#36834c";
+
+    document.getElementById("status").textContent=
+
+    "Sürtünme kapatıldı. Mevcut mekanik enerji korunuyor.";
+
+  }
+
+  updateEnergy();
+
+});
+
+// İLK GÖRÜNTÜ
+
+draw();
+
+updateEnergy();
+
+</script>
+
+</body>
+
+</html>
+
