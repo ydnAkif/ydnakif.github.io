@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="tr"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dağ Yamacından Kayan Kızak — Enerji Dönüşümleri (Ömer Haşimoğlu - 7/B)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #e0f2fe 0%, #f1f5f9 100%);
+      min-height: 100vh;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: manipulation;
+    }
+    .bar-transition {
+      transition: width 0.06s linear;
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.bottom-4{bottom:1rem}.right-2\.5{right:0.625rem}.right-4{right:1rem}.top-2\.5{top:0.625rem}.z-50{z-index:50}.my-0\.5{margin-top:0.125rem;margin-bottom:0.125rem}.mb-1{margin-bottom:0.25rem}.mb-1\.5{margin-bottom:0.375rem}.mb-2{margin-bottom:0.5rem}.mb-2\.5{margin-bottom:0.625rem}.mb-3{margin-bottom:0.75rem}.mb-5{margin-bottom:1.25rem}.mt-0\.5{margin-top:0.125rem}.mt-1\.5{margin-top:0.375rem}.mt-2{margin-top:0.5rem}.mt-2\.5{margin-top:0.625rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.aspect-\[16\/10\]{aspect-ratio:16/10}.aspect-\[16\/9\]{aspect-ratio:16/9}.h-2\.5{height:0.625rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-full{height:100%}.min-h-\[18px\]{min-height:18px}.w-2\.5{width:0.625rem}.w-4{width:1rem}.w-full{width:100%}.max-w-6xl{max-width:72rem}.flex-1{flex:1 1 0%}.border-collapse{border-collapse:collapse}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-start{justify-content:flex-start}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-3\.5{gap:0.875rem}.gap-5{gap:1.25rem}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-slate-100 > :not([hidden]) ~ :not([hidden]){--tw-divide-opacity:1;border-color:rgb(241 245 249 / var(--tw-divide-opacity, 1))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-b{border-bottom-width:1px}.border-l-4{border-left-width:4px}.border-t{border-top-width:1px}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138 / var(--tw-border-opacity, 1))}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.border-emerald-100{--tw-border-opacity:1;border-color:rgb(209 250 229 / var(--tw-border-opacity, 1))}.border-emerald-200{--tw-border-opacity:1;border-color:rgb(167 243 208 / var(--tw-border-opacity, 1))}.border-sky-200{--tw-border-opacity:1;border-color:rgb(186 230 253 / var(--tw-border-opacity, 1))}.border-sky-300{--tw-border-opacity:1;border-color:rgb(125 211 252 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.border-slate-200\/80{border-color:rgb(226 232 240 / 0.8)}.border-slate-300{--tw-border-opacity:1;border-color:rgb(203 213 225 / var(--tw-border-opacity, 1))}.bg-amber-200\/70{background-color:rgb(253 230 138 / 0.7)}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235 / var(--tw-bg-opacity, 1))}.bg-amber-50\/90{background-color:rgb(255 251 235 / 0.9)}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-blue-500{--tw-bg-opacity:1;background-color:rgb(59 130 246 / var(--tw-bg-opacity, 1))}.bg-blue-600{--tw-bg-opacity:1;background-color:rgb(37 99 235 / var(--tw-bg-opacity, 1))}.bg-emerald-50\/70{background-color:rgb(236 253 245 / 0.7)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-purple-500{--tw-bg-opacity:1;background-color:rgb(168 85 247 / var(--tw-bg-opacity, 1))}.bg-rose-500{--tw-bg-opacity:1;background-color:rgb(244 63 94 / var(--tw-bg-opacity, 1))}.bg-sky-100{--tw-bg-opacity:1;background-color:rgb(224 242 254 / var(--tw-bg-opacity, 1))}.bg-sky-200{--tw-bg-opacity:1;background-color:rgb(186 230 253 / var(--tw-bg-opacity, 1))}.bg-sky-600{--tw-bg-opacity:1;background-color:rgb(2 132 199 / var(--tw-bg-opacity, 1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-200{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.bg-slate-50{--tw-bg-opacity:1;background-color:rgb(248 250 252 / var(--tw-bg-opacity, 1))}.bg-slate-600{--tw-bg-opacity:1;background-color:rgb(71 85 105 / var(--tw-bg-opacity, 1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/90{background-color:rgb(255 255 255 / 0.9)}.bg-white\/95{background-color:rgb(255 255 255 / 0.95)}.p-0\.5{padding:0.125rem}.p-1\.5{padding:0.375rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-2{padding-bottom:0.5rem}.pb-4{padding-bottom:1rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.leading-relaxed{line-height:1.625}.tracking-tight{letter-spacing:-0.025em}.text-amber-700{--tw-text-opacity:1;color:rgb(180 83 9 / var(--tw-text-opacity, 1))}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-amber-900\/80{color:rgb(120 53 15 / 0.8)}.text-amber-950{--tw-text-opacity:1;color:rgb(69 26 3 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-emerald-600{--tw-text-opacity:1;color:rgb(5 150 105 / var(--tw-text-opacity, 1))}.text-emerald-700{--tw-text-opacity:1;color:rgb(4 120 87 / var(--tw-text-opacity, 1))}.text-emerald-950{--tw-text-opacity:1;color:rgb(2 44 34 / var(--tw-text-opacity, 1))}.text-purple-700{--tw-text-opacity:1;color:rgb(126 34 206 / var(--tw-text-opacity, 1))}.text-rose-700{--tw-text-opacity:1;color:rgb(190 18 60 / var(--tw-text-opacity, 1))}.text-sky-700{--tw-text-opacity:1;color:rgb(3 105 161 / var(--tw-text-opacity, 1))}.text-sky-800{--tw-text-opacity:1;color:rgb(7 89 133 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-slate-900{--tw-text-opacity:1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.accent-amber-600{accent-color:#d97706}.opacity-0{opacity:0}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.hover\:border-amber-400:hover{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.hover\:bg-blue-700:hover{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-700:hover{--tw-bg-opacity:1;background-color:rgb(4 120 87 / var(--tw-bg-opacity, 1))}.hover\:bg-sky-700:hover{--tw-bg-opacity:1;background-color:rgb(3 105 161 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-100:hover{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.hover\:text-rose-600:hover{--tw-text-opacity:1;color:rgb(225 29 72 / var(--tw-text-opacity, 1))}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@media (min-width: 640px){.sm\:w-auto{width:auto}.sm\:flex-row{flex-direction:row}.sm\:p-5{padding:1.25rem}.sm\:p-6{padding:1.5rem}.sm\:text-left{text-align:left}.sm\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 768px){.md\:w-auto{width:auto}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:text-left{text-align:left}}@media (min-width: 1024px){.lg\:col-span-5{grid-column:span 5 / span 5}.lg\:col-span-7{grid-column:span 7 / span 7}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}}</style></head>
+<body class="p-3 sm:p-5 text-slate-800 flex flex-col items-center justify-start">
+
+  <!-- Ana Taşıyıcı Kart -->
+  <div class="w-full max-w-6xl bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-slate-200/80 p-4 sm:p-6">
+    
+    <!-- Üst Başlık ve Hızlı İndirme Alanı -->
+    <header class="flex flex-col md:flex-row items-center justify-between gap-3 border-b border-slate-200 pb-4 mb-5">
+      <div class="text-center md:text-left">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold mb-1.5">
+          <span>7. Sınıf Fen Bilimleri • Kuvvet ve Enerjiyi Keşfedelim</span>
+        </div>
+        <h1 class="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+          🛷 Dağ Yamacından Kayan Kızak — Enerji Dönüşümleri
+        </h1>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">
+          Hazırlayan: <span class="text-slate-700 font-bold">Ömer Haşimoğlu — 7/B</span>
+        </p>
+      </div>
+
+      <button id="btnDownloadTop" type="button" class="w-full md:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+        <span>⬇️</span> <span>HTML Dosyasını İndir</span>
+      </button>
+    </header>
+
+    <!-- Üst Kısım: Sahne ve Enerji Göstergeleri -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- Sol Sütun: Dağ Manzaralı Simülasyon Alanı ve Kontroller (7 birim) -->
+      <div class="lg:col-span-7 flex flex-col gap-3">
+        
+        <!-- Responsive Canvas Kapsayıcı -->
+        <div id="canvasContainer" class="relative w-full aspect-[16/10] bg-sky-200 rounded-2xl border-2 border-sky-300 overflow-hidden shadow-inner">
+          <canvas id="simCanvas" width="906" height="566"></canvas>
+          
+          <!-- Zemin Durum Rozeti -->
+          <div id="surfaceBadge" class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm bg-white/90 text-sky-700 border border-sky-200">❄️ Buzlu Yol (Sürtünmesiz)</div>
+        </div>
+
+        <!-- Kontrol Düğmeleri ve Sürtünme Anahtarı -->
+        <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnStart" type="button" class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <span>▶</span> <span id="btnStartText">Başlat</span>
+            </button>
+            <button id="btnReset" type="button" class="px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-slate-600 hover:bg-slate-700 active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <span>↺</span> <span>Sıfırla</span>
+            </button>
+            <button id="btnRecord" type="button" class="px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <span>📌</span> <span>Sonucu Kaydet</span>
+            </button>
+          </div>
+
+          <!-- Sürtünme Aç/Kapa Kutusu -->
+          <label for="chkFriction" class="flex items-center gap-2.5 bg-white px-3 py-2 rounded-xl border border-slate-300 cursor-pointer select-none shadow-sm hover:border-amber-400 transition">
+            <input type="checkbox" id="chkFriction" class="w-4 h-4 accent-amber-600 cursor-pointer">
+            <span class="text-xs sm:text-sm font-bold text-slate-700">Sürtünme (Pürüzlü Yol)</span>
+          </label>
+        </div>
+
+        <!-- Anlık Fiziksel Ölçümler -->
+        <div class="grid grid-cols-3 gap-2 bg-white p-2.5 rounded-xl border border-slate-200 text-center shadow-sm">
+          <div class="bg-slate-50 rounded-lg p-1.5">
+            <div class="text-[11px] font-medium text-slate-500">Yükseklik (h)</div>
+            <div id="valHeight" class="text-sm sm:text-base font-extrabold text-blue-600">10.0 m</div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-1.5">
+            <div class="text-[11px] font-medium text-slate-500">Hız (v)</div>
+            <div id="valSpeed" class="text-sm sm:text-base font-extrabold text-emerald-600">0.0 m/s</div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-1.5">
+            <div class="text-[11px] font-medium text-slate-500">Zemin Durumu</div>
+            <div id="valSurface" class="text-xs sm:text-sm font-extrabold text-slate-700 mt-0.5">Buzlu Yol</div>
+          </div>
+        </div>
+
+        <!-- Canlı Türkçe Açıklama Kutusu -->
+        <div id="statusBox" class="p-3.5 rounded-xl bg-amber-50 border-l-4 border-amber-400 text-amber-950 text-xs sm:text-sm leading-relaxed shadow-sm">Kızak karlı dağın zirvesinde (10 m yükseklikte) duruyor. Tüm enerjisi <strong>çekim potansiyel enerjisi (1000 J)</strong> hâlindedir. <strong>Başlat</strong> düğmesine basarak kayışı gözlemleyin.</div>
+      </div>
+
+      <!-- Sağ Sütun: Anlık Enerji Göstergeleri (5 birim) -->
+      <div class="lg:col-span-5 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 flex flex-col gap-3.5 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <h2 class="text-base sm:text-lg font-extrabold text-slate-800">📊 Anlık Enerji Göstergeleri</h2>
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">Joule (J)</span>
+        </div>
+
+        <!-- 1. Kinetik Enerji -->
+        <div>
+          <div class="flex justify-between text-xs sm:text-sm font-bold mb-1">
+            <span class="text-emerald-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Kinetik Enerji
+            </span>
+            <span id="txtKE" class="text-emerald-700 font-extrabold">0 J</span>
+          </div>
+          <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden p-0.5">
+            <div id="barKE" class="h-full bg-emerald-500 rounded-full bar-transition" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- 2. Çekim Potansiyel Enerjisi -->
+        <div>
+          <div class="flex justify-between text-xs sm:text-sm font-bold mb-1">
+            <span class="text-blue-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Çekim Potansiyel Enerjisi
+            </span>
+            <span id="txtPE" class="text-blue-700 font-extrabold">1000 J</span>
+          </div>
+          <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden p-0.5">
+            <div id="barPE" class="h-full bg-blue-500 rounded-full bar-transition" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- 3. Mekanik Enerji (Kinetik + Potansiyel) -->
+        <div>
+          <div class="flex justify-between text-xs sm:text-sm font-bold mb-1">
+            <span class="text-purple-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> Mekanik Enerji <span class="text-[11px] font-normal text-slate-500">(Kinetik + Potansiyel)</span>
+            </span>
+            <span id="txtME" class="text-purple-700 font-extrabold">1000 J</span>
+          </div>
+          <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden p-0.5">
+            <div id="barME" class="h-full bg-purple-500 rounded-full bar-transition" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- 4. Isıya Dönüşen Enerji -->
+        <div>
+          <div class="flex justify-between text-xs sm:text-sm font-bold mb-1">
+            <span class="text-rose-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Isıya Dönüşen Enerji <span class="text-[11px] font-normal text-slate-500">(Sürtünme)</span>
+            </span>
+            <span id="txtTH" class="text-rose-700 font-extrabold">0 J</span>
+          </div>
+          <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden p-0.5">
+            <div id="barTH" class="h-full bg-rose-500 rounded-full bar-transition" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <hr class="border-slate-200 my-0.5">
+
+        <!-- 5. Toplam Enerji (Korunur) -->
+        <div class="bg-amber-50/90 p-3 rounded-xl border border-amber-200">
+          <div class="flex justify-between text-xs sm:text-sm font-extrabold mb-1">
+            <span class="text-amber-800 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Toplam Enerji (Korunur)
+            </span>
+            <span id="txtTOT" class="text-amber-800">1000 J</span>
+          </div>
+          <div class="w-full h-5 bg-amber-200/70 rounded-full overflow-hidden p-0.5">
+            <div id="barTOT" class="h-full bg-amber-500 rounded-full bar-transition" style="width: 100%"></div>
+          </div>
+          <p class="text-[11px] text-amber-900/80 mt-1.5">
+            Mekanik Enerji + Isıya Dönüşen Enerji = <strong>1000 J (Sabit)</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orta Kısım: Deney Sonuçları Grafiği ve Deney Sonuçları Tablosu -->
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
+      
+      <!-- Deney Sonuçları Grafiği (Enerji - Yol) -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col">
+        <h2 class="text-base font-extrabold text-slate-800 border-b border-slate-200 pb-2 mb-3">
+          📈 Deney Sonuçları Grafiği (Enerji – Yol)
+        </h2>
+        <div id="graphContainer" class="w-full aspect-[16/9] bg-white rounded-xl border border-slate-200 p-2">
+          <canvas id="graphCanvas" width="804" height="497"></canvas>
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-3 mt-2.5 text-xs font-semibold text-slate-700">
+          <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></i>Kinetik</span>
+          <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></i>Potansiyel</span>
+          <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></i>Mekanik</span>
+          <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></i>Isı</span>
+          <span class="flex items-center gap-1"><i class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></i>Toplam</span>
+        </div>
+      </div>
+
+      <!-- Deney Sonuçları Tablosu -->
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
+          <h2 class="text-base font-extrabold text-slate-800">📋 Deney Sonuçları Tablosu</h2>
+          <button id="btnClearTable" type="button" class="text-xs font-semibold text-slate-500 hover:text-rose-600 cursor-pointer">
+            Tabloyu Temizle
+          </button>
+        </div>
+        <p class="text-xs text-slate-600 mb-2.5">
+          Sürtünme kapalı ve açıkken yaptığınız denemeleri <strong>"📌 Sonucu Kaydet"</strong> düğmesiyle tabloya ekleyerek karşılaştırın.
+        </p>
+        <div class="overflow-x-auto bg-white rounded-xl border border-slate-200 flex-1">
+          <table class="w-full text-xs text-center border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-800 border-b border-slate-200">
+                <th class="p-2 font-bold">Deneme</th>
+                <th class="p-2 font-bold">Sürtünme</th>
+                <th class="p-2 font-bold text-emerald-700">Kinetik</th>
+                <th class="p-2 font-bold text-blue-700">Potansiyel</th>
+                <th class="p-2 font-bold text-purple-700">Mekanik</th>
+                <th class="p-2 font-bold text-rose-700">Isı</th>
+                <th class="p-2 font-bold text-amber-700">Toplam</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="7" class="p-4 text-slate-400">Henüz ölçüm kaydedilmedi.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Alt Kısım: Deney Analiz ve Değerlendirme Soruları -->
+    <section class="mt-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 sm:p-5">
+      <h2 class="text-base sm:text-lg font-extrabold text-emerald-950 mb-3">
+        ❓ Deney Analiz ve Değerlendirme Soruları
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <!-- Soru 1 -->
+        <div id="q1" class="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-slate-800 mb-2.5">
+              1. Sürtünme kapalıyken kızak dağ yamacından aşağı kayarken hangi enerji dönüşümü gerçekleşir?
+            </p>
+            <div class="flex flex-col gap-1.5">
+              <button type="button" onclick="checkAnswer(1, true, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                A) Çekim potansiyel enerjisi kinetik enerjiye dönüşür.
+              </button>
+              <button type="button" onclick="checkAnswer(1, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                B) Kinetik enerji çekim potansiyel enerjisine dönüşür.
+              </button>
+              <button type="button" onclick="checkAnswer(1, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                C) Tüm enerji ısı enerjisine dönüşür.
+              </button>
+            </div>
+          </div>
+          <div id="fb1" class="mt-2 text-xs font-bold min-h-[18px]"></div>
+        </div>
+
+        <!-- Soru 2 -->
+        <div id="q2" class="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-slate-800 mb-2.5">
+              2. Sürtünme açıkken mekanik enerji azalmasına rağmen toplam enerjinin (1000 J) sabit kalmasının nedeni nedir?
+            </p>
+            <div class="flex flex-col gap-1.5">
+              <button type="button" onclick="checkAnswer(2, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                A) Kızak hızlandığı için yeni enerji üretilir.
+              </button>
+              <button type="button" onclick="checkAnswer(2, true, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                B) Azalan mekanik enerji ısıya dönüşür ve toplam enerji korunur.
+              </button>
+              <button type="button" onclick="checkAnswer(2, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                C) Sürtünme çekim potansiyel enerjisini artırır.
+              </button>
+            </div>
+          </div>
+          <div id="fb2" class="mt-2 text-xs font-bold min-h-[18px]"></div>
+        </div>
+
+        <!-- Soru 3 -->
+        <div id="q3" class="bg-white p-3.5 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-between">
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-slate-800 mb-2.5">
+              3. Sürtünmesiz (buzlu) yolda kızak en alt noktaya (yükseklik = 0 m) ulaştığında kinetik enerjisi kaç Joule olur?
+            </p>
+            <div class="flex flex-col gap-1.5">
+              <button type="button" onclick="checkAnswer(3, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                A) 0 J
+              </button>
+              <button type="button" onclick="checkAnswer(3, false, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                B) 500 J
+              </button>
+              <button type="button" onclick="checkAnswer(3, true, this)" class="q-btn text-left text-xs font-medium p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                C) 1000 J
+              </button>
+            </div>
+          </div>
+          <div id="fb3" class="mt-2 text-xs font-bold min-h-[18px]"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alt Bilgi ve Tek Tıkla Teslim HTML İndirme Butonu -->
+    <footer class="mt-5 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-xs text-slate-500 text-center sm:text-left">
+        Ödev Teslim Dosyası: <strong>Omer_Hasimoglu_7B_Enerji_Donusumleri.html</strong>
+      </p>
+      <button id="btnDownloadBottom" type="button" class="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer">
+        <span>⬇️</span> <span>HTML Dosyasını İndir (Omer_Hasimoglu_7B_Enerji_Donusumleri.html)</span>
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- Özel Bildirim Mesajı (alert() yerine) -->
+  <div id="toastMsg" class="fixed bottom-4 right-4 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+    Dosya indiriliyor...
+  </div>
+
+  <script>
+    // DOM Referansları
+    const canvas = document.getElementById('simCanvas');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const ctx = canvas.getContext('2d');
+
+    const graphCanvas = document.getElementById('graphCanvas');
+    const graphContainer = document.getElementById('graphContainer');
+    const gCtx = graphCanvas.getContext('2d');
+
+    const btnStart = document.getElementById('btnStart');
+    const btnStartText = document.getElementById('btnStartText');
+    const btnReset = document.getElementById('btnReset');
+    const btnRecord = document.getElementById('btnRecord');
+    const btnClearTable = document.getElementById('btnClearTable');
+    const chkFriction = document.getElementById('chkFriction');
+
+    const surfaceBadge = document.getElementById('surfaceBadge');
+    const statusBox = document.getElementById('statusBox');
+    const resultsBody = document.getElementById('resultsBody');
+
+    const valHeight = document.getElementById('valHeight');
+    const valSpeed = document.getElementById('valSpeed');
+    const valSurface = document.getElementById('valSurface');
+
+    const txtKE = document.getElementById('txtKE');
+    const txtPE = document.getElementById('txtPE');
+    const txtME = document.getElementById('txtME');
+    const txtTH = document.getElementById('txtTH');
+    const txtTOT = document.getElementById('txtTOT');
+
+    const barKE = document.getElementById('barKE');
+    const barPE = document.getElementById('barPE');
+    const barME = document.getElementById('barME');
+    const barTH = document.getElementById('barTH');
+    const barTOT = document.getElementById('barTOT');
+
+    const btnDownloadTop = document.getElementById('btnDownloadTop');
+    const btnDownloadBottom = document.getElementById('btnDownloadBottom');
+    const toastMsg = document.getElementById('toastMsg');
+
+    // Fizik Sabitleri (7. Sınıf Seviyesi: m = 10 kg, g = 10 m/s², h = 10 m => E_toplam = 1000 J)
+    const MASS = 10;
+    const G = 10;
+    const H_MAX = 10;
+    const TOTAL_ENERGY = MASS * G * H_MAX; // 1000 J
+
+    // Pist Fiziksel Uzunlukları (metre)
+    const RAMP_METERS = 14.14;
+    const FLAT_METERS = 14.0;
+    const TOTAL_METERS = RAMP_METERS + FLAT_METERS;
+
+    // Simülasyon Durum Değişkenleri
+    let distMeters = 0;
+    let speed = 0;
+    let thermalEnergy = 0;
+    let currentKE = 0;
+    let currentPE = TOTAL_ENERGY;
+    let currentME = TOTAL_ENERGY;
+    let running = false;
+    let finished = false;
+    let lastTime = null;
+    let history = [];
+    let recordCount = 0;
+    let sparks = [];
+
+    // Responsive Canvas Boyutlandırma
+    function resizeAllCanvases() {
+      const dpr = window.devicePixelRatio || 1;
+
+      const simRect = canvasContainer.getBoundingClientRect();
+      if (simRect.width > 0 && simRect.height > 0) {
+        canvas.width = simRect.width * dpr;
+        canvas.height = simRect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      const grRect = graphContainer.getBoundingClientRect();
+      if (grRect.width > 0 && grRect.height > 0) {
+        graphCanvas.width = grRect.width * dpr;
+        graphCanvas.height = grRect.height * dpr;
+        gCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      drawScene();
+      drawGraph();
+    }
+
+    // Pist Geometrisi (Oransal Koordinatlar)
+    function getTrackGeometry(w, h) {
+      const startX = w * 0.14;
+      const startY = h * 0.25;
+      const bottomX = w * 0.48;
+      const bottomY = h * 0.82;
+      const endX = w * 0.94;
+      const endY = bottomY;
+      return { startX, startY, bottomX, bottomY, endX, endY };
+    }
+
+    // Mesafeye Göre Konum, Eğim Açısı ve Yükseklik
+    function getPositionAndAngle(dist, geom) {
+      if (dist <= RAMP_METERS) {
+        const ratio = Math.max(0, dist / RAMP_METERS);
+        const x = geom.startX + (geom.bottomX - geom.startX) * ratio;
+        const y = geom.startY + (geom.bottomY - geom.startY) * ratio;
+        const angle = Math.atan2(geom.bottomY - geom.startY, geom.bottomX - geom.startX);
+        const height = H_MAX * (1 - ratio);
+        return { x, y, angle, height, onRamp: true };
+      } else {
+        const flatRatio = Math.min(1, (dist - RAMP_METERS) / FLAT_METERS);
+        const x = geom.bottomX + (geom.endX - geom.bottomX) * flatRatio;
+        const y = geom.bottomY;
+        return { x, y, angle: 0, height: 0, onRamp: false };
+      }
+    }
+
+    // Bulut Çizimi
+    function drawCloud(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.arc(16, -4, 20, 0, Math.PI * 2);
+      ctx.arc(34, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Çam Ağacı Çizimi
+    function drawPineTree(x, y, h) {
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(x - 2, y - 6, 4, 6);
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.moveTo(x, y - h);
+      ctx.lineTo(x - h * 0.42, y - 6);
+      ctx.lineTo(x + h * 0.42, y - 6);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Kar Zirveli Dağ Manzarası
+    function drawMountainBackground(w, h, geom) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#7dd3fc');
+      skyGrad.addColorStop(1, '#e0f2fe');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Güneş
+      ctx.beginPath();
+      ctx.arc(w * 0.88, h * 0.16, Math.min(w, h) * 0.07, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fill();
+
+      // Bulutlar
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+      drawCloud(w * 0.34, h * 0.15, 0.9);
+      drawCloud(w * 0.65, h * 0.12, 0.75);
+
+      const baseY = geom.bottomY;
+
+      // Arka Plan Sıra Dağları
+      ctx.beginPath();
+      ctx.moveTo(w * 0.24, baseY);
+      ctx.lineTo(w * 0.45, h * 0.32);
+      ctx.lineTo(w * 0.63, h * 0.66);
+      ctx.lineTo(w * 0.78, h * 0.27);
+      ctx.lineTo(w, h * 0.74);
+      ctx.lineTo(w, baseY);
+      ctx.closePath();
+      ctx.fillStyle = '#64748b';
+      ctx.fill();
+
+      // 1. Dağ Kar Zirvesi
+      ctx.beginPath();
+      ctx.moveTo(w * 0.45, h * 0.32);
+      ctx.lineTo(w * 0.39, h * 0.46);
+      ctx.lineTo(w * 0.43, h * 0.44);
+      ctx.lineTo(w * 0.455, h * 0.48);
+      ctx.lineTo(w * 0.48, h * 0.43);
+      ctx.lineTo(w * 0.51, h * 0.47);
+      ctx.closePath();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fill();
+
+      // 2. Dağ Kar Zirvesi
+      ctx.beginPath();
+      ctx.moveTo(w * 0.78, h * 0.27);
+      ctx.lineTo(w * 0.71, h * 0.43);
+      ctx.lineTo(w * 0.75, h * 0.40);
+      ctx.lineTo(w * 0.78, h * 0.45);
+      ctx.lineTo(w * 0.81, h * 0.41);
+      ctx.lineTo(w * 0.845, h * 0.44);
+      ctx.closePath();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fill();
+
+      // Çam Ağaçları
+      drawPineTree(w * 0.58, baseY, h * 0.08);
+      drawPineTree(w * 0.62, baseY, h * 0.105);
+      drawPineTree(w * 0.83, baseY, h * 0.09);
+      drawPineTree(w * 0.88, baseY, h * 0.075);
+    }
+
+    // Ana Sahne Çizimi
+    function drawScene() {
+      const rect = canvasContainer.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (w === 0 || h === 0) return;
+
+      const frictionOn = chkFriction.checked;
+      const geom = getTrackGeometry(w, h);
+
+      ctx.clearRect(0, 0, w, h);
+      drawMountainBackground(w, h, geom);
+
+      // Yükseklik Kesikli Çizgisi (10 m)
+      ctx.save();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(geom.startX, geom.startY);
+      ctx.lineTo(geom.startX, geom.bottomY);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.fillText('10 m', Math.max(6, geom.startX - 38), (geom.startY + geom.bottomY) / 2);
+
+      // Ana Dağ Yamacı ve Zemin Dolgusu
+      const peakY = geom.startY * 0.55;
+      const shoulderX = geom.startX * 0.55;
+
+      ctx.beginPath();
+      ctx.moveTo(0, peakY);
+      ctx.lineTo(shoulderX, peakY);
+      ctx.lineTo(geom.startX, geom.startY);
+      ctx.lineTo(geom.bottomX, geom.bottomY);
+      ctx.lineTo(w, geom.endY);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = frictionOn ? '#cbd5e1' : '#e0f2fe';
+      ctx.fill();
+
+      // Sol Üst Kar Zirvesi Detayı
+      ctx.beginPath();
+      ctx.moveTo(0, peakY);
+      ctx.lineTo(shoulderX, peakY);
+      ctx.lineTo(geom.startX, geom.startY);
+      ctx.lineTo(shoulderX, geom.startY * 1.18);
+      ctx.lineTo(shoulderX * 0.5, geom.startY * 1.05);
+      ctx.lineTo(0, geom.startY * 1.2);
+      ctx.closePath();
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // Pist Yüzeyi Çizgisi
+      ctx.beginPath();
+      ctx.moveTo(0, peakY);
+      ctx.lineTo(shoulderX, peakY);
+      ctx.lineTo(geom.startX, geom.startY);
+      ctx.lineTo(geom.bottomX, geom.bottomY);
+      ctx.lineTo(geom.endX, geom.endY);
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = frictionOn ? '#92400e' : '#0284c7';
+      ctx.stroke();
+
+      // Pürüzlü Yol Noktaları (Sürtünme Açıksa)
+      if (frictionOn) {
+        ctx.fillStyle = '#78350f';
+        for (let d = 0.5; d <= TOTAL_METERS; d += 0.9) {
+          const p = getPositionAndAngle(d, geom);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y - 3, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Sürtünme Kıvılcımları
+      sparks.forEach(sp => {
+        ctx.fillStyle = `rgba(239, 68, 68, ${sp.life})`;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Kızak ve Çocuk Figürü
+      const pos = getPositionAndAngle(distMeters, geom);
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      ctx.rotate(pos.angle);
+
+      // Kızak Alt Demirleri
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(-20, -2.5);
+      ctx.lineTo(20, -2.5);
+      ctx.quadraticCurveTo(26, -2.5, 24, -9);
+      ctx.stroke();
+
+      // Kızak Gövdesi
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.roundRect(-18, -12, 36, 8, 3);
+      ctx.fill();
+
+      // Çocuk Gövdesi
+      ctx.fillStyle = '#1d4ed8';
+      ctx.beginPath();
+      ctx.roundRect(-6, -25, 12, 13, 3);
+      ctx.fill();
+
+      // Baş ve Sarı Bere
+      ctx.beginPath();
+      ctx.arc(0, -31, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fed7aa';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, -33, 6.5, Math.PI, 0);
+      ctx.fillStyle = '#eab308';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, -40, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Canlı Deney Sonuçları Grafiği (Enerji - Yol)
+    function drawGraph() {
+      const rect = graphContainer.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (w === 0 || h === 0) return;
+
+      const padL = 42, padR = 14, padT = 14, padB = 24;
+      const plotW = w - padL - padR;
+      const plotH = h - padT - padB;
+
+      gCtx.clearRect(0, 0, w, h);
+
+      // Eksen Çizgileri
+      gCtx.strokeStyle = '#94a3b8';
+      gCtx.lineWidth = 1;
+      gCtx.beginPath();
+      gCtx.moveTo(padL, padT);
+      gCtx.lineTo(padL, h - padB);
+      gCtx.lineTo(w - padR, h - padB);
+      gCtx.stroke();
+
+      // Yatay Izgara ve Joule Etiketleri
+      gCtx.fillStyle = '#475569';
+      gCtx.font = '10px Inter, sans-serif';
+      gCtx.textAlign = 'right';
+      [0, 500, 1000].forEach(val => {
+        const y = h - padB - (val / TOTAL_ENERGY) * plotH;
+        gCtx.fillText(val + 'J', padL - 5, y + 3.5);
+        gCtx.strokeStyle = '#e2e8f0';
+        gCtx.beginPath();
+        gCtx.moveTo(padL, y);
+        gCtx.lineTo(w - padR, y);
+        gCtx.stroke();
+      });
+
+      gCtx.textAlign = 'center';
+      gCtx.fillText('Başlangıç (0 m)', padL + 32, h - 7);
+      gCtx.fillText('Pist Sonu', w - padR - 24, h - 7);
+
+      if (history.length < 2) return;
+
+      const series = [
+        { key: 'tot', color: '#f59e0b', dash: [4, 4] },
+        { key: 'me',  color: '#8b5cf6', dash: [] },
+        { key: 'pe',  color: '#3b82f6', dash: [] },
+        { key: 'ke',  color: '#22c55e', dash: [] },
+        { key: 'th',  color: '#ef4444', dash: [] }
+      ];
+
+      series.forEach(sr => {
+        gCtx.save();
+        gCtx.strokeStyle = sr.color;
+        gCtx.lineWidth = 2.2;
+        gCtx.setLineDash(sr.dash);
+        gCtx.beginPath();
+        history.forEach((pt, idx) => {
+          const x = padL + pt.ratio * plotW;
+          const y = h - padB - (pt[sr.key] / TOTAL_ENERGY) * plotH;
+          if (idx === 0) gCtx.moveTo(x, y);
+          else gCtx.lineTo(x, y);
+        });
+        gCtx.stroke();
+        gCtx.restore();
+      });
+    }
+
+    // Enerji Çubukları ve Sayısal Değerleri Güncelle
+    function updateUI(ke, pe, me, th, tot, height, vVal) {
+      currentKE = ke;
+      currentPE = pe;
+      currentME = me;
+
+      txtKE.textContent = `${Math.round(ke)} J`;
+      txtPE.textContent = `${Math.round(pe)} J`;
+      txtME.textContent = `${Math.round(me)} J`;
+      txtTH.textContent = `${Math.round(th)} J`;
+      txtTOT.textContent = `${Math.round(tot)} J`;
+
+      barKE.style.width = `${(ke / TOTAL_ENERGY) * 100}%`;
+      barPE.style.width = `${(pe / TOTAL_ENERGY) * 100}%`;
+      barME.style.width = `${(me / TOTAL_ENERGY) * 100}%`;
+      barTH.style.width = `${(th / TOTAL_ENERGY) * 100}%`;
+      barTOT.style.width = `${(tot / TOTAL_ENERGY) * 100}%`;
+
+      valHeight.textContent = `${height.toFixed(1)} m`;
+      valSpeed.textContent = `${vVal.toFixed(1)} m/s`;
+    }
+
+    // Canlı Türkçe Açıklamaları Güncelle
+    function updateExplanation(pos, vVal, frictionOn) {
+      if (distMeters === 0 && !running) {
+        statusBox.innerHTML = 'Kızak karlı dağın zirvesinde (10 m yükseklikte) duruyor. Tüm enerjisi <strong>çekim potansiyel enerjisi (1000 J)</strong> hâlindedir. <strong>Başlat</strong> düğmesine basarak kayışı gözlemleyin.';
+        return;
+      }
+      if (finished) {
+        if (frictionOn && vVal <= 0.05) {
+          statusBox.innerHTML = '🛑 <strong>Sürtünme nedeniyle kızak durdu!</strong> Başlangıçtaki mekanik enerjinin tamamı <strong>ısı enerjisine</strong> dönüştü, toplam enerji (1000 J) korundu.';
+        } else {
+          statusBox.innerHTML = '🏁 <strong>Kızak pistin sonuna ulaştı!</strong> ' + (frictionOn
+            ? 'Sürtünme açık olduğu için mekanik enerjinin bir kısmı <strong>ısıya</strong> dönüştü ve kızak daha düşük hızla sona vardı.'
+            : 'Sürtünme kapalı olduğu için <strong>mekanik enerji (1000 J)</strong> hiç azalmadı ve kızak en yüksek hızıyla ilerledi.');
+        }
+        return;
+      }
+      if (pos.onRamp) {
+        if (!frictionOn) {
+          statusBox.innerHTML = '⬇️ Kızak dağ yamacından aşağı kayarken yüksekliği azalıyor: <strong>Çekim potansiyel enerjisi</strong> azalırken <strong>kinetik enerjisi</strong> artıyor. Mekanik enerji sabit!';
+        } else {
+          statusBox.innerHTML = '🔥 Kızak pürüzlü yamaçta kayıyor: Çekim potansiyel enerjisi <strong>kinetik enerjiye</strong> ve sürtünme nedeniyle <strong>ısı enerjisine</strong> dönüşüyor.';
+        }
+      } else {
+        if (!frictionOn) {
+          statusBox.innerHTML = '➡️ Kızak yatay buzlu yolda sabit hızla ilerliyor. Yükseklik sıfır olduğu için tüm mekanik enerji <strong>kinetik enerji (1000 J)</strong> hâlindedir.';
+        } else {
+          statusBox.innerHTML = '🔥 Kızak yatay pürüzlü yolda yavaşlıyor: <strong>Kinetik enerji</strong> sürtünme nedeniyle <strong>ısı enerjisine</strong> dönüşüyor.';
+        }
+      }
+    }
+
+    // Animasyon Adımı
+    function step(timestamp) {
+      if (!running) return;
+      if (!lastTime) lastTime = timestamp;
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+      lastTime = timestamp;
+
+      const frictionOn = chkFriction.checked;
+      const dsMeters = speed * dt;
+      distMeters += dsMeters;
+
+      if (distMeters >= TOTAL_METERS) {
+        distMeters = TOTAL_METERS;
+        finished = true;
+        running = false;
+        btnStartText.textContent = 'Başlat';
+        btnStart.querySelector('span').textContent = '▶';
+        btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      }
+
+      const geom = getTrackGeometry(canvasContainer.clientWidth, canvasContainer.clientHeight);
+      const posAfter = getPositionAndAngle(distMeters, geom);
+      const pe = MASS * G * posAfter.height;
+
+      if (frictionOn && dsMeters > 0) {
+        const frictionForce = posAfter.onRamp ? 28 : 42;
+        thermalEnergy += frictionForce * dsMeters;
+        if (speed > 0.5) {
+          sparks.push({
+            x: posAfter.x + (Math.random() - 0.5) * 12,
+            y: posAfter.y - 2,
+            vx: -Math.random() * 35 - 12,
+            vy: -Math.random() * 30 - 8,
+            life: 1.0
+          });
+        }
+      }
+
+      if (thermalEnergy > TOTAL_ENERGY) {
+        thermalEnergy = TOTAL_ENERGY;
+      }
+
+      let me = TOTAL_ENERGY - thermalEnergy;
+      let ke = me - pe;
+
+      if (ke <= 0 && !posAfter.onRamp && frictionOn) {
+        ke = 0;
+        me = pe;
+        thermalEnergy = TOTAL_ENERGY - me;
+        speed = 0;
+        finished = true;
+        running = false;
+        btnStartText.textContent = 'Başlat';
+        btnStart.querySelector('span').textContent = '▶';
+        btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      } else {
+        ke = Math.max(0, ke);
+        speed = Math.sqrt((2 * ke) / MASS);
+        if (posAfter.onRamp && speed < 0.35 && !finished) {
+          speed = 0.35;
+        }
+      }
+
+      sparks.forEach(sp => {
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        sp.life -= dt * 2.5;
+      });
+      sparks = sparks.filter(sp => sp.life > 0);
+
+      history.push({
+        ratio: distMeters / TOTAL_METERS,
+        ke: ke,
+        pe: pe,
+        me: me,
+        th: thermalEnergy,
+        tot: TOTAL_ENERGY
+      });
+
+      updateUI(ke, pe, me, thermalEnergy, TOTAL_ENERGY, posAfter.height, speed);
+      updateExplanation(posAfter, speed, frictionOn);
+      drawScene();
+      drawGraph();
+
+      if (running) {
+        requestAnimationFrame(step);
+      }
+    }
+
+    // Simülasyonu Başlangıç Koşullarına Sıfırla
+    function resetSimulation() {
+      running = false;
+      finished = false;
+      lastTime = null;
+      distMeters = 0;
+      speed = 0;
+      thermalEnergy = 0;
+      sparks = [];
+      history = [{
+        ratio: 0,
+        ke: 0,
+        pe: TOTAL_ENERGY,
+        me: TOTAL_ENERGY,
+        th: 0,
+        tot: TOTAL_ENERGY
+      }];
+
+      btnStartText.textContent = 'Başlat';
+      btnStart.querySelector('span').textContent = '▶';
+      btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+      btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+
+      const frictionOn = chkFriction.checked;
+      valSurface.textContent = frictionOn ? 'Pürüzlü Yol' : 'Buzlu Yol';
+      if (frictionOn) {
+        surfaceBadge.textContent = '🔥 Pürüzlü Yol (Sürtünmeli)';
+        surfaceBadge.className = 'absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm bg-amber-100 text-amber-900 border border-amber-300';
+      } else {
+        surfaceBadge.textContent = '❄️ Buzlu Yol (Sürtünmesiz)';
+        surfaceBadge.className = 'absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm bg-white/90 text-sky-700 border border-sky-200';
+      }
+
+      updateUI(0, TOTAL_ENERGY, TOTAL_ENERGY, 0, TOTAL_ENERGY, H_MAX, 0);
+      updateExplanation({ onRamp: true }, 0, frictionOn);
+      drawScene();
+      drawGraph();
+    }
+
+    // Düğme Olayları
+    btnStart.addEventListener('click', () => {
+      if (finished) {
+        resetSimulation();
+      }
+      running = !running;
+      if (running) {
+        lastTime = null;
+        btnStartText.textContent = 'Durdur';
+        btnStart.querySelector('span').textContent = '⏸';
+        btnStart.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+        btnStart.classList.add('bg-amber-600', 'hover:bg-amber-700');
+        requestAnimationFrame(step);
+      } else {
+        btnStartText.textContent = 'Devam Et';
+        btnStart.querySelector('span').textContent = '▶';
+        btnStart.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        btnStart.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      }
+    });
+
+    btnReset.addEventListener('click', resetSimulation);
+    chkFriction.addEventListener('change', resetSimulation);
+
+    // Deney Sonucu Kaydetme
+    btnRecord.addEventListener('click', () => {
+      if (recordCount === 0) {
+        resultsBody.innerHTML = '';
+      }
+      recordCount++;
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50';
+      tr.innerHTML = `
+        <td class="p-2 font-bold text-slate-700">#${recordCount}</td>
+        <td class="p-2 font-semibold">${chkFriction.checked ? 'Açık (Pürüzlü)' : 'Kapalı (Buzlu)'}</td>
+        <td class="p-2 font-bold text-emerald-700">${Math.round(currentKE)} J</td>
+        <td class="p-2 font-bold text-blue-700">${Math.round(currentPE)} J</td>
+        <td class="p-2 font-bold text-purple-700">${Math.round(currentME)} J</td>
+        <td class="p-2 font-bold text-rose-700">${Math.round(thermalEnergy)} J</td>
+        <td class="p-2 font-extrabold text-amber-700">${TOTAL_ENERGY} J</td>
+      `;
+      resultsBody.appendChild(tr);
+    });
+
+    // Tabloyu Temizle
+    btnClearTable.addEventListener('click', () => {
+      recordCount = 0;
+      resultsBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="p-4 text-slate-400">Henüz ölçüm kaydedilmedi.</td>
+        </tr>
+      `;
+    });
+
+    // Değerlendirme Soruları Kontrolü
+    function checkAnswer(qNum, isCorrect, btnEl) {
+      const container = document.getElementById('q' + qNum);
+      const buttons = container.querySelectorAll('.q-btn');
+      buttons.forEach(b => {
+        b.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-700', 'bg-rose-600', 'border-rose-700');
+        b.classList.add('bg-slate-50', 'text-slate-800', 'border-slate-200');
+      });
+
+      const fb = document.getElementById('fb' + qNum);
+      btnEl.classList.remove('bg-slate-50', 'text-slate-800', 'border-slate-200');
+
+      if (isCorrect) {
+        btnEl.classList.add('bg-emerald-600', 'text-white', 'border-emerald-700');
+        fb.className = 'mt-2 text-xs font-bold text-emerald-700';
+        fb.textContent = '✔ Doğru cevap! Enerji dönüşümünü doğru yorumladın.';
+      } else {
+        btnEl.classList.add('bg-rose-600', 'text-white', 'border-rose-700');
+        fb.className = 'mt-2 text-xs font-bold text-rose-600';
+        fb.textContent = '✘ Yanlış cevap. Simülasyondaki enerji çubuklarını inceleyip tekrar dene.';
+      }
+    }
+
+    // Tek Tıkla Teslim HTML Dosyasını İndir
+    function downloadHTMLFile() {
+      try {
+        const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Omer_Hasimoglu_7B_Enerji_Donusumleri.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toastMsg.textContent = '✅ Omer_Hasimoglu_7B_Enerji_Donusumleri.html indirildi!';
+        toastMsg.classList.remove('opacity-0');
+        setTimeout(() => toastMsg.classList.add('opacity-0'), 3000);
+      } catch (err) {
+        toastMsg.textContent = '⚠️ İndirme başlatılamadı, tarayıcı menüsünden sayfayı kaydedebilirsiniz.';
+        toastMsg.classList.remove('opacity-0');
+        setTimeout(() => toastMsg.classList.add('opacity-0'), 3500);
+      }
+    }
+
+    btnDownloadTop.addEventListener('click', downloadHTMLFile);
+    btnDownloadBottom.addEventListener('click', downloadHTMLFile);
+
+    window.addEventListener('resize', resizeAllCanvases);
+
+    // Sayfa Yüklendiğinde Başlat
+    window.onload = function () {
+      resizeAllCanvases();
+      resetSimulation();
+    };
+  </script>
+
+</body></html>
