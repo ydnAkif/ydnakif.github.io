@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaykaycı ve Enerji Dönüşümü Laboratuvarı</title>
+<style>
+:root{--navy:#172554;--ink:#172033;--muted:#64748b;--bg:#f3f7ff;--card:#fff;--blue:#3b82f6;--orange:#f59e0b;--green:#10b981;--purple:#8b5cf6;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#eef5ff,#f7f4ff);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1120px;margin:auto;padding:22px}.hero{background:linear-gradient(120deg,#172554,#4338a8);color:white;border-radius:24px;padding:24px 28px;box-shadow:0 12px 30px #243b7630}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.8;font-weight:800}.hero h1{margin:8px 0;font-size:clamp(25px,4vw,38px)}.hero p{margin:0;max-width:760px;color:#dbeafe;line-height:1.55}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.9fr);gap:18px;margin-top:18px}.card{background:var(--card);border:1px solid #e5eaf5;border-radius:20px;padding:18px;box-shadow:0 8px 24px #1e3a8a0b}
+.card h2{font-size:18px;margin:0 0 12px}.scene{position:relative;background:linear-gradient(#dff3ff,#f8fbff 68%,#e8f5e9);border-radius:16px;overflow:hidden;border:1px solid #dbeafe}
+canvas{display:block;width:100%;height:auto}.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;background:#e8eefc;color:#243b76}.btn.primary{background:#3158d4;color:white}.btn.reset{background:#fff1e7;color:#9a3412}.btn:active{transform:translateY(1px)}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #edf0f7}.switch{position:relative;width:52px;height:29px;display:inline-block}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#cbd5e1;border-radius:30px;cursor:pointer;transition:.2s}.slider:before{content:"";position:absolute;width:21px;height:21px;left:4px;top:4px;background:white;border-radius:50%;transition:.2s;box-shadow:0 1px 4px #0002}.switch input:checked+.slider{background:#f59e0b}.switch input:checked+.slider:before{transform:translateX(23px)}
+.energy-list{display:grid;gap:11px;margin-top:12px}.energy-head{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:750}.track{height:12px;border-radius:20px;background:#edf1f7;overflow:hidden;margin-top:6px}.fill{height:100%;width:0%;border-radius:20px;transition:width .08s linear}.kin{background:var(--blue)}.pot{background:var(--orange)}.mech{background:var(--purple)}.heat{background:var(--red)}.total{background:var(--green)}
+.metric{font-variant-numeric:tabular-nums;color:#334155}.note{margin-top:14px;padding:13px 14px;background:#f0f7ff;border-left:4px solid #60a5fa;border-radius:10px;line-height:1.5;font-size:14px;min-height:64px}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pill{font-size:12px;font-weight:800;padding:6px 10px;border-radius:30px;background:#eef2ff;color:#3730a3}.pill.gold{background:#fff7db;color:#92400e}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.tip{line-height:1.6;font-size:14px;color:#475569}.tip strong{color:#172033}.compare{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}.compare th,.compare td{padding:9px 7px;border-bottom:1px solid #edf0f7;text-align:left}.compare th{color:#64748b}.small{font-size:12px;color:#64748b;line-height:1.5}.status{font-size:12px;font-weight:800;color:#047857;background:#d1fae5;padding:5px 9px;border-radius:30px}
+@media(max-width:800px){.layout,.bottom{grid-template-columns:1fr}.wrap{padding:13px}.hero{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+ <div class="eyebrow">7. Sınıf • Fen Bilimleri • Etkileşimli Simülasyon</div>
+ <h1>🛹 Kaykaycı ve Enerji Dönüşümü Laboratuvarı</h1>
+ <p>Kaykaycı U şeklindeki rampada hareket ederken enerjinin nasıl dönüştüğünü keşfet! Sürtünmeyi açıp kapat, enerji çubuklarını izle ve iki denemeyi karşılaştır.</p>
+</header>
+<div class="layout">
+ <section class="card">
+  <h2>🎢 Hareket alanı <span class="status" id="runStatus">Hazır</span></h2>
+  <div class="scene"><canvas id="scene" width="800" height="430" aria-label="U şeklindeki rampada hareket eden kaykaycı"></canvas></div>
+  <div class="controls">
+   <button class="btn primary" id="startBtn">▶ Başlat</button>
+   <button class="btn" id="pauseBtn">Ⅱ Durdur</button>
+   <button class="btn reset" id="resetBtn">↺ Sıfırla</button>
+  </div>
+  <div class="pills"><span class="pill">Başlangıç yüksekliği: 1,62 m</span><span class="pill">Kütle: 1 kg</span><span class="pill gold" id="frictionPill">Sürtünme kapalı</span></div>
+  <div class="note" id="explanation">Kaykaycı başlangıç noktasında duruyor. Başlat düğmesine basarak çekim potansiyel enerjisinin kinetik enerjiye dönüşmesini izle.</div>
+ </section>
+ <aside class="card">
+  <h2>⚙️ Deney ayarları</h2>
+  <div class="switchrow"><div><strong>Sürtünme</strong><div class="small">Yüzey pürüzlü olsun mu?</div></div><label class="switch"><input type="checkbox" id="friction"><span class="slider"></span></label></div>
+  <div class="switchrow"><div><strong>Hareket hızı</strong><div class="small">Simülasyon hızını ayarla</div></div><strong id="speedLabel">1×</strong></div>
+  <input type="range" id="speed" min="0.5" max="2" step="0.5" value="1" style="width:100%;accent-color:#3158d4">
+  <h2 style="margin-top:20px">📊 Enerji göstergeleri</h2>
+  <div class="energy-list">
+   <div><div class="energy-head"><span>🔵 Kinetik enerji</span><span class="metric" id="kinVal">0,0 J</span></div><div class="track"><div class="fill kin" id="kinBar"></div></div></div>
+   <div><div class="energy-head"><span>🟠 Çekim potansiyel enerjisi</span><span class="metric" id="potVal">19,6 J</span></div><div class="track"><div class="fill pot" id="potBar"></div></div></div>
+   <div><div class="energy-head"><span>🟣 Mekanik enerji</span><span class="metric" id="mechVal">19,6 J</span></div><div class="track"><div class="fill mech" id="mechBar"></div></div></div>
+   <div><div class="energy-head"><span>🔴 Isıya dönüşen enerji</span><span class="metric" id="heatVal">0,0 J</span></div><div class="track"><div class="fill heat" id="heatBar"></div></div></div>
+   <div><div class="energy-head"><span>🟢 Toplam enerji</span><span class="metric" id="totalVal">19,6 J</span></div><div class="track"><div class="fill total" id="totalBar"></div></div></div>
+  </div>
+  <p class="small" style="margin-top:12px">Enerji birimi joule (J). Bu modelde ses ve hava direnci ihmal edilmiştir.</p>
+ </aside>
+</div>
+<div class="bottom">
+ <section class="card">
+  <h2>🧪 Deney sonuçlarını karşılaştır</h2>
+  <p class="tip">Aynı başlangıç koşullarında önce sürtünme kapalı, sonra açık deneme yap. Her deneme bittiğinde sonucu kaydet.</p>
+  <div class="controls"><button class="btn" id="saveBtn">＋ Bu denemeyi kaydet</button><button class="btn" id="clearBtn">Sonuçları temizle</button></div>
+  <table class="compare"><thead><tr><th>Deneme</th><th>Sürtünme</th><th>Mekanik (J)</th><th>Isı (J)</th><th>Toplam (J)</th></tr></thead><tbody id="results"><tr><td colspan="5" class="small">Henüz kayıt yok.</td></tr></tbody></table>
+ </section>
+ <section class="card">
+  <h2>💡 Neler oluyor?</h2>
+  <div class="tip">
+   <p><strong>Rampadan inerken:</strong> Kaykaycının yüksekliği azalır. Çekim potansiyel enerjisi azalırken kinetik enerjisi artar.</p>
+   <p><strong>En alçak noktada:</strong> Kaykaycı en hızlı hâline yaklaşır; kinetik enerji en büyük değerine ulaşır.</p>
+   <p><strong>Yukarı çıkarken:</strong> Kinetik enerji azalır, çekim potansiyel enerjisi artar.</p>
+   <p><strong>Sürtünme varsa:</strong> Mekanik enerjinin bir kısmı ısı enerjisine dönüşür. Isı enerjisini de hesaba kattığımızda toplam enerji korunur.</p>
+  </div>
+ </section>
+</div>
+<p class="small" style="text-align:center;margin:18px 0">Enerji yok olmaz; yalnızca başka bir enerji türüne dönüşür. ⚡</p>
+</div>
+<script>
+(() => {
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const W=canvas.width,H=canvas.height,m=1,g=9.8,depth=2.0,a=2.0;
+const maxE=m*g*depth,mu=.10,dt=1/240;
+let x=-1.8,v=0,heat=0,running=false,last=0,acc=0,raf=0,simTime=0;
+let saved=[],finished=false;
+const yAt=x=>depth*Math.pow(x/a,2);
+const slope=x=>2*depth*x/(a*a);
+const dsFactor=x=>Math.sqrt(1+slope(x)**2);
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const fmt=n=>n.toFixed(1).replace('.',',')+' J';
+function energies(){
+ const h=yAt(x),pot=m*g*h,kin=.5*m*v*v,mech=kin+pot,total=mech+heat;
+ return {pot,kin,mech,heat,total};
+}
+function updateBars(){
+ const e=energies(),max=maxE||1;
+ [['kin',e.kin],['pot',e.pot],['mech',e.mech],['heat',e.heat],['total',e.total]].forEach(([k,val])=>{
+  $(k+'Val').textContent=fmt(val);
+  $(k+'Bar').style.width=clamp(val/max*100,0,100)+'%';
+ });
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ // sun and clouds
+ ctx.fillStyle='#fff3c4';ctx.beginPath();ctx.arc(690,65,27,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#fff';[[130,65],[330,42],[520,95]].forEach(([cx,cy])=>{ctx.beginPath();ctx.arc(cx,cy,17,0,Math.PI*2);ctx.arc(cx+18,cy-7,22,0,Math.PI*2);ctx.arc(cx+39,cy,16,0,Math.PI*2);ctx.fill()});
+ const left=90,right=710,base=335,scale=115;
+ const px=val=>left+(val+a)/(2*a)*(right-left);
+ const py=val=>base-val*scale;
+ // ground
+ ctx.fillStyle='#d7f0d9';ctx.fillRect(0,base+30,W,H-base-30);
+ ctx.strokeStyle='#9ac5a2';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,base+30);ctx.lineTo(W,base+30);ctx.stroke();
+ // ramp
+ ctx.beginPath();for(let i=0;i<=180;i++){let xx=-a+2*a*i/180,yy=yAt(xx);if(i===0)ctx.moveTo(px(xx),py(yy));else ctx.lineTo(px(xx),py(yy));}
+ ctx.strokeStyle='#334155';ctx.lineWidth=17;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+ ctx.strokeStyle='#94a3b8';ctx.lineWidth=5;ctx.stroke();
+ // dashed center guide
+ ctx.setLineDash([7,10]);ctx.strokeStyle='#e2e8f0';ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=180;i++){let xx=-a+2*a*i/180,yy=yAt(xx);if(i===0)ctx.moveTo(px(xx),py(yy));else ctx.lineTo(px(xx),py(yy));}ctx.stroke();ctx.setLineDash([]);
+ // start marker
+ ctx.fillStyle='#64748b';ctx.font='bold 15px system-ui';ctx.fillText('BAŞLANGIÇ',65,70);
+ // height line
+ const skx=px(x),sky=py(yAt(x))-18;
+ ctx.setLineDash([5,5]);ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(skx,sky+20);ctx.lineTo(skx,base);ctx.stroke();ctx.setLineDash([]);
+ // skateboard wheels and board
+ ctx.save();ctx.translate(skx,sky);ctx.rotate(Math.atan(slope(x)) * -0.75);
+ ctx.fillStyle='#ef4444';ctx.fillRect(-24,-8,48,7);
+ ctx.fillStyle='#1e293b';[-15,15].forEach(wx=>{ctx.beginPath();ctx.arc(wx,3,5,0,Math.PI*2);ctx.fill()});
+ // rider
+ ctx.strokeStyle='#1d4ed8';ctx.lineWidth=7;ctx.lineCap='round';
+ ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(-2,-30);ctx.lineTo(11,-40);ctx.stroke();
+ ctx.strokeStyle='#0f172a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-2,-30);ctx.lineTo(-15,-16);ctx.moveTo(-2,-30);ctx.lineTo(14,-17);ctx.stroke();
+ ctx.fillStyle='#f4c7a1';ctx.beginPath();ctx.arc(13,-48,9,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(13,-51,10,Math.PI,Math.PI*2);ctx.fill();
+ ctx.restore();
+ // velocity arrow
+ if(Math.abs(v)>.3){ctx.strokeStyle='#2563eb';ctx.fillStyle='#2563eb';ctx.lineWidth=4;let dir=Math.sign(v);ctx.beginPath();ctx.moveTo(skx,sky-66);ctx.lineTo(skx+dir*clamp(Math.abs(v)*8,18,65),sky-66);ctx.stroke();ctx.beginPath();ctx.moveTo(skx+dir*clamp(Math.abs(v)*8,18,65),sky-66);ctx.lineTo(skx+dir*clamp(Math.abs(v)*8,18,65)-dir*10,sky-73);ctx.lineTo(skx+dir*clamp(Math.abs(v)*8,18,65)-dir*10,sky-59);ctx.closePath();ctx.fill();}
+ ctx.fillStyle='#334155';ctx.font='bold 14px system-ui';ctx.fillText('U RAMPASI',350,390);
+ ctx.fillStyle='#475569';ctx.font='13px system-ui';ctx.fillText('Yükseklik: '+yAt(x).toFixed(2).replace('.',',')+' m',skx+18,sky-16);
+ updateBars();
+}
+function explain(){
+ const e=energies(),h=yAt(x);
+ let msg;
+ if(finished) msg='Deneme tamamlandı! Sürtünme nedeniyle mekanik enerjinin bir bölümü ısıya dönüşmüş olabilir. Toplam enerji göstergesini kontrol et.';
+ else if(Math.abs(v)<.15 && simTime>0.5) msg='Kaykaycı anlık olarak yavaşladı veya yön değiştirmek üzere. Enerji dönüşümü hareket boyunca devam eder.';
+ else if(x<-.7 && v>0) msg='Kaykaycı aşağı iniyor: çekim potansiyel enerjisi azalırken kinetik enerji artıyor.';
+ else if(Math.abs(x)<.45) msg='Kaykaycı rampanın en altına yakın: hızı ve kinetik enerjisi en yüksek değerine yaklaşıyor.';
+ else if(x>0 && v>0) msg='Kaykaycı yukarı çıkıyor: kinetik enerji azalırken çekim potansiyel enerjisi artıyor.';
+ else if(x>0 && v<0) msg='Kaykaycı sol tarafa doğru geri dönüyor. Kinetik ve çekim potansiyel enerjisi yeniden birbirine dönüşüyor.';
+ else msg='Kaykaycı sol tarafa doğru yükseliyor. Hızı azalırken çekim potansiyel enerjisi artıyor.';
+ if(friction.checked && e.heat>0.2)msg+=' Sürtünme, mekanik enerjinin bir kısmını ısı enerjisine dönüştürüyor.';
+ $('explanation').textContent=msg;
+}
+function step(){
+ const sl=slope(x),fac=dsFactor(x);
+ // x-coordinate equation of motion on the curved track
+ let ax=-g*sl/fac;
+ if(friction.checked && Math.abs(v)>.001) ax-=Math.sign(v)*mu*g/fac;
+ v+=ax*dt;
+ x+=v/fac*dt;
+ if(x<=-1.96){x=-1.96;if(v<0)v=0;}
+ if(x>=1.96){x=1.96;if(v>0)v=0;}
+ // friction work, based on path speed
+ if(friction.checked)heat+=mu*m*g/fac*Math.abs(v)*dt;
+ simTime+=dt;
+ if(Math.abs(v)<.045 && (x<=-1.95||x>=1.95)){v=0;finished=true;running=false;$('runStatus').textContent='Tamamlandı';}
+}
+function loop(ts){
+ if(!running)return;
+ if(!last)last=ts;
+ let elapsed=Math.min((ts-last)/1000,.05);last=ts;acc+=elapsed*Number($('speed').value);
+ while(acc>=dt){step();acc-=dt;}
+ draw();explain();
+ if(running)raf=requestAnimationFrame(loop);
+}
+function start(){if(finished){return;}if(!running){running=true;last=0;$('runStatus').textContent='Çalışıyor';raf=requestAnimationFrame(loop);}}
+function pause(){running=false;cancelAnimationFrame(raf);$('runStatus').textContent='Duraklatıldı';}
+function reset(){pause();x=-1.8;v=0;heat=0;simTime=0;acc=0;finished=false;$('runStatus').textContent='Hazır';$('explanation').textContent='Kaykaycı başlangıç noktasında duruyor. Başlat düğmesine basarak çekim potansiyel enerjisinin kinetik enerjiye dönüşmesini izle.';draw();}
+$('startBtn').addEventListener('click',start);$('pauseBtn').addEventListener('click',pause);$('resetBtn').addEventListener('click',reset);
+$('friction').addEventListener('change',()=>{$('frictionPill').textContent=$('friction').checked?'Sürtünme açık':'Sürtünme kapalı';if(!running)explain();});
+$('speed').addEventListener('input',()=> $('speedLabel').textContent=$('speed').value.replace('.',',')+'×');
+$('saveBtn').addEventListener('click',()=>{
+ const e=energies(),label=$('friction').checked?'Açık':'Kapalı';
+ if(saved.some(s=>s.label===label)){if(!confirm('Bu sürtünme ayarıyla bir deneme zaten kaydedilmiş. Yeni kayıt eklensin mi?'))return;}
+ saved.push({label,mech:e.mech,heat:e.heat,total:e.total});
+ renderResults();
+});
+$('clearBtn').addEventListener('click',()=>{saved=[];renderResults();});
+function renderResults(){
+ $('results').innerHTML=saved.length?saved.map((s,i)=>`<tr><td>${i+1}</td><td>${s.label}</td><td>${s.mech.toFixed(1)}</td><td>${s.heat.toFixed(1)}</td><td>${s.total.toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5" class="small">Henüz kayıt yok.</td></tr>';
+}
+draw();
+})();
+</script>
+</body>
+</html>
