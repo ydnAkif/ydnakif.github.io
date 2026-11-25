@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarkaçta Enerji Dönüşümü - 7. Sınıf Fen Bilimleri (Soft Kidcore)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text-main: #433a5c;
+    --text-heading: #ff6b9d;
+    --text-sub: #6c5ce7;
+    --text-muted: #7a7294;
+    --text-small: #8981a3;
+    --panel-bg: rgba(255, 255, 255, 0.92);
+    --panel-border: #ffd6e8;
+    --panel-shadow: 0 8px 0 #f3d9fa, 0 12px 24px rgba(108, 92, 231, 0.12);
+    --card-bg: #fff9fc;
+    --card-border: #f8d8ea;
+    --status-bg: #fff5d6;
+    --status-border: #ffbe3d;
+    --status-text: #6e5219;
+    --live-bg: linear-gradient(135deg, #e8f8ff, #f9ebff);
+    --live-border: #cce8ff;
+    --live-text: #484066;
+    --track-bg: #f1e8ff;
+    --canvas-bg-top: #eef9ff;
+    --canvas-bg-bot: #fff8fc;
+    --canvas-border: #d5ecff;
+    --chart-bg-top: #ffffff;
+    --chart-bg-bot: #fbf6ff;
+    --chart-border: #ebd9ff;
+    --bob-label: #433a5c;
+    --dot-pattern: rgba(255, 143, 177, 0.22);
+  }
+
+  body.dark-mode {
+    --text-main: #f3efff;
+    --text-heading: #ff9ec4;
+    --text-sub: #a5b4fc;
+    --text-muted: #c4b5fd;
+    --text-small: #b3a4e6;
+    --panel-bg: rgba(36, 30, 64, 0.92);
+    --panel-border: #4c3d82;
+    --panel-shadow: 0 8px 0 #1b1536, 0 12px 26px rgba(0, 0, 0, 0.4);
+    --card-bg: #2d2552;
+    --card-border: #483b7a;
+    --status-bg: #3b3054;
+    --status-border: #fbbf24;
+    --status-text: #fde68a;
+    --live-bg: linear-gradient(135deg, #28234a, #3b2454);
+    --live-border: #52428c;
+    --live-text: #e9e4ff;
+    --track-bg: #1e1838;
+    --canvas-bg-top: #1d1836;
+    --canvas-bg-bot: #29214a;
+    --canvas-border: #483b7a;
+    --chart-bg-top: #201a3b;
+    --chart-bg-bot: #2a224d;
+    --chart-border: #483b7a;
+    --bob-label: #f8f6ff;
+    --dot-pattern: rgba(196, 181, 253, 0.14);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 18px;
+    color: var(--text-main);
+    font-family: 'Nunito', Arial, sans-serif;
+    background-color: #ffdce8;
+    background-image: radial-gradient(var(--dot-pattern) 2.5px, transparent 2.5px),
+                      radial-gradient(var(--dot-pattern) 2.5px, transparent 2.5px);
+    background-size: 36px 36px;
+    background-position: 0 0, 18px 18px;
+    transition: background-color 1.2s ease-in-out, color 0.35s ease;
+    min-height: 100vh;
+  }
+  main { max-width: 960px; margin: auto; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .title-group { flex: 1; text-align: center; }
+  h1, h2, h3, button { font-family: 'Fredoka', 'Nunito', sans-serif; }
+  h1 {
+    text-align: center;
+    color: var(--text-heading);
+    margin: 6px 0 4px;
+    font-size: clamp(25px, 4.5vw, 35px);
+    letter-spacing: 0.4px;
+    text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.8);
+    transition: color 0.35s ease;
+  }
+  body.dark-mode h1 { text-shadow: 2px 2px 0 rgba(20, 15, 40, 0.9); }
+  h2 { margin: 0 0 14px; color: var(--text-sub); font-size: 21px; transition: color 0.35s ease; }
+  .subtitle { text-align: center; color: var(--text-muted); margin: 0 0 14px; font-weight: 700; font-size: 15px; }
+
+  .theme-toggle {
+    background: linear-gradient(180deg, #7c69ef, #5b46d6);
+    box-shadow: 0 4px 0 #3f2ea8, 0 6px 12px rgba(91, 70, 214, 0.25);
+    padding: 9px 15px;
+    font-size: 14px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 2px solid rgba(255,255,255,0.5);
+  }
+  body.dark-mode .theme-toggle {
+    background: linear-gradient(180deg, #ffd166, #f4a261);
+    box-shadow: 0 4px 0 #b86b28, 0 6px 12px rgba(0,0,0,0.35);
+    color: #3b260c;
+  }
+
+  .panel {
+    background: var(--panel-bg);
+    border: 3px solid var(--panel-border);
+    border-radius: 26px;
+    padding: 18px;
+    margin: 16px 0;
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(8px);
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  canvas {
+    width: 100%;
+    height: 330px;
+    display: block;
+    background: linear-gradient(180deg, var(--canvas-bg-top), var(--canvas-bg-bot));
+    border: 3px dashed var(--canvas-border);
+    border-radius: 20px;
+    transition: border-color 0.35s ease;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  .chart-canvas {
+    height: 300px;
+    background: linear-gradient(180deg, var(--chart-bg-top), var(--chart-bg-bot));
+    border: 2px solid var(--chart-border);
+    border-radius: 18px;
+  }
+  .donut-canvas {
+    height: 255px;
+    max-width: 460px;
+    margin: auto;
+    background: linear-gradient(180deg, var(--chart-bg-top), var(--chart-bg-bot));
+    border: 2px solid var(--chart-border);
+    border-radius: 18px;
+  }
+  .chart-note { margin: 9px 2px 0; color: var(--text-small); font-size: 12.5px; line-height: 1.45; }
+  .chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; margin: 12px 0 2px; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-bg); padding: 3px 9px; border-radius: 999px; border: 1.5px solid var(--chart-border); }
+  .chart-line { width: 14px; height: 6px; border-radius: 6px; display: inline-block; }
+  .chart-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr); gap: 14px; align-items: start; }
+  .chart-card {
+    min-width: 0;
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 20px;
+    padding: 14px;
+    transition: background 0.35s ease, border-color 0.35s ease;
+  }
+  .chart-card h3 { margin: 2px 0 9px; color: var(--text-sub); font-size: 17px; }
+  .chart-current { font-weight: 800; color: var(--live-text); font-size: 13px; margin: 0 0 8px; }
+  @media(max-width:720px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .chart-canvas { height: 270px; }
+    .donut-canvas { height: 235px; }
+  }
+
+  .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  button {
+    border: 2px solid rgba(255, 255, 255, 0.65);
+    border-radius: 999px;
+    padding: 10px 18px;
+    color: white;
+    background: linear-gradient(180deg, #56ccf2, #2f9ce0);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #1f78b4, 0 7px 14px rgba(47, 156, 224, 0.22);
+    transition: transform .1s ease, box-shadow .1s ease, filter .15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  button:active { transform: translateY(4px) scale(.97); box-shadow: 0 1px 0 #1f78b4, 0 2px 5px rgba(47, 156, 224, 0.2); }
+  button.stop { background: linear-gradient(180deg, #a5b4fc, #7c8ce0); box-shadow: 0 5px 0 #5765b8, 0 7px 14px rgba(124, 140, 224, 0.22); }
+  button.reset { background: linear-gradient(180deg, #ff8fab, #fb6f92); box-shadow: 0 5px 0 #c94a6a, 0 7px 14px rgba(251, 111, 146, 0.22); }
+  button.mode { background: linear-gradient(180deg, #c084fc, #9b5de5); box-shadow: 0 5px 0 #7038b5, 0 7px 14px rgba(155, 93, 229, 0.22); }
+  button.mode.active { outline: 3px solid #ffd166; outline-offset: 2px; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #ffd166; outline-offset: 2px; }
+
+  .extra-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px dashed var(--card-border);
+  }
+  .color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--text-sub);
+  }
+  .color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .color-swatch:hover { transform: scale(1.16) rotate(8deg); }
+  .color-swatch.active {
+    transform: scale(1.2);
+    outline: 3px solid #ffd166;
+    outline-offset: 2px;
+  }
+
+  .switch { display: flex; align-items: center; gap: 8px; margin-left: auto; font-weight: 800; cursor: pointer; font-size: 14.5px; }
+  .switch input { width: 20px; height: 20px; accent-color: #ff6b9d; cursor: pointer; }
+
+  .status {
+    min-height: 44px;
+    margin: 12px 2px 0;
+    padding: 11px 15px;
+    background: var(--status-bg);
+    border: 2px solid var(--status-border);
+    border-left-width: 6px;
+    border-radius: 16px;
+    line-height: 1.45;
+    font-weight: 700;
+    color: var(--status-text);
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+  .live-info {
+    margin-top: 13px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: var(--live-bg);
+    border: 2px solid var(--live-border);
+    transition: background 0.35s ease, border-color 0.35s ease;
+  }
+  .live-info h3 { margin: 0 0 6px; color: var(--text-sub); font-size: 17px; }
+  .live-info p { margin: 0; line-height: 1.5; color: var(--live-text); font-weight: 600; }
+  .small { color: var(--text-small); font-size: 13.5px; line-height: 1.5; }
+
+  .energy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .energy-card {
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 18px;
+    padding: 13px;
+    transition: background 0.35s ease, border-color 0.35s ease, transform 0.2s ease;
+  }
+  .energy-card:hover { transform: translateY(-2px); }
+  .energy-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 9px; font-weight: 800; }
+  .energy-head span:first-child { font-size: 14.5px; }
+  .energy-head output { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--bob-label); background: var(--panel-bg); padding: 2px 9px; border-radius: 999px; border: 1.5px solid var(--card-border); }
+  .track { height: 22px; background: var(--track-bg); border-radius: 999px; overflow: hidden; padding: 3px; border: 1.5px solid var(--card-border); }
+  .fill { height: 100%; width: 0; border-radius: 999px; transition: width .08s linear; position: relative; overflow: hidden; }
+  .fill::after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 6px; right: 6px; height: 4px;
+    background: rgba(255,255,255,0.45);
+    border-radius: 999px;
+  }
+  /* Soft Pastel Kidcore Enerji Renkleri */
+  .kinetic { background: linear-gradient(90deg, #ffbe3d, #ff9f43); }
+  .potential { background: linear-gradient(90deg, #54c6eb, #4ea8de); }
+  .mechanical { background: linear-gradient(90deg, #4cd19b, #38b083); }
+  .heat { background: linear-gradient(90deg, #ff758f, #ff5d8f); }
+  .total { background: linear-gradient(90deg, #b589f7, #9b5de5); }
+  .total-card { grid-column: 1/-1; border: 2.5px dashed #c084fc; }
+  .key { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+  .key span { background: var(--card-bg); padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--card-border); }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+  .step {
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    padding: 13px;
+    border-radius: 18px;
+    line-height: 1.5;
+    transition: transform 0.2s ease, background 0.35s ease;
+  }
+  .step:hover { transform: translateY(-2px) rotate(-0.4deg); }
+  .step strong { color: var(--text-heading); font-size: 15px; }
+
+  .bg-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-sub);
+    background: var(--panel-bg);
+    border: 2px solid var(--panel-border);
+    padding: 6px 13px;
+    border-radius: 999px;
+    box-shadow: 0 3px 0 var(--panel-border);
+  }
+  .bg-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffdce8;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1.5px rgba(0,0,0,0.12);
+    transition: background-color 1s ease;
+  }
+
+  @media(max-width:620px) {
+    body { padding: 10px; }
+    .energy-grid, .steps { grid-template-columns: 1fr; }
+    .total-card { grid-column: auto; }
+    .switch { margin-left: 0; width: 100%; }
+    canvas { height: 270px; }
+    .top-bar { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="top-bar">
+    <div class="bg-indicator" title="Arka plan her 3 saniyede yumuşak pastel tonlara geçer">
+      <span class="bg-dot" id="bgDot"></span>
+      <span id="bgLabel">Pastel: Pamuk Şeker</span>
+    </div>
+    <button id="darkModeBtn" class="theme-toggle" aria-label="Gece modunu aç veya kapat">🌙 Gece Modu</button>
+  </div>
+
+  <div class="title-group">
+    <h1>✨ Sarkaçta Enerji Dönüşümü ✨</h1>
+    <p class="subtitle">7. Sınıf Fen Bilimleri • Sürtünmenin enerjiye etkisi</p>
+  </div>
+
+  <section class="panel">
+    <canvas id="scene" width="900" height="330" aria-label="Sağa ve sola sallanan sarkaç animasyonu"></canvas>
+    <p class="status" id="explanation" aria-live="polite">Sarkaç başlangıçtaki en yüksek konumunda. Potansiyel enerji en büyük, kinetik enerji sıfırdır.</p>
+    <div class="live-info" aria-live="polite">
+      <h3>🧸 Sarkaç çalışırken neler oluyor?</h3>
+      <p id="liveInfo">Sarkaç henüz hareket etmiyor. Başlat düğmesine bastığında enerji değişimini burada adım adım görebilirsin.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="controls">
+      <button id="start">▶ Başlat</button>
+      <button id="stop" class="stop">Ⅱ Durdur</button>
+      <button id="reset" class="reset">↺ Sıfırla</button>
+      <button id="slowMode" class="mode">🐢 Ağır çekim</button>
+      <button id="normalMode" class="mode active">▶ Normal hız</button>
+      <button id="fastMode" class="mode">⚡ Hızlandır</button>
+      <label class="switch"><input type="checkbox" id="friction"> Sürtünme açık</label>
+    </div>
+
+    <div class="extra-controls">
+      <div class="color-picker-group" role="group" aria-label="Sarkaç rengi seçimi">
+        <span>🍬 Sarkaç Rengi:</span>
+        <button type="button" class="color-swatch active" data-color="lemon" style="background: radial-gradient(circle at 32% 32%, #fffbeb, #fbbf24);" title="Limon Şekeri"></button>
+        <button type="button" class="color-swatch" data-color="strawberry" style="background: radial-gradient(circle at 32% 32%, #ffe4ec, #ff6b9d);" title="Çilek Sakızı"></button>
+        <button type="button" class="color-swatch" data-color="sky" style="background: radial-gradient(circle at 32% 32%, #e0f7ff, #38bdf8);" title="Bulut Mavisi"></button>
+        <button type="button" class="color-swatch" data-color="mint" style="background: radial-gradient(circle at 32% 32%, #dcfce7, #34d399);" title="Nane Şekeri"></button>
+        <button type="button" class="color-swatch" data-color="lavender" style="background: radial-gradient(circle at 32% 32%, #f3e8ff, #a855f7);" title="Lavanta Rüyası"></button>
+      </div>
+      <label class="switch" style="margin-left:auto; font-size:14px;">
+        <input type="checkbox" id="showTrail" checked> ✨ Yıldız izi ve hız oku
+      </label>
+    </div>
+
+    <p class="small">Karşılaştırma için önce sürtünme kapalıyken deneyin. Sonra Sıfırla'ya basıp sürtünmeyi açarak yeniden başlatın. Her iki deneme de aynı konumdan ve başlangıç hızından başlar. Göstergeleri incelemek için Durdur'a basabilirsiniz.</p>
+    <p class="small" id="trialStatus"><strong>Deneme:</strong> Sürtünme kapalı</p>
+  </section>
+
+  <section class="panel">
+    <h2>🌈 Enerji göstergeleri</h2>
+    <div class="energy-grid">
+      <div class="energy-card">
+        <div class="energy-head"><span>⚡ Kinetik enerji</span><output id="kineticValue">0,0 J</output></div>
+        <div class="track"><div class="fill kinetic" id="kineticBar"></div></div>
+      </div>
+      <div class="energy-card">
+        <div class="energy-head"><span>☁️ Çekim potansiyel enerjisi</span><output id="potentialValue">10,0 J</output></div>
+        <div class="track"><div class="fill potential" id="potentialBar"></div></div>
+      </div>
+      <div class="energy-card">
+        <div class="energy-head"><span>🍀 Mekanik enerji</span><output id="mechanicalValue">10,0 J</output></div>
+        <div class="track"><div class="fill mechanical" id="mechanicalBar"></div></div>
+      </div>
+      <div class="energy-card">
+        <div class="energy-head"><span>🍓 Isıya dönüşen enerji</span><output id="heatValue">0,0 J</output></div>
+        <div class="track"><div class="fill heat" id="heatBar"></div></div>
+      </div>
+      <div class="energy-card total-card">
+        <div class="energy-head"><span>🦄 TOPLAM ENERJİ</span><output id="totalValue">10,0 J</output></div>
+        <div class="track"><div class="fill total" id="totalBar"></div></div>
+        <p class="small" style="margin-bottom:0;">Toplam enerji = Mekanik enerji + Isıya dönüşen enerji</p>
+      </div>
+    </div>
+    <div class="key">
+      <span><i class="dot" style="background:#ffb703"></i>Kinetik</span>
+      <span><i class="dot" style="background:#4ea8de"></i>Potansiyel</span>
+      <span><i class="dot" style="background:#43aa8b"></i>Mekanik</span>
+      <span><i class="dot" style="background:#ff6b9d"></i>Isı</span>
+      <span><i class="dot" style="background:#9b5de5"></i>Toplam</span>
+    </div>
+    <p class="small">Modelde başlangıç toplam enerjisi 10 J kabul edilmiştir. Çubukların tamamı aynı ölçeği (0–10 J) kullanır.</p>
+  </section>
+
+  <section class="panel">
+    <h2>📊 Canlı enerji grafikleri</h2>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Enerjinin zamana göre değişimi</h3>
+        <p class="chart-current" id="chartReadout">Zaman: 0,0 sn • Toplam enerji: 10,0 J</p>
+        <div class="chart-wrap">
+          <canvas id="energyChart" class="chart-canvas" width="900" height="360" aria-label="Enerji türlerinin zamana göre değişim grafiği"></canvas>
+        </div>
+        <div class="chart-legend">
+          <span><i class="chart-line" style="background:#ffb703"></i>Kinetik</span>
+          <span><i class="chart-line" style="background:#4ea8de"></i>Potansiyel</span>
+          <span><i class="chart-line" style="background:#43aa8b"></i>Mekanik</span>
+          <span><i class="chart-line" style="background:#ff6b9d"></i>Isı</span>
+          <span><i class="chart-line" style="background:#9b5de5"></i>Toplam</span>
+        </div>
+        <p class="chart-note">Dikey eksen enerji (J), yatay eksen zamandır (sn). Eğriler yumuşak geçişlerle canlı olarak çizilir.</p>
+      </div>
+      <div class="chart-card">
+        <h3>Şu anki enerji dağılımı</h3>
+        <canvas id="energyDonut" class="donut-canvas" width="460" height="285" aria-label="O andaki enerji dağılımını gösteren halka grafik"></canvas>
+        <p class="chart-note">Halka grafik, toplam 10 J enerjinin şu anda hangi türlerde bulunduğunu gösterir.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🌟 Deneyde nelere dikkat etmelisin?</h2>
+    <div class="steps">
+      <div class="step"><strong>1. En hızlı olduğu an</strong><br>Sarkaç en alt noktadan geçerken hızı ve kinetik enerjisi en büyüktür.</div>
+      <div class="step"><strong>2. En yüksek olduğu an</strong><br>Sarkaç en yüksek noktadayken çekim potansiyel enerjisi en büyüktür.</div>
+      <div class="step"><strong>3. Sürtünme kapalı</strong><br>Kinetik ve potansiyel enerji değişir; toplamları olan mekanik enerji sabit kalır.</div>
+      <div class="step"><strong>4. Sürtünme açık</strong><br>Mekanik enerji azalırken ısıya dönüşen enerji artar. Sonraki salınımlarda sarkaç daha az yükselir.</div>
+    </div>
+    <p class="small">Bu basitleştirilmiş modelde hava direncinin etkisi sürtünme ayarıyla temsil edilir. Ses ve dışarıdan enerji aktarımı ihmal edilmiştir.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const canvas = document.getElementById('scene');
+  const ctx = canvas.getContext('2d');
+  const chartCanvas = document.getElementById('energyChart');
+  const chartCtx = chartCanvas.getContext('2d');
+  const donutCanvas = document.getElementById('energyDonut');
+  const donutCtx = donutCanvas.getContext('2d');
+  const el = id => document.getElementById(id);
+
+  const TOTAL_START = 10;
+  const MAX_ANGLE = 0.72;
+  const OMEGA = 2.15;
+  const LOSS_RATE = 0.12;
+
+  let time = 0;
+  let running = false;
+  let lastFrame = 0;
+  let frameId = null;
+  let friction = false;
+  let playbackSpeed = 1;
+  let history = [];
+  let lastChartSample = -1;
+  let darkMode = false;
+  let showTrail = true;
+
+  let trailPoints = [];
+  let heatParticles = [];
+
+  const CHART_COLORS = {
+    kinetic: '#ffb703',
+    potential: '#4ea8de',
+    mechanical: '#43aa8b',
+    heat: '#ff6b9d',
+    total: '#9b5de5'
+  };
+
+  const BOB_THEMES = {
+    lemon: {
+      stops: ['#fffef0', '#fde047', '#fbbf24', '#d97706'],
+      stroke: '#d97706',
+      trail: 'rgba(251, 191, 36, ',
+      cheek: 'rgba(255, 117, 143, 0.45)'
+    },
+    strawberry: {
+      stops: ['#fff0f5', '#ff9ebb', '#ff6b9d', '#db2777'],
+      stroke: '#db2777',
+      trail: 'rgba(255, 107, 157, ',
+      cheek: 'rgba(255, 224, 102, 0.55)'
+    },
+    sky: {
+      stops: ['#f0f9ff', '#7dd3fc', '#38bdf8', '#0284c7'],
+      stroke: '#0284c7',
+      trail: 'rgba(56, 189, 248, ',
+      cheek: 'rgba(255, 143, 177, 0.5)'
+    },
+    mint: {
+      stops: ['#f0fdf4', '#86efac', '#34d399', '#059669'],
+      stroke: '#059669',
+      trail: 'rgba(52, 211, 153, ',
+      cheek: 'rgba(255, 143, 177, 0.5)'
+    },
+    lavender: {
+      stops: ['#faf5ff', '#d8b4fe', '#a855f7', '#7e22ce'],
+      stroke: '#7e22ce',
+      trail: 'rgba(168, 85, 247, ',
+      cheek: 'rgba(255, 143, 177, 0.5)'
+    }
+  };
+  let currentBobColor = 'lemon';
+
+  const PASTEL_COLORS = [
+    { hex: '#ffdce8', name: 'Pamuk Şeker' },
+    { hex: '#ffebd2', name: 'Şeftali Sütü' },
+    { hex: '#fff8cc', name: 'Muzlu Puding' },
+    { hex: '#dcfce7', name: 'Naneli Dondurma' },
+    { hex: '#dff2ff', name: 'Bulut Mavisi' },
+    { hex: '#efe2ff', name: 'Lavanta Şekeri' }
+  ];
+  const DARK_PASTEL_COLORS = [
+    { hex: '#1e1938', name: 'Gece Masalı' },
+    { hex: '#281b3d', name: 'Böğürtlen Gecesi' },
+    { hex: '#19273d', name: 'Yıldızlı Gökyüzü' },
+    { hex: '#192e33', name: 'Gece Nanesi' },
+    { hex: '#2d1d38', name: 'Mürdüm Rüyası' }
+  ];
+  let pastelIndex = 0;
+
+  function applyPastelBackground() {
+    const palette = darkMode ? DARK_PASTEL_COLORS : PASTEL_COLORS;
+    const item = palette[pastelIndex % palette.length];
+    document.body.style.backgroundColor = item.hex;
+    el('bgDot').style.backgroundColor = item.hex;
+    el('bgLabel').textContent = (darkMode ? 'Gece: ' : 'Pastel: ') + item.name;
+    pastelIndex++;
+  }
+
+  applyPastelBackground();
+  setInterval(applyPastelBackground, 3000);
+
+  el('darkModeBtn').addEventListener('click', () => {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark-mode', darkMode);
+    el('darkModeBtn').innerHTML = darkMode ? '☀️ Gündüz Modu' : '🌙 Gece Modu';
+    pastelIndex = 0;
+    applyPastelBackground();
+    render();
+  });
+
+  document.querySelectorAll('.color-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentBobColor = btn.dataset.color;
+      render();
+    });
+  });
+
+  el('showTrail').addEventListener('change', (e) => {
+    showTrail = e.target.checked;
+    if (!showTrail) trailPoints = [];
+    render();
+  });
+
+  const fmt = n => Math.max(0, n).toFixed(1).replace('.', ',') + ' J';
+
+  function getEnergies() {
+    const remainingFraction = friction ? Math.exp(-LOSS_RATE * time) : 1;
+    const mechanical = TOTAL_START * remainingFraction;
+    const phase = OMEGA * time;
+    const potential = mechanical * Math.cos(phase) ** 2;
+    const kinetic = mechanical - potential;
+    const heat = TOTAL_START - mechanical;
+    return { mechanical, potential, kinetic, heat, total: mechanical + heat, phase, remainingFraction };
+  }
+
+  function setEnergy(name, value) {
+    const bounded = Math.max(0, Math.min(TOTAL_START, value));
+    el(name + 'Bar').style.width = (bounded / TOTAL_START * 100) + '%';
+    el(name + 'Value').textContent = fmt(bounded);
+  }
+
+  function updateIndicators() {
+    const e = getEnergies();
+    setEnergy('kinetic', e.kinetic);
+    setEnergy('potential', e.potential);
+    setEnergy('mechanical', e.mechanical);
+    setEnergy('heat', e.heat);
+    setEnergy('total', e.total);
+
+    const nearEnd = Math.abs(Math.cos(e.phase)) > 0.88;
+    const nearBottom = Math.abs(Math.cos(e.phase)) < 0.25;
+    let sentence = nearEnd
+      ? 'Sarkaç yüksek noktaya yakın: çekim potansiyel enerjisi en büyük değere yaklaşır.'
+      : nearBottom
+        ? 'Sarkaç en alt noktaya yakın ve en hızlı hâlindedir: kinetik enerji en büyüktür.'
+        : 'Sarkaç hareket ederken çekim potansiyel enerjisi ile kinetik enerji birbirine dönüşür.';
+    if (friction) sentence += ' Sürtünme nedeniyle mekanik enerji azalır, ısı enerjisi artar.';
+    else sentence += ' Sürtünme kapalı: mekanik enerji sabit kalır.';
+    el('explanation').textContent = sentence;
+
+    let info;
+    if (!running && time === 0) {
+      info = 'Başlangıç: Sarkaç en yüksek konumda ve hızı sıfır. Enerjinin tamamı çekim potansiyel enerjisidir.';
+    } else if (nearEnd) {
+      info = 'Sarkaç yön değiştirmeye hazırlanıyor. Hızı çok az; çekim potansiyel enerjisi yüksek, kinetik enerjisi düşüktür.';
+    } else if (nearBottom) {
+      info = 'Sarkaç en alt noktadan geçiyor. En hızlı olduğu an burasıdır; kinetik enerji en yüksek değerine ulaşır.';
+    } else {
+      info = 'Sarkaç aşağı inerken potansiyel enerjinin bir kısmı kinetik enerjiye dönüşür; yukarı çıkarken bu dönüşüm tersine gerçekleşir.';
+    }
+    if (friction) info += ' Sürtünme, mekanik enerjinin bir bölümünü ısı enerjisine dönüştürüyor. Bu yüzden salınım yüksekliği giderek azalıyor.';
+    else info += ' Sürtünme olmadığı için toplam mekanik enerji değişmiyor.';
+    info += ' Oynatma hızı: ' + (playbackSpeed === 0.5 ? 'ağır çekim' : playbackSpeed === 2 ? '2 kat hızlı' : 'normal') + '.';
+    el('liveInfo').textContent = info;
+    el('trialStatus').innerHTML = '<strong>Deneme:</strong> Sürtünme ' + (friction ? 'açık' : 'kapalı') +
+      ' • <strong>Durum:</strong> ' + (running ? 'Çalışıyor' : 'Duraklatıldı');
+  }
+
+  function drawCloud(cx, cy, scale) {
+    ctx.save();
+    ctx.fillStyle = darkMode ? 'rgba(165, 180, 252, 0.12)' : 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
+    ctx.arc(cx + 16 * scale, cy - 5 * scale, 22 * scale, 0, Math.PI * 2);
+    ctx.arc(cx + 34 * scale, cy, 17 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStar(cx, cy, r, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a1 = (i * 72 - 90) * Math.PI / 180;
+      const a2 = (i * 72 + 36 - 90) * Math.PI / 180;
+      if (i === 0) ctx.moveTo(cx + r * Math.cos(a1), cy + r * Math.sin(a1));
+      else ctx.lineTo(cx + r * Math.cos(a1), cy + r * Math.sin(a1));
+      ctx.lineTo(cx + (r * 0.45) * Math.cos(a2), cy + (r * 0.45) * Math.sin(a2));
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const pivotX = w / 2, pivotY = 38, length = 216;
+    const e = getEnergies();
+
+    drawCloud(110, 68, 1.05);
+    drawCloud(740, 82, 0.95);
+    drawStar(195, 130, 6, darkMode ? 'rgba(253, 224, 71, 0.35)' : 'rgba(255, 190, 61, 0.45)');
+    drawStar(705, 155, 7, darkMode ? 'rgba(244, 114, 182, 0.35)' : 'rgba(255, 107, 157, 0.4)');
+    drawStar(240, 50, 5, darkMode ? 'rgba(125, 211, 252, 0.35)' : 'rgba(84, 198, 235, 0.45)');
+
+    const angle = MAX_ANGLE * Math.sqrt(e.remainingFraction) * Math.cos(e.phase);
+    const angularVel = -MAX_ANGLE * Math.sqrt(e.remainingFraction) * OMEGA * Math.sin(e.phase);
+    const bobX = pivotX + length * Math.sin(angle);
+    const bobY = pivotY + length * Math.cos(angle);
+
+    if (running && showTrail) {
+      trailPoints.push({ x: bobX, y: bobY, alpha: 0.75, rot: Math.random() * Math.PI });
+      if (trailPoints.length > 22) trailPoints.shift();
+    }
+    trailPoints.forEach(pt => { if (running) pt.alpha *= 0.93; });
+
+    if (running && friction && Math.abs(angularVel) > 0.25 && Math.random() < 0.45) {
+      heatParticles.push({
+        x: bobX + (Math.random() - 0.5) * 26,
+        y: bobY + (Math.random() - 0.5) * 26,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: -0.9 - Math.random() * 1.3,
+        r: 3 + Math.random() * 2.5,
+        alpha: 0.9
+      });
+    }
+
+    ctx.save();
+    ctx.fillStyle = darkMode ? '#7c69ef' : '#a78bfa';
+    ctx.beginPath();
+    ctx.roundRect(pivotX - 108, 16, 216, 16, 8);
+    ctx.fill();
+    ctx.fillStyle = darkMode ? '#93c5fd' : '#7dd3fc';
+    ctx.beginPath();
+    ctx.roundRect(pivotX - 8, 24, 16, 18, 6);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.setLineDash([7, 7]);
+    ctx.strokeStyle = darkMode ? '#63569e' : '#b8c4ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, length, Math.PI / 2 - MAX_ANGLE, Math.PI / 2 + MAX_ANGLE);
+    ctx.stroke();
+    ctx.restore();
+
+    if (friction && e.remainingFraction < 0.98) {
+      const currMaxAngle = MAX_ANGLE * Math.sqrt(e.remainingFraction);
+      ctx.save();
+      ctx.strokeStyle = '#ff6b9d';
+      ctx.lineWidth = 2.5;
+      [-currMaxAngle, currMaxAngle].forEach(a => {
+        const mx = pivotX + length * Math.sin(a);
+        const my = pivotY + length * Math.cos(a);
+        ctx.beginPath();
+        ctx.arc(mx, my, 5.5, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    const endY = pivotY + length * Math.cos(MAX_ANGLE);
+    ctx.fillStyle = darkMode ? '#c4b5fd' : '#7a7294';
+    ctx.font = 'bold 13px Nunito, Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('En yüksek konumlar', pivotX, h - 25);
+    ctx.strokeStyle = darkMode ? '#63569e' : '#b8c4ff';
+    ctx.setLineDash([4, 5]);
+    ctx.beginPath();
+    ctx.moveTo(pivotX - length * Math.sin(MAX_ANGLE), endY);
+    ctx.lineTo(pivotX + length * Math.sin(MAX_ANGLE), endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const theme = BOB_THEMES[currentBobColor];
+    if (showTrail && trailPoints.length > 1) {
+      for (let i = 0; i < trailPoints.length; i++) {
+        const pt = trailPoints[i];
+        const ratio = (i + 1) / trailPoints.length;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5 + ratio * 11, 0, Math.PI * 2);
+        ctx.fillStyle = theme.trail + (pt.alpha * ratio * 0.35).toFixed(3) + ')';
+        ctx.fill();
+        if (i % 4 === 0) {
+          drawStar(pt.x, pt.y, 4 + ratio * 4, theme.trail + (pt.alpha * 0.7).toFixed(2) + ')');
+        }
+      }
+    }
+
+    ctx.strokeStyle = darkMode ? '#e2e8f0' : '#6c5ce7';
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(pivotX, pivotY);
+    ctx.lineTo(bobX, bobY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffd166';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+
+    if (showTrail && Math.abs(angularVel) > 0.08) {
+      const vScale = 48;
+      const vx = angularVel * Math.cos(angle) * vScale;
+      const vy = -angularVel * Math.sin(angle) * vScale;
+      const arrowEndX = bobX + vx;
+      const arrowEndY = bobY + vy;
+
+      ctx.save();
+      ctx.strokeStyle = '#ffb703';
+      ctx.fillStyle = '#ffb703';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(bobX, bobY);
+      ctx.lineTo(arrowEndX, arrowEndY);
+      ctx.stroke();
+
+      const headAngle = Math.atan2(vy, vx);
+      ctx.beginPath();
+      ctx.moveTo(arrowEndX, arrowEndY);
+      ctx.lineTo(arrowEndX - 11 * Math.cos(headAngle - 0.45), arrowEndY - 11 * Math.sin(headAngle - 0.45));
+      ctx.lineTo(arrowEndX - 11 * Math.cos(headAngle + 0.45), arrowEndY - 11 * Math.sin(headAngle + 0.45));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.shadowColor = darkMode ? 'rgba(0,0,0,0.45)' : 'rgba(108, 92, 231, 0.25)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 7;
+    const ballGradient = ctx.createRadialGradient(bobX - 8, bobY - 10, 2, bobX, bobY, 26);
+    ballGradient.addColorStop(0, theme.stops[0]);
+    ballGradient.addColorStop(.28, theme.stops[1]);
+    ballGradient.addColorStop(.75, theme.stops[2]);
+    ballGradient.addColorStop(1, theme.stops[3]);
+    ctx.fillStyle = ballGradient;
+    ctx.beginPath();
+    ctx.arc(bobX, bobY, 24, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,.8)';
+    ctx.beginPath();
+    ctx.ellipse(bobX - 9, bobY - 11, 4.5, 7, -.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#3b2f4a';
+    ctx.beginPath();
+    ctx.arc(bobX - 6, bobY + 1, 2.2, 0, Math.PI * 2);
+    ctx.arc(bobX + 6, bobY + 1, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = theme.cheek;
+    ctx.beginPath();
+    ctx.ellipse(bobX - 10, bobY + 4.5, 3.2, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(bobX + 10, bobY + 4.5, 3.2, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#3b2f4a';
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(bobX, bobY + 3, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    ctx.restore();
+
+    for (let i = heatParticles.length - 1; i >= 0; i--) {
+      const p = heatParticles[i];
+      if (running) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.022;
+      }
+      if (p.alpha <= 0) {
+        heatParticles.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 107, 157, ${p.alpha.toFixed(2)})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.fillStyle = darkMode ? '#f3efff' : '#6c5ce7';
+    ctx.font = 'bold 14px Fredoka, Arial';
+    ctx.fillText('Sarkaç', pivotX, h - 6);
+    ctx.textAlign = 'left';
+  }
+
+  function drawEnergyChart() {
+    const w = chartCanvas.width, h = chartCanvas.height;
+    chartCtx.clearRect(0, 0, w, h);
+    const left = 62, right = 24, top = 24, bottom = 48;
+    const plotW = w - left - right, plotH = h - top - bottom;
+    const maxT = Math.max(10, Math.ceil(time / 5) * 5);
+    const minT = Math.max(0, maxT - 30);
+    const visible = history.filter(p => p.t >= minT && p.t <= maxT);
+    const current = getEnergies();
+    if (!visible.length || visible[visible.length - 1].t < time) {
+      visible.push({t: time, ...current});
+    }
+    const x = t => left + ((t - minT) / (maxT - minT || 1)) * plotW;
+    const y = v => top + (1 - v / TOTAL_START) * plotH;
+
+    const gridMain = darkMode ? '#3b3066' : '#f1e4ff';
+    const gridSub = darkMode ? '#2f2654' : '#f7f0ff';
+    const axisCol = darkMode ? '#8b7ec8' : '#b8a6e8';
+    const labelCol = darkMode ? '#c4b5fd' : '#7a7294';
+    const titleCol = darkMode ? '#e9e4ff' : '#6c5ce7';
+
+    chartCtx.save();
+    chartCtx.setLineDash([4, 4]);
+    chartCtx.font = 'bold 13px Nunito, Arial';
+    chartCtx.textAlign = 'right';
+    chartCtx.textBaseline = 'middle';
+    for (let j = 0; j <= 5; j++) {
+      const val = j * 2, yy = y(val);
+      chartCtx.strokeStyle = gridMain;
+      chartCtx.lineWidth = 1.2;
+      chartCtx.beginPath(); chartCtx.moveTo(left, yy); chartCtx.lineTo(w - right, yy); chartCtx.stroke();
+      chartCtx.fillStyle = labelCol;
+      chartCtx.fillText(String(val), left - 10, yy);
+    }
+    const tickStart = Math.ceil(minT / 5) * 5;
+    chartCtx.textAlign = 'center';
+    chartCtx.textBaseline = 'top';
+    for (let t = tickStart; t <= maxT; t += 5) {
+      const xx = x(t);
+      chartCtx.strokeStyle = gridSub;
+      chartCtx.beginPath(); chartCtx.moveTo(xx, top); chartCtx.lineTo(xx, h - bottom); chartCtx.stroke();
+      chartCtx.fillStyle = labelCol;
+      chartCtx.fillText(String(t), xx, h - bottom + 10);
+    }
+    chartCtx.restore();
+
+    chartCtx.strokeStyle = axisCol;
+    chartCtx.lineWidth = 2;
+    chartCtx.lineCap = 'round';
+    chartCtx.beginPath(); chartCtx.moveTo(left, top); chartCtx.lineTo(left, h - bottom); chartCtx.lineTo(w - right, h - bottom); chartCtx.stroke();
+    chartCtx.fillStyle = titleCol;
+    chartCtx.font = 'bold 13.5px Fredoka, Arial';
+    chartCtx.textAlign = 'center';
+    chartCtx.fillText('Zaman (sn)', left + plotW / 2, h - 17);
+    chartCtx.save();
+    chartCtx.translate(18, top + plotH / 2);
+    chartCtx.rotate(-Math.PI / 2);
+    chartCtx.fillText('Enerji (J)', 0, 0);
+    chartCtx.restore();
+
+    if (visible.length > 1) {
+      const gradKin = chartCtx.createLinearGradient(0, top, 0, h - bottom);
+      gradKin.addColorStop(0, 'rgba(255, 183, 3, 0.25)');
+      gradKin.addColorStop(1, 'rgba(255, 183, 3, 0.02)');
+
+      const gradPot = chartCtx.createLinearGradient(0, top, 0, h - bottom);
+      gradPot.addColorStop(0, 'rgba(78, 168, 222, 0.25)');
+      gradPot.addColorStop(1, 'rgba(78, 168, 222, 0.02)');
+
+      [['kinetic', gradKin], ['potential', gradPot]].forEach(([name, fillGrad]) => {
+        chartCtx.beginPath();
+        chartCtx.moveTo(x(visible[0].t), y(0));
+        visible.forEach(p => chartCtx.lineTo(x(p.t), y(p[name])));
+        chartCtx.lineTo(x(visible[visible.length - 1].t), y(0));
+        chartCtx.closePath();
+        chartCtx.fillStyle = fillGrad;
+        chartCtx.fill();
+      });
+    }
+
+    const series = [
+      ['kinetic', CHART_COLORS.kinetic],
+      ['potential', CHART_COLORS.potential],
+      ['mechanical', CHART_COLORS.mechanical],
+      ['heat', CHART_COLORS.heat],
+      ['total', CHART_COLORS.total]
+    ];
+    series.forEach(([name, color]) => {
+      chartCtx.beginPath();
+      visible.forEach((p, i) => {
+        const xx = x(p.t), yy = y(p[name]);
+        if (i === 0) chartCtx.moveTo(xx, yy); else chartCtx.lineTo(xx, yy);
+      });
+      chartCtx.strokeStyle = color;
+      chartCtx.lineWidth = name === 'total' ? 4.5 : 3.5;
+      chartCtx.lineJoin = 'round';
+      chartCtx.lineCap = 'round';
+      chartCtx.stroke();
+
+      if (visible.length) {
+        const last = visible[visible.length - 1];
+        const lx = x(last.t), ly = y(last[name]);
+        const pulseRadius = 7 + Math.sin(performance.now() / 190) * 2.5;
+        chartCtx.beginPath();
+        chartCtx.arc(lx, ly, pulseRadius, 0, Math.PI * 2);
+        chartCtx.fillStyle = color + '38';
+        chartCtx.fill();
+
+        chartCtx.beginPath();
+        chartCtx.arc(lx, ly, 5, 0, Math.PI * 2);
+        chartCtx.fillStyle = color;
+        chartCtx.fill();
+        chartCtx.lineWidth = 2;
+        chartCtx.strokeStyle = '#ffffff';
+        chartCtx.stroke();
+      }
+    });
+    el('chartReadout').textContent = 'Zaman: ' + time.toFixed(1).replace('.', ',') +
+      ' sn • Toplam enerji: ' + current.total.toFixed(1).replace('.', ',') + ' J';
+  }
+
+  function drawEnergyDonut() {
+    const w = donutCanvas.width, h = donutCanvas.height;
+    donutCtx.clearRect(0, 0, w, h);
+    const e = getEnergies(), cx = w / 2, cy = h / 2 - 12, radius = 78, thickness = 28;
+    const values = [
+      ['Kinetik', e.kinetic, CHART_COLORS.kinetic],
+      ['Potansiyel', e.potential, CHART_COLORS.potential],
+      ['Isı', e.heat, CHART_COLORS.heat]
+    ];
+
+    donutCtx.beginPath();
+    donutCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+    donutCtx.strokeStyle = darkMode ? '#382e63' : '#f1e4ff';
+    donutCtx.lineWidth = thickness;
+    donutCtx.stroke();
+
+    let angle = -Math.PI / 2;
+    values.forEach(([name, value, color]) => {
+      const sweep = (value / TOTAL_START) * Math.PI * 2;
+      if (sweep > 0.005) {
+        donutCtx.beginPath();
+        donutCtx.arc(cx, cy, radius, angle, angle + sweep);
+        donutCtx.strokeStyle = color;
+        donutCtx.lineWidth = thickness;
+        donutCtx.lineCap = 'round';
+        donutCtx.stroke();
+      }
+      angle += sweep;
+    });
+
+    donutCtx.beginPath();
+    donutCtx.arc(cx, cy, radius - thickness / 2 - 4, 0, Math.PI * 2);
+    donutCtx.fillStyle = darkMode ? '#251e45' : '#ffffff';
+    donutCtx.fill();
+
+    donutCtx.textAlign = 'center';
+    donutCtx.textBaseline = 'middle';
+    donutCtx.fillStyle = darkMode ? '#f3efff' : '#6c5ce7';
+    donutCtx.font = 'bold 26px Fredoka, Arial';
+    donutCtx.fillText('10 J', cx, cy - 6);
+    donutCtx.font = 'bold 12.5px Nunito, Arial';
+    donutCtx.fillStyle = darkMode ? '#c4b5fd' : '#8981a3';
+    donutCtx.fillText('Toplam', cx, cy + 17);
+
+    donutCtx.font = 'bold 13px Nunito, Arial';
+    donutCtx.textAlign = 'left';
+    values.forEach(([name, value, color], i) => {
+      const yy = h - 52 + i * 18;
+      const pct = Math.round((value / TOTAL_START) * 100);
+      donutCtx.fillStyle = color;
+      donutCtx.beginPath();
+      donutCtx.arc(28, yy - 3, 5.5, 0, Math.PI * 2);
+      donutCtx.fill();
+      donutCtx.fillStyle = darkMode ? '#e9e4ff' : '#433a5c';
+      donutCtx.fillText(`${name}: ${value.toFixed(1).replace('.', ',')} J (%${pct})`, 41, yy);
+    });
+  }
+
+  function renderCharts() {
+    if (time === 0 && history.length === 0) history.push({t: 0, ...getEnergies()});
+    if (time - lastChartSample >= 0.06) {
+      history.push({t: time, ...getEnergies()});
+      lastChartSample = time;
+    }
+    if (history.length > 1400) history = history.slice(-1400);
+    drawEnergyChart();
+    drawEnergyDonut();
+  }
+
+  function render() { draw(); updateIndicators(); renderCharts(); }
+
+  function tick(timestamp) {
+    if (!running) return;
+    if (!lastFrame) lastFrame = timestamp;
+    const dt = Math.min((timestamp - lastFrame) / 1000, 0.04);
+    lastFrame = timestamp;
+    time += dt * playbackSpeed;
+    render();
+    frameId = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    lastFrame = 0;
+    updateIndicators();
+    frameId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    running = false;
+    if (frameId !== null) cancelAnimationFrame(frameId);
+    frameId = null;
+    lastFrame = 0;
+    updateIndicators();
+  }
+
+  function reset() {
+    stop();
+    time = 0;
+    friction = el('friction').checked;
+    history = [];
+    trailPoints = [];
+    heatParticles = [];
+    lastChartSample = -1;
+    render();
+  }
+
+  el('start').addEventListener('click', start);
+  el('stop').addEventListener('click', stop);
+  el('reset').addEventListener('click', reset);
+  
+  // Sürtünme kutucuğu değiştiğinde animasyonu ve zamanı sıfırlamak yerine anında canlı güncellesin:
+  el('friction').addEventListener('change', () => {
+    friction = el('friction').checked;
+    updateIndicators();
+    render();
+  });
+
+  function chooseSpeed(speed) {
+    playbackSpeed = speed;
+    ['slowMode', 'normalMode', 'fastMode'].forEach(id => el(id).classList.remove('active'));
+    el(speed === 0.5 ? 'slowMode' : speed === 2 ? 'fastMode' : 'normalMode').classList.add('active');
+    updateIndicators();
+  }
+  el('slowMode').addEventListener('click', () => chooseSpeed(0.5));
+  el('normalMode').addEventListener('click', () => chooseSpeed(1));
+  el('fastMode').addEventListener('click', () => chooseSpeed(2));
+
+  reset();
+})();
+</script>
+</body>
+</html>
