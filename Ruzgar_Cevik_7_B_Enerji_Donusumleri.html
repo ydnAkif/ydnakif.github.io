@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hız Treni Enerji Oyunu</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101b30;color:white;font-family:Arial,sans-serif}
+main{max-width:1000px;margin:auto;padding:18px}
+h1{color:#54e3b4}
+.card{background:#1c2c45;border:1px solid #40536e;border-radius:14px;padding:16px;margin:14px 0}
+button{padding:12px 18px;border:0;border-radius:9px;color:white;background:#415675;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4}
+.start{background:#119b70}
+.pause{background:#d28a32}
+.reset{background:#d44e5b}
+canvas{display:block;width:100%;height:auto;border-radius:12px}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+.row button{flex:1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.stat{background:#293e5b;padding:12px;border-radius:10px}
+.stat small{color:#c2d2e6}
+.stat strong{display:block;font-size:21px;margin-top:7px}
+label{display:flex;justify-content:space-between;margin:13px 0 6px}
+input{width:100%;accent-color:#40d5a4}
+.bar{height:12px;background:#40536e;border-radius:10px;overflow:hidden;margin-top:5px}
+.fill{height:100%;transition:width .08s}
+.energy{margin:12px 0}
+.muted{color:#b9c9dc;font-size:13px;line-height:1.5}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<h1>🎢 HIZ TRENİ ENERJİ LABORATUVARI</h1>
+<p class="muted">Potansiyel enerji, kinetik enerji, mekanik enerji, ısı ve esneklik potansiyel enerjisini keşfet!</p>
+
+<div class="card">
+<h3>🎢 HAREKETLİ HIZ TRENİ</h3>
+<canvas id="scene" width="900" height="360"></canvas>
+<div class="row" style="margin-top:14px">
+<button class="start" id="start">▶ BAŞLAT</button>
+<button class="pause" id="pause">Ⅱ DURDUR</button>
+<button class="reset" id="reset">↻ SIFIRLA</button>
+</div>
+<p id="status" class="muted">Başlamak için BAŞLAT düğmesine bas.</p>
+</div>
+
+<div class="stats">
+<div class="stat"><small>Hız</small><strong id="speed">0 m/s</strong></div>
+<div class="stat"><small>Yükseklik</small><strong id="heightNow">15 m</strong></div>
+<div class="stat"><small>Toplam enerji</small><strong id="total">7350 J</strong></div>
+<div class="stat"><small>Süre</small><strong id="time">0 s</strong></div>
+</div>
+
+<div class="card">
+<h3>🎛️ DENEY AYARLARI</h3>
+<label>Kütle <b id="massVal">50 kg</b></label>
+<input id="mass" type="range" min="20" max="100" step="5" value="50">
+<label>Başlangıç yüksekliği <b id="heightVal">15 m</b></label>
+<input id="height" type="range" min="8" max="15" value="15">
+<label>Sürtünme <b id="frictionVal">%5</b></label>
+<input id="friction" type="range" min="0" max="20" value="5">
+<label>Yay sertliği <b id="springVal">500 N/m</b></label>
+<input id="spring" type="range" min="100" max="1500" step="100" value="500">
+<label>Yay sıkışması <b id="compressionVal">0,5 m</b></label>
+<input id="compression" type="range" min="0" max="1" step=".05" value=".5">
+<p class="muted">Ayarları değiştirdikten sonra SIFIRLA düğmesine basarak yeni deneyi başlat.</p>
+</div>
+
+<div class="card">
+<h3>⚡ CANLI ENERJİ DEĞERLERİ</h3>
+<div id="bars"></div>
+<hr style="border-color:#40536e">
+<h3>Mekanik enerji: <span id="mechanical">7350 J</span></h3>
+<h3>Toplam enerji kontrolü: <span id="conservation">7350 J</span></h3>
+<p id="error" class="muted"></p>
+</div>
+
+<div class="card">
+<h3>📈 ENERJİ GRAFİĞİ</h3>
+<canvas id="chart" width="900" height="300"></canvas>
+<p class="muted">Yeşil: Potansiyel | Mavi: Kinetik | Mor: Esneklik | Kırmızı: Isı</p>
+</div>
+
+<div class="card">
+<h3>🔬 DENEY KARŞILAŞTIRMA</h3>
+<div class="row">
+<button id="saveA">A DENEYİNİ KAYDET</button>
+<button id="saveB">B DENEYİNİ KAYDET</button>
+</div>
+<p id="a">A: Henüz kaydedilmedi.</p>
+<p id="b">B: Henüz kaydedilmedi.</p>
+<p id="compare" class="muted">İki deneyi kaydet ve karşılaştır.</p>
+</div>
+
+<div class="card">
+<h3>🧠 BİLGİ YARIŞMASI</h3>
+<h3 id="question"></h3>
+<div id="answers"></div>
+<p id="feedback" class="muted">Cevabını seç.</p>
+Puan: <b id="score">0</b>
+</div>
+
+<div class="card">
+<h3>📚 FİZİK BİLGİLERİ</h3>
+<p>🟢 Potansiyel enerji: Ep = mgh</p>
+<p>🔵 Kinetik enerji: Ek = ½mv²</p>
+<p>🟡 Mekanik enerji: Em = Ep + Ek + Ee</p>
+<p>🔴 Isı enerjisi: Sürtünme ile mekanik enerjiden dönüşür.</p>
+<p>🟣 Esneklik potansiyel enerjisi: Ee = ½kx²</p>
+<p>♻️ Enerjinin korunumu: Toplam enerji korunur. Sürtünme, mekanik enerjinin bir bölümünü ısıya dönüştürür.</p>
+</div>
+</main>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const canvas=$('scene'),ctx=canvas.getContext('2d');
+const graph=$('chart'),gc=graph.getContext('2d');
+const g=9.8,L=40;
+let m=50,h0=15,mu=.05,k=500,compression=.5;
+let x=0.3,v=0,heat=0,time=0,E0=0;
+let running=false,raf=0,last=0,history=[];
+let A=null,B=null,score=0,qi=0;
+
+const questions=[
+{q:'Vagon aşağı inerken hangi enerji artar?',a:['Kinetik enerji','Potansiyel enerji','Kütle'],c:0,e:'Potansiyel enerji kinetik enerjiye dönüşür.'},
+{q:'Sürtünme sonucu ne oluşur?',a:['Isı enerjisi','Kütle','Yok olan enerji'],c:0,e:'Sürtünme mekanik enerjiyi iç enerjiye dönüştürür.'},
+{q:'Sıkışan yay hangi enerjiyi depolar?',a:['Kinetik enerji','Esneklik potansiyel enerjisi','Ses'],c:1,e:'Sıkışan yayda esneklik potansiyel enerjisi depolanır.'},
+{q:'Toplam enerji için hangisi doğrudur?',a:['Yok olur','Korunur','Sürekli artar'],c:1,e:'Bütün enerji türleri hesaba katıldığında toplam enerji korunur.'},
+{q:'Hız iki katına çıkarsa kinetik enerji kaç kat olur?',a:['2','4','8'],c:1,e:'Kinetik enerji hızın karesiyle orantılıdır.'}
+];
+
+function fmt(n){return Math.round(n).toLocaleString('tr-TR')}
+function h(z){
+return 2+(h0-2)*(1+Math.cos(2*Math.PI*z/L))/2;
+}
+function slope(z){
+return -(h0-2)*Math.PI/L*Math.sin(2*Math.PI*z/L);
+}
+function springE(z){
+if(z<17||z>23||compression===0)return 0;
+let t=(z-17)/6;
+return Math.min(.5*k*compression*compression,.12*E0)*Math.sin(Math.PI*t)**2;
+}
+function springSlope(z){
+if(z<17||z>23||compression===0)return 0;
+let t=(z-17)/6;
+return Math.min(.5*k*compression*compression,.12*E0)*
+Math.PI/3*Math.sin(Math.PI*t)*Math.cos(Math.PI*t);
+}
+function readSettings(){
+m=+$('mass').value;
+h0=+$('height').value;
+mu=+$('friction').value/100;
+k=+$('spring').value;
+compression=+$('compression').value;
+$('massVal').textContent=m+' kg';
+$('heightVal').textContent=h0+' m';
+$('frictionVal').textContent=Math.round(mu*100)+'%';
+$('springVal').textContent=k+' N/m';
+$('compressionVal').textContent=compression.toLocaleString('tr-TR')+' m';
+}
+function energies(){
+let pe=m*g*h(x);
+let se=springE(x);
+let ke=.5*m*v*v;
+return {pe,se,ke,heat,mech:pe+se+ke,total:E0};
+}
+function draw(){
+let w=900,hh=360;
+ctx.clearRect(0,0,w,hh);
+let sky=ctx.createLinearGradient(0,0,0,hh);
+sky.addColorStop(0,'#8bdcf7');
+sky.addColorStop(1,'#e9f6d9');
+ctx.fillStyle=sky;
+ctx.fillRect(0,0,w,hh);
+
+ctx.fillStyle='#ffda64';
+ctx.beginPath();ctx.arc(790,55,27,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#8acb83';ctx.fillRect(0,290,w,70);
+
+function px(z){return 35+z/L*820}
+function py(z){return 290-h(z)*15}
+
+ctx.beginPath();
+for(let i=0;i<=240;i++){
+let z=i/240*L;
+if(i===0)ctx.moveTo(px(z),py(z));
+else ctx.lineTo(px(z),py(z));
+}
+ctx.strokeStyle='#344b64';ctx.lineWidth=15;ctx.stroke();
+ctx.strokeStyle='#f3f7fa';ctx.lineWidth=3;ctx.stroke();
+
+for(let i=0;i<=24;i++){
+let z=i/24*L;
+ctx.strokeStyle='#4c6177';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(px(z),py(z)+5);ctx.lineTo(px(z),310);ctx.stroke();
+}
+
+ctx.fillStyle='#183e58';
+ctx.font='bold 16px Arial';
+ctx.fillText('BAŞLANGIÇ',25,25);
+ctx.fillText('YAY BÖLGESİ',405,335);
+ctx.fillText('FİNAL',800,25);
+
+let xx=px(x),yy=py(x);
+ctx.save();
+ctx.translate(xx,yy-14);
+ctx.rotate(Math.atan(slope(x)));
+ctx.fillStyle='#263a50';
+ctx.fillRect(-20,0,40,10);
+ctx.fillStyle='#318fe0';
+ctx.fillRect(-16,-13,32,12);
+ctx.fillStyle='#f0a27b';
+ctx.beginPath();ctx.arc(0,-20,8,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#20344b';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(0,-2);ctx.stroke();
+ctx.fillStyle='#263a50';
+ctx.beginPath();ctx.arc(-11,13,5,0,7);ctx.arc(11,13,5,0,7);ctx.fill();
+ctx.restore();
+
+ctx.fillStyle='#173e5a';ctx.font='bold 13px Arial';
+ctx.fillText('VAGON',Math.min(790,xx+18),yy-28);
+}
+function drawGraph(){
+gc.clearRect(0,0,900,300);
+for(let i=0;i<=4;i++){
+let y=15+i*65;
+gc.strokeStyle='#40536e';
+gc.beginPath();gc.moveTo(55,y);gc.lineTo(890,y);gc.stroke();
+gc.fillStyle='#b9c9dc';
+gc.fillText((100-i*25)+'%',7,y+4);
+}
+let colors=['#26b47c','#398de9','#aa72e9','#e66c4f'];
+let keys=['pe','ke','se','heat'];
+keys.forEach((key,j)=>{
+gc.beginPath();
+gc.strokeStyle=colors[j];gc.lineWidth=3;
+history.forEach((e,i)=>{
+let xx=55+i/Math.max(1,history.length-1)*830;
+let yy=275-e[key]/Math.max(1,E0)*260;
+if(i===0)gc.moveTo(xx,yy);else gc.lineTo(xx,yy);
+});
+gc.stroke();
+});
+}
+function render(){
+let e=energies();
+$('speed').textContent=Math.abs(v).toFixed(2)+' m/s';
+$('heightNow').textContent=h(x).toFixed(2)+' m';
+$('total').textContent=fmt(E0)+' J';
+$('time').textContent=time.toFixed(1)+' s';
+$('mechanical').textContent=fmt(e.mech)+' J';
+$('conservation').textContent=fmt(e.mech+heat)+' J';
+$('error').textContent='Enerji farkı: '+(e.mech+heat-E0).toFixed(2)+' J (sayısal hesaplama farkı dahil).';
+
+let data=[
+['Yer çekimi potansiyel enerjisi',e.pe,'#26b47c'],
+['Kinetik enerji',e.ke,'#398de9'],
+['Esneklik potansiyel enerjisi',e.se,'#aa72e9'],
+['Isı enerjisi',heat,'#e66c4f']
+];
+$('bars').innerHTML=data.map(d=>`
+<div class="energy">
+<div style="display:flex;justify-content:space-between;font-size:13px;gap:8px">
+<b>${d[0]}</b><b>${fmt(d[1])} J</b>
+</div>
+<div class="bar"><div class="fill" style="background:${d[2]};width:${Math.max(0,Math.min(100,d[1]/E0*100))}%"></div></div>
+</div>`).join('');
+}
+function step(dt){
+let sl=slope(x);
+let metric=Math.sqrt(1+sl*sl);
+let gravity=-g*sl/metric;
+let springForce=-springSlope(x)/(m*metric);
+let direction=Math.sign(v);
+if(!direction)direction=Math.sign(gravity+springForce);
+let friction=-mu*g*direction;
+let acceleration=gravity+springForce+friction;
+
+v+=acceleration*dt;
+x+=v*dt/metric;
+time+=dt;
+
+let ds=Math.abs(v)*dt;
+heat+=mu*m*g*ds;
+
+// Enerjinin korunumu için sayısal yuvarlama düzeltmesi
+let e=energies();
+let error=E0-(e.mech+heat);
+if(Math.abs(error)<.2){
+heat=Math.max(0,heat+error);
+}
+
+// Parkurun sınırları
+if(x<0){x=0;v=Math.abs(v)*.7;}
+if(x>L){x=L;v=-Math.abs(v)*.7;}
+if(x===0&&v<0)v=0;
+}
+function frame(t){
+if(!running)return;
+if(!last)last=t;
+let dt=Math.min((t-last)/1000,.025);
+last=t;
+let count=3;
+for(let i=0;i<count;i++){
+step(dt/count);
+}
+history.push(energies());
+if(history.length>250)history.shift();
+draw();render();drawGraph();
+raf=requestAnimationFrame(frame);
+}
+function reset(){
+running=false;
+cancelAnimationFrame(raf);
+readSettings();
+x=.3;v=0;heat=0;time=0;history=[];
+E0=m*g*h(x);
+$('status').textContent='Hazır! Başlat düğmesine bas.';
+$('start').disabled=false;
+$('pause').disabled=true;
+draw();render();drawGraph();
+}
+$('start').onclick=()=>{
+if(running)return;
+running=true;
+last=0;
+$('status').textContent='🛹 Hız treni hareket ediyor!';
+$('start').disabled=true;
+$('pause').disabled=false;
+raf=requestAnimationFrame(frame);
+};
+$('pause').onclick=()=>{
+running=false;
+cancelAnimationFrame(raf);
+$('status').textContent='⏸️ Vagon duraklatıldı. Devam etmek için BAŞLAT.';
+$('start').disabled=false;
+$('pause').disabled=true;
+};
+$('reset').onclick=reset;
+
+['mass','height','friction','spring','compression'].forEach(id=>{
+$(id).addEventListener('input',()=>{
+$('massVal').textContent=$('mass').value+' kg';
+$('heightVal').textContent=$('height').value+' m';
+$('frictionVal').textContent='%'+$('friction').value;
+$('springVal').textContent=$('spring').value+' N/m';
+$('compressionVal').textContent=$('compression').value.replace('.',',')+' m';
+});
+});
+
+function save(which){
+let e=energies();
+let sample={m,h0,mu,k,compression,total:E0};
+if(which==='A'){
+A=sample;
+$('a').textContent=`A: ${m} kg, ${h0} m, sürtünme %${mu*100}, ${fmt(E0)} J`;
+}else{
+B=sample;
+$('b').textContent=`B: ${m} kg, ${h0} m, sürtünme %${mu*100}, ${fmt(E0)} J`;
+}
+if(A&&B){
+$('compare').textContent=`A deneyi: ${fmt(A.total)} J. B deneyi: ${fmt(B.total)} J. Enerji farkı: ${fmt(Math.abs(A.total-B.total))} J.`;
+}
+}
+$('saveA').onclick=()=>save('A');
+$('saveB').onclick=()=>save('B');
+
+function quiz(){
+let q=questions[qi%questions.length];
+$('question').textContent=q.q;
+$('answers').innerHTML=q.a.map((a,i)=>
+`<button style="display:block;width:100%;text-align:left;margin:7px 0" data-i="${i}">${a}</button>`
+).join('');
+}
+$('answers').onclick=e=>{
+let b=e.target.closest('button[data-i]');
+if(!b)return;
+let q=questions[qi%questions.length];
+let ok=Number(b.dataset.i)===q.c;
+$('feedback').textContent=(ok?'✅ Doğru! ':'❌ Yanlış. ')+q.e;
+if(ok){score+=10;$('score').textContent=score;}
+qi++;
+$('answers').querySelectorAll('button').forEach(b=>b.disabled=true);
+setTimeout(quiz,1700);
+};
+quiz();
+reset();
+})();
+</script>
+</body>
+</html>
