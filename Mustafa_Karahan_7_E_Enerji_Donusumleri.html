@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>7. Sınıf Fen Bilimleri — Enerji Dönüşümleri (Kaykay Rampası)</title>
+
+<style>
+
+  :root {
+
+    --bg: #f4f7fb;
+
+    --card: #ffffff;
+
+    --text: #1e293b;
+
+    --muted: #64748b;
+
+    --border: #e2e8f0;
+
+    --primary: #2563eb;
+
+    --primary-hover: #1d4ed8;
+
+    --kinetik: #10b981;
+
+    --potansiyel: #3b82f6;
+
+    --mekanik: #8b5cf6;
+
+    --isi: #f97316;
+
+    --toplam: #0f172a;
+
+  }
+
+  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+  body { margin: 0; background: var(--bg); color: var(--text); padding: 16px; }
+
+  .container { max-width: 960px; margin: 0 auto; display: grid; gap: 16px; }
+
+  header { background: var(--card); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--border); }
+
+  header h1 { margin: 0 0 4px; font-size: 1.25rem; }
+
+  header p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+  .main-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+
+  @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 16px; }
+
+  canvas { width: 100%; height: 320px; background: linear-gradient(180deg, #e0f2fe 0%, #f8fafc 85%, #cbd5e1 85%); border-radius: 10px; border: 1px solid var(--border); display: block; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+
+  button { padding: 9px 16px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.15s; }
+
+  .btn-start { background: var(--primary); color: #fff; }
+
+  .btn-start:hover { background: var(--primary-hover); }
+
+  .btn-stop { background: #ef4444; color: #fff; }
+
+  .btn-reset { background: #e2e8f0; color: var(--text); }
+
+  .toggle-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem; }
+
+  .toggle-wrap input { width: 18px; height: 18px; cursor: pointer; }
+
+  .bars { display: grid; gap: 12px; }
+
+  .bar-item label { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; margin-bottom: 4px; }
+
+  .bar-bg { height: 14px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+
+  .bar-fill { height: 100%; width: 0%; transition: width 0.05s linear; }
+
+  .explain { background: #f8fafc; border-left: 4px solid var(--primary); padding: 12px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; }
+
+  .explain strong { display: block; margin-bottom: 4px; }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <header>
+
+    <h1>7. Sınıf Fen Bilimleri: Enerji Dönüşümleri (Kaykay Rampası)</h1>
+
+    <p>Çekim Potansiyel Enerjisi, Kinetik Enerji, Mekanik Enerji ve Sürtünme (Isı Enerjisi) Simülasyonu</p>
+
+  </header>
+
+
+
+  <div class="main-grid">
+
+    <div class="card">
+
+      <canvas id="simCanvas" width="540" height="320"></canvas>
+
+      <div class="controls">
+
+        <button class="btn-start" id="btnStart">Başlat</button>
+
+        <button class="btn-stop" id="btnStop">Durdur</button>
+
+        <button class="btn-reset" id="btnReset">Sıfırla</button>
+
+        <label class="toggle-wrap">
+
+          <input type="checkbox" id="frictionToggle">
+
+          Rampa Sürtünmesi
+
+        </label>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card">
+
+      <h3 style="margin-top:0; font-size:1.05rem;">Anlık Enerji Göstergeleri</h3>
+
+      <div class="bars">
+
+        <div class="bar-item">
+
+          <label><span>Kinetik Enerji</span><span id="valKinetik">0 J</span></label>
+
+          <div class="bar-bg"><div class="bar-fill" id="barKinetik" style="background:var(--kinetik)"></div></div>
+
+        </div>
+
+        <div class="bar-item">
+
+          <label><span>Potansiyel Enerji</span><span id="valPotansiyel">100 J</span></label>
+
+          <div class="bar-bg"><div class="bar-fill" id="barPotansiyel" style="background:var(--potansiyel)"></div></div>
+
+        </div>
+
+        <div class="bar-item">
+
+          <label><span>Mekanik Enerji (K + P)</span><span id="valMekanik">100 J</span></label>
+
+          <div class="bar-bg"><div class="bar-fill" id="barMekanik" style="background:var(--mekanik)"></div></div>
+
+        </div>
+
+        <div class="bar-item">
+
+          <label><span>Isı Enerjisi (Sürtünme)</span><span id="valIsi">0 J</span></label>
+
+          <div class="bar-bg"><div class="bar-fill" id="barIsi" style="background:var(--isi)"></div></div>
+
+        </div>
+
+        <div class="bar-item">
+
+          <label><span>Toplam Enerji</span><span id="valToplam">100 J</span></label>
+
+          <div class="bar-bg"><div class="bar-fill" id="barToplam" style="background:var(--toplam); width:100%"></div></div>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="explain" style="margin-top:16px;" id="statusBox">
+
+        <strong>Durum Açıklaması:</strong>
+
+        Kaykay rampanın en üst noktasında duruyor. Yüksekliği maksimum olduğu için tüm enerjisi çekim potansiyel enerjisidir. Başlat'a basarak hareketi izleyin.
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="card explain">
+
+    <strong>Bilimsel Açıklama (Enerjinin Korunumu):</strong>
+
+    • <b>Sürtünme Kapalı İken:</b> Kaykay aşağı inerken potansiyel enerji kinetik enerjiye, yukarı çıkarken kinetik enerji potansiyel enerjiye dönüşür. Mekanik enerji (Kinetik + Potansiyel) daima korunur.<br>
+
+    • <b>Sürtünme Açık İken:</b> Sürtünme kuvveti mekanik enerjinin bir kısmını ısı enerjisine dönüştürür. Bu nedenle kaykay her çıkışta biraz daha az yükselir ve sonunda durur; ancak <b>Toplam Enerji (Mekanik + Isı)</b> her zaman sabit kalır.
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+  const canvas = document.getElementById('simCanvas');
+
+  const ctx = canvas.getContext('2d');
+
+
+
+  const btnStart = document.getElementById('btnStart');
+
+  const btnStop = document.getElementById('btnStop');
+
+  const btnReset = document.getElementById('btnReset');
+
+  const frictionToggle = document.getElementById('frictionToggle');
+
+
+
+  const valKinetik = document.getElementById('valKinetik');
+
+  const valPotansiyel = document.getElementById('valPotansiyel');
+
+  const valMekanik = document.getElementById('valMekanik');
+
+  const valIsi = document.getElementById('valIsi');
+
+  const valToplam = document.getElementById('valToplam');
+
+
+
+  const barKinetik = document.getElementById('barKinetik');
+
+  const barPotansiyel = document.getElementById('barPotansiyel');
+
+  const barMekanik = document.getElementById('barMekanik');
+
+  const barIsi = document.getElementById('barIsi');
+
+  const statusBox = document.getElementById('statusBox');
+
+
+
+  const TOTAL_ENERGY = 100;
+
+  let x = -1;
+
+  let v = 0;
+
+  let thermalEnergy = 0;
+
+  let isRunning = false;
+
+  let lastTime = null;
+
+
+
+  function getRampPoint(normX) {
+
+    const cx = canvas.width / 2;
+
+    const widthScale = 210;
+
+    const baseY = 265;
+
+    const heightScale = 185;
+
+    const px = cx + normX * widthScale;
+
+    const py = baseY - (normX * normX) * heightScale;
+
+    return { px, py, heightNorm: normX * normX };
+
+  }
+
+
+
+  function updateUI(kinetic, potential, mechanical, thermal) {
+
+    valKinetik.textContent = kinetic.toFixed(1) + ' J';
+
+    valPotansiyel.textContent = potential.toFixed(1) + ' J';
+
+    valMekanik.textContent = mechanical.toFixed(1) + ' J';
+
+    valIsi.textContent = thermal.toFixed(1) + ' J';
+
+    valToplam.textContent = TOTAL_ENERGY.toFixed(1) + ' J';
+
+
+
+    barKinetik.style.width = kinetic + '%';
+
+    barPotansiyel.style.width = potential + '%';
+
+    barMekanik.style.width = mechanical + '%';
+
+    barIsi.style.width = thermal + '%';
+
+
+
+    let msg = '';
+
+    if (!isRunning && thermal > 99) {
+
+      msg = 'Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve kaykay en alt noktada durdu.';
+
+    } else if (Math.abs(x) < 0.08 && isRunning) {
+
+      msg = 'Kaykay rampanın en alt noktasından geçiyor: Kinetik enerji en yüksek, potansiyel enerji sıfıra yakın.';
+
+    } else if (v > 0.05) {
+
+      msg = x < 0
+
+        ? 'Kaykay aşağı iniyor: Potansiyel enerji azalırken kinetik enerji artıyor.'
+
+        : 'Kaykay yukarı çıkıyor: Kinetik enerji potansiyel enerjiye dönüşüyor.';
+
+    } else if (v < -0.05) {
+
+      msg = x > 0
+
+        ? 'Kaykay aşağı iniyor: Potansiyel enerji azalırken kinetik enerji artıyor.'
+
+        : 'Kaykay yukarı çıkıyor: Kinetik enerji potansiyel enerjiye dönüşüyor.';
+
+    } else {
+
+      msg = 'Kaykay en yüksek noktada anlık olarak durdu: Potansiyel enerji maksimum, kinetik enerji sıfır.';
+
+    }
+
+
+
+    if (frictionToggle.checked) {
+
+      msg += ' (Sürtünme açık: Mekanik enerji azalarak ısıya dönüşüyor.)';
+
+    }
+
+    statusBox.innerHTML = '<strong>Durum Açıklaması:</strong>' + msg;
+
+  }
+
+
+
+  function draw() {
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+
+    ctx.strokeStyle = '#cbd5e1';
+
+    ctx.setLineDash([4, 4]);
+
+    ctx.lineWidth = 1;
+
+    for (let h = 0; h <= 1; h += 0.25) {
+
+      const y = 265 - h * 185;
+
+      ctx.beginPath();
+
+      ctx.moveTo(40, y);
+
+      ctx.lineTo(canvas.width - 40, y);
+
+      ctx.stroke();
+
+    }
+
+    ctx.setLineDash([]);
+
+
+
+    ctx.beginPath();
+
+    ctx.lineWidth = 6;
+
+    ctx.strokeStyle = frictionToggle.checked ? '#ea580c' : '#334155';
+
+    for (let i = -1.05; i <= 1.05; i += 0.02) {
+
+      const pt = getRampPoint(i);
+
+      if (i === -1.05) ctx.moveTo(pt.px, pt.py);
+
+      else ctx.lineTo(pt.px, pt.py);
+
+    }
+
+    ctx.stroke();
+
+
+
+    const pos = getRampPoint(x);
+
+    const slope = -2 * x * (185 / 210);
+
+    const angle = Math.atan(slope);
+
+
+
+    ctx.save();
+
+    ctx.translate(pos.px, pos.py);
+
+    ctx.rotate(angle);
+
+
+
+    ctx.fillStyle = '#0f172a';
+
+    ctx.beginPath();
+
+    ctx.arc(-12, -5, 4, 0, Math.PI * 2);
+
+    ctx.arc(12, -5, 4, 0, Math.PI * 2);
+
+    ctx.fill();
+
+
+
+    ctx.fillStyle = '#ef4444';
+
+    ctx.fillRect(-18, -11, 36, 4);
+
+
+
+    ctx.strokeStyle = '#1e293b';
+
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(-6, -11); ctx.lineTo(-2, -24);
+
+    ctx.moveTo(6, -11); ctx.lineTo(2, -24);
+
+    ctx.moveTo(0, -24); ctx.lineTo(0, -38);
+
+    ctx.stroke();
+
+
+
+    ctx.fillStyle = '#2563eb';
+
+    ctx.beginPath();
+
+    ctx.arc(0, -45, 7, 0, Math.PI * 2);
+
+    ctx.fill();
+
+
+
+    ctx.restore();
+
+  }
+
+
+
+  function stepPhysics(dt) {
+
+    const g = 3.2;
+
+    const accel = -g * x;
+
+    v += accel * dt;
+
+    x += v * dt;
+
+
+
+    if (frictionToggle.checked) {
+
+      const damping = 0.28;
+
+      v *= Math.exp(-damping * dt);
+
+      const currentMech = TOTAL_ENERGY * (x * x + (v * v) / g);
+
+      thermalEnergy = Math.min(TOTAL_ENERGY, Math.max(thermalEnergy, TOTAL_ENERGY - currentMech));
+
+      if (TOTAL_ENERGY - thermalEnergy < 0.25 && Math.abs(x) < 0.04) {
+
+        x = 0;
+
+        v = 0;
+
+        thermalEnergy = TOTAL_ENERGY;
+
+        isRunning = false;
+
+      }
+
+    } else {
+
+      const availableMech = Math.max(0, TOTAL_ENERGY - thermalEnergy);
+
+      const maxAmp = Math.sqrt(availableMech / TOTAL_ENERGY);
+
+      if (Math.abs(x) > maxAmp) {
+
+        x = Math.sign(x) * maxAmp;
+
+        v = 0;
+
+      }
+
+      const targetSpeedSq = Math.max(0, g * (maxAmp * maxAmp - x * x));
+
+      v = (v >= 0 ? 1 : -1) * Math.sqrt(targetSpeedSq);
+
+    }
+
+  }
+
+
+
+  function loop(now) {
+
+    if (!lastTime) lastTime = now;
+
+    const dt = Math.min(0.03, (now - lastTime) / 1000);
+
+    lastTime = now;
+
+
+
+    if (isRunning) {
+
+      stepPhysics(dt);
+
+    }
+
+
+
+    const potential = Math.min(TOTAL_ENERGY - thermalEnergy, TOTAL_ENERGY * x * x);
+
+    const mechanical = TOTAL_ENERGY - thermalEnergy;
+
+    const kinetic = Math.max(0, mechanical - potential);
+
+
+
+    updateUI(kinetic, potential, mechanical, thermalEnergy);
+
+    draw();
+
+
+
+    if (isRunning) {
+
+      requestAnimationFrame(loop);
+
+    }
+
+  }
+
+
+
+  function resetSimulation() {
+
+    isRunning = false;
+
+    lastTime = null;
+
+    x = -1;
+
+    v = 0;
+
+    thermalEnergy = 0;
+
+    updateUI(0, 100, 100, 0);
+
+    draw();
+
+  }
+
+
+
+  btnStart.addEventListener('click', () => {
+
+    if (!isRunning) {
+
+      if (thermalEnergy >= 99.5) resetSimulation();
+
+      isRunning = true;
+
+      lastTime = null;
+
+      requestAnimationFrame(loop);
+
+    }
+
+  });
+
+
+
+  btnStop.addEventListener('click', () => {
+
+    isRunning = false;
+
+  });
+
+
+
+  btnReset.addEventListener('click', resetSimulation);
+
+
+
+  frictionToggle.addEventListener('change', () => {
+
+    draw();
+
+  });
+
+
+
+  resetSimulation();
+
+</script>
+
+</body>
+
+</html>
