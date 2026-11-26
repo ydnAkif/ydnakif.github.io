@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarkaçta Enerji Dönüşümü</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 16px;
+    background: #edf2f8;
+    font-family: Arial, sans-serif;
+    color: #243447;
+}
+
+.container {
+    max-width: 850px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px #0002;
+}
+
+h1 {
+    text-align: center;
+    color: #244c75;
+    font-size: 25px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #718096;
+}
+
+canvas {
+    width: 100%;
+    height: 350px;
+    display: block;
+    background: #f5f9fd;
+    border-radius: 14px;
+    border: 1px solid #dce5ef;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 15px 0;
+}
+
+button {
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 9px;
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#start { background: #218653; }
+#stop { background: #d97736; }
+#reset { background: #426b9b; }
+#slower, #faster { background: #64748b; }
+#speedDisplay {
+    background: #334155;
+    min-width: 75px;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.friction {
+    background: #edf2f7;
+    padding: 14px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+input {
+    transform: scale(1.3);
+    margin-right: 8px;
+}
+
+h2 {
+    font-size: 19px;
+    color: #244c75;
+    margin-top: 25px;
+}
+
+.energy {
+    margin: 14px 0;
+}
+
+.energy-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.bar-bg {
+    width: 100%;
+    height: 19px;
+    background: #e5eaf0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.06s;
+}
+
+.kinetic { background: #e6a23c; }
+.potential { background: #3689d8; }
+.mechanical { background: #8064c7; }
+.heat { background: #e46b54; }
+.total { background: #269b78; }
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.point-info {
+    background: #edf5fc;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 18px;
+    line-height: 1.6;
+}
+
+.point-info strong {
+    color: #244c75;
+}
+
+.note {
+    text-align: center;
+    font-size: 12px;
+    color: #718096;
+    line-height: 1.5;
+}
+
+.chart-wrap {
+    margin-top: 18px;
+    padding: 14px;
+    background: #f7fafc;
+    border: 1px solid #dce5ef;
+    border-radius: 14px;
+}
+
+#energyChart {
+    width: 100%;
+    height: 260px;
+    display: block;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.chart-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 4px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: middle;
+    background: var(--line-color);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⚖️ Sarkaçta Enerji Dönüşümü</h1>
+
+<p class="subtitle">
+Çekim potansiyel enerjisi ve kinetik enerji
+</p>
+
+<canvas id="scene"></canvas>
+
+<div class="legend">
+    <span>🔵 Potansiyel enerji</span>
+    <span>🟠 Kinetik enerji</span>
+    <span>🟣 Mekanik enerji</span>
+</div>
+
+<div class="controls">
+    <button id="start">▶ Başlat</button>
+    <button id="stop">Durdur</button>
+    <button id="reset">↻ Sıfırla</button>
+</div>
+
+<div class="controls">
+    <button id="slower">− Yavaşlat</button>
+    <button id="speedDisplay">1.0x</button>
+    <button id="faster">+ Hızlandır</button>
+</div>
+
+<div class="friction">
+    <label>
+        <input type="checkbox" id="friction">
+        <strong>Sürtünmeyi Aç</strong>
+    </label>
+</div>
+
+<h2>Enerji Değerleri</h2>
+
+<div id="bars"></div>
+
+<h2>Enerji Grafiği</h2>
+
+<div class="chart-wrap">
+    <canvas id="energyChart"></canvas>
+
+    <div class="chart-legend">
+        <span style="--line-color:#e6a23c">Kinetik</span>
+        <span style="--line-color:#3689d8">Potansiyel</span>
+        <span style="--line-color:#8064c7">Mekanik</span>
+        <span style="--line-color:#e46b54">Isı</span>
+    </div>
+
+    <p class="note">
+        Grafik, hareket boyunca enerji değerlerinin değişimini gösterir.
+    </p>
+</div>
+
+<div class="point-info">
+    <strong id="pointTitle">Başlangıç noktası: A</strong>
+
+    <p id="pointText">
+        Sarkaç A noktasında bulunuyor. Potansiyel enerji en yüksek,
+        kinetik enerji sıfırdır.
+    </p>
+</div>
+
+<p class="note">
+Enerji birimi Joule (J). Dışarıdan enerji verilmez.
+Sürtünme ile mekanik enerjinin bir kısmı ısıya dönüşür.
+</p>
+
+</div>
+
+<script>
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+
+const energyChart = document.getElementById("energyChart");
+const chartCtx = energyChart.getContext("2d");
+
+const chartHistory = [];
+const chartMaxPoints = 180;
+let chartSampleTimer = 0;
+
+const mass = 1;
+const length = 1.5;
+const gravity = 9.81;
+const damping = 0.45;
+
+const initialAngle = -55 * Math.PI / 180;
+const initialVelocity = 0;
+
+let angle = initialAngle;
+let velocity = initialVelocity;
+let running = false;
+let lastTime = 0;
+let speed = 1;
+
+const initialEnergy =
+    0.5 * mass * length * length * initialVelocity ** 2 +
+    mass * gravity * length *
+    (1 - Math.cos(initialAngle));
+
+const friction = document.getElementById("friction");
+
+const pointNames = ["A", "B", "C", "D", "E"];
+
+const pointAngles = [
+    initialAngle,
+    initialAngle / 2,
+    0,
+    -initialAngle / 2,
+    -initialAngle
+];
+
+const pointDescriptions = {
+    A: "A noktasında çekim potansiyel enerjisi en yüksek, kinetik enerji sıfırdır.",
+    B: "B noktasında potansiyel enerji azalırken kinetik enerji artmıştır.",
+    C: "C noktasında potansiyel enerji en az, kinetik enerji en fazladır.",
+    D: "D noktasında kinetik enerji azalmaya, potansiyel enerji artmaya başlar.",
+    E: "E noktasında sarkaç en yüksek konumuna ulaşır. Kinetik enerjisi sıfıra yaklaşır."
+};
+
+const energyTypes = [
+    ["Kinetik Enerji", "k", "kinetic"],
+    ["Çekim Potansiyel Enerjisi", "p", "potential"],
+    ["Mekanik Enerji", "m", "mechanical"],
+    ["Isıya Dönüşen Enerji", "h", "heat"],
+    ["Toplam Enerji", "t", "total"]
+];
+
+const bars = document.getElementById("bars");
+
+energyTypes.forEach(([name, id, color]) => {
+    bars.innerHTML += `
+        <div class="energy">
+            <div class="energy-title">
+                <span>${name}</span>
+                <span id="${id}Value">0 J</span>
+            </div>
+
+            <div class="bar-bg">
+                <div class="bar ${color}" id="${id}Bar"></div>
+            </div>
+        </div>`;
+});
+
+function getEnergy() {
+    const kinetic =
+        0.5 * mass * length * length * velocity * velocity;
+
+    const potential =
+        mass * gravity * length * (1 - Math.cos(angle));
+
+    const mechanical = kinetic + potential;
+
+    const heat = friction.checked
+        ? Math.max(0, initialEnergy - mechanical)
+        : 0;
+
+    return {
+        kinetic,
+        potential,
+        mechanical,
+        heat,
+        total: mechanical + heat
+    };
+}
+
+function getNearestPoint() {
+    let nearest = 0;
+    let minDistance = Infinity;
+
+    pointAngles.forEach((a, i) => {
+        const distance = Math.abs(angle - a);
+
+        if (distance < minDistance) {
+            minDistance = distance;
+            nearest = i;
+        }
+    });
+
+    return {
+        index: nearest,
+        distance: minDistance
+    };
+}
+
+function update() {
+    const e = getEnergy();
+
+    const values = [
+        ["k", e.kinetic],
+        ["p", e.potential],
+        ["m", e.mechanical],
+        ["h", e.heat],
+        ["t", e.total]
+    ];
+
+    values.forEach(([id, value]) => {
+        document.getElementById(id + "Value").textContent =
+            value.toFixed(2) + " J";
+
+        document.getElementById(id + "Bar").style.width =
+            Math.min(
+                100,
+                Math.max(0, value / initialEnergy * 100)
+            ) + "%";
+    });
+
+    const nearest = getNearestPoint();
+    const index = nearest.index;
+
+    if (nearest.distance < 0.12) {
+        const name = pointNames[index];
+
+        document.getElementById("pointTitle").textContent =
+            "Sarkaç şu anda " + name + " noktasında!";
+
+        document.getElementById("pointText").textContent =
+            pointDescriptions[name];
+    } else {
+        document.getElementById("pointTitle").textContent =
+            "Sarkaç A ile E arasında hareket ediyor";
+
+        if (friction.checked) {
+            document.getElementById("pointText").textContent =
+                "Sürtünme nedeniyle mekanik enerji azalıyor ve " +
+                "ısı enerjisine dönüşüyor.";
+        } else {
+            document.getElementById("pointText").textContent =
+                "Sarkaç hareket ettikçe kinetik ve potansiyel " +
+                "enerji birbirine dönüşüyor.";
+        }
+    }
+
+    if (friction.checked) {
+        document.getElementById("pointText").textContent +=
+            " Isıya dönüşen enerji de toplam enerjiye dahildir.";
+    }
+}
+
+function draw() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+
+    if (canvas.width !== Math.round(w * dpr) ||
+        canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+    }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const pivotX = w / 2;
+    const pivotY = 42;
+    const ropeLength = Math.min(205, h * 0.62);
+
+    // Askı
+    ctx.strokeStyle = "#425b73";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(pivotX - 48, pivotY);
+    ctx.lineTo(pivotX + 48, pivotY);
+    ctx.stroke();
+
+    // Hareket yayı
+    ctx.strokeStyle = "#b6c9db";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+
+    ctx.beginPath();
+    ctx.arc(
+        pivotX,
+        pivotY,
+        ropeLength,
+        Math.PI / 2 + initialAngle,
+        Math.PI / 2 - initialAngle
+    );
+
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Denge çizgisi
+    ctx.strokeStyle = "#bdc9d5";
+    ctx.setLineDash([4, 4]);
+
+    ctx.beginPath();
+    ctx.moveTo(pivotX, pivotY);
+    ctx.lineTo(pivotX, pivotY + ropeLength + 25);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    // A, B, C, D, E noktaları
+    pointNames.forEach((name, i) => {
+        const a = pointAngles[i];
+
+        const x = pivotX + Math.sin(a) * ropeLength;
+        const y = pivotY + Math.cos(a) * ropeLength;
+
+        const isNear = Math.abs(angle - a) < 0.12;
+
+        ctx.fillStyle = isNear ? "#f28c28" : "white";
+
+        ctx.beginPath();
+        ctx.arc(x, y, 13, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#315d85";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = isNear ? "white" : "#244c75";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(name, x, y);
+    });
+
+    // Sarkaçın konumu
+    const ballX = pivotX + Math.sin(angle) * ropeLength;
+    const ballY = pivotY + Math.cos(angle) * ropeLength;
+
+    // İp
+    ctx.strokeStyle = "#53677b";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(pivotX, pivotY);
+    ctx.lineTo(ballX, ballY);
+    ctx.stroke();
+
+    // Askı noktası
+    ctx.fillStyle = "#34495e";
+
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sarkaç topu
+    const gradient = ctx.createRadialGradient(
+        ballX - 8, ballY - 8, 2,
+        ballX, ballY, 24
+    );
+
+    gradient.addColorStop(0, "#ffdc91");
+    gradient.addColorStop(1, "#d88724");
+
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+    ctx.arc(ballX, ballY, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#9c5e17";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+}
+
+function drawEnergyChart() {
+    const w = energyChart.clientWidth;
+    const h = energyChart.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+
+    if (energyChart.width !== Math.round(w * dpr) ||
+        energyChart.height !== Math.round(h * dpr)) {
+        energyChart.width = Math.round(w * dpr);
+        energyChart.height = Math.round(h * dpr);
+    }
+
+    chartCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    chartCtx.clearRect(0, 0, w, h);
+
+    const left = 42;
+    const right = 12;
+    const top = 16;
+    const bottom = 30;
+
+    const plotW = w - left - right;
+    const plotH = h - top - bottom;
+
+    const maxY = Math.max(1, initialEnergy * 1.15);
+
+    chartCtx.font = "12px Arial";
+    chartCtx.fillStyle = "#64748b";
+    chartCtx.strokeStyle = "#e5eaf0";
+    chartCtx.lineWidth = 1;
+
+    // Grafiğin yatay çizgileri ve değerleri
+    for (let i = 0; i <= 4; i++) {
+        const y = top + plotH * i / 4;
+
+        chartCtx.beginPath();
+        chartCtx.moveTo(left, y);
+        chartCtx.lineTo(w - right, y);
+        chartCtx.stroke();
+
+        chartCtx.textAlign = "right";
+        chartCtx.textBaseline = "middle";
+
+        chartCtx.fillText(
+            (maxY * (4 - i) / 4).toFixed(1),
+            left - 7,
+            y
+        );
+    }
+
+    chartCtx.textAlign = "center";
+    chartCtx.textBaseline = "alphabetic";
+    chartCtx.fillText("Zaman →", left + plotW / 2, h - 7);
+
+    const series = [
+        ["kinetic", "#e6a23c"],
+        ["potential", "#3689d8"],
+        ["mechanical", "#8064c7"],
+        ["heat", "#e46b54"]
+    ];
+
+    // Enerji çizgileri
+    series.forEach(([key, color]) => {
+        chartCtx.strokeStyle = color;
+        chartCtx.lineWidth = 2.5;
+        chartCtx.beginPath();
+
+        chartHistory.forEach((item, i) => {
+            const x = left +
+                (chartHistory.length <= 1
+                    ? 0
+                    : i / (chartHistory.length - 1)) * plotW;
+
+            const y = top + plotH -
+                Math.min(maxY, item[key]) / maxY * plotH;
+
+            if (i === 0) {
+                chartCtx.moveTo(x, y);
+            } else {
+                chartCtx.lineTo(x, y);
+            }
+        });
+
+        chartCtx.stroke();
+    });
+}
+
+function sampleEnergyChart() {
+    const e = getEnergy();
+
+    chartHistory.push({
+        kinetic: e.kinetic,
+        potential: e.potential,
+        mechanical: e.mechanical,
+        heat: e.heat
+    });
+
+    if (chartHistory.length > chartMaxPoints) {
+        chartHistory.shift();
+    }
+
+    drawEnergyChart();
+}
+
+function animate(time) {
+    if (!running) return;
+
+    if (!lastTime) lastTime = time;
+
+    const dt = Math.min((time - lastTime) / 1000, 0.02) * speed;
+    lastTime = time;
+
+    function acceleration(a, v) {
+        return -(gravity / length) * Math.sin(a) -
+            (friction.checked ? damping * v : 0);
+    }
+
+    // Runge-Kutta yöntemi
+    const a1 = velocity;
+    const b1 = acceleration(angle, velocity);
+
+    const a2 = velocity + b1 * dt / 2;
+    const b2 = acceleration(
+        angle + a1 * dt / 2,
+        velocity + b1 * dt / 2
+    );
+
+    const a3 = velocity + b2 * dt / 2;
+    const b3 = acceleration(
+        angle + a2 * dt / 2,
+        velocity + b2 * dt / 2
+    );
+
+    const a4 = velocity + b3 * dt;
+    const b4 = acceleration(
+        angle + a3 * dt,
+        velocity + b3 * dt
+    );
+
+    angle += dt / 6 * (a1 + 2 * a2 + 2 * a3 + a4);
+
+    velocity += dt / 6 * (b1 + 2 * b2 + 2 * b3 + b4);
+
+    update();
+    draw();
+
+    chartSampleTimer += dt;
+
+    if (chartSampleTimer >= 0.08) {
+        chartSampleTimer = 0;
+        sampleEnergyChart();
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Başlat
+document.getElementById("start").onclick = () => {
+    if (!running) {
+        running = true;
+        lastTime = 0;
+        requestAnimationFrame(animate);
+    }
+};
+
+// Durdur
+document.getElementById("stop").onclick = () => {
+    running = false;
+    lastTime = 0;
+};
+
+// Sıfırla
+document.getElementById("reset").onclick = () => {
+    running = false;
+    lastTime = 0;
+
+    angle = initialAngle;
+    velocity = initialVelocity;
+    speed = 1;
+
+    chartHistory.length = 0;
+    chartSampleTimer = 0;
+
+    sampleEnergyChart();
+
+    updateSpeedDisplay();
+    update();
+    draw();
+};
+
+// Hız göstergesi
+function updateSpeedDisplay() {
+    document.getElementById("speedDisplay").textContent =
+        speed.toFixed(1) + "x";
+
+    document.getElementById("slower").disabled = speed <= 0.1;
+    document.getElementById("faster").disabled = speed >= 2;
+}
+
+// Yavaşlat
+document.getElementById("slower").onclick = () => {
+    speed = Math.max(
+        0.1,
+        Math.round((speed - 0.1) * 10) / 10
+    );
+
+    updateSpeedDisplay();
+};
+
+// Hızlandır
+document.getElementById("faster").onclick = () => {
+    speed = Math.min(
+        2,
+        Math.round((speed + 0.1) * 10) / 10
+    );
+
+    updateSpeedDisplay();
+};
+
+// Sürtünme
+friction.onchange = () => {
+    update();
+};
+
+// Ekran boyutu değişirse çizimi yenile
+window.addEventListener("resize", () => {
+    draw();
+    drawEnergyChart();
+});
+
+updateSpeedDisplay();
+update();
+draw();
+sampleEnergyChart();
+</script>
+
+</body>
+</html>
