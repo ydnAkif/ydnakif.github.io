@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enerji Dönüşümleri Simülasyonu - Trambolin | Yağız Eren TAN</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body { background: #f0f4f8; color: #1e293b; padding: 16px; }
+  .container { max-width: 1180px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
+  
+  /* Üst Bilgi (Öğrenci Kartı) */
+  header { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; padding: 18px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+  .title-area h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .title-area p { font-size: 0.9rem; opacity: 0.9; }
+  .student-badge { background: rgba(255,255,255,0.18); backdrop-filter: blur(6px); padding: 8px 16px; border-radius: 50px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.3); }
+  .student-avatar { width: 42px; height: 42px; background: #fbbf24; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2); flex-shrink: 0; }
+  .student-info { font-size: 0.92rem; line-height: 1.3; }
+  .student-info strong { display: block; font-size: 1rem; color: #fef08a; }
+
+  /* Ana Grid */
+  .main-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; padding: 20px; }
+  @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* Sol Panel: Simülasyon ve Kontroller */
+  .sim-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  canvas { width: 100%; height: auto; background: linear-gradient(to bottom, #bae6fd 0%, #e0f2fe 78%, #86efac 78%, #22c55e 100%); border-radius: 10px; border: 2px solid #cbd5e1; display: block; }
+  
+  .status-box { background: #eff6ff; border-left: 5px solid #2563eb; padding: 12px 14px; border-radius: 8px; font-size: 0.95rem; font-weight: 500; color: #1e3a8a; min-height: 54px; display: flex; align-items: center; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: #ffffff; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { padding: 9px 16px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+  .btn-start { background: #16a34a; color: white; }
+  .btn-start:hover { background: #15803d; }
+  .btn-pause { background: #ea580c; color: white; }
+  .btn-reset { background: #475569; color: white; }
+  .btn-reset:hover { background: #334155; }
+  .btn-quiz { background: #7c3aed; color: white; }
+  .btn-quiz:hover { background: #6d28d9; }
+
+  .friction-toggle { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.92rem; background: #f1f5f9; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+  .friction-toggle input { width: 18px; height: 18px; cursor: pointer; }
+
+  /* Sağ Panel: Grafikler */
+  .charts-card { display: flex; flex-direction: column; gap: 16px; }
+  .panel-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+  .panel-box h2 { font-size: 1.05rem; margin-bottom: 12px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+
+  /* Çubuk Grafik */
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 0.86rem; font-weight: 600; margin-bottom: 4px; }
+  .bar-track { width: 100%; height: 18px; background: #e2e8f0; border-radius: 9px; overflow: hidden; }
+  .bar-fill { height: 100%; width: 0%; transition: width 0.05s linear; border-radius: 9px; }
+
+  .c-kinetik { background: #22c55e; }
+  .c-cekim { background: #3b82f6; }
+  .c-esneklik { background: #a855f7; }
+  .c-mekanik { background: #f59e0b; }
+  .c-isi { background: #ef4444; }
+  .c-toplam { background: #0f172a; }
+
+  /* Zaman Grafiği Canvas */
+  #timeChartCanvas { background: #ffffff; border: 1px solid #cbd5e1; height: 190px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.78rem; margin-top: 8px; font-weight: 600; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* Mini Soru Bölümü */
+  .quiz-section { margin: 0 20px 20px 20px; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px; padding: 18px; }
+  .quiz-section h2 { color: #581c87; font-size: 1.1rem; margin-bottom: 12px; }
+  .q-item { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #f3e8ff; }
+  .q-item p { font-weight: 600; font-size: 0.92rem; margin-bottom: 8px; }
+  .q-options label { display: block; font-size: 0.88rem; margin-bottom: 4px; cursor: pointer; }
+  .quiz-result { margin-top: 10px; font-weight: 700; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-area">
+      <h1>🤸 Enerji Dönüşümleri Simülasyonu: Trambolin</h1>
+      <p>7. Sınıf Fen Bilimleri • 2. Ünite: Kuvvet ve Enerjiyi Keşfedelim</p>
+    </div>
+    <div class="student-badge">
+      <!-- İsmin Yanındaki Özel Trambolin & Öğrenci SVG Görseli -->
+      <div class="student-avatar" title="Trambolin Sporcusu">
+        <svg width="30" height="30" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="8" r="4" fill="#1e3a8a"/>
+          <path d="M11 15L18 13L25 15M18 13V21M18 21L13 26M18 21L23 26" stroke="#1e3a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 29C12 32 24 32 30 29" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="student-info">
+        <strong>Yağız Eren TAN</strong>
+        <span>Sınıf: 7/E &nbsp;|&nbsp; No: 206</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+    <!-- Sol Taraf -->
+    <div class="sim-card">
+      <canvas id="simCanvas" width="560" height="360"></canvas>
+      
+      <div class="status-box" id="statusText">
+        Başlangıç konumu: Sporcu en yüksek noktada. Çekim potansiyel enerjisi maksimum! Başlat'a basın.
+      </div>
+
+      <div class="controls">
+        <div class="btn-group">
+          <button id="btnToggle" class="btn-start">▶ Başlat</button>
+          <button id="btnReset" class="btn-reset">↺ Sıfırla</button>
+        </div>
+
+        <label class="friction-toggle">
+          <input type="checkbox" id="frictionCheck">
+          <span>Sürtünme (Hava Direnci + Isı)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Sağ Taraf: Grafikler -->
+    <div class="charts-card">
+      <!-- Anlık Sütun Grafiği -->
+      <div class="panel-box">
+        <h2>📊 Anlık Enerji Çubukları (Joule - J)</h2>
+        
+        <div class="bar-row">
+          <div class="bar-label"><span>Kinetik Enerji</span><span id="valK">0 J</span></div>
+          <div class="bar-track"><div id="barK" class="bar-fill c-kinetik"></div></div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label"><span>Çekim Potansiyel Enerjisi</span><span id="valG">1000 J</span></div>
+          <div class="bar-track"><div id="barG" class="bar-fill c-cekim"></div></div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label"><span>Esneklik Potansiyel Enerjisi (Trambolin)</span><span id="valE">0 J</span></div>
+          <div class="bar-track"><div id="barE" class="bar-fill c-esneklik"></div></div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label"><span>Mekanik Enerji (Kinetik + Potansiyeller)</span><span id="valM">1000 J</span></div>
+          <div class="bar-track"><div id="barM" class="bar-fill c-mekanik"></div></div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-label"><span>Isıya Dönüşen Enerji</span><span id="valT">0 J</span></div>
+          <div class="bar-track"><div id="barT" class="bar-fill c-isi"></div></div>
+        </div>
+
+        <div class="bar-row" style="margin-bottom:0;">
+          <div class="bar-label"><span>TOPLAM ENERJİ (Korunur)</span><span id="valTot">1000 J</span></div>
+          <div class="bar-track"><div id="barTot" class="bar-fill c-toplam" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <!-- Zamanla Değişim Çizgi Grafiği -->
+      <div class="panel-box">
+        <h2>📈 Zamana Bağlı Enerji Dönüşümü Grafiği</h2>
+        <canvas id="timeChartCanvas" width="480" height="180"></canvas>
+        <div class="legend">
+          <span><i class="dot c-kinetik"></i> Kinetik</span>
+          <span><i class="dot c-cekim"></i> Çekim Pot.</span>
+          <span><i class="dot c-esneklik"></i> Esneklik Pot.</span>
+          <span><i class="dot c-isi"></i> Isı</span>
+          <span><i class="dot c-toplam"></i> Toplam</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kendini Test Et Bölümü -->
+  <div class="quiz-section">
+    <h2>🧠 Simülasyon Gözlem Soruları (Kendini Test Et!)</h2>
+    
+    <div class="q-item">
+      <p>1. Sporcu tramboline çarpıp trambolin ağını en fazla aşağı esnettiği (en alt) anda hangi enerji türü en yüksek değerine ulaşır?</p>
+      <div class="q-options">
+        <label><input type="radio" name="q1" value="a"> A) Çekim potansiyel enerjisi</label>
+        <label><input type="radio" name="q1" value="b"> B) Esneklik potansiyel enerjisi</label>
+        <label><input type="radio" name="q1" value="c"> C) Kinetik enerji</label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <p>2. Sürtünme kutucuğu işaretlendiğinde (açıldığında) mekanik enerji ve toplam enerji nasıl değişir?</p>
+      <div class="q-options">
+        <label><input type="radio" name="q2" value="a"> A) Mekanik enerji azalır, ısı enerjisi artar ama toplam enerji sabit kalır.</label>
+        <label><input type="radio" name="q2" value="b"> B) Hem mekanik enerji hem de toplam enerji sıfırlanır.</label>
+        <label><input type="radio" name="q2" value="c"> C) Isı enerjisi hiç oluşmaz, sporcu sonsuza kadar aynı yüksekliğe zıplar.</label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <p>3. Sürtünme kapalıyken sporcu en tepe noktadan aşağı düşerken tramboline değdiği ilk anda hangi enerji türü maksimumdur?</p>
+      <div class="q-options">
+        <label><input type="radio" name="q3" value="a"> A) Isı enerjisi</label>
+        <label><input type="radio" name="q3" value="b"> B) Esneklik potansiyel enerjisi</label>
+        <label><input type="radio" name="q3" value="c"> C) Kinetik enerji (en hızlı olduğu an)</label>
+      </div>
+    </div>
+
+    <button class="btn-quiz" onclick="checkQuiz()">Cevapları Kontrol Et</button>
+    <div class="quiz-result" id="quizResult"></div>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const tCanvas = document.getElementById('timeChartCanvas');
+  const tCtx = tCanvas.getContext('2d');
+
+  // Fizik sabitleri (Basit enerji korunumlu model)
+  const TOTAL_ENERGY = 1000; // Joule
+  const m = 40; // kg (7. sınıf öğrencisi kütlesi)
+  const g = 10; // m/s^2
+  // y=0 trambolin yüzeyi (dinlenme hali), y > 0 yukarı, y < 0 aşağı esneme
+  const H_MAX = 2.5; // metre (40 * 10 * 2.5 = 1000 J)
+  const k = 3200; // N/m yay sabiti
+
+  let y = H_MAX;
+  let v = 0;
+  let thermalEnergy = 0;
+  let running = false;
+  let history = [];
+
+  const btnToggle = document.getElementById('btnToggle');
+  const btnReset = document.getElementById('btnReset');
+  const frictionCheck = document.getElementById('frictionCheck');
+  const statusText = document.getElementById('statusText');
+
+  function getEnergies() {
+    let Ep_grav = 0;
+    let Ep_elas = 0;
+    if (y >= 0) {
+      Ep_grav = m * g * y;
+    } else {
+      Ep_elas = 0.5 * k * y * y;
+    }
+    let availableMech = Math.max(0, TOTAL_ENERGY - thermalEnergy);
+    let Ek = Math.max(0, availableMech - (Ep_grav + Ep_elas));
+    let Emec = Ek + Ep_grav + Ep_elas;
+    return { Ek, Ep_grav, Ep_elas, Emec, Etherm: thermalEnergy, Etot: Emec + thermalEnergy };
+  }
+
+  function stepPhysics(dt) {
+    const frictionOn = frictionCheck.checked;
+    let availableMech = TOTAL_ENERGY - thermalEnergy;
+
+    if (availableMech <= 0.5 && Math.abs(y) < 0.02 && Math.abs(v) < 0.05) {
+      y = 0; v = 0;
+      thermalEnergy = TOTAL_ENERGY;
+      running = false;
+      btnToggle.textContent = "▶ Başlat";
+      btnToggle.className = "btn-start";
+      return;
+    }
+
+    // İvme hesabı
+    let a = (y >= 0) ? -g : (-k * y) / m;
+    
+    // Sürtünme varsa hızla orantılı sönümleme
+    if (frictionOn) {
+      let damping = (y >= 0) ? 0.35 : 1.4;
+      a -= damping * v;
+    }
+
+    v += a * dt;
+    y += v * dt;
+
+    // Enerji korunumu düzeltmesi (sayısal sapmayı önlemek için)
+    let Ep = (y >= 0) ? (m * g * y) : (0.5 * k * y * y);
+    if (frictionOn) {
+      let currentKin = 0.5 * m * v * v;
+      let newMech = Ep + currentKin;
+      if (newMech < availableMech) {
+        thermalEnergy += (availableMech - newMech);
+      }
+    } else {
+      // Sürtünme kapalıyken mekanik enerji tam sabit kalır
+      let targetKin = Math.max(0, availableMech - Ep);
+      let speed = Math.sqrt((2 * targetKin) / m);
+      v = (v >= 0) ? speed : -speed;
+      if (targetKin === 0) {
+        if (y > 0) { y = availableMech / (m * g); v = -0.01; }
+        else { y = -Math.sqrt((2 * availableMech) / k); v = 0.01; }
+      }
+    }
+  }
+
+  function drawScene() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Bulutlar ve Arka Plan Detayları
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.beginPath(); ctx.arc(90, 60, 22, 0, Math.PI*2); ctx.arc(115, 55, 28, 0, Math.PI*2); ctx.arc(140, 62, 20, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(430, 50, 20, 0, Math.PI*2); ctx.arc(455, 48, 25, 0, Math.PI*2); ctx.fill();
+
+    // Yükseklik cetveli
+    ctx.strokeStyle = "rgba(30, 41, 59, 0.35)";
+    ctx.fillStyle = "#334155";
+    ctx.font = "12px sans-serif";
+    const trampRestY = 265;
+    const scale = 75; // 1 metre = 75 piksel
+
+    for (let h = 0; h <= 2.5; h += 0.5) {
+      let py = trampRestY - h * scale;
+      ctx.beginPath(); ctx.moveTo(25, py); ctx.lineTo(45, py); ctx.stroke();
+      ctx.fillText(h.toFixed(1) + " m", 50, py + 4);
+    }
+
+    // Trambolin ayakları ve çerçevesi
+    const leftX = 160, rightX = 420, midX = 290;
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(leftX + 15, trampRestY); ctx.lineTo(leftX + 5, 325);
+    ctx.moveTo(rightX - 15, trampRestY); ctx.lineTo(rightX - 5, 325);
+    ctx.stroke();
+
+    // Trambolin esnek ağı
+    let stretchPx = (y < 0) ? (-y * scale * 1.1) : 0;
+    let contactY = trampRestY + stretchPx;
+
+    ctx.strokeStyle = "#dc2626";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(leftX, trampRestY);
+    ctx.quadraticCurveTo(midX, trampRestY + stretchPx * 2, rightX, trampRestY);
+    ctx.stroke();
+
+    // Yay detayları
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(leftX-10, trampRestY); ctx.lineTo(leftX+10, trampRestY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rightX-10, trampRestY); ctx.lineTo(rightX+10, trampRestY); ctx.stroke();
+
+    // Sporcu çizimi
+    let jumperFeetY = (y >= 0) ? (trampRestY - y * scale) : contactY;
+    drawJumper(midX, jumperFeetY, y < 0);
+  }
+
+  function drawJumper(x, feetY, isSquashed) {
+    ctx.save();
+    ctx.translate(x, feetY);
+    
+    // Bacaklar
+    ctx.strokeStyle = "#1e3a8a";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    if (isSquashed) {
+      // Dizler bükülü
+      ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-14, -14); ctx.lineTo(-6, -26); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(14, -14); ctx.lineTo(6, -26); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(-5, -28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(5, -28); ctx.stroke();
+    }
+
+    let hipY = isSquashed ? -26 : -28;
+    let shoulderY = hipY - 24;
+
+    // Gövde (Tişört)
+    ctx.strokeStyle = "#2563eb";
+    ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(0, hipY); ctx.lineTo(0, shoulderY); ctx.stroke();
+
+    // Kollar (Hızı/yüksekliğe göre açık)
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = 4;
+    let armAngle = (y > 0.5) ? -14 : 8;
+    ctx.beginPath(); ctx.moveTo(0, shoulderY + 3); ctx.lineTo(-18, shoulderY + armAngle); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, shoulderY + 3); ctx.lineTo(18, shoulderY + armAngle); ctx.stroke();
+
+    // Kafa
+    ctx.fillStyle = "#fde68a";
+    ctx.beginPath(); ctx.arc(0, shoulderY - 11, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#b45309"; ctx.lineWidth = 1.5; ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function updateUI() {
+    const e = getEnergies();
+    
+    document.getElementById('valK').textContent = Math.round(e.Ek) + " J";
+    document.getElementById('valG').textContent = Math.round(e.Ep_grav) + " J";
+    document.getElementById('valE').textContent = Math.round(e.Ep_elas) + " J";
+    document.getElementById('valM').textContent = Math.round(e.Emec) + " J";
+    document.getElementById('valT').textContent = Math.round(e.Etherm) + " J";
+    document.getElementById('valTot').textContent = Math.round(e.Etot) + " J";
+
+    document.getElementById('barK').style.width = (e.Ek / TOTAL_ENERGY * 100) + "%";
+    document.getElementById('barG').style.width = (e.Ep_grav / TOTAL_ENERGY * 100) + "%";
+    document.getElementById('barE').style.width = (e.Ep_elas / TOTAL_ENERGY * 100) + "%";
+    document.getElementById('barM').style.width = (e.Emec / TOTAL_ENERGY * 100) + "%";
+    document.getElementById('barT').style.width = (e.Etherm / TOTAL_ENERGY * 100) + "%";
+    document.getElementById('barTot').style.width = (e.Etot / TOTAL_ENERGY * 100) + "%";
+
+    // Türkçe Bilimsel Açıklamalar
+    if (!running && e.Etherm > 995) {
+      statusText.textContent = "Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve sporcu durdu. Toplam enerji 1000 J olarak korundu.";
+    } else if (y > 0.1 && v < 0) {
+      statusText.textContent = "⬇️ Aşağı düşüyor: Yükseklik azaldığı için çekim potansiyel enerjisi azalıyor, hız arttığı için kinetik enerji artıyor.";
+    } else if (y <= 0 && v < 0) {
+      statusText.textContent = "⏬ Trambolin esniyor: Kinetik enerji azalırken trambolin ağında esneklik potansiyel enerjisi depolanıyor.";
+    } else if (y < 0 && v >= 0) {
+      statusText.textContent = "⏫ Trambolin yukarı fırlatıyor: Esneklik potansiyel enerjisi tekrar kinetik enerjiye dönüşüyor.";
+    } else if (y >= 0 && v > 0) {
+      statusText.textContent = "⬆️ Yukarı yükseliyor: Kinetik enerji azalıyor, yükseklik arttığı için çekim potansiyel enerjisi artıyor.";
+    }
+
+    if (running) {
+      history.push(e);
+      if (history.length > 240) history.shift();
+    }
+    drawTimeChart();
+  }
+
+  function drawTimeChart() {
+    tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
+    
+    // Izgara çizgileri
+    tCtx.strokeStyle = "#e2e8f0";
+    tCtx.lineWidth = 1;
+    for (let i = 1; i <= 4; i++) {
+      let gy = (tCanvas.height / 5) * i;
+      tCtx.beginPath(); tCtx.moveTo(0, gy); tCtx.lineTo(tCanvas.width, gy); tCtx.stroke();
+    }
+
+    if (history.length < 2) return;
+
+    const plotLine = (key, color, width = 2) => {
+      tCtx.strokeStyle = color;
+      tCtx.lineWidth = width;
+      tCtx.beginPath();
+      history.forEach((pt, idx) => {
+        let px = (idx / 240) * tCanvas.width;
+        let py = tCanvas.height - (pt[key] / TOTAL_ENERGY) * (tCanvas.height - 16) - 8;
+        if (idx === 0) tCtx.moveTo(px, py);
+        else tCtx.lineTo(px, py);
+      });
+      tCtx.stroke();
+    };
+
+    plotLine('Etot', '#0f172a', 2.5);
+    plotLine('Ek', '#22c55e', 2);
+    plotLine('Ep_grav', '#3b82f6', 2);
+    plotLine('Ep_elas', '#a855f7', 2);
+    plotLine('Etherm', '#ef4444', 2);
+  }
+
+  let lastTime = null;
+  function loop(timestamp) {
+    if (!lastTime) lastTime = timestamp;
+    let dt = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    if (dt > 0.05) dt = 0.05;
+
+    if (running) {
+      for (let i = 0; i < 4; i++) stepPhysics(dt / 4);
+      updateUI();
+    }
+    drawScene();
+    requestAnimationFrame(loop);
+  }
+
+  btnToggle.addEventListener('click', () => {
+    running = !running;
+    if (running) {
+      btnToggle.textContent = "⏸ Durdur";
+      btnToggle.className = "btn-pause";
+      lastTime = null;
+    } else {
+      btnToggle.textContent = "▶ Başlat";
+      btnToggle.className = "btn-start";
+    }
+  });
+
+  btnReset.addEventListener('click', () => {
+    running = false;
+    y = H_MAX;
+    v = 0;
+    thermalEnergy = 0;
+    history = [];
+    btnToggle.textContent = "▶ Başlat";
+    btnToggle.className = "btn-start";
+    statusText.textContent = "Sıfırlandı: Sporcu en yüksek noktada (2.5 m). Çekim potansiyel enerjisi 1000 J.";
+    updateUI();
+    drawScene();
+  });
+
+  function checkQuiz() {
+    const q1 = document.querySelector('input[name="q1"]:checked');
+    const q2 = document.querySelector('input[name="q2"]:checked');
+    const q3 = document.querySelector('input[name="q3"]:checked');
+    const res = document.getElementById('quizResult');
+
+    if (!q1 || !q2 || !q3) {
+      res.style.color = "#b45309";
+      res.textContent = "⚠️ Lütfen tüm soruları işaretleyin.";
+      return;
+    }
+
+    let score = 0;
+    if (q1.value === 'b') score++;
+    if (q2.value === 'a') score++;
+    if (q3.value === 'c') score++;
+
+    res.style.color = (score === 3) ? "#15803d" : "#1d4ed8";
+    res.textContent = `Sonuç: 3 sorudan ${score} doğru yaptın! (Doğru cevaplar: 1-B, 2-A, 3-C)`;
+  }
+
+  updateUI();
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
