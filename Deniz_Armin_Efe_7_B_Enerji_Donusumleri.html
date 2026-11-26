@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enerji Dönüşümleri - Kaykay Rampası</title>
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  body {
+    margin: 0;
+    padding: 18px;
+    background: linear-gradient(135deg, #060b19 0%, #0f1c3f 55%, #172554 100%);
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.55rem;
+    text-align: center;
+    color: #93c5fd;
+    text-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+  }
+  .subtitle {
+    margin: 0 0 16px 0;
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    text-align: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 980px;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 820px) {
+    .app {
+      grid-template-columns: 1fr;
+    }
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    border: 2px solid #3b82f6;
+    display: block;
+    background: linear-gradient(180deg, #0a1128 0%, #16264c 78%, #14532d 78%, #166534 100%);
+  }
+  .controls {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e293b;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+  }
+  .btns {
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+  }
+  button:hover {
+    filter: brightness(1.1);
+  }
+  button:active {
+    transform: scale(0.96);
+  }
+  #startBtn {
+    background: #22c55e;
+    color: #052e16;
+  }
+  #startBtn.running {
+    background: #f59e0b;
+    color: #451a03;
+  }
+  #resetBtn {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+  .friction-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0f172a;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #475569;
+    font-weight: bold;
+    font-size: 0.92rem;
+    cursor: pointer;
+    user-select: none;
+    color: #e2e8f0;
+  }
+  .friction-box input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  .badge {
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+  }
+  .off {
+    background: #1d4ed8;
+    color: #dbeafe;
+  }
+  .on {
+    background: #dc2626;
+    color: #fee2e2;
+  }
+  .info-box {
+    margin-top: 12px;
+    background: #1e293b;
+    border-left: 5px solid #38bdf8;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.94rem;
+    line-height: 1.45;
+    min-height: 72px;
+    color: #e2e8f0;
+  }
+  .info-box strong {
+    color: #7dd3fc;
+  }
+  .panel {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .panel h2 {
+    margin: 0 0 14px 0;
+    font-size: 1.15rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #334155;
+    color: #93c5fd;
+  }
+  .meter {
+    margin-bottom: 14px;
+  }
+  .meter-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #f1f5f9;
+  }
+  .track {
+    width: 100%;
+    height: 22px;
+    background: #0f172a;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #334155;
+  }
+  .fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+  }
+  .ke { background: #22c55e; }
+  .pe { background: #38bdf8; }
+  .mech { background: #a855f7; }
+  .heat { background: #ef4444; }
+  .total { background: #f59e0b; }
+  .note {
+    background: #0f172a;
+    border: 1px solid #334155;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+  .note strong {
+    color: #93c5fd;
+  }
+</style>
+</head>
+<body>
+
+  <h1>Kaykay Rampası Enerji Dönüşümleri Simülasyonu</h1>
+  <p class="subtitle">7. Sınıf Fen Bilimleri • Kuvvet ve Enerjiyi Keşfedelim</p>
+
+  <div class="app">
+    <div>
+      <canvas id="canvas" width="540" height="320"></canvas>
+
+      <div class="controls">
+        <div class="btns">
+          <button id="startBtn" type="button">Başlat</button>
+          <button id="resetBtn" type="button">Sıfırla</button>
+        </div>
+
+        <label class="friction-box" for="frictionInput">
+          <input id="frictionInput" type="checkbox">
+          <span>Sürtünme:</span>
+          <span id="frictionBadge" class="badge off">KAPALI</span>
+        </label>
+      </div>
+
+      <div class="info-box">
+        <strong id="statusTitle">Başlangıç Konumu</strong><br>
+        <span id="statusDesc">Kaykaycı rampanın sol üst noktasında bekliyor. Başlat'a bastığında hemen aşağı inmeye başlar.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div>
+        <h2>Enerji Göstergeleri (Joule - J)</h2>
+
+        <div class="meter">
+          <div class="meter-top"><span>Kinetik Enerji</span><span id="keText">0 J</span></div>
+          <div class="track"><div id="keBar" class="fill ke"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-top"><span>Çekim Potansiyel Enerjisi</span><span id="peText">1000 J</span></div>
+          <div class="track"><div id="peBar" class="fill pe"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-top"><span>Mekanik Enerji (Kinetik + Potansiyel)</span><span id="mechText">1000 J</span></div>
+          <div class="track"><div id="mechBar" class="fill mech"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-top"><span>Isıya Dönüşen Enerji</span><span id="heatText">0 J</span></div>
+          <div class="track"><div id="heatBar" class="fill heat"></div></div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-top"><span>Toplam Enerji (Mekanik + Isı)</span><span id="totalText">1000 J</span></div>
+          <div class="track"><div id="totalBar" class="fill total"></div></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Özet Bilgi:</strong><br>
+        • Sürtünme <b>KAPALI</b> iken mekanik enerji değişmez (1000 J).<br>
+        • Sürtünme <b>AÇIK</b> iken mekanik enerji azalır, ısıya dönüşen enerji artar; <b>Toplam Enerji</b> 1000 J kalır.
+      </div>
+    </div>
+  </div>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const startBtn = document.getElementById("startBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const frictionInput = document.getElementById("frictionInput");
+  const frictionBadge = document.getElementById("frictionBadge");
+
+  const statusTitle = document.getElementById("statusTitle");
+  const statusDesc = document.getElementById("statusDesc");
+
+  const keBar = document.getElementById("keBar");
+  const peBar = document.getElementById("peBar");
+  const mechBar = document.getElementById("mechBar");
+  const heatBar = document.getElementById("heatBar");
+  const totalBar = document.getElementById("totalBar");
+
+  const keText = document.getElementById("keText");
+  const peText = document.getElementById("peText");
+  const mechText = document.getElementById("mechText");
+  const heatText = document.getElementById("heatText");
+  const totalText = document.getElementById("totalText");
+
+  const TOTAL_J = 1000;
+  const MAX_H = 10;
+  const WEIGHT = TOTAL_J / MAX_H;
+  const MASS = 10;
+
+  let xNorm = -1;
+  let dir = 1;
+  let mechJ = TOTAL_J;
+  let running = false;
+  let prevTime = null;
+
+  const cx = canvas.width / 2;
+  const halfW = 205;
+  const bottomY = 262;
+  const topY = 62;
+
+  function toXY(xn) {
+    const hRatio = xn * xn;
+    return {
+      x: cx + xn * halfW,
+      y: bottomY - hRatio * (bottomY - topY)
+    };
+  }
+
+  function renderUI() {
+    const h = MAX_H * (xNorm * xNorm);
+    const mech = Math.round(mechJ);
+    let pe = Math.round(WEIGHT * h);
+    if (pe > mech) pe = mech;
+    if (pe < 0) pe = 0;
+
+    const ke = Math.max(0, mech - pe);
+    const heat = TOTAL_J - mech;
+    const total = mech + heat;
+
+    keBar.style.width = (ke / TOTAL_J * 100) + "%";
+    peBar.style.width = (pe / TOTAL_J * 100) + "%";
+    mechBar.style.width = (mech / TOTAL_J * 100) + "%";
+    heatBar.style.width = (heat / TOTAL_J * 100) + "%";
+    totalBar.style.width = (total / TOTAL_J * 100) + "%";
+
+    keText.textContent = ke + " J";
+    peText.textContent = pe + " J";
+    mechText.textContent = mech + " J";
+    heatText.textContent = heat + " J";
+    totalText.textContent = total + " J";
+
+    const fOn = frictionInput.checked;
+    if (!running && xNorm === -1 && heat === 0) {
+      statusTitle.textContent = "Başlangıç Konumu";
+      statusDesc.textContent = "Kaykaycı sol üst noktada bekliyor. Çekim potansiyel enerjisi en yüksek (1000 J), kinetik enerji 0 J.";
+    } else if (mech === 0 && fOn) {
+      statusTitle.textContent = "Durdu";
+      statusDesc.textContent = "Sürtünme nedeniyle mekanik enerjinin tamamı ısıya dönüştü. Toplam enerji hâlâ 1000 J.";
+    } else if (Math.abs(xNorm) < 0.1) {
+      statusTitle.textContent = "En Alt Nokta";
+      statusDesc.textContent = fOn
+        ? "Kaykaycı rampanın dibinden geçiyor. Kinetik enerji yüksek, sürtünme ısı üretiyor."
+        : "Kaykaycı rampanın dibinden en yüksek hızıyla geçiyor. Potansiyel enerjinin tamamı kinetik enerjiye dönüştü.";
+    } else if ((xNorm < 0 && dir === 1) || (xNorm > 0 && dir === -1)) {
+      statusTitle.textContent = "Aşağı İniş";
+      statusDesc.textContent = fOn
+        ? "Çekim potansiyel enerjisi kinetik enerjiye dönüşüyor; sürtünme bir kısmını ısıya çeviriyor."
+        : "Çekim potansiyel enerjisi kinetik enerjiye dönüşüyor; mekanik enerji 1000 J olarak değişmiyor.";
+    } else {
+      statusTitle.textContent = "Yukarı Çıkış";
+      statusDesc.textContent = fOn
+        ? "Kinetik enerji potansiyel enerjiye dönüşüyor; sürtünme yüzünden ilk yüksekliğe çıkamıyor."
+        : "Kinetik enerji potansiyel enerjiye dönüşüyor; sürtünme olmadığı için karşı tarafta aynı yüksekliğe çıkıyor.";
+    }
+  }
+
+  function renderCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+    ctx.setLineDash([4, 4]);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "12px Arial";
+    for (let h = 0; h <= 10; h += 2.5) {
+      const yLine = bottomY - (h / MAX_H) * (bottomY - topY);
+      ctx.beginPath();
+      ctx.moveTo(45, yLine);
+      ctx.lineTo(canvas.width - 20, yLine);
+      ctx.stroke();
+      ctx.fillText(h + " m", 10, yLine + 4);
+    }
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    const pStart = toXY(-1);
+    ctx.moveTo(pStart.x, pStart.y);
+    for (let i = -100; i <= 100; i++) {
+      const p = toXY(i / 100);
+      ctx.lineTo(p.x, p.y);
+    }
+    const pEnd = toXY(1);
+    ctx.lineTo(pEnd.x, bottomY + 12);
+    ctx.lineTo(pStart.x, bottomY + 12);
+    ctx.closePath();
+    ctx.fillStyle = "#334155";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(pStart.x, pStart.y);
+    for (let i = -100; i <= 100; i++) {
+      const p = toXY(i / 100);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = frictionInput.checked ? "#ef4444" : "#38bdf8";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    const pos = toXY(xNorm);
+    const pa = toXY(xNorm - 0.01);
+    const pb = toXY(xNorm + 0.01);
+    const angle = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(angle);
+
+    ctx.fillStyle = "#fb923c";
+    ctx.fillRect(-16, -7, 32, 4);
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.beginPath();
+    ctx.arc(-10, -2, 2.5, 0, Math.PI * 2);
+    ctx.arc(10, -2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#60a5fa";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-5, -7);
+    ctx.lineTo(0, -20);
+    ctx.lineTo(5, -7);
+    ctx.moveTo(0, -20);
+    ctx.lineTo(0, -33);
+    ctx.moveTo(-8, -28);
+    ctx.lineTo(8, -28);
+    ctx.stroke();
+
+    ctx.fillStyle = "#fde047";
+    ctx.beginPath();
+    ctx.arc(0, -39, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.fillStyle = "#e2e8f0";
+    ctx.font = "bold 12px Arial";
+    ctx.fillText("Yükseklik: " + (MAX_H * xNorm * xNorm).toFixed(1) + " m", canvas.width - 130, 24);
+  }
+
+  function loop(now) {
+    if (!prevTime) prevTime = now;
+    const dt = Math.min((now - prevTime) / 1000, 0.03);
+    prevTime = now;
+
+    if (running) {
+      const steps = 10;
+      const hStep = dt / steps;
+
+      for (let i = 0; i < steps; i++) {
+        if (!frictionInput.checked) {
+          mechJ = TOTAL_J;
+        } else if (mechJ > 0) {
+          const hNow = MAX_H * (xNorm * xNorm);
+          const peNow = WEIGHT * hNow;
+          const keNow = Math.max(0, mechJ - peNow);
+          const vNow = Math.sqrt(2 * keNow / MASS);
+          mechJ = Math.max(0, mechJ - 16 * (vNow + 0.5) * hStep);
+
+          if (mechJ < 3) {
+            mechJ = 0;
+            xNorm = 0;
+            running = false;
+            startBtn.textContent = "Başlat";
+            startBtn.classList.remove("running");
+            break;
+          }
+        }
+
+        const keCur = Math.max(1.5, mechJ - WEIGHT * (MAX_H * xNorm * xNorm));
+        const speed = Math.sqrt(2 * keCur / MASS);
+        const slope = 2 * MAX_H * xNorm / 10;
+        const ds = Math.sqrt(1 + slope * slope);
+        xNorm += dir * (speed / (10 * ds)) * hStep;
+
+        const peCur = WEIGHT * (MAX_H * xNorm * xNorm);
+        if (peCur >= mechJ && ((xNorm > 0 && dir === 1) || (xNorm < 0 && dir === -1))) {
+          const reach = Math.sqrt(Math.max(0, mechJ / TOTAL_J));
+          xNorm = (xNorm >= 0 ? 1 : -1) * reach;
+          dir = xNorm >= 0 ? -1 : 1;
+        }
+      }
+    }
+
+    renderUI();
+    renderCanvas();
+    requestAnimationFrame(loop);
+  }
+
+  startBtn.addEventListener("click", function () {
+    if (mechJ === 0 && frictionInput.checked) {
+      resetSim();
+    }
+    if (!running && Math.abs(xNorm) >= 0.999) {
+      xNorm = xNorm < 0 ? -0.99 : 0.99;
+      dir = xNorm < 0 ? 1 : -1;
+    }
+    running = !running;
+    prevTime = performance.now();
+    startBtn.textContent = running ? "Durdur" : "Başlat";
+    startBtn.classList.toggle("running", running);
+  });
+
+  function resetSim() {
+    running = false;
+    xNorm = -1;
+    dir = 1;
+    mechJ = TOTAL_J;
+    startBtn.textContent = "Başlat";
+    startBtn.classList.remove("running");
+    renderUI();
+    renderCanvas();
+  }
+
+  resetBtn.addEventListener("click", resetSim);
+
+  frictionInput.addEventListener("change", function () {
+    if (frictionInput.checked) {
+      frictionBadge.textContent = "AÇIK";
+      frictionBadge.className = "badge on";
+    } else {
+      frictionBadge.textContent = "KAPALI";
+      frictionBadge.className = "badge off";
+    }
+    renderUI();
+    renderCanvas();
+  });
+
+  renderUI();
+  renderCanvas();
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
