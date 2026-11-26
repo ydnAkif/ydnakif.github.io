@@ -342,7 +342,9 @@
       vx = 0.0;
       thermalEnergy = 0.0;
       lastTime = null;
-      updateUI(0, 0, 0, "Sıfırlandı. Kaykaycı sol rampada ilk konumunda ve başlangıç hızı sıfır. Başlat düğmesine basarak denemeye başlayabilirsiniz.");
+      const energies = computeEnergies();
+      updateUI(energies.pe, energies.ke, energies.me, energies.th, energies.tot);
+      explanationText.textContent = "Sıfırlandı. Kaykaycı sol rampada ilk konumunda ve başlangıç hızı sıfır. Başlat düğmesine basarak denemeye başlayabilirsiniz.";
       drawScene();
     }
 
@@ -582,8 +584,12 @@
       // Kaykay tahtası
       ctx.fillStyle = "#0f172a";
       ctx.beginPath();
-      ctx.roundRect(-22, -10, 44, 6, 3);
-      ctx.fill();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(-22, -10, 44, 6, 3);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-22, -10, 44, 6);
+      }
 
       // Tekerlekler
       ctx.fillStyle = "#f59e0b";
