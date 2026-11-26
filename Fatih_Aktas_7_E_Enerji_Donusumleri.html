@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lunapark Treni – Enerji Macerası</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e8f6ff;color:#18344d;font-family:Arial,sans-serif}main{max-width:980px;margin:auto;padding:14px}h1{text-align:center;margin:8px 0}p.lead{text-align:center;margin:6px 0 14px;color:#49677d}
+.panel{background:white;border-radius:20px;padding:12px;box-shadow:0 5px 22px #245a8020}
+canvas{width:100%;height:auto;display:block;border-radius:14px;background:linear-gradient(#8bdcff,#eafaff 72%,#8ed078 72%);touch-action:manipulation}
+.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button{flex:1;min-width:115px;padding:13px 10px;border:0;border-radius:13px;background:#1269a9;color:white;font-size:15px;font-weight:bold;cursor:pointer}button.alt{background:#f1a52b;color:#382600}button:active{filter:brightness(.9);transform:translateY(1px)}
+.data{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.meter{background:#f0f8fd;border-radius:13px;padding:10px}.meter b{display:block;font-size:18px}.meter small{color:#526d80}
+.energy{margin-top:12px}.energy h3{margin:10px 0 5px;font-size:15px}.track{height:18px;background:#e3edf4;border-radius:99px;overflow:hidden}.fill{height:100%;width:0%;transition:width .08s;border-radius:99px}.ke{background:#f3a52b}.pe{background:#398bd3}.te{background:#37a66b}
+.note{text-align:center;font-size:14px;min-height:34px;margin:12px 0 0;color:#385b72}
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:13px;margin-top:9px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+@media(max-width:520px){main{padding:9px}.data{gap:5px}.meter{padding:8px 5px}.meter b{font-size:16px}button{min-width:90px}}
+</style></head><body><main>
+<h1>🎢 Lunapark Treni: Enerji Macerası</h1><p class="lead">Sürtünme kapalı! Treni hareket ettir ve enerji dönüşümünü keşfet.</p>
+<div class="panel">
+<canvas id="scene" width="900" height="440"></canvas>
+<p style="text-align:center;margin:0 0 10px;font-weight:bold;color:#21834e">🟢 Sürtünme: KAPALI (ideal sistem)</p>
+<div class="controls">
+<button id="start">▶ Başlat</button><button id="pause" class="alt">⏸ Duraklat</button><button id="reset" class="alt">↻ Baştan başla</button>
+</div>
+<div class="data">
+<div class="meter"><b id="height">—</b><small>📏 Yükseklik (m)</small></div>
+<div class="meter"><b id="speed">—</b><small>💨 Hız (m/s)</small></div>
+<div class="meter"><b id="total">100</b><small>⚡ Toplam enerji (birim)</small></div>
+</div>
+<div class="energy">
+<h3>🟠 Kinetik enerji (KE) <span id="keval">0</span></h3><div class="track"><div id="ke" class="fill ke"></div></div>
+<h3>🔵 Potansiyel enerji (PE) <span id="peval">100</span></h3><div class="track"><div id="pe" class="fill pe"></div></div>
+<h3>🟢 Toplam mekanik enerji (KE + PE) <span id="teval">100</span></h3><div class="track"><div id="te" class="fill te"></div></div>
+</div>
+<div class="legend"><span><i class="dot" style="background:#f3a52b"></i>Hareket enerjisi</span><span><i class="dot" style="background:#398bd3"></i>Yükseklik enerjisi</span><span><i class="dot" style="background:#37a66b"></i>Toplam enerji</span></div>
+<p class="note" id="message">Başlat'a bas! Tren en yüksek noktadan yola çıkacak.</p>
+</div></main>
+<script>
+(()=>{
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id);
+const W=900,H=440,base=330,track=[{x:45,y:90},{x:160,y:115},{x:270,y:300},{x:390,y:205},{x:520,y:265},{x:650,y:145},{x:790,y:300},{x:870,y:250}];
+let t=0,running=false,paused=false,last=0,carX=45,carY=90,energy=100;
+function pathPoint(u){let n=track.length-1,z=u*n,i=Math.min(n-1,Math.floor(z)),f=z-i;let a=track[i],b=track[i+1];return{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};}
+function draw(){
+ctx.clearRect(0,0,W,H);
+// clouds and sun
+ctx.fillStyle='#fff9';[[120,65],[440,55],[740,75]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,22,0,7);ctx.arc(x+25,y-8,28,0,7);ctx.arc(x+52,y,20,0,7);ctx.fill()});
+ctx.fillStyle='#ffd34e';ctx.beginPath();ctx.arc(825,60,28,0,7);ctx.fill();
+// distant hills and ground
+ctx.fillStyle='#9bdc85';ctx.beginPath();ctx.moveTo(0,330);ctx.quadraticCurveTo(250,270,460,335);ctx.quadraticCurveTo(700,275,900,330);ctx.lineTo(900,440);ctx.lineTo(0,440);ctx.fill();
+ctx.strokeStyle='#425e75';ctx.lineWidth=18;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();track.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+ctx.strokeStyle='#e9f4fa';ctx.lineWidth=7;ctx.beginPath();track.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();
+// supports
+ctx.strokeStyle='#71899b';ctx.lineWidth=5;[160,270,390,520,650,790].forEach(x=>{let p=track.reduce((a,b)=>Math.abs(b.x-x)<Math.abs(a.x-x)?b:a);ctx.beginPath();ctx.moveTo(p.x,p.y+7);ctx.lineTo(p.x,330);ctx.stroke()});
+let p=pathPoint(t);carX=p.x;carY=p.y;
+ctx.save();ctx.translate(carX,carY-20);
+ctx.fillStyle='#ed5746';ctx.strokeStyle='#9b302a';ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-24,-15,48,27,8);ctx.fill();ctx.stroke();
+ctx.fillStyle='#ffe58a';ctx.fillRect(-13,-10,11,9);ctx.fillRect(3,-10,11,9);
+ctx.fillStyle='#24394a';[-14,14].forEach(x=>{ctx.beginPath();ctx.arc(x,14,7,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,14,2,0,7);ctx.fill();ctx.fillStyle='#24394a'});
+ctx.restore();
+ctx.fillStyle='#274b63';ctx.font='bold 17px Arial';ctx.fillText('LUNAPARK ENERJİ PARKURU',22,30);
+}
+function updateUI(){
+let p=pathPoint(t),h=Math.max(0,(330-p.y)/2.4),pe=Math.min(100,Math.max(0,h/100*100));
+let ke=100-pe;let speed=Math.sqrt(ke/100)*22;
+$('height').textContent=h.toFixed(1);$('speed').textContent=speed.toFixed(1);
+$('ke').style.width=ke+'%';$('pe').style.width=pe+'%';$('te').style.width='100%';
+$('keval').textContent=ke.toFixed(0);$('peval').textContent=pe.toFixed(0);$('teval').textContent='100';$('total').textContent='100';
+}
+function loop(ts){let dt=Math.min(40,ts-last||16);last=ts;if(running&&!paused){t+=dt/16000;if(t>=1){t=1;running=false;$('message').textContent='Tren parkurun sonuna ulaştı! Baştan başla ile tekrar deneyebilirsin.';$('start').textContent='▶ Tekrar başlat';}updateUI();}draw();requestAnimationFrame(loop);}
+$('start').onclick=()=>{if(t>=1)t=0;running=true;paused=false;$('pause').textContent='⏸ Duraklat';$('start').textContent='▶ Devam';$('message').textContent='Tren hareket ediyor! Alçaldıkça hız ve kinetik enerji artar.';};
+$('pause').onclick=()=>{if(!running&&t===0)return;paused=!paused;$('pause').textContent=paused?'▶ Devam':'⏸ Duraklat';$('message').textContent=paused?'Tren duraklatıldı.':'Tren yeniden hareket ediyor.';};
+$('reset').onclick=()=>{t=0;running=false;paused=false;$('start').textContent='▶ Başlat';$('pause').textContent='⏸ Duraklat';$('message').textContent='Başlat’a bas! Tren en yüksek noktadan yola çıkacak.';updateUI();draw();};
+updateUI();draw();requestAnimationFrame(loop);
+})();
+</script></body></html>
