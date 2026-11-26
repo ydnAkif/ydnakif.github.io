@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enerji Dönüşümleri | Kaykay Parkı | Alp Berk Özen – 7/B</title>
+<style>
+:root{--ink:#193149;--muted:#52677b;--line:#dbe5ed;--blue:#1764c4;--green:#18835d;--orange:#c45118;--purple:#7449bb;--navy:#183b60}*{box-sizing:border-box}body{margin:0;background:#edf4f8;color:var(--ink);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}main{max-width:1120px;margin:auto;padding:22px}header{margin-bottom:18px}h1{font-size:clamp(25px,4vw,38px);line-height:1.1;margin:5px 0 9px}h2{font-size:20px;margin:0 0 12px}p{margin:0}.eyebrow{font-size:12px;letter-spacing:1.5px;font-weight:800;color:#1764c4}.subtitle{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,1fr);gap:16px}.panel{background:white;border:1px solid var(--line);border-radius:19px;padding:16px;box-shadow:0 4px 18px #173a5510;min-width:0}.scene{width:100%;height:auto;display:block;border-radius:12px;background:#dff3fb}.controls{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0;align-items:center}button{font:inherit;font-weight:750;cursor:pointer;border:1px solid #cedce7;background:#f2f6fa;border-radius:10px;color:var(--ink);padding:10px 15px;min-height:44px}button.primary{background:var(--blue);color:white;border-color:var(--blue)}button:focus-visible,input:focus-visible{outline:3px solid #ec9c32;outline-offset:3px}label.toggle{display:flex;gap:8px;align-items:center;font-weight:700;cursor:pointer;padding:8px 0}input[type=checkbox]{width:22px;height:22px;accent-color:var(--orange)}.readings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.readings div{background:#eef5fa;padding:9px;border-radius:9px}.small{font-size:12px;color:var(--muted)}.reading{display:block;font-size:clamp(17px,2.8vw,23px);font-weight:800;font-variant-numeric:tabular-nums}.explain{margin-top:12px;border-left:4px solid var(--blue);padding:10px 12px;background:#eef5ff;border-radius:0 9px 9px 0;min-height:75px}.meter{margin:0 0 15px}.meterhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px;font-weight:700}.value{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}.track{height:13px;background:#e9eef3;border-radius:8px;overflow:hidden;margin-top:5px}.fill{height:100%;width:0%;border-radius:8px}.formula{font-size:13px;background:#f0f4f8;padding:12px;border-radius:10px;margin-top:7px}.legend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.stack{height:16px;border-radius:8px;overflow:hidden;display:flex;background:#edf1f5}.stack span{height:100%}.notes{margin-top:16px}.notes p{font-size:14px;color:var(--muted)}.notes strong{color:var(--ink)}.status{display:inline-block;padding:3px 9px;border-radius:20px;background:#eaf4ec;color:#22623d;font-size:12px;font-weight:700;margin-left:7px}.status.hot{background:#fff0e2;color:#9c3f13}.testbox{margin-top:12px;font-size:13px;color:var(--muted)}@media(max-width:760px){main{padding:12px}.layout{grid-template-columns:1fr}.panel{padding:13px}.controls{gap:7px}button{padding:9px 12px}.readings div{padding:7px}.meter{margin-bottom:12px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">7. SINIF • FEN BİLİMLERİ • KUVVET VE ENERJİ</div><h1>Enerji Dönüşümleri: Kaykay Parkı</h1><p style="font-weight:750;margin:0 0 8px">Alp Berk Özen • 7/B</p><p class="subtitle">Kaykayın U rampasındaki hareketini izle, sürtünmeyi değiştir ve enerjinin nasıl korunduğunu keşfet.</p></header>
+<div class="layout">
+<section class="panel"><h2>U rampası <span class="status" id="mode">Sürtünme kapalı</span></h2>
+<svg class="scene" viewBox="0 0 720 300" role="img" aria-label="U biçiminde kaykay rampası ve rampada hareket eden kaykaycı">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#d8f2fc"/><stop offset="1" stop-color="#f8fcff"/></linearGradient><linearGradient id="ground" x2="0" y2="1"><stop stop-color="#aac9b2"/><stop offset="1" stop-color="#dce9d7"/></linearGradient></defs>
+<rect width="720" height="300" fill="url(#sky)"/><circle cx="650" cy="48" r="24" fill="#ffdc82"/><path d="M25 75 Q40 56 58 68 Q68 42 88 66 Q113 60 121 80 H25Z M493 47 Q509 28 525 41 Q542 17 560 41 Q580 34 592 51 H493Z" fill="#fff" opacity=".85"/>
+<rect y="260" width="720" height="40" fill="#8fc69f"/>
+<g stroke="#8ca5b6" stroke-dasharray="5 5" opacity=".8"><line x1="54" y1="140" x2="666" y2="140"/><line x1="54" y1="250" x2="666" y2="250"/></g>
+<g font-size="12" fill="#49667a" font-weight="600"><text x="15" y="144">5 m</text><text x="15" y="254">0 m</text></g>
+<path id="rampGround" fill="url(#ground)"/><path id="ramp" fill="none" stroke="#314e62" stroke-width="8" stroke-linecap="round"/><path id="rampLine" fill="none" stroke="#f4b34e" stroke-width="2" stroke-dasharray="12 9"/>
+<g id="heightLine"><line id="heightMark" stroke="#18835d" stroke-width="2" stroke-dasharray="5 4"/><circle id="heightBase" r="3" fill="#18835d"/></g>
+<g id="skater"><g transform="translate(0,-1)"><path d="M-24 -7 Q-22 -3 -17 -3 H17 Q22 -3 24 -7" fill="none" stroke="#142d47" stroke-width="5" stroke-linecap="round"/><circle cx="-15" cy="0" r="4" fill="#27374b"/><circle cx="15" cy="0" r="4" fill="#27374b"/><path d="M-8 -8 L-12 -22 L0 -35 M12 -8 L8 -23 L0 -35" fill="none" stroke="#304b68" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M0 -35 L-3 -53" stroke="#2377ca" stroke-width="13" stroke-linecap="round"/><path d="M-3 -49 L-20 -39 M-1 -49 L16 -43" stroke="#e3a16d" stroke-width="5" stroke-linecap="round"/><circle cx="-3" cy="-62" r="10" fill="#e7ab77"/><path d="M-14 -63 A11 11 0 0 1 8 -63 L10 -61 H-14Z" fill="#e56a37"/></g></g>
+<g font-size="13" fill="#193149" font-weight="700"><text x="360" y="285" text-anchor="middle">En alçak nokta</text></g>
+</svg>
+<div class="controls"><button class="primary" id="play" type="button">▶ Başlat</button><button id="reset" type="button">↺ Sıfırla</button><label class="toggle"><input type="checkbox" id="friction"> Sürtünme</label><label class="toggle" style="font-size:13px"><input type="checkbox" id="checkpoint" checked> 4. saniyede dur</label></div>
+<div class="readings"><div><span class="small">Yükseklik</span><span class="reading" id="height">5,00 m</span></div><div><span class="small">Sürat</span><span class="reading" id="speed">0,00 m/s</span></div><div><span class="small">Süre</span><span class="reading" id="time">0,0 s</span></div></div>
+<div class="explain" id="explain">Kaykay en yüksek başlangıç noktasında duruyor. Çekim potansiyel enerjisi en büyük, kinetik enerji sıfır.</div>
+<p class="testbox">Deneme: Önce sürtünme kapalıyken başlat. Sonra sıfırla, sürtünmeyi aç ve yeniden başlat. 4. saniyede otomatik durma ayarı, iki denemeyi aynı anda karşılaştırmanı sağlar. İstersen işareti kaldırıp hareketi sürekli izleyebilirsin.</p>
+</section>
+<section class="panel"><h2>Enerji göstergeleri</h2><div id="meters"></div>
+<div class="small">Toplam enerjinin dağılımı</div><div class="stack" aria-label="Kinetik, potansiyel ve ısı enerjisinin toplamı"><span id="stackK" style="background:#1764c4"></span><span id="stackP" style="background:#18835d"></span><span id="stackH" style="background:#c45118"></span></div>
+<div class="legend"><span><i class="dot" style="background:#1764c4"></i>Kinetik</span><span><i class="dot" style="background:#18835d"></i>Potansiyel</span><span><i class="dot" style="background:#c45118"></i>Isı</span></div>
+<div class="formula"><strong>Mekanik enerji = Kinetik + Potansiyel</strong><br><strong>Toplam enerji = Mekanik + Isıya dönüşen enerji</strong><br>Enerji birimi: joule (J)</div>
+</section></div>
+<section class="panel notes"><h2>Enerjinin korunumu</h2><p><strong>Sürtünme kapalı:</strong> Kaykay inerken hızlanır, çıkarken yavaşlar. Mekanik enerji değişmez. <strong>Sürtünme açık:</strong> Mekanik enerjinin bir kısmı ısıya dönüşür, kaykay daha az yükselir. Her iki durumda da toplam enerji 100 J kalır.</p><p style="margin-top:8px"><strong>Model:</strong> Kaykay ve kaykaycı, basitleştirilmiş modelde toplam 2 kg olan tek bir cisim olarak kabul edilmiştir. Başlangıç yüksekliği 5 m, başlangıç sürati 0 m/s, yer çekimi ivmesi 10 m/s². Motorsuz, ideal U rampası kullanılır; sürtünme hareketi yavaşlatan basit bir direnç olarak modellenir. Dışarıdan enerji verilmez.</p></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const mass=2,g=10,R=4,E0=100,w=Math.sqrt(g/(4*R)),startS=-Math.sqrt(8*R*5);
+let s=startS,v=0,elapsed=0,running=false,friction=false,last=0,raf=0,heat=0;
+const definitions=[['k','Kinetik enerji','#1764c4'],['p','Çekim potansiyel enerjisi','#18835d'],['m','Mekanik enerji','#7449bb'],['h','Isıya dönüşen enerji','#c45118'],['t','Toplam enerji','#183b60']];
+for(const [id,label,color] of definitions){$('meters').insertAdjacentHTML('beforeend',`<div class="meter"><div class="meterhead"><span>${label}</span><span class="value" id="val-${id}">0,0 J</span></div><div class="track" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="meter-${id}"><div class="fill" id="bar-${id}" style="background:${color}"></div></div></div>`)}
+const num=(x,n=1)=>x.toLocaleString('tr-TR',{minimumFractionDigits:n,maximumFractionDigits:n});
+function point(a){const t=2*Math.asin(a/(4*R));return {x:360+22*R*(t+Math.sin(t)),y:250-22*R*(1-Math.cos(t)),angle:-t/2*180/Math.PI};}
+let d='';for(let i=0;i<=200;i++){let a=(-.96+1.92*i/200)*4*R;let p=point(a);d+=(i?' L':'M')+p.x.toFixed(3)+' '+p.y.toFixed(3)}
+const left=point(-.96*4*R),right=point(.96*4*R);$('ramp').setAttribute('d',d);$('rampLine').setAttribute('d',d);$('rampGround').setAttribute('d',d+` L${right.x} 260 L${left.x} 260 Z`);
+function advance(dt){
+ // Exact solution for motion along an ideal cycloidal U track, with optional linear resistance.
+ const gamma=friction?.22:0,wd=Math.sqrt(w*w-gamma*gamma),c=Math.cos(wd*dt),q=Math.sin(wd*dt),dec=Math.exp(-gamma*dt),oldS=s,oldV=v;
+ s=dec*(oldS*c+(oldV+gamma*oldS)/wd*q);
+ v=dec*(oldV*c-(gamma*oldV+w*w*oldS)/wd*q);
+ const mechanical=.5*mass*v*v+mass*g*s*s/(8*R);
+ if(friction)heat=Math.max(heat,E0-mechanical);
+ // Correct only floating-point drift, preserving the energy already converted to heat.
+ const target=Math.max(0,E0-heat);if(mechanical>0){const factor=Math.sqrt(target/mechanical);s*=factor;v*=factor;}
+ elapsed+=dt;
+ if(friction && target<.005){s=0;v=0;heat=E0;running=false;}
+}
+function energies(){const p=mass*g*s*s/(8*R),k=.5*mass*v*v,m=k+p;return {k,p,m,h:heat,t:m+heat};}
+function render(){const e=energies(),p=point(s),h=s*s/(8*R);$('skater').setAttribute('transform',`translate(${p.x} ${p.y-5}) rotate(${p.angle})`);$('heightMark').setAttribute('x1',p.x);$('heightMark').setAttribute('x2',p.x);$('heightMark').setAttribute('y1',p.y);$('heightMark').setAttribute('y2',250);$('heightBase').setAttribute('cx',p.x);$('heightBase').setAttribute('cy',250);
+ for(const [id] of definitions){let val=Math.max(0,e[id]);$('val-'+id).textContent=num(val)+' J';$('bar-'+id).style.width=Math.min(100,val)+'%';$('meter-'+id).setAttribute('aria-valuenow',val.toFixed(2));}
+ $('stackK').style.width=e.k+'%';$('stackP').style.width=e.p+'%';$('stackH').style.width=e.h+'%';$('height').textContent=num(h,2)+' m';$('speed').textContent=num(Math.abs(v),2)+' m/s';$('time').textContent=num(elapsed)+' s';$('mode').textContent='Sürtünme '+(friction?'açık':'kapalı');$('mode').classList.toggle('hot',friction);$('play').disabled=e.m<.005;$('play').textContent=running?'⏸ Durdur':e.m<.005?'Hareket bitti':elapsed>0?'▶ Devam et':'▶ Başlat';
+ let msg;if(e.m<.005)msg='Kaykay durdu. Mekanik enerjinin tamamı ısıya dönüştü.';else if(elapsed===0)msg='Kaykay başlangıç noktasında duruyor. Çekim potansiyel enerjisi 100 J, kinetik enerji 0 J.';else if(Math.abs(v)<.13)msg='Kaykay dönüş noktasında çok yavaş. Çekim potansiyel enerjisi en yüksek yerel değerine ulaşıyor.';else if(h<.04)msg='Kaykay rampanın en alçak noktasına yakın. Çekim potansiyel enerjisi çok az, sürati yüksek.';else if(s*v<0)msg='Kaykay aşağı inerken çekim potansiyel enerjisi azalır. Bu enerji kinetik enerjiye'+(friction?' ve ısıya':'')+' dönüşür.';else msg='Kaykay yukarı çıkarken yavaşlar. Kinetik enerjisi çekim potansiyel enerjisine'+(friction?' ve ısıya':'')+' dönüşür.';
+ if(friction&&e.m>=.005&&elapsed>0)msg+=' Mekanik enerji azalır, ısıya dönüşen enerji artar.';if(!friction&&elapsed>0)msg+=' Mekanik enerji sabittir.';$('explain').textContent=msg;
+}
+function tick(now){if(!running)return;let dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;const checkpoint=$('checkpoint').checked&&elapsed<4; if(checkpoint)dt=Math.min(dt,4-elapsed);advance(dt);if(checkpoint&&elapsed>=4-1e-9){elapsed=4;running=false;}render();if(running)raf=requestAnimationFrame(tick)}
+$('play').addEventListener('click',()=>{if(running){running=false;cancelAnimationFrame(raf)}else if(E0-heat>=.005){running=true;last=performance.now();raf=requestAnimationFrame(tick)}render()});
+$('reset').addEventListener('click',()=>{running=false;cancelAnimationFrame(raf);s=startS;v=0;heat=0;elapsed=0;render()});
+$('friction').addEventListener('change',()=>{friction=$('friction').checked;render()});render();
+</script></body></html>
+
