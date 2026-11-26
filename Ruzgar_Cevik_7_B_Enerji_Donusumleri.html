@@ -28,10 +28,29 @@ input{width:100%;accent-color:#40d5a4}
 .fill{height:100%;transition:width .08s}
 .energy{margin:12px 0}
 .muted{color:#b9c9dc;font-size:13px;line-height:1.5}
+button.bonus{background:#e63946}
+.overlay{position:fixed;inset:0;background:rgba(10,18,34,.97);z-index:50;overflow:auto;display:flex;align-items:center;justify-content:center;padding:14px}
+.selbox{max-width:900px;width:100%;text-align:center}
+.selbox h2{color:#54e3b4;margin:6px 0}
+.chars{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:16px 0}
+.charcard{width:150px;background:#1c2c45;border:3px solid #40536e;border-radius:14px;padding:10px;color:white;display:flex;flex-direction:column;align-items:center;gap:6px}
+.charcard canvas{width:110px;height:120px}
+.charcard.sel{border-color:#54e3b4;background:#254566}
+.charcard span{font-size:14px}
+.tries div{padding:4px 0;border-bottom:1px solid #40536e;font-size:14px}
 @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
+<div class="overlay" id="select">
+<div class="selbox">
+<h2>🎭 KARAKTERİNİ SEÇ</h2>
+<p class="muted">Seçtiğin karakter vagonda yolculuk yapacak. Karakter yalnızca görüntüdür, deneyin fiziğini değiştirmez.</p>
+<div class="chars" id="chars"></div>
+<p id="selName" class="muted">Bir karakter seç.</p>
+<button class="start" id="go" disabled>▶ OYUNA BAŞLA</button>
+</div>
+</div>
 <main>
 <h1>🎢 HIZ TRENİ ENERJİ LABORATUVARI</h1>
 <p class="muted">Potansiyel enerji, kinetik enerji, mekanik enerji, ısı ve esneklik potansiyel enerjisini keşfet!</p>
@@ -43,8 +62,12 @@ input{width:100%;accent-color:#40d5a4}
 <button class="start" id="start">▶ BAŞLAT</button>
 <button class="pause" id="pause">Ⅱ DURDUR</button>
 <button class="reset" id="reset">↻ SIFIRLA</button>
+<button class="bonus" id="bonus" disabled>🎯 ORTADA DUR!</button>
+<button id="changeChar">🎭 KARAKTER DEĞİŞTİR</button>
 </div>
 <p id="status" class="muted">Başlamak için BAŞLAT düğmesine bas.</p>
+<p id="bonusMsg" class="muted"></p>
+<p class="muted">🎯 <b>Bonus görevi:</b> Vagon aşağı yukarı giderken parkurun tam ortasındaki kırmızı çizgide <b>ORTADA DUR!</b> düğmesine (veya boşluk tuşuna) bas. Her deneyde 1 hakkın var. Orta noktaya sapma ≤1,5 m: 50 puan, ≤3 m: 30, ≤5 m: 20, ≤8 m: 10 puan.</p>
 </div>
 
 <div class="stats">
@@ -52,6 +75,19 @@ input{width:100%;accent-color:#40d5a4}
 <div class="stat"><small>Yükseklik</small><strong id="heightNow">15 m</strong></div>
 <div class="stat"><small>Toplam enerji</small><strong id="total">7350 J</strong></div>
 <div class="stat"><small>Süre</small><strong id="time">0 s</strong></div>
+</div>
+
+<div class="card">
+<h3>🏆 PUAN EKRANI</h3>
+<div class="stats">
+<div class="stat"><small>Karakter</small><strong id="bChar" style="font-size:16px">-</strong></div>
+<div class="stat"><small>Bonus puanı</small><strong id="bBonus">0</strong></div>
+<div class="stat"><small>Yarışma puanı</small><strong id="bQuiz">0</strong></div>
+<div class="stat"><small>Toplam puan</small><strong id="bTotal">0</strong></div>
+</div>
+<h3>🎯 Bonus denemeleri</h3>
+<div class="tries" id="tries"><p class="muted">Henüz deneme yok.</p></div>
+<button class="reset" id="clearScore" style="margin-top:10px">PUANLARI SIFIRLA</button>
 </div>
 
 <div class="card">
@@ -89,9 +125,11 @@ input{width:100%;accent-color:#40d5a4}
 <div class="row">
 <button id="saveA">A DENEYİNİ KAYDET</button>
 <button id="saveB">B DENEYİNİ KAYDET</button>
+<button id="clearAB" class="reset">KAYITLARI TEMİZLE</button>
 </div>
 <p id="a">A: Henüz kaydedilmedi.</p>
 <p id="b">B: Henüz kaydedilmedi.</p>
+<p class="muted">İpucu: Deneyi çalıştır, vagon durunca (veya istediğin anda) A veya B olarak kaydet. Kayıt, o andaki mekanik ve ısı enerjisini de saklar.</p>
 <p id="compare" class="muted">İki deneyi kaydet ve karşılaştır.</p>
 </div>
 
@@ -121,9 +159,99 @@ const canvas=$('scene'),ctx=canvas.getContext('2d');
 const graph=$('chart'),gc=graph.getContext('2d');
 const g=9.8,L=40;
 let m=50,h0=15,mu=.05,k=500,compression=.5;
-let x=0.3,v=0,heat=0,time=0,E0=0;
+const X0=3;            // Vagonun rampada başladığı yatay konum (m)
+let H=15;      // Parkurun en yüksek noktası (rampa şekli)
+let x=X0,v=0,heat=0,time=0,E0=0,vmax=0,resting=false;
 let running=false,raf=0,last=0,history=[];
 let A=null,B=null,score=0,qi=0;
+
+// ---------- KARAKTERLER (yalnızca görüntü) ----------
+function R(c,x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h);}
+function C(c,x,y,r,col){c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
+function E(c,x,y,rx,ry,col){c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fill();}
+function Ln(c,x1,y1,x2,y2,col,w){c.strokeStyle=col;c.lineWidth=w||1;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
+const CHARS=[
+{name:'Uzaylı',draw(c){
+R(c,-5,-9,3,9,'#4aa84f');R(c,2,-9,3,9,'#4aa84f');
+R(c,-6,-22,12,14,'#5fbf63');R(c,-9,-21,3,10,'#5fbf63');R(c,6,-21,3,10,'#5fbf63');
+Ln(c,-3,-34,-6,-41,'#4aa84f',1.5);Ln(c,3,-34,6,-41,'#4aa84f',1.5);
+C(c,-6,-41,1.8,'#ffe066');C(c,6,-41,1.8,'#ffe066');
+E(c,0,-28,8,7.5,'#8ee06c');
+c.save();c.translate(-3.6,-28);c.rotate(.4);E(c,0,0,3.2,1.8,'#111');c.restore();
+c.save();c.translate(3.6,-28);c.rotate(-.4);E(c,0,0,3.2,1.8,'#111');c.restore();
+Ln(c,-2,-23.5,2,-23.5,'#2f6b34',1);
+}},
+{name:'Yeşil Dev',draw(c){
+R(c,-7,-10,14,10,'#7b4fc7');
+R(c,-10,-25,20,16,'#4caf50');
+R(c,-15,-25,5,14,'#43a047');R(c,10,-25,5,14,'#43a047');
+C(c,-12.5,-11,4,'#43a047');C(c,12.5,-11,4,'#43a047');
+Ln(c,0,-24,0,-12,'#2e7d32',1);
+C(c,0,-30,6.5,'#4caf50');
+c.fillStyle='#222';c.beginPath();c.arc(0,-31,6.7,Math.PI,0);c.closePath();c.fill();
+C(c,-2.5,-30,1.2,'#fff');C(c,2.5,-30,1.2,'#fff');
+Ln(c,-5,-32.5,-1,-30.8,'#111',1.5);Ln(c,5,-32.5,1,-30.8,'#111',1.5);
+Ln(c,-2,-26.5,2,-26.5,'#1b5e20',1.2);
+}},
+{name:'Beşiktaşlı Çocuk',draw(c){
+R(c,-4,-9,3,9,'#f0b48a');R(c,1,-9,3,9,'#f0b48a');
+R(c,-6,-12,12,5,'#111');
+R(c,-6,-23,12,12,'#fff');
+for(let i=-6;i<6;i+=4)R(c,i,-23,2,12,'#111');
+R(c,-9,-22,3,10,'#f0b48a');R(c,6,-22,3,10,'#f0b48a');
+R(c,-9,-22,3,4,'#111');R(c,6,-22,3,4,'#111');
+C(c,0,-28.5,6,'#f0b48a');
+c.fillStyle='#3b2414';c.beginPath();c.arc(0,-29.5,6.2,Math.PI,0);c.closePath();c.fill();
+C(c,-2,-28,.9,'#111');C(c,2,-28,.9,'#111');
+c.strokeStyle='#8b3a2b';c.lineWidth=1;c.beginPath();c.arc(0,-26.5,2,.2,Math.PI-.2);c.stroke();
+}},
+{name:'Mekanik Adam',draw(c){
+R(c,-5,-9,3.5,9,'#6c7a89');R(c,1.5,-9,3.5,9,'#6c7a89');
+R(c,-8,-24,16,15,'#9aa7b5');
+C(c,0,-17,3.5,'#4fd1ff');C(c,0,-17,1.5,'#e6faff');
+C(c,-6,-22,.8,'#556270');C(c,6,-22,.8,'#556270');C(c,-6,-11,.8,'#556270');C(c,6,-11,.8,'#556270');
+R(c,-12,-23,4,12,'#7d8a99');R(c,8,-23,4,12,'#7d8a99');
+C(c,-10,-10.5,2.3,'#556270');C(c,10,-10.5,2.3,'#556270');
+R(c,-2,-26,4,2,'#556270');
+R(c,-6.5,-36,13,10,'#b8c4d0');
+R(c,-4.5,-33,3.2,2.2,'#4fd1ff');R(c,1.3,-33,3.2,2.2,'#4fd1ff');
+Ln(c,-3,-28.5,3,-28.5,'#556270',1);Ln(c,-3,-27.2,3,-27.2,'#556270',1);
+Ln(c,0,-36,0,-41,'#556270',1.2);C(c,0,-41.5,1.6,'#ff5252');
+}},
+{name:'Örümcek Kahraman',draw(c){
+R(c,-5,-9,4,9,'#1f4fb5');R(c,1,-9,4,9,'#1f4fb5');
+R(c,-7,-23,14,14,'#d32f2f');
+C(c,0,-17,1.6,'#111');
+Ln(c,-4,-19.5,4,-14.5,'#111',.8);Ln(c,-4,-14.5,4,-19.5,'#111',.8);
+R(c,-10,-22,3,11,'#d32f2f');R(c,7,-22,3,11,'#d32f2f');
+C(c,-8.5,-10.5,2,'#1f4fb5');C(c,8.5,-10.5,2,'#1f4fb5');
+C(c,0,-28.5,6.3,'#d32f2f');
+c.strokeStyle='#7f1d1d';c.lineWidth=.7;
+c.beginPath();c.arc(0,-28.5,3.5,0,Math.PI*2);c.stroke();
+Ln(c,0,-34.8,0,-22.2,'#7f1d1d',.7);Ln(c,-6.3,-28.5,6.3,-28.5,'#7f1d1d',.7);
+c.save();c.translate(-2.8,-28.5);c.rotate(.35);E(c,0,0,3.4,2.1,'#111');E(c,0,0,2.8,1.5,'#fff');c.restore();
+c.save();c.translate(2.8,-28.5);c.rotate(-.35);E(c,0,0,3.4,2.1,'#111');E(c,0,0,2.8,1.5,'#fff');c.restore();
+}}
+];
+let charIdx=null;
+let bonus=0,bonusUsed=false,attempts=[],tryNo=0;
+function curChar(){return charIdx===null?0:charIdx;}
+function bonusPoints(d){return d<=1.5?50:d<=3?30:d<=5?20:d<=8?10:0;}
+function updateBoard(){
+$('bChar').textContent=CHARS[curChar()].name;
+$('bBonus').textContent=bonus;
+$('bQuiz').textContent=score;
+$('bTotal').textContent=bonus+score;
+$('tries').innerHTML=attempts.length?attempts.map(a=>`<div>Deneme ${a.n}: sapma ${a.d.toFixed(2).replace('.',',')} m → <b>+${a.p} puan</b></div>`).join(''):'<p class="muted">Henüz deneme yok.</p>';
+}
+function buildSelect(){
+$('chars').innerHTML=CHARS.map((c,i)=>`<button class="charcard${charIdx===i?' sel':''}" data-i="${i}"><canvas width="110" height="120"></canvas><span>${c.name}</span></button>`).join('');
+$('chars').querySelectorAll('canvas').forEach((cv,i)=>{
+let c=cv.getContext('2d');
+c.save();c.translate(55,105);c.scale(2.2,2.2);CHARS[i].draw(c);c.restore();
+});
+}
+
 
 const questions=[
 {q:'Vagon aşağı inerken hangi enerji artar?',a:['Kinetik enerji','Potansiyel enerji','Kütle'],c:0,e:'Potansiyel enerji kinetik enerjiye dönüşür.'},
@@ -135,10 +263,10 @@ const questions=[
 
 function fmt(n){return Math.round(n).toLocaleString('tr-TR')}
 function h(z){
-return 2+(h0-2)*(1+Math.cos(2*Math.PI*z/L))/2;
+return 2+(H-2)*(1+Math.cos(2*Math.PI*z/L))/2;
 }
 function slope(z){
-return -(h0-2)*Math.PI/L*Math.sin(2*Math.PI*z/L);
+return -(H-2)*Math.PI/L*Math.sin(2*Math.PI*z/L);
 }
 function springE(z){
 if(z<17||z>23||compression===0)return 0;
@@ -206,18 +334,26 @@ ctx.fillText('BAŞLANGIÇ',25,25);
 ctx.fillText('YAY BÖLGESİ',405,335);
 ctx.fillText('FİNAL',800,25);
 
+ctx.save();
+ctx.setLineDash([7,6]);ctx.strokeStyle='#e63946';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(px(L/2),40);ctx.lineTo(px(L/2),290);ctx.stroke();
+ctx.restore();
+ctx.fillStyle='#e63946';ctx.font='bold 13px Arial';
+ctx.fillText('🎯 ORTA',px(L/2)-27,34);
+
 let xx=px(x),yy=py(x);
 ctx.save();
 ctx.translate(xx,yy-14);
 ctx.rotate(Math.atan(slope(x)));
 ctx.fillStyle='#263a50';
 ctx.fillRect(-20,0,40,10);
+ctx.save();
+ctx.translate(0,-3);
+ctx.scale(.9,.9);
+CHARS[curChar()].draw(ctx);
+ctx.restore();
 ctx.fillStyle='#318fe0';
 ctx.fillRect(-16,-13,32,12);
-ctx.fillStyle='#f0a27b';
-ctx.beginPath();ctx.arc(0,-20,8,0,Math.PI*2);ctx.fill();
-ctx.strokeStyle='#20344b';ctx.lineWidth=3;
-ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(0,-2);ctx.stroke();
 ctx.fillStyle='#263a50';
 ctx.beginPath();ctx.arc(-11,13,5,0,7);ctx.arc(11,13,5,0,7);ctx.fill();
 ctx.restore();
@@ -272,55 +408,74 @@ $('bars').innerHTML=data.map(d=>`
 </div>`).join('');
 }
 function step(dt){
+// Eğimli yolda iki kuvvet bileşeni (yol boyunca ivme):
 let sl=slope(x);
-let metric=Math.sqrt(1+sl*sl);
-let gravity=-g*sl/metric;
-let springForce=-springSlope(x)/(m*metric);
-let direction=Math.sign(v);
-if(!direction)direction=Math.sign(gravity+springForce);
-let friction=-mu*g*direction;
-let acceleration=gravity+springForce+friction;
+let metric=Math.sqrt(1+sl*sl);                       // 1/cos(a)
+let drive=-g*sl/metric-springSlope(x)/(m*metric);     // yer çekimi + yay
+let fmax=mu*g/metric;                                // sürtünme ivmesi = mu*N/m, N = m*g*cos(a)
+let vNew;
 
-v+=acceleration*dt;
+if(v===0){
+// DURAĞAN CİSİM: statik sürtünme kontrolü
+if(Math.abs(drive)<=fmax){return true;}               // sürtünme tutuyor, vagon kıpırdamaz
+vNew=(drive-fmax*Math.sign(drive))*dt;                // tutunma aşıldı, hareket başlar
+}else{
+vNew=v+(drive-fmax*Math.sign(v))*dt;                  // kinetik sürtünme hareketin tersine
+// Sürtünme hızın yönünü ters çeviriyorsa ve itme kuvveti yetersizse vagon durur
+if(Math.sign(vNew)!==Math.sign(v)&&Math.abs(drive)<=fmax)vNew=0;
+}
+
+v=vNew;
 x+=v*dt/metric;
 time+=dt;
 
+// Isı = sürtünme kuvveti x yol uzunluğu
 let ds=Math.abs(v)*dt;
-heat+=mu*m*g*ds;
+heat+=fmax*m*ds;
 
-// Enerjinin korunumu için sayısal yuvarlama düzeltmesi
-let e=energies();
-let error=E0-(e.mech+heat);
-if(Math.abs(error)<.2){
-heat=Math.max(0,heat+error);
-}
-
-// Parkurun sınırları
+// Parkur sınırları: enerji kaybı ısıya yazılır, enerji yok olmaz
+if(x<0||x>L){
+let before=energies().mech;
 if(x<0){x=0;v=Math.abs(v)*.7;}
-if(x>L){x=L;v=-Math.abs(v)*.7;}
-if(x===0&&v<0)v=0;
+else{x=L;v=-Math.abs(v)*.7;}
+let after=energies().mech;
+heat+=Math.max(0,before-after);
+}
+return false;
 }
 function frame(t){
 if(!running)return;
 if(!last)last=t;
 let dt=Math.min((t-last)/1000,.025);
 last=t;
-let count=3;
+let count=20;
 for(let i=0;i<count;i++){
-step(dt/count);
+if(step(dt/count)){resting=true;v=0;break;}
 }
+vmax=Math.max(vmax,Math.abs(v));
 history.push(energies());
 if(history.length>250)history.shift();
 draw();render();drawGraph();
+if(resting){
+running=false;
+$('status').textContent='🛑 Vagon durdu: sürtünme kuvveti vagonu tutuyor. Şimdi A veya B deneyini kaydedebilirsin.';
+$('start').disabled=true;
+$('pause').disabled=true;
+$('bonus').disabled=true;
+return;
+}
 raf=requestAnimationFrame(frame);
 }
 function reset(){
 running=false;
 cancelAnimationFrame(raf);
 readSettings();
-x=.3;v=0;heat=0;time=0;history=[];
+// Parkuru, vagon seçilen başlangıç yüksekliğinde (h0) başlayacak şekilde ayarla
+H=2+(h0-2)*2/(1+Math.cos(2*Math.PI*X0/L));
+x=X0;v=0;heat=0;time=0;history=[];vmax=0;resting=false;
 E0=m*g*h(x);
 $('status').textContent='Hazır! Başlat düğmesine bas.';
+bonusUsed=false;$('bonus').disabled=true;$('bonusMsg').textContent='';
 $('start').disabled=false;
 $('pause').disabled=true;
 draw();render();drawGraph();
@@ -330,6 +485,7 @@ if(running)return;
 running=true;
 last=0;
 $('status').textContent='🛹 Hız treni hareket ediyor!';
+$('bonus').disabled=bonusUsed;
 $('start').disabled=true;
 $('pause').disabled=false;
 raf=requestAnimationFrame(frame);
@@ -338,6 +494,7 @@ $('pause').onclick=()=>{
 running=false;
 cancelAnimationFrame(raf);
 $('status').textContent='⏸️ Vagon duraklatıldı. Devam etmek için BAŞLAT.';
+$('bonus').disabled=true;
 $('start').disabled=false;
 $('pause').disabled=true;
 };
@@ -355,18 +512,28 @@ $('compressionVal').textContent=$('compression').value.replace('.',',')+' m';
 
 function save(which){
 let e=energies();
-let sample={m,h0,mu,k,compression,total:E0};
-if(which==='A'){
-A=sample;
-$('a').textContent=`A: ${m} kg, ${h0} m, sürtünme %${mu*100}, ${fmt(E0)} J`;
-}else{
-B=sample;
-$('b').textContent=`B: ${m} kg, ${h0} m, sürtünme %${mu*100}, ${fmt(E0)} J`;
-}
+let sample={m,h0,mu,k,compression,total:E0,mech:e.mech,heat:heat,vmax:vmax,time:time};
+let pct=Math.round(mu*100);
+let text=`${m} kg, ${h0} m, sürtünme %${pct} | Toplam: ${fmt(E0)} J, Mekanik: ${fmt(e.mech)} J, Isı: ${fmt(heat)} J, En yüksek hız: ${vmax.toFixed(1)} m/s, Süre: ${time.toFixed(1)} s`;
+if(which==='A'){A=sample;$('a').textContent='A: '+text;}
+else{B=sample;$('b').textContent='B: '+text;}
 if(A&&B){
-$('compare').textContent=`A deneyi: ${fmt(A.total)} J. B deneyi: ${fmt(B.total)} J. Enerji farkı: ${fmt(Math.abs(A.total-B.total))} J.`;
+let d=(p,u,dg)=>{let f=B[p]-A[p];return (f>0?'+':'')+(dg?f.toFixed(dg):fmt(f))+' '+u;};
+$('compare').innerHTML=
+`<b>B − A farkları:</b><br>`+
+`Toplam enerji: ${d('total','J')}<br>`+
+`Mekanik enerji (kayıt anında): ${d('mech','J')}<br>`+
+`Isı enerjisi (kayıt anında): ${d('heat','J')}<br>`+
+`En yüksek hız: ${d('vmax','m/s',1)}<br>`+
+`Not: Karşılaştırmanın anlamlı olması için iki deneyi de vagon durduğunda (veya aynı sürede) kaydet.`;
 }
 }
+$('clearAB').onclick=()=>{
+A=null;B=null;
+$('a').textContent='A: Henüz kaydedilmedi.';
+$('b').textContent='B: Henüz kaydedilmedi.';
+$('compare').textContent='İki deneyi kaydet ve karşılaştır.';
+};
 $('saveA').onclick=()=>save('A');
 $('saveB').onclick=()=>save('B');
 
@@ -383,12 +550,49 @@ if(!b)return;
 let q=questions[qi%questions.length];
 let ok=Number(b.dataset.i)===q.c;
 $('feedback').textContent=(ok?'✅ Doğru! ':'❌ Yanlış. ')+q.e;
-if(ok){score+=10;$('score').textContent=score;}
+if(ok){score+=10;$('score').textContent=score;updateBoard();}
 qi++;
 $('answers').querySelectorAll('button').forEach(b=>b.disabled=true);
 setTimeout(quiz,1700);
 };
 quiz();
+
+function doBonus(){
+if(!running||bonusUsed)return;
+let d=Math.abs(x-L/2);
+let p=bonusPoints(d);
+bonusUsed=true;bonus+=p;tryNo++;
+attempts.unshift({n:tryNo,d:d,p:p});
+if(attempts.length>6)attempts.pop();
+running=false;cancelAnimationFrame(raf);
+let msg=p===50?'🎯 TAM İSABET!':p>=30?'👏 Çok yakın!':p>0?'👍 Fena değil!':'😅 Hedeften uzak kaldı.';
+$('bonusMsg').innerHTML=`<b>${msg}</b> Orta noktadan sapma: ${d.toFixed(2).replace('.',',')} m → <b>+${p} puan</b>`;
+$('status').textContent='⏸️ Vagon durduruldu. Devam etmek için BAŞLAT, yeni deneme için SIFIRLA.';
+$('start').disabled=false;$('pause').disabled=true;$('bonus').disabled=true;
+draw();render();drawGraph();updateBoard();
+}
+$('bonus').onclick=doBonus;
+document.addEventListener('keydown',e=>{
+if(e.code==='Space'&&running&&!bonusUsed){e.preventDefault();doBonus();}
+});
+$('clearScore').onclick=()=>{bonus=0;score=0;attempts=[];tryNo=0;$('score').textContent=0;updateBoard();};
+$('chars').onclick=e=>{
+let b=e.target.closest('.charcard');
+if(!b)return;
+charIdx=+b.dataset.i;
+$('chars').querySelectorAll('.charcard').forEach(el=>el.classList.toggle('sel',+el.dataset.i===charIdx));
+$('selName').textContent='Seçtiğin karakter: '+CHARS[charIdx].name;
+$('go').disabled=false;
+};
+$('go').onclick=()=>{$('select').style.display='none';draw();updateBoard();};
+$('changeChar').onclick=()=>{
+if(running)$('pause').onclick();
+buildSelect();
+$('go').disabled=charIdx===null;
+$('select').style.display='flex';
+};
+buildSelect();
+updateBoard();
 reset();
 })();
 </script>
