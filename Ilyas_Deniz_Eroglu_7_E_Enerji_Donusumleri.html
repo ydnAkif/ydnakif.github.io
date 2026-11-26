@@ -47,7 +47,7 @@
     border-radius: 12px;
     padding: 12px 14px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    width: 256px;
+    width: 268px;
     pointer-events: none;
     border: 1px solid rgba(0,0,0,0.08);
   }
@@ -85,7 +85,7 @@
     transition: width 0.04s linear;
   }
   .bar-val {
-    width: 58px;
+    width: 64px;
     text-align: right;
     font-family: Consolas, monospace;
     font-size: 11px;
@@ -259,10 +259,10 @@
   }
 
   @media (max-width: 600px) {
-    .energy-panel { width: 204px; padding: 8px 10px; }
+    .energy-panel { width: 214px; padding: 8px 10px; }
     .controls-panel { width: 196px; padding: 8px 10px; }
     .bar-label { width: 54px; font-size: 10.5px; }
-    .bar-val { width: 48px; font-size: 10px; }
+    .bar-val { width: 52px; font-size: 10px; }
     .hint { font-size: 11px; max-width: 94vw; white-space: normal; text-align: center; }
   }
 </style>
@@ -381,11 +381,14 @@ let rawDrawPoints = [];
 let customSpline = [];
 let customTotalLength = 0;
 
+let presetArcTable = [];
+let presetTotalLength = 0;
+
 let isPaused = false;
 let isDragging = false;
 let impactFlashTimer = 0;
 
-const GROUND_CLEARANCE_M = 0.04;
+const GROUND_CLEARANCE_M = 0.0;
 
 // Fizik Parametreleri
 let mass = 60;
@@ -396,18 +399,105 @@ let windSpeed = 0;
 // Kaykaycı Durumu
 let skater = {
   x: 0,
-  y: GROUND_CLEARANCE_M,
+  y: 0,
   vx: 0,
   vy: 0,
-  s: -4.2,
+  s: 0,
   v: 0,
   onTrack: true,
   angle: 0,
   thermalEnergy: 0,
   impactEnergy: 0,
-  initialBudget: 0,
+  baseEnergy: 0,
   exitCooldown: 0
 };
+
+function getTrackBounds() {
+  if (trackType === 'u') return { min: -4.8, max: 4.8 };
+  if (trackType === 'w') return { min: -4.4, max: 4.4 };
+  if (trackType === 'ramp') return { min: -4.6, max: 4.6 };
+  return { min: -4.5, max: 4.5 };
+}
+
+function getTrackY(x) {
+  if (trackType === 'u') {
+    return 0.22 * x * x;
+  } else if (trackType === 'w') {
+    return Math.max(0, 0.028 * Math.pow(x, 4) - 0.35 * x * x + 1.09375);
+  } else if (trackType === 'ramp') {
+    if (x < 1) {
+      return 0.25 * Math.pow(x - 1, 2);
+    } else {
+      return 0.12 * Math.pow(x - 1, 2);
+    }
+  }
+  return 0;
+}
+
+function buildPresetArcTable() {
+  presetArcTable = [];
+  presetTotalLength = 0;
+  if (trackType !== 'u' && trackType !== 'w' && trackType !== 'ramp') return;
+
+  const bounds = getTrackBounds();
+  const samples = 500;
+  let prevX = bounds.min;
+  let prevY = getTrackY(prevX);
+  presetArcTable.push({ s: 0, x: prevX, y: prevY });
+
+  for (let i = 1; i <= samples; i++) {
+    const t = i / samples;
+    const x = bounds.min + t * (bounds.max - bounds.min);
+    const y = getTrackY(x);
+    presetTotalLength += Math.hypot(x - prevX, y - prevY);
+    presetArcTable.push({ s: presetTotalLength, x, y });
+    prevX = x;
+    prevY = y;
+  }
+}
+
+function samplePresetAtArc(s) {
+  if (presetArcTable.length === 0) return { x: 0, y: 0 };
+  const clampedS = Math.max(0, Math.min(presetTotalLength, s));
+  for (let i = 0; i < presetArcTable.length - 1; i++) {
+    const a = presetArcTable[i];
+    const b = presetArcTable[i + 1];
+    if (clampedS >= a.s && clampedS <= b.s) {
+      const span = Math.max(1e-7, b.s - a.s);
+      const ratio = (clampedS - a.s) / span;
+      return {
+        x: a.x + ratio * (b.x - a.x),
+        y: a.y + ratio * (b.y - a.y)
+      };
+    }
+  }
+  const last = presetArcTable[presetArcTable.length - 1];
+  return { x: last.x, y: last.y };
+}
+
+function findClosestPresetPoint(mx, my) {
+  let bestDist = Infinity;
+  let bestS = 0;
+  let bestPt = { x: mx, y: getTrackY(mx) };
+
+  for (let i = 0; i < presetArcTable.length - 1; i++) {
+    const a = presetArcTable[i];
+    const b = presetArcTable[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq > 1e-8 ? Math.max(0, Math.min(1, ((mx - a.x) * dx + (my - a.y) * dy) / lenSq)) : 0;
+    const px = a.x + t * dx;
+    const py = a.y + t * dy;
+    const d = Math.hypot(mx - px, my - py);
+    if (d < bestDist) {
+      bestDist = d;
+      bestS = a.s + t * Math.sqrt(lenSq);
+      bestPt = { x: px, y: py };
+    }
+  }
+  return { dist: bestDist, s: bestS, x: bestPt.x, y: bestPt.y };
+}
 
 function getCurrentSpeed() {
   if (skater.onTrack && hasActiveTrack()) {
@@ -430,9 +520,9 @@ function getMechanicalEnergy() {
   return { ke, pe, mech: ke + pe };
 }
 
-function syncInitialBudget() {
+function syncBaseEnergy() {
   const { mech } = getMechanicalEnergy();
-  skater.initialBudget = mech + skater.thermalEnergy + skater.impactEnergy;
+  skater.baseEnergy = mech + skater.thermalEnergy + skater.impactEnergy;
 }
 
 function resize() {
@@ -476,7 +566,7 @@ function buildCustomSpline(points) {
 
   let pts = points.map(p => ({
     x: Math.max(-6.4, Math.min(6.4, toMeterX(p.px))),
-    y: Math.max(0.25, Math.min(7.0, toMeterY(p.py)))
+    y: Math.max(0, Math.min(7.0, toMeterY(p.py)))
   }));
 
   const filtered = [pts[0]];
@@ -494,7 +584,7 @@ function buildCustomSpline(points) {
     const pNext = filtered[idx + 1];
     return {
       x: (pPrev.x + pt.x * 2 + pNext.x) / 4,
-      y: Math.max(0.25, (pPrev.y + pt.y * 2 + pNext.y) / 4)
+      y: Math.max(0, (pPrev.y + pt.y * 2 + pNext.y) / 4)
     };
   });
 
@@ -551,82 +641,56 @@ function findClosestCustomPoint(mx, my) {
   return { dist: bestDist, s: bestS, x: bestPt.x, y: bestPt.y };
 }
 
-function getTrackY(x) {
-  if (trackType === 'u') {
-    return 0.22 * x * x + 0.4;
-  } else if (trackType === 'w') {
-    return 0.028 * Math.pow(x, 4) - 0.35 * x * x + 1.6;
-  } else if (trackType === 'ramp') {
-    if (x < 1) {
-      return 0.25 * Math.pow(x - 1, 2) + 0.4;
-    } else {
-      return 0.4 + 0.12 * Math.pow(x - 1, 2);
-    }
+function getTrackTangentAtArc(s) {
+  if (trackType === 'custom' && customSpline.length >= 2) {
+    const eps = Math.min(0.025, customTotalLength * 0.008);
+    const pPrev = sampleCustomAtArc(Math.max(0, s - eps));
+    const pNext = sampleCustomAtArc(Math.min(customTotalLength, s + eps));
+    const dx = pNext.x - pPrev.x;
+    const dy = pNext.y - pPrev.y;
+    const len = Math.max(1e-6, Math.hypot(dx, dy));
+    return { tx: dx / len, ty: dy / len, angle: Math.atan2(dy, dx) };
   }
-  return 0.4;
-}
 
-function getTrackSlope(x) {
-  const dx = 0.015;
-  return (getTrackY(x + dx) - getTrackY(x - dx)) / (2 * dx);
-}
-
-function getTrackBounds() {
-  if (trackType === 'u') return { min: -4.8, max: 4.8 };
-  if (trackType === 'w') return { min: -4.4, max: 4.4 };
-  if (trackType === 'ramp') return { min: -4.6, max: 4.6 };
-  return { min: -4.5, max: 4.5 };
+  const eps = Math.min(0.025, presetTotalLength * 0.008);
+  const pPrev = samplePresetAtArc(Math.max(0, s - eps));
+  const pNext = samplePresetAtArc(Math.min(presetTotalLength, s + eps));
+  const dx = pNext.x - pPrev.x;
+  const dy = pNext.y - pPrev.y;
+  const len = Math.max(1e-6, Math.hypot(dx, dy));
+  return { tx: dx / len, ty: dy / len, angle: Math.atan2(dy, dx) };
 }
 
 function updateSkaterPosFromTrack() {
-  if (trackType === 'custom' && customSpline.length >= 2) {
-    const p = sampleCustomAtArc(skater.s);
-    const eps = Math.min(0.03, customTotalLength * 0.01);
-    const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
-    const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
-    skater.x = p.x;
-    skater.y = p.y;
-    skater.angle = Math.atan2(pNext.y - pPrev.y, pNext.x - pPrev.x);
-    return;
-  }
-
-  skater.x = skater.s;
-  skater.y = getTrackY(skater.s);
-  skater.angle = Math.atan(getTrackSlope(skater.s));
+  const p = trackType === 'custom' ? sampleCustomAtArc(skater.s) : samplePresetAtArc(skater.s);
+  const tang = getTrackTangentAtArc(skater.s);
+  skater.x = p.x;
+  skater.y = p.y;
+  skater.angle = tang.angle;
 }
 
 function resetSkater() {
+  buildPresetArcTable();
   skater.exitCooldown = 0;
   impactFlashTimer = 0;
+
   if (!hasActiveTrack()) {
     skater.x = 0;
     skater.y = 3.2;
     skater.v = 0;
     skater.vx = 0;
     skater.vy = 0;
+    skater.s = 0;
     skater.onTrack = false;
     skater.angle = 0;
     skater.thermalEnergy = 0;
     skater.impactEnergy = 0;
-    syncInitialBudget();
+    syncBaseEnergy();
     return;
   }
 
-  if (trackType === 'custom') {
-    skater.s = Math.min(0.2, customTotalLength * 0.05);
-    skater.v = 0;
-    skater.vx = 0;
-    skater.vy = 0;
-    skater.onTrack = true;
-    skater.thermalEnergy = 0;
-    skater.impactEnergy = 0;
-    updateSkaterPosFromTrack();
-    syncInitialBudget();
-    return;
-  }
-
-  const bounds = getTrackBounds();
-  skater.s = bounds.min + Math.min(0.4, (bounds.max - bounds.min) * 0.1);
+  const totalLen = trackType === 'custom' ? customTotalLength : presetTotalLength;
+  skater.s = Math.min(0.35, totalLen * 0.05);
   skater.v = 0;
   skater.vx = 0;
   skater.vy = 0;
@@ -634,14 +698,14 @@ function resetSkater() {
   skater.thermalEnergy = 0;
   skater.impactEnergy = 0;
   updateSkaterPosFromTrack();
-  syncInitialBudget();
+  syncBaseEnergy();
 }
 
 function resetThermal() {
   skater.thermalEnergy = 0;
   skater.impactEnergy = 0;
   impactFlashTimer = 0;
-  syncInitialBudget();
+  syncBaseEnergy();
 }
 
 function clearActiveTrackButtons() {
@@ -665,6 +729,8 @@ function startDrawMode(btnEl) {
   trackType = 'empty';
   customSpline = [];
   customTotalLength = 0;
+  presetArcTable = [];
+  presetTotalLength = 0;
   rawDrawPoints = [];
   skater.onTrack = false;
   skater.exitCooldown = 0;
@@ -674,7 +740,7 @@ function startDrawMode(btnEl) {
   skater.angle = 0;
   skater.thermalEnergy = 0;
   skater.impactEnergy = 0;
-  syncInitialBudget();
+  syncBaseEnergy();
 
   isDrawMode = true;
   isDrawingTrack = false;
@@ -702,13 +768,13 @@ document.getElementById('slider-mass').addEventListener('input', e => {
   const ratio = mass / oldMass;
   skater.thermalEnergy *= ratio;
   skater.impactEnergy *= ratio;
-  skater.initialBudget *= ratio;
+  skater.baseEnergy *= ratio;
 });
 
 document.getElementById('slider-gravity').addEventListener('input', e => {
   gravity = parseFloat(e.target.value);
   document.getElementById('val-gravity').textContent = gravity.toFixed(1) + ' m/s²';
-  syncInitialBudget();
+  syncBaseEnergy();
 });
 
 document.getElementById('slider-wind').addEventListener('input', e => {
@@ -759,21 +825,18 @@ function handlePointerMove(px, py) {
       skater.exitCooldown = 0;
       skater.s = closest.s;
       updateSkaterPosFromTrack();
-      syncInitialBudget();
+      syncBaseEnergy();
       return;
     }
-  } else if (hasActiveTrack()) {
-    const bounds = getTrackBounds();
-    if (mx >= bounds.min && mx <= bounds.max) {
-      const trackY = getTrackY(mx);
-      if (Math.abs(my - trackY) < 0.95) {
-        skater.onTrack = true;
-        skater.exitCooldown = 0;
-        skater.s = mx;
-        updateSkaterPosFromTrack();
-        syncInitialBudget();
-        return;
-      }
+  } else if (hasActiveTrack() && presetArcTable.length >= 2) {
+    const closest = findClosestPresetPoint(mx, my);
+    if (closest.dist < 0.95) {
+      skater.onTrack = true;
+      skater.exitCooldown = 0;
+      skater.s = closest.s;
+      updateSkaterPosFromTrack();
+      syncBaseEnergy();
+      return;
     }
   }
 
@@ -781,7 +844,7 @@ function handlePointerMove(px, py) {
   skater.x = Math.max(-6.5, Math.min(6.5, mx));
   skater.y = Math.min(7.5, my);
   skater.angle = 0;
-  syncInitialBudget();
+  syncBaseEnergy();
 }
 
 function handlePointerUp() {
@@ -810,7 +873,7 @@ function handlePointerUp() {
     skater.v = 0;
     skater.vx = 0;
     skater.vy = 0;
-    syncInitialBudget();
+    syncBaseEnergy();
   }
 }
 
@@ -844,8 +907,8 @@ function updatePhysics(dt) {
   const steps = 24;
   const subDt = effectiveDt / steps;
   const activeTrack = hasActiveTrack();
-  const bounds = (activeTrack && trackType !== 'custom') ? getTrackBounds() : null;
-  const windAccel = (windSpeed * 0.45) * (60 / mass);
+  const totalLen = trackType === 'custom' ? customTotalLength : presetTotalLength;
+  const windForceX = windSpeed * 18.0;
 
   for (let i = 0; i < steps; i++) {
     if (skater.exitCooldown > 0) {
@@ -853,132 +916,97 @@ function updatePhysics(dt) {
     }
 
     if (skater.onTrack && activeTrack) {
-      if (trackType === 'custom') {
-        const eps = Math.min(0.025, customTotalLength * 0.008);
-        const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
-        const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
-        const dx = pNext.x - pPrev.x;
-        const dy = pNext.y - pPrev.y;
-        const segLen = Math.max(1e-6, Math.hypot(dx, dy));
-        const tx = dx / segLen;
-        const ty = dy / segLen;
+      const tang = getTrackTangentAtArc(skater.s);
+      const tx = tang.tx;
+      const ty = tang.ty;
 
-        let a = -gravity * ty + windAccel * tx;
+      let a = -gravity * ty + (windForceX / mass) * tx;
 
-        if (friction > 0 && Math.abs(skater.v) > 0.0005) {
-          const cosSlope = Math.abs(tx);
-          const normalForce = mass * gravity * cosSlope;
-          const frictionForce = friction * 12 * normalForce;
-          const frictionDecel = frictionForce / mass;
-          const sign = skater.v > 0 ? 1 : -1;
-          const vLoss = Math.min(Math.abs(skater.v), frictionDecel * subDt);
-          const ds = Math.abs(skater.v * subDt);
-          skater.v -= sign * vLoss;
-          skater.thermalEnergy += frictionForce * ds;
-        }
+      if (friction > 0 && Math.abs(skater.v) > 0.0005) {
+        const cosSlope = Math.abs(tx);
+        const normalForce = mass * gravity * cosSlope;
+        const frictionForce = friction * 12 * normalForce;
+        const sign = skater.v > 0 ? 1 : -1;
+        const maxDecelStep = Math.abs(skater.v) / subDt;
+        const appliedDecel = Math.min(maxDecelStep, frictionForce / mass);
+        const actualFrictionForce = appliedDecel * mass;
+        const dsStep = Math.abs(skater.v * subDt);
+        skater.v -= sign * appliedDecel * subDt;
+        skater.thermalEnergy += actualFrictionForce * dsStep;
+      }
 
-        skater.v += a * subDt;
-        const nextS = skater.s + skater.v * subDt;
+      skater.v += a * subDt;
+      const ds = skater.v * subDt;
+      const dx = ds * tx;
 
-        if (nextS <= 0 || nextS >= customTotalLength) {
-          const endS = nextS <= 0 ? 0 : customTotalLength;
-          const endPt = sampleCustomAtArc(endS);
-          const outDir = nextS <= 0 ? -1 : 1;
-          skater.onTrack = false;
-          skater.exitCooldown = 0.22;
-          skater.x = endPt.x + tx * outDir * 0.08;
-          skater.y = endPt.y + ty * outDir * 0.08;
-          skater.vx = skater.v * tx;
-          skater.vy = gravity === 0 ? 0 : skater.v * ty;
-          skater.v = 0;
-        } else {
-          skater.s = nextS;
-          updateSkaterPosFromTrack();
-        }
+      if (windForceX !== 0) {
+        skater.baseEnergy = Math.max(0, skater.baseEnergy + windForceX * dx);
+      }
+
+      const nextS = skater.s + ds;
+      if (nextS <= 0 || nextS >= totalLen) {
+        const endS = nextS <= 0 ? 0 : totalLen;
+        const endPt = trackType === 'custom' ? sampleCustomAtArc(endS) : samplePresetAtArc(endS);
+        const outDir = nextS <= 0 ? -1 : 1;
+        skater.onTrack = false;
+        skater.exitCooldown = 0.22;
+        skater.x = endPt.x + tx * outDir * 0.08;
+        skater.y = endPt.y + ty * outDir * 0.08;
+        skater.vx = skater.v * tx;
+        skater.vy = gravity === 0 ? 0 : skater.v * ty;
+        skater.v = 0;
       } else {
-        const slope = getTrackSlope(skater.s);
-        const angle = Math.atan(slope);
-        const cosA = Math.cos(angle);
-        const sinA = Math.sin(angle);
-
-        let a = -gravity * sinA + windAccel * cosA;
-
-        if (friction > 0 && Math.abs(skater.v) > 0.0005) {
-          const normalForce = mass * gravity * cosA;
-          const frictionForce = friction * 12 * normalForce;
-          const frictionDecel = frictionForce / mass;
-          const sign = skater.v > 0 ? 1 : -1;
-          const vLoss = Math.min(Math.abs(skater.v), frictionDecel * subDt);
-          const ds = Math.abs(skater.v * subDt);
-          skater.v -= sign * vLoss;
-          skater.thermalEnergy += frictionForce * ds;
-        }
-
-        skater.v += a * subDt;
-        skater.s += skater.v * cosA * subDt;
+        skater.s = nextS;
         updateSkaterPosFromTrack();
-
-        if (skater.s < bounds.min || skater.s > bounds.max) {
-          skater.onTrack = false;
-          skater.exitCooldown = 0.18;
-          skater.vx = skater.v * cosA;
-          skater.vy = gravity === 0 ? 0 : skater.v * sinA;
-        }
       }
     } else {
-      skater.vx += windAccel * subDt;
-      skater.vy -= gravity * subDt;
+      const prevX = skater.x;
+      const ax = windForceX / mass;
+      const ay = -gravity;
+
+      skater.vx += ax * subDt;
+      skater.vy += ay * subDt;
       skater.x += skater.vx * subDt;
       skater.y += skater.vy * subDt;
       skater.angle *= 0.92;
 
-      if (activeTrack && trackType === 'custom' && skater.exitCooldown <= 0) {
-        const closest = findClosestCustomPoint(skater.x, skater.y);
+      const dx = skater.x - prevX;
+      if (windForceX !== 0) {
+        skater.baseEnergy = Math.max(0, skater.baseEnergy + windForceX * dx);
+      }
+
+      if (activeTrack && skater.exitCooldown <= 0) {
+        const closest = trackType === 'custom'
+          ? findClosestCustomPoint(skater.x, skater.y)
+          : findClosestPresetPoint(skater.x, skater.y);
+
         if (closest.dist < 0.14 && skater.vy <= 0.2) {
+          const tang = getTrackTangentAtArc(closest.s);
+          const keBefore = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
+          const vTangent = skater.vx * tang.tx + skater.vy * tang.ty;
+          const keAfter = 0.5 * mass * vTangent * vTangent;
+          const impactLoss = Math.max(0, keBefore - keAfter);
+
           skater.onTrack = true;
           skater.s = closest.s;
-          const eps = Math.min(0.025, customTotalLength * 0.008);
-          const pPrev = sampleCustomAtArc(Math.max(0, skater.s - eps));
-          const pNext = sampleCustomAtArc(Math.min(customTotalLength, skater.s + eps));
-          const dx = pNext.x - pPrev.x;
-          const dy = pNext.y - pPrev.y;
-          const len = Math.max(1e-6, Math.hypot(dx, dy));
-          const oldKE = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
-          skater.v = skater.vx * (dx / len) + skater.vy * (dy / len);
-          const newKE = 0.5 * mass * skater.v * skater.v;
-          const transfer = Math.max(0, oldKE - newKE);
-          skater.impactEnergy += transfer;
-          if (transfer > 2) impactFlashTimer = 1.6;
-          updateSkaterPosFromTrack();
-        }
-      } else if (activeTrack && trackType !== 'custom' && skater.exitCooldown <= 0 && skater.x >= bounds.min && skater.x <= bounds.max) {
-        const ty = getTrackY(skater.x);
-        if (skater.y <= ty && skater.vy <= 0) {
-          skater.onTrack = true;
-          skater.s = skater.x;
-          const angle = Math.atan(getTrackSlope(skater.s));
-          const oldKE = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
-          skater.v = skater.vx * Math.cos(angle) + skater.vy * Math.sin(angle);
-          const newKE = 0.5 * mass * skater.v * skater.v;
-          const transfer = Math.max(0, oldKE - newKE);
-          skater.impactEnergy += transfer;
-          if (transfer > 2) impactFlashTimer = 1.6;
+          skater.v = vTangent;
+          skater.impactEnergy += impactLoss;
+          if (impactLoss > 2) impactFlashTimer = 1.6;
           updateSkaterPosFromTrack();
         }
       }
 
       if (skater.y <= GROUND_CLEARANCE_M) {
-        const oldKE = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
-        const vAfterGround = skater.vx * 0.85;
-        const newKE = 0.5 * mass * (vAfterGround * vAfterGround);
-        const transfer = Math.max(0, oldKE - newKE);
-        skater.impactEnergy += transfer;
-        if (transfer > 2) impactFlashTimer = 1.8;
+        const keBefore = 0.5 * mass * (skater.vx * skater.vx + skater.vy * skater.vy);
+        const keAfter = 0.5 * mass * (skater.vx * skater.vx);
+        const impactLoss = Math.max(0, keBefore - keAfter);
+
+        skater.impactEnergy += impactLoss;
+        if (impactLoss > 2) impactFlashTimer = 1.8;
 
         skater.y = GROUND_CLEARANCE_M;
         skater.vy = 0;
         skater.angle = 0;
-        skater.vx = vAfterGround;
       }
     }
   }
@@ -989,14 +1017,25 @@ function updatePhysics(dt) {
 }
 
 function updateEnergyAndText() {
-  const { ke, pe } = getMechanicalEnergy();
+  const { ke, pe, mech } = getMechanicalEnergy();
   const th = Math.max(0, skater.thermalEnergy);
   const imp = Math.max(0, skater.impactEnergy);
-  const total = ke + pe + th + imp;
 
-  if (isDragging) {
-    skater.initialBudget = total;
+  // Sürtünme ve rüzgar yokken toplam enerjinin sayısal oynamasını önle
+  let total = mech + th + imp;
+  if (!isDragging && friction === 0 && windSpeed === 0 && skater.baseEnergy > 0) {
+    const diff = skater.baseEnergy - total;
+    if (Math.abs(diff) < 8) {
+      total = skater.baseEnergy;
+    } else {
+      skater.baseEnergy = total;
+    }
+  } else if (isDragging) {
+    skater.baseEnergy = total;
   }
+
+  // En yukarı/en aşağı inildiğinde baskın enerjinin sütunu tam doldurması için ölçek toplam enerjiye göre ayarlanır
+  const scale = Math.max(total, 1);
 
   document.getElementById('val-ke').textContent = Math.round(ke) + ' J';
   document.getElementById('val-pe').textContent = Math.round(pe) + ' J';
@@ -1004,13 +1043,11 @@ function updateEnergyAndText() {
   document.getElementById('val-imp').textContent = Math.round(imp) + ' J';
   document.getElementById('val-tot').textContent = Math.round(total) + ' J';
 
-  // Sütunların Joule değerlerindeki artış ve azalışa duyarlı hareket etmesi için ölçek
-  const scaleRef = Math.max(skater.initialBudget, total, 1200);
-  document.getElementById('bar-ke').style.width = Math.min(100, (ke / scaleRef) * 100) + '%';
-  document.getElementById('bar-pe').style.width = Math.min(100, (pe / scaleRef) * 100) + '%';
-  document.getElementById('bar-th').style.width = Math.min(100, (th / scaleRef) * 100) + '%';
-  document.getElementById('bar-imp').style.width = Math.min(100, (imp / scaleRef) * 100) + '%';
-  document.getElementById('bar-tot').style.width = Math.min(100, (total / scaleRef) * 100) + '%';
+  document.getElementById('bar-ke').style.width = Math.min(100, Math.max(0, (ke / scale) * 100)) + '%';
+  document.getElementById('bar-pe').style.width = Math.min(100, Math.max(0, (pe / scale) * 100)) + '%';
+  document.getElementById('bar-th').style.width = Math.min(100, Math.max(0, (th / scale) * 100)) + '%';
+  document.getElementById('bar-imp').style.width = Math.min(100, Math.max(0, (imp / scale) * 100)) + '%';
+  document.getElementById('bar-tot').style.width = (total > 0.01 ? 100 : 0) + '%';
 
   const vy = getCurrentVy();
   const speed = getCurrentSpeed();
@@ -1018,7 +1055,7 @@ function updateEnergyAndText() {
   if (isDragging) {
     motionNote.textContent = 'Yukarı çektikçe Potansiyel enerji artar, bıraktığında hareket başlar.';
   } else if (impactFlashTimer > 0) {
-    motionNote.textContent = 'Zemine/piste iniş çarpmasında enerji çevreye ve zemine aktarıldı.';
+    motionNote.textContent = 'Çarpma sırasında dikey hız enerjisi zemine/çevreye aktarıldı.';
   } else if (vy < -0.18) {
     motionNote.textContent = 'İniş: Potansiyel enerji azalıyor, Kinetik enerji artıyor.';
   } else if (vy > 0.18) {
@@ -1119,10 +1156,9 @@ function drawTrack() {
     ctx.strokeStyle = '#f97316';
     ctx.lineWidth = 3;
     ctx.stroke();
-  } else if (hasActiveTrack()) {
+  } else if (hasActiveTrack() && presetArcTable.length >= 2) {
     const bounds = getTrackBounds();
     const span = bounds.max - bounds.min;
-    const step = Math.max(0.03, span / 220);
 
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 4;
@@ -1141,13 +1177,12 @@ function drawTrack() {
     ctx.lineWidth = 10;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    for (let x = bounds.min; x <= bounds.max; x += step) {
-      const sx = toScreenX(x);
-      const sy = toScreenY(getTrackY(x));
-      if (x === bounds.min) ctx.moveTo(sx, sy);
+    presetArcTable.forEach((pt, idx) => {
+      const sx = toScreenX(pt.x);
+      const sy = toScreenY(pt.y);
+      if (idx === 0) ctx.moveTo(sx, sy);
       else ctx.lineTo(sx, sy);
-    }
-    ctx.lineTo(toScreenX(bounds.max), toScreenY(getTrackY(bounds.max)));
+    });
     ctx.stroke();
 
     ctx.strokeStyle = '#f97316';
