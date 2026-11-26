@@ -1,267 +1,542 @@
 <!DOCTYPE html>
-
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hız Treni - Enerji Dönüşümü</title>
+<title>Hız Treni – Enerji Dönüşümü Simülasyonu</title>
 <style>
+* { box-sizing: border-box; }
+
 body {
-    font-family: Arial, sans-serif;
-    background: #eef5fc;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #eef3f8;
+  color: #172033;
 }
-h1 { color: #234b70; }
-.container {
-    max-width: 850px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 15px;
+
+header {
+  background: #173b67;
+  color: white;
+  padding: 18px 20px;
+  text-align: center;
 }
+
+header h1 {
+  margin: 0 0 6px;
+  font-size: 25px;
+}
+
+header p {
+  margin: 0;
+  font-size: 14px;
+}
+
+main {
+  max-width: 1050px;
+  margin: 18px auto;
+  padding: 0 14px;
+}
+
+.panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 3px 12px #162b4412;
+}
+
 canvas {
-    width: 100%;
-    background: #dceeff;
-    border-radius: 10px;
+  display: block;
+  width: 100%;
+  height: auto;
+  background: linear-gradient(#dff2ff, #f8fcff);
+  border: 1px solid #c8d8e8;
+  border-radius: 9px;
 }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 button {
-    padding: 12px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    background: #2679c9;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  color: white;
+  background: #1d65a6;
 }
-button:hover { background: #15599c; }
-.info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 15px;
+
+button:hover {
+  filter: brightness(.92);
 }
-.box {
-    flex: 1;
-    min-width: 130px;
-    background: #edf4fa;
-    padding: 15px;
-    border-radius: 10px;
+
+#pause { background: #66758a; }
+#reset { background: #b34a43; }
+
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
-input { accent-color: #2679c9; }
+
+input[type="range"] {
+  width: 145px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.stat {
+  padding: 12px;
+  border-radius: 9px;
+  background: #f2f6fa;
+  border-left: 5px solid #2878bd;
+}
+
+.stat:nth-child(2) { border-color: #e09a26; }
+.stat:nth-child(3) { border-color: #22a06b; }
+.stat:nth-child(4) { border-color: #8a62bd; }
+
+.stat small {
+  display: block;
+  color: #536276;
+  margin-bottom: 5px;
+}
+
+.stat strong {
+  font-size: 21px;
+}
+
+.bar {
+  display: flex;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e7edf3;
+  margin-top: 10px;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  transition: width .12s;
+}
+
+#keBar { background: #2878bd; }
+#peBar { background: #e09a26; }
+#heatBar { background: #22a06b; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 5px;
+}
+
 #explain {
-    background: #e5f1ff;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 15px;
+  background: #edf6ff;
+  border-left: 5px solid #2878bd;
+  padding: 12px;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.note {
+  font-size: 13px;
+  color: #59677a;
+  line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  header h1 {
+    font-size: 21px;
+  }
 }
 </style>
 </head>
+
 <body>
 
-<div class="container">
-<h1>🎢 Hız Treni Enerji Simülasyonu</h1>
-<p>Hız treninin hareketini ve enerji dönüşümlerini keşfet!</p>
+<header>
+  <h1>🎢 Hız Treni – Enerji Dönüşümü Simülasyonu</h1>
+  <p>Hareket, çekim potansiyel enerjisi, kinetik enerji ve sürtünmenin etkisi</p>
+</header>
 
-<canvas id="canvas" width="800" height="320"></canvas>
+<main>
 
-<br>
+<section class="panel">
+  <canvas id="scene" width="1000" height="390"></canvas>
+</section>
 
-<button onclick="play()">▶ Oynat</button>
-<button onclick="pause()">Ⅱ Duraklat</button>
-<button onclick="reset()">↺ Başa Sar</button>
+<section class="panel controls">
+  <button id="play">▶ Başlat</button>
+  <button id="pause">Ⅱ Duraklat</button>
+  <button id="reset">↻ Başa Sar</button>
 
-<div class="info">
-<div class="box">
-<h3>🚀 Kinetik Enerji</h3>
-<strong id="ke">0 J</strong>
+  <label>
+    Oynatma hızı
+    <input id="speed" type="range"
+    min="0.5" max="2" step="0.1" value="1">
+    <b id="speedText">1.0x</b>
+  </label>
+
+  <label>
+    <input id="friction" type="checkbox">
+    Sürtünme açık
+  </label>
+</section>
+
+<section class="panel">
+
+<h2 style="margin-top:0">Enerji değerleri</h2>
+
+<div class="stats">
+
+  <div class="stat">
+    <small>Kinetik enerji</small>
+    <strong id="ke">0 J</strong>
+  </div>
+
+  <div class="stat">
+    <small>Çekim potansiyel enerjisi</small>
+    <strong id="pe">0 J</strong>
+  </div>
+
+  <div class="stat">
+    <small>Isıya dönüşen enerji</small>
+    <strong id="heat">0 J</strong>
+  </div>
+
+  <div class="stat">
+    <small>Toplam enerji</small>
+    <strong id="total">1.000 J</strong>
+  </div>
+
 </div>
-<div class="box">
-<h3>⛰️ Potansiyel Enerji</h3>
-<strong id="pe">1000 J</strong>
+
+<div class="bar">
+  <span id="keBar"></span>
+  <span id="peBar"></span>
+  <span id="heatBar"></span>
 </div>
-<div class="box">
-<h3>⚡ Toplam Enerji</h3>
-<strong id="total">1000 J</strong>
+
+<div class="legend">
+  <span><i class="dot" style="background:#2878bd"></i>Kinetik</span>
+  <span><i class="dot" style="background:#e09a26"></i>Potansiyel</span>
+  <span><i class="dot" style="background:#22a06b"></i>Isıya dönüşen</span>
 </div>
-</div>
+
+</section>
+
+<section class="panel">
+
+<h2 style="margin-top:0">Neler oluyor?</h2>
 
 <div id="explain">
-Tren başlangıç noktasında. Potansiyel enerji yüksektir.
+Başlat düğmesine bas. Tren hareket ettikçe enerji değerlerini takip et.
 </div>
 
-<br>
+<p class="note">
+<b>Bilimsel not:</b>
+Bu modelde toplam enerji her zaman 1.000 J olarak korunur.
+Sürtünme kapalıyken enerji kinetik ve potansiyel enerji arasında dönüşür.
+Sürtünme açıldığında mekanik enerjinin bir bölümü ısıya dönüşür;
+bu nedenle kinetik + potansiyel enerji azalır, fakat ısıya dönüşen
+enerji de hesaba katıldığında toplam enerji değişmez.
+Model, sürtünmenin etkisini göstermek için basitleştirilmiştir.
+</p>
 
-<label>Yavaşlatma:</label>
-<input type="range" id="speed" min="1" max="4" value="2">
-
-<br><br>
-
-<label>
-<input type="checkbox" id="friction">
-Sürtünmeyi etkinleştir
-</label>
-
-<p id="frictionInfo">Sürtünme kapalı.</p>
-</div>
+</section>
+</main>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
 
-let progress = 0;
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+
+const TOTAL = 1000;
+const MASS = 10;
+const G = 9.8;
+
+let x = 0;
+let mechanical = TOTAL;
+let heat = 0;
 let running = false;
-let energy = 1000;
-let animation;
+let last = 0;
 
-function getPosition(t) {
-    let x = 20 + t * 760;
-    let y;
+const $ = id => document.getElementById(id);
 
-    if (x <= 220) {
-        y = 250 - 180 * Math.sin((x-20)/200 * Math.PI/2);
-    } else if (x <= 420) {
-        y = 70 + 180 * (1-Math.cos((x-220)/200 * Math.PI/2));
-    } else if (x <= 610) {
-        y = 250 - 150 * Math.sin((x-420)/190 * Math.PI/2);
-    } else {
-        y = 100 + 150 * (1-Math.cos((x-610)/170 * Math.PI/2));
-    }
-
-    return {x,y};
+function heightAt(t) {
+  return 0.25 +
+    3.55 * (0.5 - 0.5 * Math.cos(2 * Math.PI * t)) +
+    2.7 * Math.pow(Math.sin(3 * Math.PI * t), 2);
 }
 
 function draw() {
-    ctx.clearRect(0,0,800,320);
 
-    // Ray
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#e8f5e8';
+  ctx.fillRect(0, 320, 1000, 70);
+
+  ctx.strokeStyle = '#d4e4ef';
+  ctx.lineWidth = 1;
+
+  for (let gx = 0; gx <= 1000; gx += 100) {
     ctx.beginPath();
-    for(let i=0;i<=200;i++){
-        let p=getPosition(i/200);
-        if(i===0) ctx.moveTo(p.x,p.y);
-        else ctx.lineTo(p.x,p.y);
-    }
-
-    ctx.strokeStyle="#455a64";
-    ctx.lineWidth=7;
+    ctx.moveTo(gx, 0);
+    ctx.lineTo(gx, 350);
     ctx.stroke();
+  }
 
-    // Destekler
-    for(let i=0;i<=10;i++){
-        let p=getPosition(i/10);
-        ctx.beginPath();
-        ctx.moveTo(p.x,p.y);
-        ctx.lineTo(p.x,300);
-        ctx.strokeStyle="#8999a5";
-        ctx.lineWidth=3;
-        ctx.stroke();
-    }
+  const px = t => 35 + t * 920;
+  const py = h => 315 - h * 31;
 
-    // Tren
-    let p=getPosition(progress);
+  ctx.beginPath();
 
-    ctx.fillStyle="#e74c3c";
-    ctx.fillRect(p.x-20,p.y-25,40,20);
+  for (let i = 0; i <= 500; i++) {
 
-    ctx.fillStyle="#263747";
-    ctx.beginPath();
-    ctx.arc(p.x-10,p.y,6,0,Math.PI*2);
-    ctx.arc(p.x+10,p.y,6,0,Math.PI*2);
-    ctx.fill();
-}
+    const t = i / 500;
+    const xx = px(t);
+    const yy = py(heightAt(t));
 
-function update() {
-    let p=getPosition(progress);
-
-    let height=Math.max(0,Math.min(1,(250-p.y)/180));
-
-    let potential=energy*height;
-    let kinetic=energy-potential;
-
-    document.getElementById("ke").innerText=
-        Math.round(kinetic)+" J";
-
-    document.getElementById("pe").innerText=
-        Math.round(potential)+" J";
-
-    document.getElementById("total").innerText=
-        Math.round(energy)+" J";
-
-    let explanation="";
-
-    if(p.y<110){
-        explanation="Tren yüksek noktada. Potansiyel enerji yüksek, kinetik enerji düşüktür.";
-    }
-    else if(p.y>200){
-        explanation="Tren alçak noktada. Potansiyel enerji azalır, kinetik enerji artar.";
-    }
-    else {
-        explanation="Tren hareket ediyor. Potansiyel ve kinetik enerji birbirine dönüşüyor.";
-    }
-
-    document.getElementById("explain").innerText=explanation;
-
-    if(document.getElementById("friction").checked){
-        document.getElementById("frictionInfo").innerText=
-        "Sürtünme açık: Mekanik enerjinin bir kısmı ısıya dönüşür.";
+    if (i === 0) {
+      ctx.moveTo(xx, yy);
     } else {
-        document.getElementById("frictionInfo").innerText=
-        "Sürtünme kapalı: Mekanik enerji korunur.";
+      ctx.lineTo(xx, yy);
     }
+  }
 
+  ctx.strokeStyle = '#34495e';
+  ctx.lineWidth = 7;
+  ctx.stroke();
+
+  ctx.strokeStyle = '#aab8c5';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  for (let i = 0; i <= 20; i++) {
+
+    const t = i / 20;
+    const xx = px(t);
+    const yy = py(heightAt(t));
+
+    ctx.beginPath();
+    ctx.moveTo(xx, yy + 5);
+    ctx.lineTo(xx, 350);
+
+    ctx.strokeStyle = '#8998a7';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  const cx = px(x);
+  const cy = py(heightAt(x));
+
+  ctx.save();
+  ctx.translate(cx, cy - 13);
+
+  ctx.fillStyle = '#d94841';
+  ctx.fillRect(-19, -11, 38, 17);
+
+  ctx.fillStyle = '#26384a';
+
+  ctx.beginPath();
+  ctx.arc(-10, 8, 5, 0, Math.PI * 2);
+  ctx.arc(11, 8, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-10, -8, 8, 6);
+
+  ctx.restore();
+
+  ctx.fillStyle = '#24364a';
+  ctx.font = 'bold 15px Arial';
+
+  ctx.fillText('Başlangıç', 35, 375);
+  ctx.fillText('Bitiş', 910, 375);
+
+  ctx.fillStyle = '#516579';
+  ctx.font = '13px Arial';
+
+  ctx.fillText(
+    'Yükseklik: ' + heightAt(x).toFixed(1) + ' m',
+    cx - 48,
+    cy - 35
+  );
+}
+
+function updateValues() {
+
+  const pe = Math.min(
+    mechanical,
+    MASS * G * heightAt(x)
+  );
+
+  const ke = Math.max(0, mechanical - pe);
+
+  $('ke').textContent = Math.round(ke) + ' J';
+  $('pe').textContent = Math.round(pe) + ' J';
+  $('heat').textContent = Math.round(heat) + ' J';
+
+  $('total').textContent =
+    Math.round(ke + pe + heat).toLocaleString('tr-TR') + ' J';
+
+  $('keBar').style.width = (ke / TOTAL * 100) + '%';
+  $('peBar').style.width = (pe / TOTAL * 100) + '%';
+  $('heatBar').style.width = (heat / TOTAL * 100) + '%';
+
+  const friction = $('friction').checked;
+
+  let msg;
+
+  if (x >= 1) {
+    msg = 'Tren parkurun sonuna ulaştı. Başa Sar düğmesiyle yeniden deneyebilirsin.';
+  }
+
+  else if (!running && x === 0) {
+    msg = 'Başlat düğmesine bas. Tren hareket ettikçe enerji değerlerini takip et.';
+  }
+
+  else if (ke < 1) {
+    msg = 'Tren bu noktada ilerleyemeyecek kadar yavaşladı. Sürtünme nedeniyle mekanik enerjinin bir kısmı ısıya dönüşmüştür.';
+  }
+
+  else if (heightAt(x) > 5.2) {
+    msg = 'Tren yüksek bir noktada: çekim potansiyel enerjisi artar, kinetik enerji azalır.';
+  }
+
+  else if (heightAt(x) < 1.4) {
+    msg = 'Tren alçak bir noktada: çekim potansiyel enerjisi azalır, kinetik enerji artar.';
+  }
+
+  else {
+    msg = 'Tren ray üzerinde ilerliyor. Yokuş çıkarken potansiyel enerji artar; yokuş inerken kinetik enerji artar.';
+  }
+
+  if (friction) {
+    msg += ' Sürtünme açık: mekanik enerjinin bir bölümü ısıya dönüşüyor. Toplam enerji yine 1.000 J.';
+  } else {
+    msg += ' Sürtünme kapalı: mekanik enerji korunur ve kinetik + potansiyel enerji 1.000 J eder.';
+  }
+
+  $('explain').textContent = msg;
+}
+
+function frame(ts) {
+
+  if (!running) return;
+
+  if (!last) last = ts;
+
+  const dt = Math.min((ts - last) / 1000, 0.05);
+  last = ts;
+
+  const speed = Number($('speed').value);
+
+  const h = heightAt(x);
+  const pe = MASS * G * h;
+  const ke = Math.max(0, mechanical - pe);
+
+  if (x >= 1 || ke <= 0.5) {
+    running = false;
+    updateValues();
     draw();
+    return;
+  }
+
+  const velocity = 0.035 + Math.sqrt(ke / TOTAL) * 0.22;
+  const dx = velocity * dt * speed;
+
+  if ($('friction').checked) {
+
+    const loss = Math.min(mechanical - pe, dx * 115);
+
+    mechanical -= loss;
+    heat += loss;
+  }
+
+  x = Math.min(1, x + dx);
+
+  if (MASS * G * heightAt(x) > mechanical) {
+    x = Math.max(0, x - dx);
+    running = false;
+  }
+
+  draw();
+  updateValues();
+
+  requestAnimationFrame(frame);
 }
 
-function play(){
-    if(running) return;
+$('play').addEventListener('click', () => {
 
-    if(progress>=1){
-        progress=0;
-        energy=1000;
-    }
+  if (x >= 1 || mechanical <= MASS * G * heightAt(x)) {
+    return;
+  }
 
-    running=true;
-    animate();
-}
+  if (!running) {
+    running = true;
+    last = 0;
+    requestAnimationFrame(frame);
+  }
+});
 
-function animate(){
-    if(!running) return;
+$('pause').addEventListener('click', () => {
 
-    let speed=Number(document.getElementById("speed").value);
+  running = false;
+  last = 0;
+  updateValues();
+});
 
-    progress+=0.0005*speed;
+$('reset').addEventListener('click', () => {
 
-    if(document.getElementById("friction").checked){
-        energy=Math.max(400,energy-0.3);
-    }
+  running = false;
+  last = 0;
 
-    if(progress>=1){
-        progress=1;
-        running=false;
-    }
+  x = 0;
+  mechanical = TOTAL;
+  heat = 0;
 
-    update();
+  draw();
+  updateValues();
+});
 
-    if(running){
-        animation=requestAnimationFrame(animate);
-    }
-}
+$('speed').addEventListener('input', () => {
 
-function pause(){
-    running=false;
-    cancelAnimationFrame(animation);
-}
+  $('speedText').textContent =
+    Number($('speed').value).toFixed(1) + 'x';
+});
 
-function reset(){
-    pause();
-    progress=0;
-    energy=1000;
-    update();
-}
+$('friction').addEventListener('change', () => {
+  updateValues();
+});
 
-update();
+draw();
+updateValues();
+
 </script>
 
 </body>
