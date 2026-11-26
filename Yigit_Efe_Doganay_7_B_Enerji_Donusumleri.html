@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enerji Dönüşümü: Yuvarlanan Tenis Topu</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0a18;--card:#12122a;--tx:#39ff14;--mut:#ff7ad9;--bd:#2f2f6a;--sky:#0b0b22}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+h1{font-size:1.2rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--sky)}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+button{font-size:1rem;padding:8px 16px;border-radius:8px;border:1px solid var(--bd);background:#2f6fed;color:#fff;cursor:pointer}
+button.alt{background:var(--card);color:var(--tx)}
+label{display:flex;gap:6px;align-items:center;cursor:pointer;font-size:1rem}
+.say{min-height:3.2em;font-size:1.05rem;line-height:1.4}
+.row{display:grid;grid-template-columns:150px 1fr 80px;gap:8px;align-items:center;margin:7px 0;font-size:.95rem}
+.track{height:20px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;overflow:hidden}
+.fill{height:100%;width:0}
+.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.note{color:var(--mut);font-size:.85rem;line-height:1.4}
+h1{background:linear-gradient(90deg,#ff2bd6,#00f0ff,#39ff14,#ffee00);-webkit-background-clip:text;background-clip:text;color:transparent}
+canvas{box-shadow:0 0 16px #00f0ff55}
+#dir{color:#00f0ff;text-shadow:0 0 8px #00f0ff99}
+#say{color:#ffee00;text-shadow:0 0 6px #ffee0088}
+button{background:#ff2bd6;color:#0a0a18;font-weight:700;border-color:#ff2bd6;box-shadow:0 0 10px #ff2bd6}
+button.alt{background:transparent;color:#00f0ff;border-color:#00f0ff;box-shadow:0 0 10px #00f0ff88}
+select{background:#12122a;color:#ffee00;border:1px solid #ffee00;border-radius:6px;padding:3px}
+#info{color:#ff9f1c}
+.row:nth-child(1)>span,.row:nth-child(1) .val{color:#ff6a00}
+.row:nth-child(2)>span,.row:nth-child(2) .val{color:#00b3ff}
+.row:nth-child(3)>span,.row:nth-child(3) .val{color:#c27bff}
+.row:nth-child(4)>span,.row:nth-child(4) .val{color:#ff2b6d}
+.row:nth-child(5)>span,.row:nth-child(5) .val{color:#39ff14}
+#b0{background:#ff6a00!important;box-shadow:0 0 10px #ff6a00}
+#b1{background:#00b3ff!important;box-shadow:0 0 10px #00b3ff}
+#b2{background:#c27bff!important;box-shadow:0 0 10px #c27bff}
+#b3{background:#ff2b6d!important;box-shadow:0 0 10px #ff2b6d}
+#b4{background:#39ff14!important;box-shadow:0 0 10px #39ff14}
+@media(max-width:520px){.row{grid-template-columns:105px 1fr 64px;font-size:.85rem}}
+</style>
+</head>
+<body>
+<h1>Enerji Dönüşümü: Yuvarlanan Tenis Topu</h1>
+<div class="card">
+<canvas id="cv" width="900" height="360"></canvas>
+<div class="ctrl">
+<button id="go">Başlat</button>
+<button id="rs" class="alt">Sıfırla</button>
+<label><input type="checkbox" id="fr"> Sürtünme açık</label>
+<label>Hız: <select id="sp"><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="2">2x</option></select></label>
+<span class="note" id="info"></span>
+</div>
+</div>
+<div class="card" id="dir" style="font-weight:600"></div>
+<div class="card say" id="say">Başlat düğmesine bas ve enerji dönüşümünü izle.</div>
+<div class="card">
+<div class="row"><span>Kinetik enerji</span><div class="track"><div class="fill" id="b0" style="background:#e8590c"></div></div><span class="val" id="v0"></span></div>
+<div class="row"><span>Çekim potansiyel enerjisi</span><div class="track"><div class="fill" id="b1" style="background:#1c7ed6"></div></div><span class="val" id="v1"></span></div>
+<div class="row"><span>Mekanik (K + P)</span><div class="track"><div class="fill" id="b2" style="background:#7048e8"></div></div><span class="val" id="v2"></span></div>
+<div class="row"><span>Isıya dönüşen enerji</span><div class="track"><div class="fill" id="b3" style="background:#c92a2a"></div></div><span class="val" id="v3"></span></div>
+<div class="row"><span>Toplam enerji</span><div class="track"><div class="fill" id="b4" style="background:#2b8a3e"></div></div><span class="val" id="v4"></span></div>
+<p class="note">Basit model: Dışarıdan enerji verilmez. Topun dönme enerjisi ve havanın direnci ihmal edilir. Top zıplamadığı ve yay içermediği için esneklik potansiyel enerjisi yoktur; bu yüzden ayrı bir esneklik çubuğu gösterilmez. Sürtünme kapalıyken K + P sabittir. Sürtünme açıkken azalan mekanik enerji ısıya dönüşür ve toplam enerji yine sabit kalır.</p>
+</div>
+<script>
+(function(){
+var m=0.058,g=9.8,mu=0.08,X0=-2.8,V0=1.0,R=0.11;
+var cv=document.getElementById('cv'),c=cv.getContext('2d');
+var W=cv.width,H=cv.height,S=130,ox=W/2,oy=H-30;
+function h(x){return 0.25*x*x}
+function dh(x){return 0.5*x}
+var x,u,Q,E0,rot,run,stopped,raf,last,speed=1,pend=null;
+function reset(){
+if(pend){clearTimeout(pend);pend=null}
+x=X0;var s=dh(x),cs=1/Math.sqrt(1+s*s);
+u=V0; // eğim aşağı doğru (sağa) başlangıç hızı, m/s
+Q=0;E0=0.5*m*u*u+m*g*h(x);rot=0;run=false;stopped=false;
+document.getElementById('go').textContent='Başlat';
+draw();say('Top en yüksek noktada, ilk konumunda. Başlangıç hızı sıfırlandı.');
+}
+function step(dt){
+var fr=document.getElementById('fr').checked;
+var s=dh(x),cs=1/Math.sqrt(1+s*s),sn=s*cs;
+var dir=u!==0?(u>0?1:-1):(s>0?-1:1);
+var a=-g*sn-(fr?mu*g*cs*dir:0);
+u+=a*dt;
+var ds=u*dt;
+x+=ds*cs;
+if(x<-3){x=-3;u=Math.abs(u)*0.0}
+if(x>3){x=3;u=0}
+if(fr)Q+=mu*m*g*cs*Math.abs(ds);
+rot+=ds/R;
+var y=h(x),s2=dh(x);
+var v2=2*(E0-Q)/m-2*g*y;
+if(v2<=0){
+ // dönüm noktası: hız sıfır
+ u=0;Q=E0-m*g*y;if(Q<0)Q=0;
+ if(fr&&Math.abs(s2)<=mu){stopped=true;run=false;document.getElementById('go').textContent='Başlat'}
+}else{
+ var sg=u>0?1:(u<0?-1:(s2>0?-1:1));
+ u=sg*Math.sqrt(v2);
+ if(fr&&Math.abs(u)<0.02&&Math.abs(s2)<=mu){u=0;Q=E0-m*g*y;stopped=true;run=false;document.getElementById('go').textContent='Başlat'}
+}
+}
+function say(t){document.getElementById('say').textContent=t}
+function explain(){
+var fr=document.getElementById('fr').checked;
+var y=h(x),t;
+if(stopped){t='Top durdu. Başlangıçtaki enerjinin büyük kısmı sürtünme yüzünden ısıya dönüştü. Toplam enerji hâlâ aynı.';}
+else if(Math.abs(u)<0.05){t='Top en yüksek noktada anlık duruyor. Kinetik enerji sıfır, potansiyel enerji en büyük.';}
+else if(y<0.02){t='Top en alt noktada. Potansiyel enerji en az, kinetik enerji en büyük.';}
+else{
+ var up=(u*dh(x))>0; // yükseliyor mu
+ t=up?'Top yukarı çıkıyor: kinetik enerji azalıyor, potansiyel enerji artıyor.':'Top aşağı iniyor: potansiyel enerji azalıyor, kinetik enerji artıyor.';
+}
+if(fr&&!stopped)t+=' Sürtünme yüzünden mekanik enerjinin bir kısmı ısıya dönüşüyor.';
+else if(!fr&&!stopped)t+=' Sürtünme yok: kinetik + potansiyel enerji sabit.';
+say(t);
+}
+function bars(){
+var K=0.5*m*u*u,P=m*g*h(x),M=K+P,T=M+Q,mx=E0*1.02;
+var a=[K,P,M,Q,T];
+for(var i=0;i<5;i++){
+ document.getElementById('b'+i).style.width=Math.min(100,a[i]/mx*100)+'%';
+ document.getElementById('v'+i).textContent=a[i].toFixed(3)+' J';
+}
+document.getElementById('info').textContent='Hız: '+Math.abs(u).toFixed(2)+' m/s   Yükseklik: '+h(x).toFixed(2)+' m';
+}
+function dirs(){
+var s=dh(x),cs=1/Math.sqrt(1+s*s),vx=u*cs,vy=u*cs*s;
+return {x:Math.abs(vx)>0.05?(vx>0?1:-1):0,y:Math.abs(vy)>0.05?(vy>0?1:-1):0};
+}
+function arrow(bx,by,dx,dy,r){
+var a=r+6,b=r+26,tx=bx+dx*b,ty=by+dy*b;
+c.strokeStyle=c.fillStyle='#ff2bd6';c.lineWidth=3;
+c.beginPath();c.moveTo(bx+dx*a,by+dy*a);c.lineTo(tx,ty);c.stroke();
+c.beginPath();c.moveTo(tx,ty);c.lineTo(tx-dx*8-dy*6,ty-dy*8+dx*6);c.lineTo(tx-dx*8+dy*6,ty-dy*8-dx*6);c.closePath();c.fill();
+}
+function draw(){
+c.clearRect(0,0,W,H);
+var gr=c.createLinearGradient(ox-3.2*S,0,ox+3.2*S,0);
+gr.addColorStop(0,'#ff2bd6');gr.addColorStop(0.25,'#00f0ff');gr.addColorStop(0.5,'#39ff14');gr.addColorStop(0.75,'#ffee00');gr.addColorStop(1,'#ff6a00');
+c.beginPath();c.moveTo(ox-3.2*S,H);
+for(var i=-3.2;i<=3.2001;i+=0.05)c.lineTo(ox+i*S,oy-h(i)*S);
+c.lineTo(ox+3.2*S,H);c.closePath();
+c.fillStyle='#15153a';c.fill();
+c.globalAlpha=0.22;c.fillStyle=gr;c.fill();c.globalAlpha=1;
+c.beginPath();
+for(var j=-3.2;j<=3.2001;j+=0.05){if(j<-3.19)c.moveTo(ox+j*S,oy-h(j)*S);else c.lineTo(ox+j*S,oy-h(j)*S)}
+c.strokeStyle=gr;c.lineWidth=6;c.lineJoin='round';c.shadowColor='#00f0ff';c.shadowBlur=16;c.stroke();c.shadowBlur=0;
+// başlangıç ve bitiş noktası işaretleri
+c.fillStyle='#888';c.font='13px sans-serif';c.textAlign='center';
+var frOn=document.getElementById('fr').checked;
+var pts=[[X0,'başlangıç']];
+if(!frOn)pts.push([-X0,'bitiş']);
+else if(stopped)pts.push([x,'bitiş']);
+pts.forEach(function(p){
+var px=ox+p[0]*S,py=oy-h(p[0])*S;
+c.font='bold 14px sans-serif';
+c.fillStyle=p[1]==='bitiş'?'#00f0ff':'#ff2bd6';c.shadowColor=c.fillStyle;c.shadowBlur=10;
+c.beginPath();c.arc(px,py,5,0,7);c.fill();c.fillText(p[1],px,py-58);c.shadowBlur=0;
+});
+c.textAlign='start';
+var s=dh(x),n=Math.sqrt(1+s*s),nx=-s/n,ny=1/n;
+var bx=ox+(x+nx*R)*S,by=oy-(h(x)+ny*R)*S,r=R*S;
+c.save();c.translate(bx,by);c.rotate(-rot);
+c.beginPath();c.arc(0,0,r,0,7);c.fillStyle='#c6e03a';c.fill();
+c.lineWidth=1.5;c.strokeStyle='#8aa000';c.stroke();
+c.beginPath();c.arc(-r*1.15,0,r*0.95,-0.9,0.9);c.strokeStyle='#fff';c.lineWidth=2;c.stroke();
+c.beginPath();c.arc(r*1.15,0,r*0.95,Math.PI-0.9,Math.PI+0.9);c.stroke();
+c.restore();
+var d=dirs();
+if(!stopped){if(d.x)arrow(bx,by,d.x,0,r);if(d.y)arrow(bx,by,0,-d.y,r)}
+var tx=stopped?'Top durdu — x: yok, y: yok':'Hareket yönü — x: '+(d.x>0?'sağa →':d.x<0?'sola ←':'yok')+'   y: '+(d.y>0?'yukarı ↑':d.y<0?'aşağı ↓':'yok');
+document.getElementById('dir').textContent=tx;
+bars();
+}
+function loop(t){
+if(!run)return;
+var dt=Math.min(0.05,(t-last)/1000)*speed;last=t;
+var n=Math.ceil(dt/0.002);
+for(var i=0;i<n&&run;i++)step(dt/n);
+draw();explain();
+if(run)raf=requestAnimationFrame(loop);else{draw();explain()}
+}
+function startRun(){
+if(pend){clearTimeout(pend);pend=null}
+if(stopped)return;
+run=true;
+document.getElementById('go').textContent='Durdur';
+last=performance.now();raf=requestAnimationFrame(loop);
+}
+document.getElementById('go').onclick=function(){
+if(run){run=false;this.textContent='Başlat';return}
+startRun();
+};
+document.getElementById('rs').onclick=function(){cancelAnimationFrame(raf);reset()};
+document.getElementById('fr').onchange=function(){
+cancelAnimationFrame(raf);reset();
+say('Sürtünme ayarı değişti. Simülasyon sıfırlandı ve 1,5 saniye sonra otomatik başlayacak.');
+pend=setTimeout(function(){pend=null;startRun()},1500);
+};
+document.getElementById('sp').onchange=function(){speed=parseFloat(this.value)};
+reset();
+})();
+</script>
+</body>
+</html>
