@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaykay Rampasında Enerji Dönüşümleri</title>
+<style>
+  :root{--ink:#f1f3f5;--mut:#8fa3b8;--line:rgba(255,255,255,.11);--kin:#ff922b;--pot:#4dabf7;--mek:#51cf66;--heat:#f06595;--tot:#ced4da}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--ink);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.45;
+    background:radial-gradient(1100px 560px at 15% -10%,#10224a 0%,transparent 60%),radial-gradient(900px 500px at 105% 105%,#2b0f26 0%,transparent 55%),#000}
+  .wrap{max-width:1040px;margin:0 auto;padding:16px}
+  h1{font-size:1.9rem;letter-spacing:-.02em;margin:6px 0 4px;background:linear-gradient(90deg,#fff,#74c0fc 55%,#ffa94d);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:0 0 14px;color:var(--mut)}
+  .grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 24px 60px rgba(0,0,0,.65)}
+  canvas{width:100%;height:auto;display:block;border-radius:12px;border:1px solid var(--line);background:#03060a}
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .chip{border:1px solid var(--line);border-top:3px solid currentColor;border-radius:14px;padding:8px 10px;background:rgba(255,255,255,.04);text-align:center}
+  .chip small{display:block;color:var(--mut);font-size:.8rem}
+  .chip b{font-size:1.5rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  #chM{color:var(--tot)} #chV{color:var(--kin)} #chH{color:var(--pot)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:12px}
+  button{font:inherit;font-weight:700;padding:10px 22px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.09);color:var(--ink);cursor:pointer;transition:filter .15s,transform .1s}
+  button:hover{filter:brightness(1.25)} button:active{transform:scale(.97)}
+  #btnPlay{background:linear-gradient(135deg,#ffa94d,#f76707);color:#1a0f00;border:0;box-shadow:0 6px 22px rgba(247,103,7,.45)}
+  button:focus-visible,input:focus-visible{outline:3px solid #74c0fc;outline-offset:2px}
+  label{display:flex;gap:8px;align-items:center;font-weight:600;cursor:pointer}
+  input[type=checkbox]{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:13px;background:#2b3440;position:relative;cursor:pointer;transition:background .2s;margin:0}
+  input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+  input[type=checkbox]:checked{background:var(--heat)} input[type=checkbox]:checked::after{transform:translateX(20px)}
+  #say{margin-top:12px;padding:12px 14px;border-left:4px solid var(--pot);background:rgba(77,171,247,.09);border-radius:10px;min-height:3.6em;font-size:1.02rem}
+  h2{font-size:1.05rem;margin:0 0 12px}
+  .bar{margin:0 0 12px}
+  .bar .t{display:flex;justify-content:space-between;font-weight:600;font-size:.93rem;margin-bottom:4px}
+  .bar .t span:last-child{font-variant-numeric:tabular-nums}
+  .track{height:18px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden}
+  .fill{height:100%;width:0;border-radius:999px;box-shadow:0 0 14px currentColor;transition:width .05s linear}
+  #bK{background:linear-gradient(90deg,#f76707,#ffa94d);color:rgba(255,146,43,.6)}
+  #bU{background:linear-gradient(90deg,#1c7ed6,#74c0fc);color:rgba(77,171,247,.6)}
+  #bM{background:linear-gradient(90deg,#2f9e44,#8ce99a);color:rgba(81,207,102,.6)}
+  #bQ{background:linear-gradient(90deg,#c2255c,#faa2c1);color:rgba(240,101,149,.6)}
+  #bT{background:linear-gradient(90deg,#868e96,#f1f3f5);color:rgba(206,212,218,.5)}
+  .note{font-size:.85rem;color:var(--mut);margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛹 Kaykay Rampasında Enerji Dönüşümleri</h1>
+  <p class="sub">7. Sınıf Fen Bilimleri – Kuvvet ve Enerji | Kaykaycı U biçimli rampanın sol üstünden durgun halde bırakılıyor.</p>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="chips">
+          <div class="chip" id="chM"><small>⚖️ Kütle</small><b id="cM">40 kg</b></div>
+          <div class="chip" id="chV"><small>💨 Hız</small><b id="cV">0,00 m/s</b></div>
+          <div class="chip" id="chH"><small>📏 Yükseklik</small><b id="cH">0,00 m</b></div>
+        </div>
+        <canvas id="cv" width="720" height="360" aria-label="U biçimli rampada kaykaycı"></canvas>
+        <div class="controls">
+          <button id="btnPlay">▶ Başlat</button>
+          <button id="btnReset">↺ Sıfırla</button>
+          <label><input type="checkbox" id="fric"> Sürtünme açık</label>
+          <label><input type="checkbox" id="slow"> Ağır çekim</label>
+        </div>
+        <div id="say" aria-live="polite">Başlat düğmesine bas.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Enerji göstergeleri (joule, J)</h2>
+      <div class="bar"><div class="t"><span>Kinetik enerji</span><span id="vK">0 J</span></div><div class="track"><div class="fill" id="bK"></div></div></div>
+      <div class="bar"><div class="t"><span>Çekim potansiyel enerjisi</span><span id="vU">0 J</span></div><div class="track"><div class="fill" id="bU"></div></div></div>
+      <div class="bar"><div class="t"><span>Mekanik enerji (kinetik + potansiyel)</span><span id="vM">0 J</span></div><div class="track"><div class="fill" id="bM"></div></div></div>
+      <div class="bar"><div class="t"><span>🔥 Isıya dönüşen enerji</span><span id="vQ">0 J</span></div><div class="track"><div class="fill" id="bQ"></div></div></div>
+      <div class="bar"><div class="t"><span>Toplam enerji (mekanik + ısı)</span><span id="vT">0 J</span></div><div class="track"><div class="fill" id="bT"></div></div></div>
+      <p class="note">Bu modelde esneklik potansiyel enerjisi yoktur. Dışarıdan enerji verilmez. Hava direnci ve ses ihmal edilmiştir. Kaykaycı + kaykay kütlesi 40 kg, g = 9,8 N/kg alınmıştır.</p>
+      <p class="note"><b>Deney ipucu:</b> Önce sürtünme kapalıyken dene. Sonra Sıfırla'ya bas, sürtünmeyi aç ve aynı başlangıçla tekrar dene.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var W=cv.width, H=cv.height;
+  var M=40, G=9.8, MU=0.10, A=0.4;      // kütle, çekim, sürtünme katsayısı, rampa şekli h = A x²
+  var X0=-2.0, XMAX=2.2;                 // başlangıç konumu ve rampa ucu (m)
+  var SC=130, GY=325;                    // ölçek (px/m), zemin çizgisi
+  var h=function(x){return A*x*x;};
+  var slope=function(x){return 2*A*x;};
+  var E0=M*G*h(X0);                      // başlangıç toplam enerjisi
+
+  var st, running=false, last=0;
+  var $=function(id){return document.getElementById(id);};
+
+  function reset(){
+    st={x:X0, v:0, Q:0, stopped:false, started:false, trail:[]};
+    running=false; $('btnPlay').textContent='▶ Başlat';
+    update(); draw();
+    $('say').textContent='Kaykaycı rampanın sol üstünde duruyor. Hızı 0, bu yüzden kinetik enerjisi 0 J. Yüksekte olduğu için çekim potansiyel enerjisi en büyük değerinde.';
+  }
+
+  function step(dt){
+    if(st.stopped) return;
+    var hp=slope(st.x), n=Math.sqrt(1+hp*hp), sn=hp/n, cs=1/n;
+    st.v += -G*sn*dt;                              // yerçekimi bileşeni
+    var fr=document.getElementById('fric').checked;
+    if(fr){
+      var d=MU*G*cs*dt;
+      st.Q += MU*M*G*cs*Math.abs(st.v)*dt;         // sürtünme işi = ısıya dönüşen enerji
+      if(Math.abs(st.v)<=d) st.v=0; else st.v -= (st.v>0?1:-1)*d;
+    }
+    st.x += st.v*cs*dt;
+    if(st.x>XMAX){st.x=XMAX; st.v=Math.min(st.v,0);}
+    if(st.x<-XMAX){st.x=-XMAX; st.v=Math.max(st.v,0);}
+    // sayısal hatayı gidermek için hızı enerjiye göre düzelt
+    var U=M*G*h(st.x), target=E0-st.Q-U, K=0.5*M*st.v*st.v;
+    if(target>0 && K>1e-9){
+      var r=target/K;
+      if(r>0.8 && r<1.25) st.v*=Math.sqrt(r);
+    }
+    // sürtünmeyle durma
+    if(fr && Math.abs(st.v)<0.03 && Math.abs(st.x)<0.12){
+      st.v=0; st.stopped=true; st.Q=Math.max(0,E0-M*G*h(st.x));
+    }
+  }
+
+  function values(){
+    var U=M*G*h(st.x), K=0.5*M*st.v*st.v;
+    var Mk=K+U, Q=st.Q, T=Mk+Q;
+    return {K:K,U:U,Mk:Mk,Q:Q,T:T};
+  }
+
+  function setBar(id,val,vid){
+    var p=Math.max(0,Math.min(100,val/E0*100));
+    $(id).style.width=p+'%';
+    $(vid).textContent=val.toFixed(0)+' J';
+  }
+
+  function update(){
+    var e=values();
+    setBar('bK',e.K,'vK'); setBar('bU',e.U,'vU'); setBar('bM',e.Mk,'vM');
+    setBar('bQ',e.Q,'vQ'); setBar('bT',e.T,'vT');
+    var f=function(n){return n.toFixed(2).replace('.',',');};
+    $('cM').textContent=M+' kg'; $('cV').textContent=f(Math.abs(st.v))+' m/s'; $('cH').textContent=f(h(st.x))+' m';
+  }
+
+  function explain(){
+    var e=values(), fr=document.getElementById('fric').checked, t;
+    var dhdt=slope(st.x)*st.v;                     // yükseklik değişimi
+    if(st.stopped){
+      t='Kaykaycı durdu. Başlangıçtaki enerjinin tamamı ısıya dönüştü. Mekanik enerji 0 J, ısı '+e.Q.toFixed(0)+' J. Toplam enerji hâlâ '+e.T.toFixed(0)+' J.';
+    } else if(Math.abs(st.v)<0.25 && st.x*st.x>0.5){
+      t='En yüksek noktada: hız çok az olduğu için kinetik enerji en küçük, çekim potansiyel enerjisi en büyük.';
+    } else if(Math.abs(st.x)<0.15){
+      t='En alt noktada: yükseklik en az, hız en fazla. Çekim potansiyel enerjisi en küçük, kinetik enerji en büyük.';
+    } else if(dhdt<0){
+      t='İniyor: yükseklik azalıyor, çekim potansiyel enerjisi azalıyor. Hız arttığı için kinetik enerji artıyor.';
+    } else {
+      t='Çıkıyor: yükseklik artıyor, çekim potansiyel enerjisi artıyor. Hız azaldığı için kinetik enerji azalıyor.';
+    }
+    if(fr && !st.stopped) t+=' Sürtünme var: mekanik enerjinin bir kısmı ısıya dönüşüyor, bu yüzden kaykaycı bir önceki kadar yükselemiyor. Mekanik + ısı = toplam enerji sabit.';
+    if(!fr && !st.stopped) t+=' Sürtünme yok: kinetik + potansiyel toplamı sabit kalıyor.';
+    $('say').textContent=t;
+  }
+
+  var STARS=[]; (function(){var a=7; for(var i=0;i<70;i++){a=(a*9301+49297)%233280; var x=a/233280*W; a=(a*9301+49297)%233280; var y=a/233280*(H*0.8); a=(a*9301+49297)%233280; STARS.push({x:x,y:y,r:0.6+a/233280*1.6,a:0.15+a/233280*0.5});}})();
+  function rr(x,y,w,hh,r){ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,hh,r); else ctx.rect(x,y,w,hh);}
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0a1330'); bg.addColorStop(0.6,'#050912'); bg.addColorStop(1,'#000');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    for(var i=0;i<STARS.length;i++){var sd=STARS[i]; ctx.fillStyle='rgba(255,255,255,'+sd.a+')'; ctx.fillRect(sd.x,sd.y,sd.r,sd.r);}
+    ctx.font='12px sans-serif'; ctx.textAlign='left';
+    for(var m=0;m<=2;m+=0.5){
+      var gy=GY-m*SC;
+      ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(48,gy); ctx.lineTo(W-10,gy); ctx.stroke();
+      ctx.fillStyle='#8fa3b8'; ctx.fillText(String(m).replace('.',',')+' m',6,gy+4);
+    }
+    // rampa dolgusu
+    var x;
+    ctx.beginPath(); ctx.moveTo(W/2-XMAX*SC, GY+40);
+    for(x=-XMAX; x<=XMAX+0.001; x+=0.05) ctx.lineTo(W/2+x*SC, GY-h(x)*SC);
+    ctx.lineTo(W/2+XMAX*SC, GY+40); ctx.closePath();
+    var rg=ctx.createLinearGradient(0,GY-2*SC,0,GY+40); rg.addColorStop(0,'#27406b'); rg.addColorStop(1,'#0a101c');
+    ctx.fillStyle=rg; ctx.fill();
+    // rampa parlayan çizgi
+    ctx.save(); ctx.shadowBlur=18; ctx.shadowColor='#4dabf7'; ctx.lineWidth=5; ctx.strokeStyle='#74c0fc'; ctx.lineJoin='round';
+    ctx.beginPath();
+    for(x=-XMAX; x<=XMAX+0.001; x+=0.05){var px=W/2+x*SC, py=GY-h(x)*SC; if(x===-XMAX) ctx.moveTo(px,py); else ctx.lineTo(px,py);}
+    ctx.stroke(); ctx.restore();
+    // başlangıç yüksekliği
+    ctx.setLineDash([6,6]); ctx.lineWidth=1.5; ctx.strokeStyle='#ff6b6b';
+    var y0=GY-h(X0)*SC; ctx.beginPath(); ctx.moveTo(48,y0); ctx.lineTo(W-20,y0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ff8787'; ctx.font='13px sans-serif'; ctx.fillText('başlangıç yüksekliği',W/2-50,y0-6);
+    // iz
+    for(var j=0;j<st.trail.length;j++){
+      var tp=st.trail[j], a=(j+1)/st.trail.length;
+      ctx.fillStyle='rgba(255,146,43,'+(0.5*a*Math.min(1,tp.k*2+0.2))+')';
+      ctx.beginPath(); ctx.arc(W/2+tp.x*SC, GY-h(tp.x)*SC-8, 3+4*a, 0, 7); ctx.fill();
+    }
+    // yükseklik çizgisi
+    var cx=W/2+st.x*SC, cy=GY-h(st.x)*SC;
+    if(h(st.x)>0.05){
+      ctx.setLineDash([4,5]); ctx.strokeStyle='#4dabf7'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx,cy+4); ctx.lineTo(cx,GY); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#74c0fc'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('h = '+h(st.x).toFixed(2).replace('.',',')+' m', cx+(st.x<0?-44:44), (cy+GY)/2);
+      ctx.textAlign='left';
+    }
+    // kinetik parıltı
+    var e=values(), kr=Math.min(1,e.K/E0);
+    var gl=ctx.createRadialGradient(cx,cy-24,4,cx,cy-24,80);
+    gl.addColorStop(0,'rgba(255,146,43,'+(0.15+0.4*kr)+')'); gl.addColorStop(1,'rgba(255,146,43,0)');
+    ctx.fillStyle=gl; ctx.fillRect(cx-90,cy-110,180,150);
+    // kaykaycı
+    var ang=Math.atan(slope(st.x));
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(-ang);
+    ctx.fillStyle='#ff922b'; rr(-29,-14,58,7,3.5); ctx.fill();
+    ctx.fillStyle='#f1f3f5'; ctx.beginPath(); ctx.arc(-17,-6,5.5,0,7); ctx.arc(17,-6,5.5,0,7); ctx.fill();
+    ctx.fillStyle='#14263a'; ctx.beginPath(); ctx.arc(-17,-6,2,0,7); ctx.arc(17,-6,2,0,7); ctx.fill();
+    ctx.translate(0,-14); ctx.rotate(Math.max(-0.25,Math.min(0.25,st.v*0.04)));
+    ctx.lineCap='round'; ctx.lineWidth=8; ctx.strokeStyle='#1c4f8a';
+    ctx.beginPath(); ctx.moveTo(-9,0); ctx.lineTo(-3,-22); ctx.moveTo(9,0); ctx.lineTo(3,-22); ctx.stroke();
+    ctx.fillStyle='#4dabf7'; rr(-11,-50,22,31,9); ctx.fill();
+    ctx.lineWidth=5; ctx.strokeStyle='#ffc9a3';
+    ctx.beginPath(); ctx.moveTo(-10,-44); ctx.lineTo(-24,-32); ctx.moveTo(10,-44); ctx.lineTo(24,-36); ctx.stroke();
+    ctx.fillStyle='#ffc9a3'; ctx.beginPath(); ctx.arc(0,-58,9,0,7); ctx.fill();
+    ctx.fillStyle='#ff922b'; ctx.beginPath(); ctx.arc(0,-60,10.5,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // hız oku
+    if(Math.abs(st.v)>0.05){
+      var hp2=slope(st.x), n2=Math.sqrt(1+hp2*hp2), sg=st.v>0?1:-1;
+      var ux=sg/n2, uy=-sg*hp2/n2, L=Math.abs(st.v)*16+8;
+      ctx.strokeStyle='#ffa94d'; ctx.fillStyle='#ffa94d'; ctx.lineWidth=4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(cx,cy-80); ctx.lineTo(cx+ux*L,cy-80+uy*L); ctx.stroke();
+      var ax=cx+ux*L, ay=cy-80+uy*L, ang2=Math.atan2(uy,ux);
+      ctx.beginPath(); ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-12*Math.cos(ang2-0.5),ay-12*Math.sin(ang2-0.5));
+      ctx.lineTo(ax-12*Math.cos(ang2+0.5),ay-12*Math.sin(ang2+0.5)); ctx.closePath(); ctx.fill();
+    }
+    // ısı kıvılcımları
+    if(document.getElementById('fric').checked && Math.abs(st.v)>0.3){
+      for(var k=0;k<5;k++){
+        ctx.fillStyle='rgba(255,'+(120+Math.random()*100|0)+',40,'+Math.random()+')';
+        ctx.beginPath(); ctx.arc(cx+(Math.random()-0.5)*44, cy-4+Math.random()*8, 1+Math.random()*2.5, 0, 7); ctx.fill();
+      }
+    }
+    if(e.Q>1){
+      ctx.fillStyle='rgba(240,101,149,'+Math.min(0.9,e.Q/E0)+')';
+      ctx.beginPath(); ctx.arc(cx,cy+3,8,0,7); ctx.fill();
+    }
+  }
+
+  var acc=0;
+  function loop(ts){
+    if(!running){return;}
+    var dt=Math.min(0.05,(ts-last)/1000); last=ts;
+    if(document.getElementById('slow').checked) dt*=0.25;
+    var sub=0.001; acc+=dt;
+    while(acc>=sub){step(sub); acc-=sub;}
+    st.trail.push({x:st.x,k:values().K/E0}); if(st.trail.length>45) st.trail.shift();
+    update(); draw(); explain();
+    requestAnimationFrame(loop);
+  }
+
+  $('btnPlay').onclick=function(){
+    if(running){running=false; this.textContent='▶ Devam et'; return;}
+    running=true; st.started=true; this.textContent='⏸ Durdur'; last=performance.now(); requestAnimationFrame(loop);
+  };
+  $('btnReset').onclick=reset;
+  $('fric').onchange=function(){ if(!running){update(); draw(); if(st.started) explain();} };
+  reset();
+})();
+</script>
+</body>
+</html>
