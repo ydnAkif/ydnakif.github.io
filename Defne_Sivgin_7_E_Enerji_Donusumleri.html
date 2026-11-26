@@ -265,13 +265,13 @@
                                 <span id="eElasticVal" class="font-bold">0.0 J</span>
                             </div>
                             <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
-                                <div id="eElasticBar" class="h-full bg-fuchsia-400 transition-all duration-75" style="width: 0%"></div>
+                                <div id="eElasticBar" class="h-full bg-violet-400 transition-all duration-75" style="width: 0%"></div>
                             </div>
                         </div>
 
                         <div>
                             <div class="flex justify-between mb-1">
-                                <span>Isı Enerjisi (Sürtünme)</span>
+                                <span>Isı Enerjisi</span>
                                 <span id="eHeatVal" class="font-bold">0.0 J</span>
                             </div>
                             <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
@@ -281,11 +281,11 @@
 
                         <div>
                             <div class="flex justify-between mb-1">
-                                <span>Azalan Enerji (Dönüşen Kayıp)</span>
-                                <span id="eDecayedVal" class="font-bold">0.0 J</span>
+                                <span>Isıya Dönüşen Enerji</span>
+                                <span id="eConvertedHeatVal" class="font-bold">0.0 J</span>
                             </div>
                             <div class="w-full h-2.5 rounded-full inner-panel overflow-hidden">
-                                <div id="eDecayedBar" class="h-full bg-indigo-400 transition-all duration-75" style="width: 0%"></div>
+                                <div id="eConvertedHeatBar" class="h-full bg-orange-400 transition-all duration-75" style="width: 0%"></div>
                             </div>
                         </div>
 
@@ -364,8 +364,7 @@
             v: 0,
             compression: 0,
             eHeat: 0,
-            eDecayed: 0,
-            startedOnce: false,
+            eConvertedHeat: 0,
             friction: false,
             frictionLevel: 'light',
             soundEnabled: true,
@@ -378,28 +377,12 @@
             }
         };
 
-        function getActiveFrictionPreset() {
-            return FRICTION_PRESETS[state.frictionLevel] || FRICTION_PRESETS.light;
-        }
-
         // DOM referansları
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
-        const btnStartPause = document.getElementById('btnStartPause');
-        const btnReset = document.getElementById('btnReset');
-        const btnFriction = document.getElementById('btnFriction');
-        const frictionLevelRow = document.getElementById('frictionLevelRow');
-        const btnSound = document.getElementById('btnSound');
-        const btnCourtToggle = document.getElementById('btnCourtToggle');
-        const btnThemeToggle = document.getElementById('btnThemeToggle');
-        const dropHeightSlider = document.getElementById('dropHeightSlider');
-        const dropHeightLabel = document.getElementById('dropHeightLabel');
-        const taskToast = document.getElementById('taskToast');
-
         const valHeight = document.getElementById('valHeight');
         const valVelocity = document.getElementById('valVelocity');
         const valSpeedMode = document.getElementById('valSpeedMode');
-
         const eGravVal = document.getElementById('eGravVal');
         const eGravBar = document.getElementById('eGravBar');
         const eKineticVal = document.getElementById('eKineticVal');
@@ -408,14 +391,26 @@
         const eElasticBar = document.getElementById('eElasticBar');
         const eHeatVal = document.getElementById('eHeatVal');
         const eHeatBar = document.getElementById('eHeatBar');
-        const eDecayedVal = document.getElementById('eDecayedVal');
-        const eDecayedBar = document.getElementById('eDecayedBar');
+        const eConvertedHeatVal = document.getElementById('eConvertedHeatVal');
+        const eConvertedHeatBar = document.getElementById('eConvertedHeatBar');
         const eTotalVal = document.getElementById('eTotalVal');
         const eTotalBar = document.getElementById('eTotalBar');
+        const btnStartPause = document.getElementById('btnStartPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnFriction = document.getElementById('btnFriction');
+        const frictionLevelRow = document.getElementById('frictionLevelRow');
+        const frictionLevelButtons = document.querySelectorAll('.friction-level-btn');
+        const btnSound = document.getElementById('btnSound');
+        const btnCourtToggle = document.getElementById('btnCourtToggle');
+        const btnThemeToggle = document.getElementById('btnThemeToggle');
+        const speedButtons = document.querySelectorAll('.speed-btn');
+        const dropHeightSlider = document.getElementById('dropHeightSlider');
+        const dropHeightLabel = document.getElementById('dropHeightLabel');
+        const taskToast = document.getElementById('taskToast');
 
-        // Çevrimdışı Web Audio "Doing" zıplama sesi
+        // Web Audio API ile "doing" sekme sesi
         let audioCtx = null;
-        function playDoingSound(impactSpeed) {
+        function playDoingSound(intensity = 1) {
             if (!state.soundEnabled) return;
             try {
                 if (!audioCtx) {
@@ -425,340 +420,267 @@
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
-
                 const now = audioCtx.currentTime;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-
-                const intensity = Math.min(1, Math.max(0.2, impactSpeed / 12));
-                const baseFreq = 135 + intensity * 65;
+                const clamped = Math.max(0.25, Math.min(1, intensity));
 
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(baseFreq, now);
-                osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.1, now + 0.11);
-                osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.85, now + 0.28);
+                osc.frequency.setValueAtTime(165 * (0.85 + 0.3 * clamped), now);
+                osc.frequency.exponentialRampToValueAtTime(340, now + 0.11);
+                osc.frequency.exponentialRampToValueAtTime(145, now + 0.28);
 
                 gain.gain.setValueAtTime(0.001, now);
-                gain.gain.linearRampToValueAtTime(0.22 * intensity, now + 0.02);
+                gain.gain.linearRampToValueAtTime(0.22 * clamped, now + 0.02);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-
                 osc.start(now);
                 osc.stop(now + 0.31);
-            } catch (err) {
-                // Ses çalınamazsa simülasyon akışı etkilenmez
+            } catch (e) {
+                // Tarayıcı ses kısıtlamalarında sessizce devam et
             }
         }
-        <!-- Görev bildirimi -->
+
+        // Görev tamamlama yardımcısı
         let toastTimer = null;
-        function showSuccessToast(message = 'Başarılı!') {
-            taskToast.textContent = message;
-            taskToast.classList.remove('hidden');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                taskToast.classList.add('hidden');
-            }, 1500);
-        }
-
-        function completeTask(key) {
-            if (state.tasks[key]) return;
-            state.tasks[key] = true;
-
-            const map = {
-                t1: { li: 'task1', badge: 'task1Badge' },
-                t2: { li: 'task2', badge: 'task2Badge' },
-                t3: { li: 'task3', badge: 'task3Badge' }
-            };
-            const item = map[key];
-            if (item) {
-                const liEl = document.getElementById(item.li);
-                const badgeEl = document.getElementById(item.badge);
-                liEl.classList.add('border-sky-400/60');
-                badgeEl.textContent = '✓ Başarılı!';
-                badgeEl.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500 text-white shrink-0';
+        function completeTask(key, message = 'Başarılı!') {
+            if (!state.tasks[key]) {
+                state.tasks[key] = true;
+                const badge = document.getElementById(`task${key.slice(1)}Badge`);
+                if (badge) {
+                    badge.textContent = 'Tamamlandı';
+                    badge.className = 'px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 text-emerald-400 shrink-0';
+                }
             }
-            showSuccessToast();
+            if (taskToast) {
+                taskToast.textContent = message;
+                taskToast.classList.remove('hidden');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    taskToast.classList.add('hidden');
+                }, 1800);
+            }
         }
 
-        // Canvas boyutlandırma (ekran taşmasını önleyerek yüksek DPI uyumlu)
+        // Tuval boyutunu kapsayıcıya göre duyarlı ayarla
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = Math.max(200, Math.floor(rect.width * dpr));
-            canvas.height = Math.max(200, Math.floor(rect.height * dpr));
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+            canvas.height = Math.max(1, Math.floor(rect.height * dpr));
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             drawScene();
         }
 
-        // Voleybol sahası arka planı
-        function drawVolleyballCourt(width, height, groundY, isLight) {
-            const wallGrad = ctx.createLinearGradient(0, 0, 0, groundY);
-            if (isLight) {
-                wallGrad.addColorStop(0, '#dbeafe');
-                wallGrad.addColorStop(0.65, '#eff6ff');
-                wallGrad.addColorStop(1, '#e2e8f0');
-            } else {
-                wallGrad.addColorStop(0, '#0f172a');
-                wallGrad.addColorStop(0.6, '#1e293b');
-                wallGrad.addColorStop(1, '#1e3a8a');
+        // Arka plan çizimi (Varsayılan veya Voleybol Sahası)
+        function drawBackground(w, h, floorY) {
+            const isLight = document.body.classList.contains('light-mode');
+            ctx.clearRect(0, 0, w, h);
+
+            if (!state.courtBg) {
+                const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+                if (isLight) {
+                    bgGrad.addColorStop(0, '#e0f2fe');
+                    bgGrad.addColorStop(1, '#f8fafc');
+                } else {
+                    bgGrad.addColorStop(0, '#0f172a');
+                    bgGrad.addColorStop(1, '#1e293b');
+                }
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Yükseklik kılavuz çizgileri
+                ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(148, 163, 184, 0.18)';
+                ctx.lineWidth = 1;
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
+
+                const topPad = 32;
+                const usableH = floorY - topPad;
+                for (let m = 0; m <= 10; m += 2) {
+                    const y = floorY - (m / INITIAL_HEIGHT) * usableH;
+                    ctx.beginPath();
+                    ctx.moveTo(14, y);
+                    ctx.lineTo(w - 14, y);
+                    ctx.stroke();
+                    ctx.fillText(`${m} m`, 16, y - 4);
+                }
+
+                // Zemin
+                ctx.fillStyle = isLight ? '#cbd5e1' : '#334155';
+                ctx.fillRect(0, floorY, w, h - floorY);
+                return;
             }
+
+            // Voleybol Sahası arka planı
+            const wallGrad = ctx.createLinearGradient(0, 0, 0, floorY);
+            wallGrad.addColorStop(0, isLight ? '#dbeafe' : '#172554');
+            wallGrad.addColorStop(1, isLight ? '#eff6ff' : '#1e3a8a');
             ctx.fillStyle = wallGrad;
-            ctx.fillRect(0, 0, width, groundY);
+            ctx.fillRect(0, 0, w, floorY);
 
-            // Salon duvar bandı ve pencereler
-            const bandY = Math.max(54, groundY * 0.44);
-            ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(15, 23, 42, 0.55)';
-            ctx.fillRect(0, bandY, width, groundY - bandY);
-
-            const winCount = 4;
-            const winSpacing = width / (winCount + 1);
+            // Salon pencereleri
+            const winCount = 3;
+            const winGap = w / (winCount + 1);
             for (let i = 1; i <= winCount; i++) {
-                const wx = winSpacing * i - 26;
-                const wy = 18;
-                const ww = 52;
-                const wh = Math.max(36, bandY - 32);
-
-                ctx.fillStyle = isLight ? 'rgba(186, 230, 253, 0.85)' : 'rgba(125, 211, 252, 0.16)';
-                ctx.fillRect(wx, wy, ww, wh);
-                ctx.strokeStyle = isLight ? 'rgba(51, 65, 85, 0.45)' : 'rgba(148, 163, 184, 0.35)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(wx, wy, ww, wh);
+                const wx = winGap * i - 28;
+                ctx.fillStyle = isLight ? 'rgba(255,255,255,0.75)' : 'rgba(147,197,253,0.18)';
+                ctx.fillRect(wx, 24, 56, 36);
+                ctx.strokeStyle = isLight ? '#93c5fd' : 'rgba(191,219,254,0.35)';
+                ctx.strokeRect(wx, 24, 56, 36);
             }
 
-            // Voleybol parke zemini ve çizgileri
-            ctx.fillStyle = isLight ? '#cbd5e1' : '#1e293b';
-            ctx.fillRect(0, groundY, width, height - groundY);
-
-            const courtTop = groundY + 3;
-            const courtHeight = Math.max(18, Math.min(44, height - groundY - 8));
-            const courtGrad = ctx.createLinearGradient(0, courtTop, 0, courtTop + courtHeight);
-            courtGrad.addColorStop(0, '#f97316');
-            courtGrad.addColorStop(1, '#ea580c');
+            // Parke zemin
+            const courtGrad = ctx.createLinearGradient(0, floorY, 0, h);
+            courtGrad.addColorStop(0, '#f59e0b');
+            courtGrad.addColorStop(1, '#b45309');
             ctx.fillStyle = courtGrad;
-            ctx.fillRect(12, courtTop, width - 24, courtHeight);
+            ctx.fillRect(0, floorY, w, h - floorY);
 
+            // Saha çizgileri
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2.5;
-            ctx.strokeRect(12, courtTop, width - 24, courtHeight);
-
-            const netX = width * 0.68;
-            const attackLeft = Math.max(24, netX - Math.min(115, width * 0.15));
-            const attackRight = Math.min(width - 24, netX + Math.min(115, width * 0.15));
-
-            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(netX, courtTop);
-            ctx.lineTo(netX, courtTop + courtHeight);
-            ctx.moveTo(attackLeft, courtTop);
-            ctx.lineTo(attackLeft, courtTop + courtHeight);
-            ctx.moveTo(attackRight, courtTop);
-            ctx.lineTo(attackRight, courtTop + courtHeight);
+            ctx.moveTo(24, floorY + 6);
+            ctx.lineTo(w - 24, floorY + 6);
             ctx.stroke();
 
-            // Voleybol direkleri ve file
-            const netTop = Math.max(48, groundY - Math.min(125, groundY * 0.46));
-            const netBottom = Math.min(groundY - 6, netTop + 56);
-            const netLeft = Math.max(36, netX - Math.min(155, width * 0.22));
-
-            ctx.strokeStyle = isLight ? '#1e293b' : '#f8fafc';
+            // Sağ tarafta perspektif voleybol filesi
+            const netX = w * 0.74;
+            const netTop = floorY - Math.min(130, floorY * 0.52);
+            ctx.strokeStyle = isLight ? '#334155' : '#e2e8f0';
             ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.moveTo(netX, courtTop + 2);
-            ctx.lineTo(netX, netTop - 10);
-            ctx.moveTo(netLeft, groundY);
-            ctx.lineTo(netLeft, netTop - 6);
+            ctx.moveTo(netX, floorY + 4);
+            ctx.lineTo(netX, netTop);
             ctx.stroke();
 
-            // File üst bandı
+            // File üst bandı ve ağ örgüsü
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(netLeft, netTop, Math.max(10, netX - netLeft), 5);
-
-            // File ağ çizgileri
-            ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.55)';
-            ctx.lineWidth = 1.2;
-            for (let y = netTop + 5; y <= netBottom; y += 8) {
+            ctx.fillRect(netX, netTop, w - netX - 18, 6);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+            ctx.lineWidth = 1;
+            const netHeight = 46;
+            for (let y = netTop + 6; y <= netTop + netHeight; y += 8) {
                 ctx.beginPath();
-                ctx.moveTo(netLeft, y);
-                ctx.lineTo(netX, y);
+                ctx.moveTo(netX, y);
+                ctx.lineTo(w - 18, y);
                 ctx.stroke();
             }
-            for (let x = netLeft; x <= netX; x += 12) {
+            for (let x = netX; x <= w - 18; x += 10) {
                 ctx.beginPath();
-                ctx.moveTo(x, netTop + 5);
-                ctx.lineTo(x, netBottom);
+                ctx.moveTo(x, netTop + 6);
+                ctx.lineTo(x, netTop + netHeight);
                 ctx.stroke();
             }
         }
 
-        // Yazısız klasik üç renkli voleybol topu çizimi
-        function drawVolleyball(cx, cy, rx, ry) {
+        // Voleybol topunu çiz (Ekran sınırları içinde kalır)
+        function drawBall(cx, cy, radius, stretchX, stretchY) {
             ctx.save();
             ctx.translate(cx, cy);
+            ctx.scale(stretchX, stretchY);
 
-            // Dış daire (esnemeye göre yatay/dikey ölçeklenir)
+            // Ana top gövdesi
+            const grad = ctx.createRadialGradient(-radius * 0.3, -radius * 0.3, radius * 0.15, 0, 0, radius);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.65, '#facc15');
+            grad.addColorStop(1, '#2563eb');
+
             ctx.beginPath();
-            ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
             ctx.fill();
-
-            // Kavisli sarı ve mavi voleybol panelleri
-            ctx.save();
-            ctx.clip();
-
-            // Sol-üst sarı panel
-            ctx.fillStyle = '#facc15';
-            ctx.beginPath();
-            ctx.ellipse(-rx * 0.55, -ry * 0.25, rx * 0.85, ry * 0.7, -0.35, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Sağ-alt mavi panel
-            ctx.fillStyle = '#2563eb';
-            ctx.beginPath();
-            ctx.ellipse(rx * 0.58, ry * 0.32, rx * 0.85, ry * 0.72, -0.35, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Orta beyaz şerit ve dikiş çizgileri
-            ctx.strokeStyle = '#1e293b';
-            ctx.lineWidth = 1.6;
-
-            ctx.beginPath();
-            ctx.moveTo(-rx, -ry * 0.15);
-            ctx.quadraticCurveTo(0, -ry * 0.65, rx, ry * 0.05);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(-rx * 0.85, ry * 0.45);
-            ctx.quadraticCurveTo(0, ry * 0.1, rx * 0.9, ry * 0.55);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(-rx * 0.15, -ry);
-            ctx.quadraticCurveTo(rx * 0.25, 0, -rx * 0.1, ry);
-            ctx.stroke();
-
-            ctx.restore();
-
-            // Dış kenar çizgisi
-            ctx.beginPath();
-            ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-            ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 2;
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.stroke();
+
+            // Voleybol panel çizgileri
+            ctx.strokeStyle = 'rgba(30, 58, 138, 0.75)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(-radius * 0.25, 0, radius * 0.75, -0.8, 0.8);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(radius * 0.35, -radius * 0.15, radius * 0.7, 2.1, 3.9);
             ctx.stroke();
 
             ctx.restore();
         }
 
-        // Sahneyi çiz (top her zaman görünür sınırlar içinde)
+        // Ana sahne çizimi
         function drawScene() {
-            const dpr = window.devicePixelRatio || 1;
-            const width = canvas.width / dpr;
-            const height = canvas.height / dpr;
-            const isLight = document.body.classList.contains('light-mode');
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (!w || !h) return;
 
-            ctx.clearRect(0, 0, width, height);
+            const floorY = h - 38;
+            drawBackground(w, h, floorY);
 
-            const groundY = Math.max(120, height - 54);
-            const topMargin = 26;
+            const radius = Math.max(18, Math.min(26, w * 0.042));
+            const topPad = 32;
+            const minCenterY = topPad + radius;
+            const maxCenterY = floorY - radius;
+            const usableSpan = Math.max(10, maxCenterY - minCenterY);
 
-            if (state.courtBg) {
-                drawVolleyballCourt(width, height, groundY, isLight);
-            } else {
-                ctx.fillStyle = isLight ? '#e2e8f0' : '#0f172a';
-                ctx.fillRect(0, 0, width, groundY);
+            // Yüksekliği [0, INITIAL_HEIGHT] aralığında ve ekran sınırlarında tut
+            const clampedH = Math.max(0, Math.min(INITIAL_HEIGHT, state.h));
+            const ratio = clampedH / INITIAL_HEIGHT;
 
-                // Yükseklik referans çizgileri (10 m üst sınır ve 5 m orta çizgi)
-                ctx.strokeStyle = isLight ? 'rgba(71, 85, 105, 0.22)' : 'rgba(148, 163, 184, 0.16)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 5]);
+            // Esneme (sıkışma) miktarı
+            const compRatio = state.compression > 0 ? Math.min(1, state.compression / MAX_COMPRESSION) : 0;
+            const stretchY = 1 - compRatio * 0.26;
+            const stretchX = 1 + compRatio * 0.22;
 
-                const midY = topMargin + (groundY - topMargin) * 0.5;
-                ctx.beginPath();
-                ctx.moveTo(16, topMargin);
-                ctx.lineTo(width - 16, topMargin);
-                ctx.moveTo(16, midY);
-                ctx.lineTo(width - 16, midY);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
-                ctx.font = '600 11px Inter, sans-serif';
-                ctx.fillText('10 m', 20, topMargin + 13);
-                ctx.fillText('5 m', 20, midY - 4);
-
-                // Standart zemin
-                ctx.fillStyle = isLight ? '#94a3b8' : '#334155';
-                ctx.fillRect(0, groundY, width, height - groundY);
-                ctx.strokeStyle = isLight ? '#475569' : '#64748b';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(0, groundY);
-                ctx.lineTo(width, groundY);
-                ctx.stroke();
+            let centerY = maxCenterY - ratio * usableSpan;
+            if (compRatio > 0) {
+                centerY = floorY - radius * stretchY;
             }
+            centerY = Math.max(minCenterY, Math.min(floorY - radius * stretchY, centerY));
 
-            // Top boyut ve konum hesapları (ekran dışına çıkmaması için sıkı sınırlandırma)
-            const safeH = Math.max(0, Math.min(INITIAL_HEIGHT, state.h));
-            const baseRadius = Math.max(16, Math.min(24, Math.min(width, groundY) * 0.085));
-            const squash = state.compression > 0 ? Math.min(0.32, state.compression * 0.72) : 0;
-            const rx = baseRadius * (1 + squash * 0.85);
-            const ry = Math.max(8, baseRadius * (1 - squash));
+            const centerX = w * 0.44;
 
-            const ballX = Math.max(rx + 18, Math.min(width - rx - 18, state.courtBg ? width * 0.32 : width * 0.5));
-            const minCenterY = topMargin + ry;
-            const maxCenterY = groundY - ry;
-            const usableRange = Math.max(20, maxCenterY - minCenterY);
-
-            const ratio = safeH / INITIAL_HEIGHT;
-            const rawCenterY = maxCenterY - ratio * usableRange;
-            const ballCenterY = state.compression > 0
-                ? maxCenterY
-                : Math.max(minCenterY, Math.min(maxCenterY, rawCenterY));
-
-            // Zemindeki gölge (top yere yaklaştıkça belirginleşir)
-            const shadowScale = Math.max(0.25, 1 - ratio * 0.72);
-            ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.22)' : 'rgba(0, 0, 0, 0.35)';
+            // Zemin gölgesi
+            const shadowScale = 0.4 + 0.6 * (1 - ratio);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
             ctx.beginPath();
-            ctx.ellipse(ballX, groundY + 4, rx * shadowScale, Math.max(3, 5 * shadowScale), 0, 0, Math.PI * 2);
+            ctx.ellipse(centerX, floorY + 4, radius * shadowScale * 1.15, 5 * shadowScale, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Voleybol topunu çiz
-            drawVolleyball(ballX, ballCenterY, rx, ry);
+            drawBall(centerX, centerY, radius, stretchX, stretchY);
         }
 
         // Enerji çubuklarını ve değerleri güncelle (Toplam Enerji = 100.0 J sabit)
         function updateUI() {
             const safeH = Math.max(0, Math.min(INITIAL_HEIGHT, state.h));
             const eHeat = Math.min(TOTAL_ENERGY, Math.max(0, state.eHeat));
-            const eDecayed = Math.min(Math.max(0, TOTAL_ENERGY - eHeat), Math.max(0, state.eDecayed));
+            const eConvertedHeat = Math.min(TOTAL_ENERGY - eHeat, Math.max(0, state.eConvertedHeat));
+            const remainingMech = Math.max(0, TOTAL_ENERGY - eHeat - eConvertedHeat);
 
             let eGrav = 0;
             let eKinetic = 0;
             let eElastic = 0;
 
-            // Başlatılmadan önce potansiyel enerji 0.0 J başlar; oyun başlayınca yükseklik ve harekete göre değişir
-            if (state.startedOnce || state.running) {
-                const remainingMech = Math.max(0, TOTAL_ENERGY - eHeat - eDecayed);
+            // Top yukarı çıkarken veya dururken (tepe/başlangıç noktası) kinetik enerji 0.0 J olur
+            const atApex = state.compression <= 0 && Math.abs(state.v) < 0.22;
+            if (atApex && safeH > 0.05) {
+                eGrav = remainingMech;
+                eElastic = 0;
+                eKinetic = 0;
+            } else {
+                const heightFraction = safeH / INITIAL_HEIGHT;
+                eGrav = Math.min(remainingMech, remainingMech * heightFraction);
+                const afterGrav = Math.max(0, remainingMech - eGrav);
 
-                // Top yukarı çıkarken hızı çok küçüldüyse (tepe noktası) kinetik enerji 0.0 J olur ve mekanik enerji potansiyel enerjidedir
-                const atApex = state.compression <= 0 && Math.abs(state.v) < 0.22;
-                if (atApex && safeH > 0.05) {
-                    eGrav = remainingMech;
-                    eElastic = 0;
-                    eKinetic = 0;
-                } else {
-                    const heightFraction = safeH / INITIAL_HEIGHT;
-                    eGrav = Math.min(remainingMech, remainingMech * heightFraction);
-                    const afterGrav = Math.max(0, remainingMech - eGrav);
+                // Zemin temasındaki esneme sırasında esneklik potansiyel enerjisi oluşur
+                const compRatio = state.compression > 0 ? Math.min(1, state.compression / MAX_COMPRESSION) : 0;
+                eElastic = Math.min(afterGrav, afterGrav * compRatio);
 
-                    // Zemin temasındaki esneme sırasında esneklik potansiyel enerjisi oluşur
-                    const compRatio = state.compression > 0 ? Math.min(1, state.compression / MAX_COMPRESSION) : 0;
-                    eElastic = Math.min(afterGrav, afterGrav * compRatio);
-
-                    // Hız çok düşükse kinetik enerji sıfırlanır; aksi halde kalan mekanik enerji kinetik enerjidir
-                    eKinetic = Math.abs(state.v) < 0.05 && state.compression <= 0 ? 0 : Math.max(0, afterGrav - eElastic);
-                }
+                // Hız çok düşükse kinetik enerji sıfırlanır; aksi halde kalan mekanik enerji kinetik enerjidir
+                eKinetic = Math.abs(state.v) < 0.05 && state.compression <= 0 ? 0 : Math.max(0, afterGrav - eElastic);
             }
 
             valHeight.textContent = `${safeH.toFixed(2)} m`;
@@ -777,8 +699,8 @@
             eHeatVal.textContent = `${eHeat.toFixed(1)} J`;
             eHeatBar.style.width = `${(eHeat / TOTAL_ENERGY) * 100}%`;
 
-            eDecayedVal.textContent = `${eDecayed.toFixed(1)} J`;
-            eDecayedBar.style.width = `${(eDecayed / TOTAL_ENERGY) * 100}%`;
+            eConvertedHeatVal.textContent = `${eConvertedHeat.toFixed(1)} J`;
+            eConvertedHeatBar.style.width = `${(eConvertedHeat / TOTAL_ENERGY) * 100}%`;
 
             eTotalVal.textContent = `${TOTAL_ENERGY.toFixed(1)} J`;
             eTotalBar.style.width = '100%';
@@ -786,45 +708,50 @@
 
         // Fizik adımı
         function stepPhysics(dt) {
-            const clampedDt = Math.min(0.035, Math.max(0, dt)) * state.speedMultiplier;
+            const clampedDt = Math.min(dt, 0.03) * state.speedMultiplier;
             if (clampedDt <= 0) return;
 
+            const preset = FRICTION_PRESETS[state.frictionLevel] || FRICTION_PRESETS.light;
+
             if (state.compression > 0) {
-                // Yerde esneme ve geri sekme aşaması
-                state.compression += clampedDt * 3.4;
+                // Zeminde esneme ve yukarı fırlama aşaması
+                state.compression += clampedDt * 4.5;
                 if (state.compression >= MAX_COMPRESSION) {
-                    const impactSpeed = Math.max(1.2, Math.abs(state.v));
-                    const preset = getActiveFrictionPreset();
-                    const rest = state.friction ? preset.restitution : RESTITUTION_NO_FRICTION;
-                    state.v = impactSpeed * rest;
                     state.compression = 0;
-                    state.h = 0.02;
+                    const restitution = state.friction ? preset.restitution : RESTITUTION_NO_FRICTION;
+                    const remainingRatio = Math.max(0, (TOTAL_ENERGY - state.eHeat - state.eConvertedHeat) / TOTAL_ENERGY);
+                    const maxBounceSpeed = Math.sqrt(2 * GRAVITY * INITIAL_HEIGHT * remainingRatio);
+                    state.v = Math.max(0, maxBounceSpeed * restitution);
 
-                    playDoingSound(impactSpeed);
+                    playDoingSound(Math.min(1, state.v / 14));
 
-                    if (!state.friction && state.v > 0.2) {
+                    if (!state.friction && state.v > 1.0) {
                         completeTask('t1');
+                    }
+                    if (state.friction && (state.eHeat + state.eConvertedHeat) > 1.0) {
+                        completeTask('t2');
                     }
                     if (state.speedMultiplier === 0.25) {
                         completeTask('t3');
                     }
                 }
             } else {
-                // Serbest düşüş veya yükseliş aşaması
-                const prevV = state.v;
-                const preset = getActiveFrictionPreset();
+                // Serbest düşüş / yükseliş aşaması
                 const dragAccel = state.friction ? -preset.dragCoeff * state.v * Math.abs(state.v) : 0;
-                const netAccel = -GRAVITY + dragAccel;
+                const accel = -GRAVITY + dragAccel;
+                const prevV = state.v;
+                state.v += accel * clampedDt;
+                state.h += state.v * clampedDt;
 
-                state.v += netAccel * clampedDt;
-                state.h += 0.5 * (prevV + state.v) * clampedDt;
+                // Tepe noktasına ulaşma anı (yukarı çıkıştan inişe geçiş): kinetik enerji 0 J olur
+                if (prevV > 0 && state.v <= 0) {
+                    state.v = 0;
+                }
 
-                // Topun üst sınırdan (10 m) çıkmasını engelle
-                if (state.h >= INITIAL_HEIGHT) {
+                // Tavan sınırını aşmasını engelle (ekrandan çıkmasın)
+                if (state.h > INITIAL_HEIGHT) {
                     state.h = INITIAL_HEIGHT;
-                    if (state.v > 0) {
-                        state.v = 0;
-                    }
+                    if (state.v > 0) state.v = 0;
                 }
 
                 // Zemine temas kontrolü
@@ -835,13 +762,9 @@
                         state.compression = 0.05;
                         if (state.friction) {
                             const lostFraction = Math.max(0, 1 - preset.restitution * preset.restitution);
-                            const remaining = Math.max(0, TOTAL_ENERGY - state.eHeat - state.eDecayed);
+                            const remaining = Math.max(0, TOTAL_ENERGY - state.eHeat - state.eConvertedHeat);
                             const bounceLoss = remaining * lostFraction * preset.bounceLossRatio;
-                            state.eHeat = Math.min(TOTAL_ENERGY, state.eHeat + bounceLoss * 0.65);
-                            state.eDecayed = Math.min(
-                                Math.max(0, TOTAL_ENERGY - state.eHeat),
-                                state.eDecayed + bounceLoss * 0.35
-                            );
+                            state.eConvertedHeat = Math.min(TOTAL_ENERGY - state.eHeat, state.eConvertedHeat + bounceLoss);
                         }
                     } else {
                         state.h = 0;
@@ -850,53 +773,16 @@
                     }
                 }
 
-                // Sürtünme açıkken seçilen şiddete göre hava direncinin yaptığı iş ısı ve azalan enerjiye aktarılır
-                if (state.friction && state.eHeat < TOTAL_ENERGY) {
+                // Sürtünme açıkken seçilen şiddete göre hava direncinin yaptığı iş ısı enerjisine aktarılır
+                if (state.friction && (state.eHeat + state.eConvertedHeat) < TOTAL_ENERGY) {
                     const dragHeatStep = Math.abs(dragAccel) * clampedDt * preset.heatGain;
-                    const maxHeatAdd = Math.max(0, TOTAL_ENERGY - state.eHeat - state.eDecayed);
-                    const actualHeatAdd = Math.min(maxHeatAdd, dragHeatStep);
-                    state.eHeat = Math.min(TOTAL_ENERGY, state.eHeat + actualHeatAdd);
-                    state.eDecayed = Math.min(
-                        Math.max(0, TOTAL_ENERGY - state.eHeat),
-                        state.eDecayed + actualHeatAdd * 0.25
-                    );
+                    state.eHeat = Math.min(TOTAL_ENERGY - state.eConvertedHeat, state.eHeat + dragHeatStep);
                 }
             }
-
-            if (state.friction && state.eHeat > 0.5) {
-                completeTask('t2');
-            }
         }
 
-        // Ana animasyon döngüsü
-        let lastTime = null;
-        function animate(timestamp) {
-            if (lastTime === null) lastTime = timestamp;
-            const dt = (timestamp - lastTime) / 1000;
-            lastTime = timestamp;
-
-            if (state.running) {
-                stepPhysics(dt);
-            }
-
-            updateUI();
-            drawScene();
-            requestAnimationFrame(animate);
-        }
-
-        // Kontrol düğmeleri
+        // Kontrol olayları
         btnStartPause.addEventListener('click', () => {
-            if (!state.running && state.h <= 0.02 && Math.abs(state.v) < 0.1) {
-                // Zemin üzerinde duruyorsa yeniden başlatırken seçilen yükseklikten bırak
-                state.h = state.dropHeight;
-                state.v = 0;
-                state.compression = 0;
-                state.eHeat = 0;
-                state.eDecayed = 0;
-            }
-            if (!state.running) {
-                state.startedOnce = true;
-            }
             state.running = !state.running;
             btnStartPause.textContent = state.running ? 'Duraklat' : 'Başlat';
             updateUI();
@@ -904,12 +790,11 @@
 
         btnReset.addEventListener('click', () => {
             state.running = false;
-            state.startedOnce = false;
             state.h = state.dropHeight;
             state.v = 0;
             state.compression = 0;
             state.eHeat = 0;
-            state.eDecayed = 0;
+            state.eConvertedHeat = 0;
             btnStartPause.textContent = 'Başlat';
             updateUI();
             drawScene();
@@ -926,39 +811,49 @@
                 state.v = 0;
                 state.compression = 0;
                 state.eHeat = 0;
-                state.eDecayed = 0;
+                state.eConvertedHeat = 0;
                 updateUI();
                 drawScene();
             }
         });
 
+        function updateFrictionUI() {
+            const preset = FRICTION_PRESETS[state.frictionLevel] || FRICTION_PRESETS.light;
+            btnFriction.textContent = state.friction ? `Sürtünme: Açık (${preset.label})` : 'Sürtünme: Kapalı';
+            btnFriction.className = state.friction
+                ? 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 text-white transition cursor-pointer'
+                : 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 transition cursor-pointer';
+
+            if (state.friction) {
+                frictionLevelRow.classList.remove('hidden');
+                frictionLevelRow.classList.add('flex');
+            } else {
+                frictionLevelRow.classList.add('hidden');
+                frictionLevelRow.classList.remove('flex');
+            }
+
+            frictionLevelButtons.forEach((btn) => {
+                const isSelected = btn.dataset.frictionLevel === state.frictionLevel;
+                btn.className = isSelected
+                    ? 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition cursor-pointer'
+                    : 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer';
+            });
+        }
+
         btnFriction.addEventListener('click', () => {
             state.friction = !state.friction;
-            // Sürtünmeli hareket sırasında o ana kadar biriken ısı enerjisi sıfırlanmaz
-            const preset = getActiveFrictionPreset();
-            btnFriction.textContent = state.friction ? `Sürtünme: Açık (${preset.label})` : 'Sürtünme: Kapalı';
-            frictionLevelRow.classList.toggle('hidden', !state.friction);
-            frictionLevelRow.classList.toggle('flex', state.friction);
+            // Sürtünme kapatıldığında o ana kadar biriken ısı enerjisi sıfırlanmaz
+            updateFrictionUI();
             updateUI();
         });
 
-        document.querySelectorAll('.friction-level-btn').forEach((btn) => {
+        frictionLevelButtons.forEach((btn) => {
             btn.addEventListener('click', () => {
-                const level = btn.dataset.frictionLevel;
-                if (!FRICTION_PRESETS[level]) return;
-                state.frictionLevel = level;
-
-                document.querySelectorAll('.friction-level-btn').forEach((b) => {
-                    b.className = 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer';
-                });
-                btn.className = 'friction-level-btn px-3 py-1 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition cursor-pointer';
-
+                state.frictionLevel = btn.dataset.frictionLevel || 'light';
                 if (!state.friction) {
                     state.friction = true;
-                    frictionLevelRow.classList.remove('hidden');
-                    frictionLevelRow.classList.add('flex');
                 }
-                btnFriction.textContent = `Sürtünme: Açık (${FRICTION_PRESETS[level].label})`;
+                updateFrictionUI();
                 updateUI();
             });
         });
@@ -970,113 +865,111 @@
 
         btnCourtToggle.addEventListener('click', () => {
             state.courtBg = !state.courtBg;
-            btnCourtToggle.classList.toggle('bg-amber-500/40', state.courtBg);
+            btnCourtToggle.textContent = state.courtBg ? '📐 Sade Arka Plan' : '🏐 Voleybol Sahası';
             drawScene();
         });
 
         btnThemeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
+            const isLight = document.body.classList.toggle('light-mode');
             btnThemeToggle.textContent = isLight ? '🌙 Gece Modu' : '☀️ Beyaz Mod';
             drawScene();
         });
 
-        document.querySelectorAll('.speed-btn').forEach((btn) => {
+        speedButtons.forEach((btn) => {
             btn.addEventListener('click', () => {
-                const spd = parseFloat(btn.dataset.speed);
-                state.speedMultiplier = spd;
-                document.querySelectorAll('.speed-btn').forEach((b) => {
+                state.speedMultiplier = parseFloat(btn.dataset.speed) || 1;
+                speedButtons.forEach((b) => {
                     b.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-semibold inner-panel hover:opacity-85 transition cursor-pointer';
                 });
                 btn.className = 'speed-btn px-3 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white transition cursor-pointer';
-                if (spd === 0.25) {
-                    completeTask('t3');
-                }
                 updateUI();
             });
         });
 
-        // Kolay Gözlem Testi
-        const quizQuestions = [
+        // Kolay gözlem testi
+        const quizData = [
             {
-                q: '1. Top en yüksekten aşağı inerken hangi enerji artar?',
-                options: ['Kinetik enerji', 'Çekim potansiyel enerjisi', 'Isı enerjisi'],
-                correct: 0,
-                feedback: 'Doğru! Top aşağı inerken sürati artar ve potansiyel enerjisi kinetik enerjiye dönüşür.'
+                q: '1. Top aşağı doğru hızlanırken hangi enerji artar?',
+                options: ['Kinetik enerji', 'Esneklik potansiyel enerjisi', 'Çekim potansiyel enerjisi'],
+                answer: 0
             },
             {
-                q: '2. Top yere çarpıp esnediğinde hangi enerji ortaya çıkar?',
-                options: ['Esneklik potansiyel enerjisi', 'Kimyasal enerji', 'Elektrik enerjisi'],
-                correct: 0,
-                feedback: 'Harika! Topun şekli değiştiği an esneklik potansiyel enerjisi oluşur.'
+                q: '2. Top yere çarpıp esnediği anda kısa süreliğine hangi enerji oluşur?',
+                options: ['Esneklik potansiyel enerjisi', 'Işık enerjisi', 'Elektrik enerjisi'],
+                answer: 0
             },
             {
-                q: '3. Sürtünme açıkken toplam enerjide ne olur?',
-                options: ['100.0 J sabit kalır, bir kısmı ısıya dönüşür', 'Sıfıra iner', 'Sürekli artar'],
-                correct: 0,
-                feedback: 'Doğru! Enerji yok olmaz; sürtünme nedeniyle bir kısmı ısı enerjisine dönüşür.'
+                q: '3. Sürtünme açıkken bir miktar enerji ısıya dönüşse bile toplam enerji ne olur?',
+                options: ['Değişmez, 100.0 J sabit kalır', 'Sürekli artar', 'Sıfıra düşer'],
+                answer: 0
             }
         ];
 
         function renderQuiz() {
             const container = document.getElementById('quizContainer');
             container.innerHTML = '';
-
-            quizQuestions.forEach((item) => {
+            quizData.forEach((item, qIdx) => {
                 const card = document.createElement('div');
                 card.className = 'inner-panel rounded-xl p-4 flex flex-col justify-between gap-3';
 
                 const title = document.createElement('p');
-                title.className = 'text-xs sm:text-sm font-bold';
+                title.className = 'text-xs sm:text-sm font-semibold';
                 title.textContent = item.q;
                 card.appendChild(title);
 
                 const optsWrap = document.createElement('div');
-                optsWrap.className = 'space-y-2';
+                optsWrap.className = 'space-y-1.5';
 
-                const feedbackEl = document.createElement('p');
-                feedbackEl.className = 'text-xs font-semibold hidden';
+                const feedback = document.createElement('div');
+                feedback.className = 'text-xs font-semibold h-4';
 
-                item.options.forEach((optText, idx) => {
-                    const optBtn = document.createElement('button');
-                    optBtn.type = 'button';
-                    optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-slate-500/15 hover:bg-slate-500/25 transition cursor-pointer';
-                    optBtn.textContent = optText;
-
-                    optBtn.addEventListener('click', () => {
-                        optsWrap.querySelectorAll('button').forEach((b) => {
-                            b.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-slate-500/15 transition cursor-pointer';
-                        });
-
-                        feedbackEl.classList.remove('hidden');
-                        if (idx === item.correct) {
-                            optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-white transition cursor-pointer';
-                            feedbackEl.className = 'text-xs font-semibold text-emerald-400';
-                            feedbackEl.textContent = item.feedback;
-                            showSuccessToast('Bravo!');
+                item.options.forEach((optText, oIdx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs inner-panel hover:opacity-85 transition cursor-pointer';
+                    btn.textContent = optText;
+                    btn.addEventListener('click', () => {
+                        if (oIdx === item.answer) {
+                            feedback.textContent = 'Bravo! Doğru cevap.';
+                            feedback.className = 'text-xs font-semibold h-4 text-emerald-400';
+                            completeTask(`q${qIdx}`, 'Bravo!');
                         } else {
-                            optBtn.className = 'w-full text-left px-3 py-2 rounded-lg text-xs font-bold bg-rose-500 text-white transition cursor-pointer';
-                            feedbackEl.className = 'text-xs font-semibold text-rose-400';
-                            feedbackEl.textContent = 'Tekrar dene! Topun hareketini ve enerji çubuklarını incele.';
+                            feedback.textContent = 'Tekrar dene.';
+                            feedback.className = 'text-xs font-semibold h-4 text-rose-400';
                         }
                     });
-
-                    optsWrap.appendChild(optBtn);
+                    optsWrap.appendChild(btn);
                 });
 
                 card.appendChild(optsWrap);
-                card.appendChild(feedbackEl);
+                card.appendChild(feedback);
                 container.appendChild(card);
             });
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', () => {
-            renderQuiz();
-            resizeCanvas();
-            updateUI();
+        // Ana animasyon döngüsü
+        let lastTime = null;
+        function animate(timestamp) {
+            if (lastTime === null) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (state.running) {
+                stepPhysics(dt);
+                updateUI();
+            }
+            drawScene();
             requestAnimationFrame(animate);
-        });
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = function () {
+            renderQuiz();
+            updateFrictionUI();
+            updateUI();
+            resizeCanvas();
+            requestAnimationFrame(animate);
+        };
     </script>
 </body>
 </html>
