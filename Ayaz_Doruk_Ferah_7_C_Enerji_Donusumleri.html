@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motor Enerji Parkuru</title>
+<style>
+body{font-family:system-ui;margin:0;padding:16px;background:#eef6ff;color:#17283a}main{max-width:700px;margin:auto}canvas{width:100%;border-radius:12px;background:#cdeaff;display:block}button,label{font-size:16px;padding:10px 14px;border-radius:9px;border:1px solid #999;background:white;margin:5px 4px 10px 0}#start{background:#16803c;color:white;border:0}#bars{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bar{height:12px;background:#ddd;border-radius:8px;overflow:hidden}.fill{height:100%;width:0}small{display:block;margin:8px 0}
+</style></head>
+<body><main>
+<h2>🏍️ Motor Enerji Parkuru</h2><div id="status">Hazır</div>
+<canvas id="scene" width="640" height="280"></canvas>
+<button id="start">▶ Başlat</button><button id="reset">↺ Sıfırla</button><label><input id="friction" type="checkbox"> Sürtünme</label>
+<small>Parkur ilerlemesi: <b id="progressText">0%</b></small><div class="bar"><div id="progressBar" class="fill" style="background:#319b76"></div></div>
+<div id="bars"></div><p id="info">Başlamak için Başlat'a bas!</p><b id="total">Toplam enerji: 100 J</b>
+</main>
+<script>
+const $=id=>document.getElementById(id),ctx=$('scene').getContext('2d');
+let running=false,friction=false,progress=0,mechanical=100,heat=0,last=0,raf=0;
+const specs=[['Kinetik enerji','#3185d4'],['Potansiyel enerji','#e5a52e'],['Mekanik enerji','#8759c7'],['Isıya dönüşen enerji','#df654b'],['Toplam enerji','#319b76']];
+$('bars').innerHTML=specs.map((s,i)=>`<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${s[0]}</span><b id="v${i}">0 J</b></div><div class="bar"><div id="b${i}" class="fill" style="background:${s[1]}"></div></div></div>`).join('');
+function ground(x){let u=x/640;return 218-75*Math.sin(u*Math.PI*2)-22*Math.sin(u*Math.PI*6)}
+function draw(){
+ let g=ctx;g.clearRect(0,0,640,280);let sky=g.createLinearGradient(0,0,0,280);sky.addColorStop(0,'#a8dcff');sky.addColorStop(1,'#eef9ff');g.fillStyle=sky;g.fillRect(0,0,640,280);
+ g.fillStyle='white';[[90,45,25],[270,65,32],[500,40,22]].forEach(([x,y,r])=>{g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.arc(x+r,y+5,r*.8,0,Math.PI*2);g.fill()});
+ g.beginPath();g.moveTo(0,ground(0));for(let x=0;x<=640;x+=3)g.lineTo(x,ground(x));g.lineTo(640,280);g.lineTo(0,280);g.closePath();g.fillStyle='#7dbb6b';g.fill();g.beginPath();for(let x=0;x<=640;x+=3){if(!x)g.moveTo(x,ground(x));else g.lineTo(x,ground(x))}g.strokeStyle='#397a3d';g.lineWidth=5;g.stroke();
+ let x=progress*570+30,y=ground(x)-24;g.save();g.translate(x,y);
+ g.strokeStyle='#202a35';g.lineWidth=5;g.beginPath();g.arc(-22,14,13,0,Math.PI*2);g.arc(25,14,13,0,Math.PI*2);g.stroke();
+ g.fillStyle='#e33c35';g.beginPath();g.moveTo(-25,4);g.lineTo(-10,-7);g.lineTo(17,-5);g.lineTo(30,7);g.lineTo(3,10);g.closePath();g.fill();
+ g.fillStyle='#263b50';g.fillRect(-5,-8,18,5);g.strokeStyle='#24384c';g.lineWidth=9;g.lineCap='round';g.beginPath();g.moveTo(0,-12);g.lineTo(-10,-32);g.lineTo(5,-43);g.stroke();g.beginPath();g.moveTo(-7,-28);g.lineTo(-22,-12);g.lineTo(-12,-5);g.stroke();g.beginPath();g.moveTo(5,-28);g.lineTo(20,-12);g.lineTo(25,-8);g.stroke();
+ g.fillStyle='#f0bd91';g.beginPath();g.arc(8,-51,11,0,Math.PI*2);g.fill();g.fillStyle='#f2a32b';g.beginPath();g.arc(8,-53,12,Math.PI,Math.PI*2);g.lineTo(20,-49);g.lineTo(-4,-49);g.closePath();g.fill();g.restore();
+ g.fillStyle='#1f4359';g.font='bold 13px system-ui';g.fillText('MOTOR PARKURU',14,22);g.fillText(Math.round(progress*100)+'%',570,22)
+}
+function update(){
+ let h=(ground(0)-ground(progress*640)+95)/170,pe=Math.max(0,Math.min(mechanical,h*mechanical)),ke=Math.max(0,mechanical-pe),vals=[ke,pe,mechanical,heat,mechanical+heat];
+ vals.forEach((v,i)=>{$('v'+i).textContent=v.toFixed(1)+' J';$('b'+i).style.width=Math.min(100,v/100*100)+'%'});
+ $('progressText').textContent=Math.round(progress*100)+'%';$('progressBar').style.width=progress*100+'%';$('total').textContent='Toplam enerji: '+(mechanical+heat).toFixed(1)+' J';draw()
+}
+function loop(now){if(!running)return;if(last){let dt=Math.min((now-last)/1000,.04);progress+=dt*Math.sqrt(Math.max(0,mechanical)/100)*.11;if(friction){let loss=Math.min(mechanical,dt*7);mechanical-=loss;heat+=loss}if(progress>=1){progress=1;running=false;$('start').textContent='▶ Başlat';$('status').textContent='Parkur tamamlandı!';$('info').textContent='Tebrikler! Parkuru bitirdin.'}}last=now;update();if(running)raf=requestAnimationFrame(loop)}
+$('start').onclick=()=>{running=!running;$('start').textContent=running?'Ⅱ Durdur':'▶ Başlat';$('status').textContent=running?'Hareket ediyor':'Duraklatıldı';$('info').textContent=running?'Motor parkurda ilerliyor!':'Oyun duraklatıldı.';if(running){last=0;raf=requestAnimationFrame(loop)}else cancelAnimationFrame(raf)};
+$('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);progress=0;mechanical=100;heat=0;last=0;$('start').textContent='▶ Başlat';$('status').textContent='Başlangıç konumu';$('info').textContent='Aynı başlangıç konumu ve hız hazır.';update()};
+$('friction').onchange=e=>{friction=e.target.checked;$('info').textContent=friction?'Sürtünme açık: mekanik enerji ısıya dönüşür.':'Sürtünme kapalı: mekanik enerji korunur.';update()};
+update();
+</script></body></html>
