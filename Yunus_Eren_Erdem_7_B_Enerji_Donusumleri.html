@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaykay Pistinde Enerji Dönüşümleri</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 12px; font-family: "Segoe UI", Arial, sans-serif; background: #eef3f8; color: #1d2b3a; }
+  main { max-width: 1200px; margin: 0 auto; }
+  h1 { margin: 0 0 10px; font-size: 1.5rem; text-align: center; }
+  .kart { background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 1px 5px rgba(0,0,0,.12); }
+  .kontroller { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .kontroller label { font-size: .95rem; display: flex; align-items: center; gap: 6px; }
+  output { display: inline-block; min-width: 62px; font-weight: 700; }
+  select { font-size: 1rem; padding: 4px; }
+  button { font-size: 1.05rem; font-weight: 700; border: 0; border-radius: 8px; padding: 10px 22px; cursor: pointer; color: #fff; }
+  #baslat { background: #1b7f3b; min-width: 130px; }
+  #baslat.calisiyor { background: #b3541e; }
+  #sifirla { background: #52606d; }
+  .anahtar { font-weight: 700; background: #fdf0e3; border: 2px solid #e0a15e; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .anahtar input { width: 20px; height: 20px; }
+  .duzen { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 10px; }
+  @media (max-width: 850px) { .duzen { grid-template-columns: 1fr; } }
+  canvas { display: block; width: 100%; height: 400px; border-radius: 8px; }
+  .bilgi { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 6px; margin-top: 8px; font-weight: 600; }
+  #aciklama { margin-top: 10px; padding: 12px; min-height: 76px; border-left: 6px solid #2563eb; background: #eaf1ff; border-radius: 6px; font-size: 1.1rem; line-height: 1.4; }
+  h2 { margin: 0 0 8px; font-size: 1.1rem; text-align: center; }
+  .grafik { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .sutun { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .deger { font-weight: 700; font-size: 1rem; margin-bottom: 4px; white-space: nowrap; }
+  .yuva { position: relative; width: 70%; max-width: 56px; height: 300px; background: #f0f2f5; border-radius: 6px 6px 0 0; border-bottom: 3px solid #1d2b3a; overflow: hidden; }
+  .cubuk { position: absolute; left: 0; bottom: 0; width: 100%; height: 0; }
+  .ad { font-size: .78rem; font-weight: 600; margin-top: 6px; line-height: 1.25; }
+  .denklem { margin-top: 12px; padding: 8px; background: #f0f2f5; border-radius: 8px; text-align: center; font-size: .95rem; line-height: 1.6; }
+  .not { font-size: .85rem; color: #4b5a6a; text-align: center; margin: 10px 0 0; }
+  #tema { background: #334155; }
+  body.karanlik { background: #0f141a; color: #d8dee6; color-scheme: dark; }
+  .karanlik .kart { background: #1a222c; box-shadow: none; }
+  .karanlik select { background: #27313d; color: #d8dee6; }
+  .karanlik .anahtar { background: #33271b; border-color: #8a6137; }
+  .karanlik #aciklama { background: #1e2b40; border-color: #4f7fd9; }
+  .karanlik .yuva { background: #27313d; border-bottom-color: #d8dee6; }
+  .karanlik .denklem { background: #27313d; }
+  .karanlik .not { color: #a7b3c0; }
+  .karanlik .ad { filter: brightness(1.8); }
+  /* Gizli disko düğmesi */
+  #gizli { position: fixed; right: 8px; bottom: 8px; width: 18px; height: 18px; padding: 0; border-radius: 50%; background: #dc2626; opacity: .35; z-index: 10; }
+  #gizli:hover, #gizli:focus-visible, .disko #gizli { opacity: 1; box-shadow: 0 0 12px #ff2d2d; }
+  /* Disko modu: yumuşak renk geçişleri (hızlı yanıp sönme yok) */
+  body.disko { background: linear-gradient(120deg, #3b0764, #831843, #1e3a8a, #064e3b, #3b0764); background-size: 400% 400%; animation: zemin 8s ease infinite; color: #fff; color-scheme: dark; }
+  .disko .kart { background: rgba(15,10,30,.85); animation: isik 6s linear infinite; }
+  .disko h1 { animation: yazi 6s linear infinite; }
+  .disko select { background: #27183d; color: #fff; }
+  .disko .anahtar { background: #3b1d3f; }
+  .disko #aciklama { background: #25164a; }
+  .disko .yuva, .disko .denklem { background: #2a2140; }
+  .disko .yuva { border-bottom-color: #fff; }
+  .disko .not { color: #e9d5ff; }
+  .disko .ad { filter: brightness(1.8); }
+  @keyframes zemin { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @keyframes isik {
+    0%, 100% { box-shadow: 0 0 16px #ff2da6; } 33% { box-shadow: 0 0 16px #22d3ee; } 66% { box-shadow: 0 0 16px #a3e635; }
+  }
+  @keyframes yazi {
+    0%, 100% { color: #ff7ac8; } 33% { color: #67e8f9; } 66% { color: #bef264; }
+  }
+  /* Yalnızca disko modunda görünen eğlence sütunu */
+  #heyecan { display: none; }
+  body.disko #heyecan { display: flex; }
+  body.disko .grafik { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  #heyecan .cubuk { height: 100%; background: linear-gradient(#ff2da6, #fde047, #22d3ee); }
+  #heyecan .ad { color: #f9a8d4; filter: none; }
+  #heyecan small { font-size: .65rem; line-height: 1.25; margin-top: 4px; color: #e9d5ff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🛹 Kaykay Pistinde Enerji Dönüşümleri</h1>
+
+  <div class="kart kontroller">
+    <label>Pist:
+      <select id="pist">
+        <option value="U">U pisti</option>
+        <option value="W">W pisti</option>
+      </select>
+    </label>
+    <label>Başlangıç yüksekliği:
+      <input type="range" id="yukseklik" min="0.5" max="4" step="0.1" value="3">
+      <output id="yukseklikYazi"></output>
+    </label>
+    <label>Başlangıç hızı:
+      <input type="range" id="hiz" min="0" max="4" step="0.5" value="0">
+      <output id="hizYazi"></output>
+    </label>
+    <label>Kütle (kaykaycı + kaykay):
+      <input type="range" id="kutle" min="30" max="80" step="5" value="50">
+      <output id="kutleYazi"></output>
+    </label>
+  </div>
+
+  <div class="kart kontroller">
+    <button type="button" id="baslat">▶ Başlat</button>
+    <button type="button" id="sifirla">↺ Sıfırla</button>
+    <label>Hareket hızı:
+      <select id="yavas">
+        <option value="1">Normal (1×)</option>
+        <option value="0.5">Yavaş (0,5×)</option>
+        <option value="0.25">Daha yavaş (0,25×)</option>
+        <option value="0.1">Çok yavaş (0,1×)</option>
+      </select>
+    </label>
+    <button type="button" id="tema">🌙 Karanlık mod</button>
+    <label class="anahtar">
+      <input type="checkbox" id="surtunme">
+      <span id="surtunmeYazi">Sürtünme: KAPALI</span>
+    </label>
+    <small>Sürtünme ayarı değişince deney baştan başlar.</small>
+  </div>
+
+  <div class="duzen">
+    <section class="kart">
+      <canvas id="sahne" aria-label="Kaykay pisti animasyonu"></canvas>
+      <div class="bilgi">
+        <span id="zamanBilgi"></span>
+        <span id="yukseklikBilgi"></span>
+        <span id="hizBilgi"></span>
+      </div>
+      <div id="aciklama"></div>
+    </section>
+
+    <section class="kart">
+      <h2>Enerji Çubukları (J)</h2>
+      <div class="grafik" id="grafik"></div>
+      <div class="denklem" id="denklem"></div>
+      <p class="not">Bu pistte yay veya esnek cisim olmadığı için esneklik potansiyel enerjisi yoktur.</p>
+    </section>
+  </div>
+
+  <p class="not">
+    <b>Basit model:</b> Dışarıdan enerji verilmez. Hava direnci, ses ve tekerleklerin dönme enerjisi ihmal edilir.
+    Kaykaycının pistten ayrılmadığı kabul edilir. Sürtünme kuvveti basitleştirilmiştir.
+    Potansiyel enerji, pistin en alt noktasında sıfır alınır. g = 9,8 N/kg
+  </p>
+</main>
+<button type="button" id="gizli" aria-label="Gizli disko düğmesi" aria-pressed="false"></button>
+
+<script>
+"use strict";
+
+/* ---------- Sabitler ---------- */
+const g = 9.8;            // N/kg
+const MU = 0.05;          // sürtünme katsayısı
+const ADIM = 0.001;       // hesaplama adımı (s)
+
+/* ---------- Pist şekilleri: y(x) metre cinsinden, egim = dy/dx ---------- */
+const PISTLER = {
+  U: {
+    sinir: 4.6,
+    y:     x => 0.25 * x * x,
+    egim:  x => 0.5 * x,
+    solX:  h => -Math.sqrt(h / 0.25)          // verilen yükseklikteki sol nokta
+  },
+  W: {
+    sinir: 5.05,
+    y:     x => 1.5 * Math.pow(1 - x * x / 9, 2),
+    egim:  x => 1.5 * 2 * (1 - x * x / 9) * (-2 * x / 9),
+    solX:  h => -3 * Math.sqrt(1 + Math.sqrt(h / 1.5))
+  }
+};
+
+const $ = id => document.getElementById(id);
+const sayi = (v, basamak = 1) => v.toFixed(basamak).replace(".", ",");
+
+/* ---------- Durum ---------- */
+let pist, kutle, x, v, isi, zaman, E0;
+let calisiyor = false;
+let basladi = false;
+let oncekiAn = null;
+
+/* ---------- Fizik ---------- */
+// Durum: [x konumu, pist boyunca hız v, ısıya dönüşen enerji]
+// yon: hareket yönü (+1 sağa, -1 sola); sürtünme bu yöne zıttır.
+function turev(d, mu, yon) {
+  const e = pist.egim(d[0]);
+  const kok = Math.sqrt(1 + e * e);
+  const dx = d[1] / kok;
+  const dv = -g * (e + yon * mu) / kok;
+  const dIsi = kutle * g * mu * yon * dx;
+  return [dx, dv, dIsi];
+}
+
+// Dördüncü dereceden Runge-Kutta yöntemi
+function rk4(d, h, mu, yon) {
+  const ekle = (a, k, c) => a.map((deger, i) => deger + c * k[i]);
+  const k1 = turev(d, mu, yon);
+  const k2 = turev(ekle(d, k1, h / 2), mu, yon);
+  const k3 = turev(ekle(d, k2, h / 2), mu, yon);
+  const k4 = turev(ekle(d, k3, h), mu, yon);
+  return d.map((deger, i) => deger + h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+}
+
+function durduMu() {
+  const mu = $("surtunme").checked ? MU : 0;
+  return v === 0 && Math.abs(pist.egim(x)) <= mu + 1e-9;
+}
+
+function ilerle(sure) {
+  const mu = $("surtunme").checked ? MU : 0;
+  let kalan = sure;
+  while (kalan > 1e-9) {
+    if (durduMu()) { v = 0; return; }
+    let h = Math.min(ADIM, kalan);
+    const yon = v !== 0 ? Math.sign(v) : -Math.sign(pist.egim(x));
+    let yeni = rk4([x, v, isi], h, mu, yon);
+    // Sürtünme varken hız yön değiştiriyorsa adımı tam dönüş anında böl
+    if (mu > 0 && v !== 0 && yeni[1] * yon < 0) {
+      h *= v / (v - yeni[1]);
+      yeni = rk4([x, v, isi], h, mu, yon);
+      yeni[1] = 0;
+    }
+    [x, v, isi] = yeni;
+    zaman += h;
+    kalan -= h;
+  }
+}
+
+function enerjiler() {
+  const kinetik = 0.5 * kutle * v * v;
+  const potansiyel = kutle * g * pist.y(x);
+  return { kinetik, potansiyel, isi };
+}
+
+// Yuvarlanmış değerlerin toplamı, yuvarlanmış toplam enerjiye tam eşit olsun
+function yuvarla(degerler, toplam) {
+  const sonuc = degerler.map(d => Math.floor(Math.max(0, d)));
+  let fark = Math.round(toplam) - sonuc.reduce((a, b) => a + b, 0);
+  const sira = degerler.map((d, i) => [d - sonuc[i], i]).sort((a, b) => b[0] - a[0]);
+  for (let i = 0; fark > 0; i++, fark--) sonuc[sira[i % sira.length][1]]++;
+  return sonuc;
+}
+
+/* ---------- Enerji çubukları ---------- */
+const CUBUKLAR = [
+  { id: "k", ad: "Kinetik Enerji",                  renk: "#16a34a" },
+  { id: "p", ad: "Çekim Potansiyel Enerjisi",       renk: "#2563eb" },
+  { id: "m", ad: "Mekanik Enerji<br>(Kinetik + Potansiyel)", renk: "#7c3aed" },
+  { id: "q", ad: "Isıya Dönüşen Enerji",            renk: "#ea580c" },
+  { id: "t", ad: "Toplam Enerji",                   renk: "#475569" }
+];
+$("grafik").innerHTML = CUBUKLAR.map(c => `
+  <div class="sutun">
+    <div class="deger" id="deger_${c.id}">0 J</div>
+    <div class="yuva"><div class="cubuk" id="cubuk_${c.id}" style="background:${c.renk}"></div></div>
+    <div class="ad" style="color:${c.renk}">${c.ad}</div>
+  </div>`).join("") + `
+  <div class="sutun" id="heyecan">
+    <div class="deger">∞</div>
+    <div class="yuva"><div class="cubuk"></div></div>
+    <div class="ad">Heyecan: Sonsuz</div>
+    <small>Sadece eğlence için. Enerji değildir, hesaplarla ilgisi ve etkisi yoktur.</small>
+  </div>`;
+
+function cubuklariGuncelle() {
+  const e = enerjiler();
+  const gercek = {
+    k: e.kinetik, p: e.potansiyel, m: e.kinetik + e.potansiyel,
+    q: e.isi, t: e.kinetik + e.potansiyel + e.isi
+  };
+  const [K, P, Q] = yuvarla([e.kinetik, e.potansiyel, e.isi], E0);
+  const yazi = { k: K, p: P, m: K + P, q: Q, t: K + P + Q };
+  for (const c of CUBUKLAR) {
+    $("cubuk_" + c.id).style.height = Math.min(100, Math.max(0, gercek[c.id] / E0 * 100)) + "%";
+    $("deger_" + c.id).textContent = yazi[c.id] + " J";
+  }
+  $("denklem").innerHTML =
+    `<b>Mekanik</b> = ${K} + ${P} = <b>${K + P} J</b><br>` +
+    `<b>Toplam</b> = Mekanik + Isı = ${K + P} + ${Q} = <b>${K + P + Q} J</b>`;
+}
+
+/* ---------- Açıklama cümleleri ---------- */
+function aciklamaMetni() {
+  const surtunmeVar = $("surtunme").checked;
+  const e = enerjiler();
+  const mekanik = e.kinetik + e.potansiyel;
+  const e_ = pist.egim(x);
+
+  if (!basladi) {
+    const ilk = v === 0
+      ? "Kaykaycı duruyor. Enerjisinin tamamı çekim potansiyel enerjisidir."
+      : "Kaykaycının başlangıçta hem kinetik hem de potansiyel enerjisi var.";
+    return ilk + " <b>Başlat</b> düğmesine bas.";
+  }
+
+  let metin;
+  if (durduMu()) {
+    return "Kaykaycı durdu. Kinetik enerjisi sıfır oldu. Azalan mekanik enerji ısıya dönüştü." +
+      (e.potansiyel > 1 ? " Yüksekte kaldığı için potansiyel enerjisi hâlâ var." : "") +
+      " Toplam enerji değişmedi.";
+  } else if (e.potansiyel < 0.06 * mekanik) {
+    metin = "En alt noktaya yakın: Potansiyel enerji çok az, mekanik enerjinin neredeyse tamamı kinetik enerjidir.";
+  } else if (e.kinetik < 0.06 * mekanik) {
+    metin = "Hız çok düşük: Kinetik enerji çok az, mekanik enerjinin çoğu potansiyel enerjidir.";
+  } else if (surtunmeVar && Math.abs(e_) <= MU) {
+    metin = "Pist burada neredeyse düz: Kinetik enerji sürtünme etkisiyle azalıyor.";
+  } else if (e_ * v < 0) {
+    metin = "Kaykaycı iniyor: Potansiyel enerji azalıyor, kinetik enerjiye dönüşüyor.";
+  } else {
+    metin = "Kaykaycı çıkıyor: Kinetik enerji azalıyor, potansiyel enerjiye dönüşüyor.";
+  }
+
+  metin += surtunmeVar
+    ? "<br>🔥 Sürtünme mekanik enerjiyi ısıya dönüştürüyor. Toplam enerji sabit."
+    : "<br>Sürtünme yok: Mekanik enerji sabit kalıyor.";
+  if (surtunmeVar && document.body.classList.contains("disko")) metin += "<br>🪩 Alevler yalnızca eğlence efektidir.";
+  return (calisiyor ? "" : "⏸ Duraklatıldı. ") + metin;
+}
+
+/* ---------- Çizim ---------- */
+const tuval = $("sahne");
+const c = tuval.getContext("2d");
+
+function ciz() {
+  const W = tuval.clientWidth, H = tuval.clientHeight;
+  const oran = window.devicePixelRatio || 1;
+  if (tuval.width !== Math.round(W * oran) || tuval.height !== Math.round(H * oran)) {
+    tuval.width = Math.round(W * oran);
+    tuval.height = Math.round(H * oran);
+  }
+  c.setTransform(oran, 0, 0, oran, 0, 0);
+
+  // Yatay ve düşey ölçek aynıdır (1 m her iki yönde eşit uzunlukta)
+  const yMax = pist.y(pist.sinir);
+  const olcek = Math.min((W - 50) / (2 * pist.sinir), (H - 90) / yMax);
+  const taban = H - 35;
+  const px = m => W / 2 + m * olcek;
+  const py = m => taban - m * olcek;
+
+  const disko = document.body.classList.contains("disko");
+  const koyu = disko || document.body.classList.contains("karanlik");
+  const an = performance.now() / 1000;
+  const yaziRengi = koyu ? "#d8dee6" : "#1d2b3a";
+  c.fillStyle = koyu ? "#111c27" : "#dff1fd";
+  c.fillRect(0, 0, W, H);
+
+  // Disko ışıkları ve disko topu
+  if (disko) {
+    for (let i = 0; i < 5; i++) {
+      const uc = W * (0.5 + 0.55 * Math.sin(an * 0.7 + i * 1.3));
+      c.fillStyle = `hsla(${(i * 72 + an * 40) % 360}, 100%, 60%, 0.22)`;
+      c.beginPath(); c.moveTo(W / 2, 32); c.lineTo(uc - 55, H); c.lineTo(uc + 55, H); c.fill();
+    }
+    for (let i = 0; i < 24; i++) {
+      c.fillStyle = `hsl(${(i * 47 + an * 50) % 360}, 80%, 75%)`;
+      const a = i % 12 * Math.PI / 6 + an * 0.5, uzak = i < 12 ? 17 : 8;
+      c.fillRect(W / 2 + Math.cos(a) * uzak - 3, 32 + Math.sin(a) * uzak - 3, 6, 6);
+    }
+  }
+
+  // Pist
+  const yol = () => {
+    c.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const m = -pist.sinir + 2 * pist.sinir * i / 200;
+      i ? c.lineTo(px(m), py(pist.y(m))) : c.moveTo(px(m), py(pist.y(m)));
+    }
+  };
+  yol();
+  c.lineTo(px(pist.sinir), H);
+  c.lineTo(px(-pist.sinir), H);
+  c.closePath();
+  c.fillStyle = koyu ? "#40372b" : "#c9b79c";
+  c.fill();
+  yol();
+  c.strokeStyle = koyu ? "#a89069" : "#5b4a35";
+  c.lineWidth = 5;
+  c.stroke();
+
+  // Sıfır düzeyi ve başlangıç yüksekliği çizgileri
+  const cizgi = (m, renk, yazi, yaziY) => {
+    c.setLineDash([7, 6]);
+    c.strokeStyle = renk;
+    c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(8, py(m)); c.lineTo(W - 8, py(m)); c.stroke();
+    c.setLineDash([]);
+    c.fillStyle = renk;
+    c.font = "bold 12px Arial";
+    c.textAlign = "center";
+    c.fillText(yazi, W / 2, yaziY);
+  };
+  const h0 = Number($("yukseklik").value);
+  cizgi(0, yaziRengi, "Sıfır düzeyi (h = 0)", py(0) + 18);
+  cizgi(h0, koyu ? "#f87171" : "#dc2626", "Başlangıç yüksekliği: " + sayi(h0) + " m", py(h0) - 6);
+
+  // Kaykaycının yükseklik çizgisi
+  const X = px(x), Y = py(pist.y(x));
+  c.strokeStyle = "#2563eb";
+  c.lineWidth = 3;
+  c.beginPath(); c.moveTo(X, py(0)); c.lineTo(X, Y); c.stroke();
+
+  // Kaykaycı (pistin eğimine göre döner)
+  c.save();
+  c.translate(X, Y);
+  c.rotate(-Math.atan(pist.egim(x)));
+  c.lineCap = "round";
+  // Disko modunda kaykayın arkasından alev çıkar (hız arttıkça uzar)
+  if (disko && $("surtunme").checked && Math.abs(v) > 0.1) {
+    const arka = -Math.sign(v);
+    const boy = 18 + Math.min(Math.abs(v), 8) * 9;
+    [["#dc2626", 1, 11], ["#f97316", 0.72, 8], ["#fde047", 0.45, 5]].forEach(([renk, oranBoy, en], i) => {
+      const uzunluk = boy * oranBoy * (1 + 0.18 * Math.sin(an * 17 + i * 2));
+      const bas = arka * 19;
+      c.fillStyle = renk;
+      c.beginPath();
+      c.moveTo(bas, -12 - en);
+      c.quadraticCurveTo(bas + arka * uzunluk * 0.5, -12 - en * 1.3, bas + arka * uzunluk, -14 + 4 * Math.sin(an * 13 + i));
+      c.quadraticCurveTo(bas + arka * uzunluk * 0.5, -12 + en * 0.9, bas, -8);
+      c.fill();
+    });
+  }
+  c.fillStyle = koyu ? "#cbd5e1" : "#111827";
+  for (const t of [-13, 13]) { c.beginPath(); c.arc(t, -6, 4.5, 0, 2 * Math.PI); c.fill(); }
+  c.strokeStyle = "#b91c1c";
+  c.lineWidth = 5;
+  c.beginPath(); c.moveTo(-21, -12); c.lineTo(21, -12); c.stroke();
+  c.strokeStyle = yaziRengi;
+  c.lineWidth = 4;
+  c.beginPath();
+  c.moveTo(-9, -15); c.lineTo(0, -28); c.lineTo(9, -15);   // bacaklar
+  c.moveTo(0, -28);  c.lineTo(0, -46);                     // gövde
+  c.moveTo(-14, -36); c.lineTo(0, -42); c.lineTo(14, -36); // kollar
+  c.stroke();
+  c.fillStyle = "#f2b38a";
+  c.beginPath(); c.arc(0, -54, 8, 0, 2 * Math.PI); c.fill(); c.stroke();
+  c.restore();
+}
+
+/* ---------- Ekranı güncelleme ---------- */
+let sonAciklama = "";
+function guncelle() {
+  ciz();
+  cubuklariGuncelle();
+  const metin = aciklamaMetni();
+  if (metin !== sonAciklama) { $("aciklama").innerHTML = metin; sonAciklama = metin; }
+  $("zamanBilgi").textContent = "⏱ Süre: " + sayi(zaman, 2) + " s";
+  $("yukseklikBilgi").textContent = "↕ Yükseklik: " + sayi(pist.y(x), 2) + " m";
+  $("hizBilgi").textContent = "➜ Sürat: " + sayi(Math.abs(v), 2) + " m/s";
+}
+
+function dugmeyiGuncelle() {
+  $("baslat").textContent = calisiyor ? "⏸ Durdur" : (basladi ? "▶ Devam Et" : "▶ Başlat");
+  $("baslat").classList.toggle("calisiyor", calisiyor);
+}
+
+// Sıfırla: seçili başlangıç koşullarına geri döner (sürtünme ayarı korunur)
+// Sürtünme ayarı değiştiğinde de çağrılır
+function sifirla() {
+  pist = PISTLER[$("pist").value];
+  kutle = Number($("kutle").value);
+  const h0 = Number($("yukseklik").value);
+  const v0 = Number($("hiz").value);
+  x = pist.solX(h0);
+  v = v0;                       // pozitif hız: pistin ortasına doğru
+  isi = 0;
+  zaman = 0;
+  E0 = 0.5 * kutle * v0 * v0 + kutle * g * h0;
+  calisiyor = false;
+  basladi = false;
+  oncekiAn = null;
+  $("yukseklikYazi").textContent = sayi(h0) + " m";
+  $("hizYazi").textContent = sayi(v0) + " m/s";
+  $("kutleYazi").textContent = kutle + " kg";
+  dugmeyiGuncelle();
+  guncelle();
+}
+
+/* ---------- Olaylar ---------- */
+$("baslat").addEventListener("click", () => {
+  calisiyor = !calisiyor;
+  basladi = true;
+  oncekiAn = null;
+  dugmeyiGuncelle();
+  guncelle();
+});
+$("sifirla").addEventListener("click", sifirla);
+$("surtunme").addEventListener("change", () => {
+  $("surtunmeYazi").textContent = "Sürtünme: " + ($("surtunme").checked ? "AÇIK" : "KAPALI");
+  sifirla();                    // her deneme temiz başlar (önceki ısı silinir)
+});
+for (const id of ["pist", "yukseklik", "hiz", "kutle"]) $(id).addEventListener("input", sifirla);
+window.addEventListener("resize", guncelle);
+
+function diskoAyarla(acik) {
+  document.body.classList.toggle("disko", acik);
+  $("gizli").setAttribute("aria-pressed", acik);
+}
+// Gizli düğme: disko açılırken sürtünme açılır, deney baştan başlar ve hareket eder
+$("gizli").addEventListener("click", () => {
+  const acik = !document.body.classList.contains("disko");
+  diskoAyarla(acik);
+  if (acik) {
+    $("surtunme").checked = true;
+    $("surtunmeYazi").textContent = "Sürtünme: AÇIK";
+    sifirla();
+    $("baslat").click();
+  } else {
+    guncelle();
+  }
+});
+
+function dongu(an) {
+  if (calisiyor) {
+    if (oncekiAn !== null) ilerle(Math.min((an - oncekiAn) / 1000, 0.05) * Number($("yavas").value));
+    oncekiAn = an;
+    guncelle();
+  } else if (document.body.classList.contains("disko")) {
+    ciz();                       // duraklatılmışken de ışıklar dönsün
+  }
+  requestAnimationFrame(dongu);
+}
+
+function temaAyarla(koyu) {
+  document.body.classList.toggle("karanlik", koyu);
+  $("tema").textContent = koyu ? "☀️ Aydınlık mod" : "🌙 Karanlık mod";
+}
+$("tema").addEventListener("click", () => {
+  const koyu = !document.body.classList.contains("karanlik");
+  temaAyarla(koyu);
+  try { localStorage.setItem("kaykayTema", koyu ? "koyu" : "acik"); } catch (hata) {}
+  guncelle();
+});
+try { temaAyarla(localStorage.getItem("kaykayTema") === "koyu"); } catch (hata) {}
+
+$("surtunme").checked = false;
+sifirla();
+requestAnimationFrame(dongu);
+</script>
+</body>
+</html>
