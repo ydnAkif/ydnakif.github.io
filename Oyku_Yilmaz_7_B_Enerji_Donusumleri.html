@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7. Sınıf Fen Bilimleri - Kaykay Rampası Enerji Dönüşümleri</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --panel: #ffffff;
+    --primary: #2563eb;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --ep-color: #3b82f6;
+    --ek-color: #10b981;
+    --em-color: #8b5cf6;
+    --eh-color: #f97316;
+    --et-color: #1e293b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 14px; }
+  .header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+  }
+  .header h1 { font-size: 1.25rem; font-weight: 700; }
+  .header p { font-size: 0.85rem; opacity: 0.9; }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 14px;
+    max-width: 1360px;
+    margin: 0 auto;
+  }
+  @media (max-width: 960px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+  }
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #94a3b8;
+    background: #e0f2fe;
+  }
+  canvas { display: block; width: 100%; height: auto; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .explanation-box {
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: #eff6ff;
+    border-left: 5px solid var(--primary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+  }
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-play { background: #16a34a; color: white; }
+  .btn-play.paused { background: #eab308; color: #1e293b; }
+  .btn-reset { background: #dc2626; color: white; }
+  .toggle-friction {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-friction input { width: 18px; height: 18px; accent-color: #f97316; cursor: pointer; }
+
+  .side-col { display: flex; flex-direction: column; gap: 14px; }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e2e8f0;
+    color: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .energy-bars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    align-items: end;
+    height: 225px;
+    padding: 14px 8px 6px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+  }
+  .bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-val {
+    font-size: 0.76rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .bar-track {
+    width: 34px;
+    height: 145px;
+    background: #e2e8f0;
+    border-radius: 6px 6px 2px 2px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+  }
+  .bar-fill {
+    width: 100%;
+    height: 0%;
+    transition: height 0.05s linear;
+  }
+  .bar-label {
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 6px;
+    line-height: 1.15;
+    min-height: 28px;
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .control-group {
+    background: #f8fafc;
+    padding: 9px 11px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+  .control-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #334155;
+  }
+  .control-group input[type="range"] { width: 100%; cursor: pointer; }
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .color-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f8fafc;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+  .color-item input[type="color"] {
+    width: 36px;
+    height: 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .hint { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🛹 Kaykay Rampası Enerji Dönüşümleri Simülasyonu</h1>
+    <p>7. Sınıf Fen Bilimleri • Kinetik, Çekim Potansiyel, Mekanik ve Isı Enerjisi İlişkisi</p>
+  </div>
+  <div style="font-size: 0.82rem; background: rgba(255,255,255,0.18); padding: 6px 12px; border-radius: 8px;">
+    g = 10 m/s² • Dışarıdan enerji girişi yok
+  </div>
+</div>
+
+<div class="main-grid">
+  <div class="card">
+    <div class="canvas-wrap">
+      <canvas id="simCanvas" width="760" height="440"></canvas>
+    </div>
+
+    <div class="explanation-box" id="explanationText">
+      Kaykaycı en yüksek noktada hareketsiz duruyor; enerjisinin tamamı çekim potansiyel enerjisidir.
+    </div>
+
+    <div class="controls-bar">
+      <button id="playPauseBtn" class="btn-play">▶ Başlat</button>
+      <button id="resetBtn" class="btn-reset">↺ Sıfırla</button>
+
+      <label class="toggle-friction">
+        <input type="checkbox" id="frictionToggle">
+        <span>Sürtünme: <strong id="frictionStateText" style="color:#16a34a;">KAPALI</strong></span>
+      </label>
+
+      <div style="margin-left:auto; font-size:0.84rem; font-weight:700; color:#334155;">
+        Hız: <span id="speedDisplay">0.0</span> m/s • Yükseklik: <span id="heightDisplay">6.0</span> m
+      </div>
+    </div>
+    <p class="hint">💡 İpucu: Kaykaycıyı rampa üzerinde fare ile sürükleyerek istediğin yüksekliğe bırakabilirsin.</p>
+  </div>
+
+  <div class="side-col">
+    <div class="card">
+      <div class="section-title">
+        <span>📊 Anlık Enerji Dönüşüm Grafiği (Joule)</span>
+        <span style="font-size:0.78rem; color:var(--muted);">Toplam Enerji Korunur</span>
+      </div>
+
+      <div class="energy-bars">
+        <div class="bar-col">
+          <div class="bar-val" id="valEk" style="color:var(--ek-color);">0 J</div>
+          <div class="bar-track"><div class="bar-fill" id="barEk" style="background:var(--ek-color);"></div></div>
+          <div class="bar-label">Kinetik<br>Enerji</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-val" id="valEp" style="color:var(--ep-color);">3000 J</div>
+          <div class="bar-track"><div class="bar-fill" id="barEp" style="background:var(--ep-color);"></div></div>
+          <div class="bar-label">Potansiyel<br>Enerji</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-val" id="valEm" style="color:var(--em-color);">3000 J</div>
+          <div class="bar-track"><div class="bar-fill" id="barEm" style="background:var(--em-color);"></div></div>
+          <div class="bar-label">Mekanik<br>(K + P)</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-val" id="valEh" style="color:var(--eh-color);">0 J</div>
+          <div class="bar-track"><div class="bar-fill" id="barEh" style="background:var(--eh-color);"></div></div>
+          <div class="bar-label">Isıya<br>Dönüşen</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-val" id="valEt" style="color:var(--et-color);">3000 J</div>
+          <div class="bar-track"><div class="bar-fill" id="barEt" style="background:var(--et-color);"></div></div>
+          <div class="bar-label">Toplam<br>Enerji</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">⚙️ Deney ve Karakter Ayarları</div>
+
+      <div class="settings-grid">
+        <div class="control-group">
+          <label><span>Başlangıç Yüksekliği</span><span id="initHeightVal">6.0 m</span></label>
+          <input type="range" id="initHeightSlider" min="1" max="6" step="0.5" value="6">
+        </div>
+        <div class="control-group">
+          <label><span>Çocuğun Kilosu (Kütle)</span><span id="massVal">50 kg</span></label>
+          <input type="range" id="massSlider" min="30" max="90" step="5" value="50">
+        </div>
+        <div class="control-group">
+          <label><span>Simülasyon Hızı</span><span id="simSpeedVal">1.0x</span></label>
+          <input type="range" id="simSpeedSlider" min="0.25" max="2.0" step="0.25" value="1.0">
+        </div>
+        <div class="control-group">
+          <label><span>Sürtünme Büyüklüğü</span><span id="frictionMagVal">Orta</span></label>
+          <input type="range" id="frictionMagSlider" min="0.005" max="0.045" step="0.005" value="0.02">
+        </div>
+      </div>
+
+      <div style="margin-top:10px; font-size:0.83rem; font-weight:700; color:#334155;">🎨 Kaykaycı Kıyafet ve Ekipman Renkleri</div>
+      <div class="color-grid">
+        <div class="color-item">
+          <span>Tişört</span>
+          <input type="color" id="shirtColor" value="#ef4444">
+        </div>
+        <div class="color-item">
+          <span>Pantolon</span>
+          <input type="color" id="pantsColor" value="#1e3a8a">
+        </div>
+        <div class="color-item">
+          <span>Kask</span>
+          <input type="color" id="helmetColor" value="#facc15">
+        </div>
+        <div class="color-item">
+          <span>Kaykay</span>
+          <input type="color" id="boardColor" value="#10b981">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+
+const g = 10;
+const maxH = 6.0;
+let mass = 50;
+let initH = 6.0;
+let initSide = -1;
+let simSpeed = 1.0;
+let frictionOn = false;
+let frictionCoeff = 0.02;
+
+let u = -1.0;
+let v = 0.0;
+let isRunning = false;
+let isDragging = false;
+let wheelAngle = 0;
+
+let E_total = mass * g * initH;
+let E_heat = 0;
+let E_pot = E_total;
+let E_kin = 0;
+
+const rampCenterX = 380;
+const rampHalfWidth = 310;
+const rampBottomY = 385;
+const rampTopY = 85;
+
+function uToCanvas(uVal) {
+  const x = rampCenterX + uVal * rampHalfWidth;
+  const h = maxH * uVal * uVal;
+  const y = rampBottomY - (h / maxH) * (rampBottomY - rampTopY);
+  return { x, y, h };
+}
+
+function getRampSlopeAngle(uVal) {
+  const dx = rampHalfWidth;
+  const dy = -2 * uVal * (rampBottomY - rampTopY);
+  return Math.atan2(dy, dx);
+}
+
+function dsDu(uVal) {
+  const dxDu = 8.0;
+  const dyDu = 12.0 * uVal;
+  return Math.sqrt(dxDu * dxDu + dyDu * dyDu);
+}
+
+function resetSimulation() {
+  isRunning = false;
+  updatePlayButton();
+  u = initSide * Math.sqrt(initH / maxH);
+  v = 0;
+  E_total = mass * g * initH;
+  E_heat = 0;
+  E_pot = E_total;
+  E_kin = 0;
+  updateUI();
+  draw();
+}
+
+function updatePlayButton() {
+  const btn = document.getElementById('playPauseBtn');
+  if (isRunning) {
+    btn.textContent = '⏸ Durdur';
+    btn.classList.add('paused');
+  } else {
+    btn.textContent = '▶ Başlat';
+    btn.classList.remove('paused');
+  }
+}
+
+function stepPhysics(dt) {
+  if (!isRunning || isDragging) return;
+  const subSteps = 12;
+  const subDt = (dt * simSpeed) / subSteps;
+
+  for (let i = 0; i < subSteps; i++) {
+    const slopeAngleMath = Math.atan2(12.0 * u, 8.0);
+    const sinTheta = Math.sin(slopeAngleMath);
+    const cosTheta = Math.cos(slopeAngleMath);
+
+    let a = -g * sinTheta;
+
+    if (frictionOn && Math.abs(v) > 0.0005) {
+      const fDecel = frictionCoeff * g * cosTheta;
+      if (v > 0) a -= fDecel;
+      else a += fDecel;
+    }
+
+    v += a * subDt;
+
+    if (frictionOn && Math.abs(u) < 0.015 && Math.abs(v) < 0.08) {
+      v = 0;
+      u = 0;
+    }
+
+    const ds = v * subDt;
+    wheelAngle += ds * 2.5;
+    u += ds / dsDu(u);
+
+    const currentH = Math.min(maxH, maxH * u * u);
+    E_pot = mass * g * currentH;
+
+    if (!frictionOn) {
+      E_heat = 0;
+      if (E_pot >= E_total) {
+        E_pot = E_total;
+        E_kin = 0;
+        v = 0;
+        u = Math.sign(u) * Math.sqrt(E_total / (mass * g * maxH));
+      } else {
+        E_kin = E_total - E_pot;
+        const speedMag = Math.sqrt((2 * E_kin) / mass);
+        v = Math.sign(v || -u) * speedMag;
+      }
+    } else {
+      const rawEkin = 0.5 * mass * v * v;
+      const maxAllowedMech = Math.max(0, E_total - E_heat);
+      if (E_pot + rawEkin > maxAllowedMech) {
+        E_kin = Math.max(0, maxAllowedMech - E_pot);
+        v = Math.sign(v) * Math.sqrt((2 * E_kin) / mass);
+      } else {
+        E_kin = rawEkin;
+        E_heat = Math.max(E_heat, E_total - (E_pot + E_kin));
+      }
+      if (E_heat > E_total) {
+        E_heat = E_total;
+        E_pot = 0;
+        E_kin = 0;
+        v = 0;
+      }
+    }
+  }
+}
+
+function updateUI() {
+  const currentH = maxH * u * u;
+  const E_mech = E_pot + E_kin;
+  const scaleMax = Math.max(3000, mass * g * maxH);
+
+  document.getElementById('valEk').textContent = Math.round(E_kin) + ' J';
+  document.getElementById('valEp').textContent = Math.round(E_pot) + ' J';
+  document.getElementById('valEm').textContent = Math.round(E_mech) + ' J';
+  document.getElementById('valEh').textContent = Math.round(E_heat) + ' J';
+  document.getElementById('valEt').textContent = Math.round(E_total) + ' J';
+
+  document.getElementById('barEk').style.height = Math.min(100, (E_kin / scaleMax) * 100) + '%';
+  document.getElementById('barEp').style.height = Math.min(100, (E_pot / scaleMax) * 100) + '%';
+  document.getElementById('barEm').style.height = Math.min(100, (E_mech / scaleMax) * 100) + '%';
+  document.getElementById('barEh').style.height = Math.min(100, (E_heat / scaleMax) * 100) + '%';
+  document.getElementById('barEt').style.height = Math.min(100, (E_total / scaleMax) * 100) + '%';
+
+  document.getElementById('speedDisplay').textContent = Math.abs(v).toFixed(1);
+  document.getElementById('heightDisplay').textContent = currentH.toFixed(1);
+
+  const expBox = document.getElementById('explanationText');
+  if (frictionOn && E_mech < 5 && E_heat > 10) {
+    expBox.textContent = 'Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve kaykaycı en altta durdu. Toplam enerji korundu.';
+  } else if (Math.abs(v) < 0.15 && currentH > 0.2) {
+    expBox.textContent = 'Kaykaycı en yüksek noktada anlık olarak duruyor; kinetik enerji sıfır, çekim potansiyel enerjisi en büyüktür.';
+  } else if (currentH < 0.15 && Math.abs(v) >= 0.15) {
+    expBox.textContent = frictionOn
+      ? 'Kaykaycı rampanın en alt noktasında en yüksek hıza ulaştı. Bir miktar enerji sürtünmeyle ısıya dönüştü.'
+      : 'Kaykaycı rampanın en alt noktasında! Potansiyel enerjinin tamamı kinetik enerjiye dönüştü.';
+  } else if ((u < 0 && v > 0) || (u > 0 && v < 0)) {
+    expBox.textContent = frictionOn
+      ? 'Kaykaycı aşağı inerken potansiyel enerji kinetik enerjiye ve sürtünme nedeniyle ısı enerjisine dönüşüyor.'
+      : 'Kaykaycı aşağı inerken yüksekliği azalıyor; çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.';
+  } else {
+    expBox.textContent = frictionOn
+      ? 'Kaykaycı yukarı çıkarken kinetik enerji potansiyel enerjiye ve sürtünmeyle ısıya dönüşüyor.'
+      : 'Kaykaycı yukarı çıkarken yavaşlıyor; kinetik enerjisi çekim potansiyel enerjisine dönüşüyor.';
+  }
+}
+
+function drawBackground() {
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  skyGrad.addColorStop(0, '#bae6fd');
+  skyGrad.addColorStop(1, '#f0f9ff');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#fde047';
+  ctx.beginPath();
+  ctx.arc(680, 62, 32, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  drawCloud(130, 70, 0.9);
+  drawCloud(480, 55, 0.75);
+
+  ctx.strokeStyle = 'rgba(100, 116, 139, 0.28)';
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#475569';
+  ctx.font = 'bold 12px Segoe UI';
+  for (let hMeter = 0; hMeter <= 6; hMeter += 1) {
+    const y = rampBottomY - (hMeter / maxH) * (rampBottomY - rampTopY);
+    ctx.beginPath();
+    ctx.moveTo(45, y);
+    ctx.lineTo(715, y);
+    ctx.stroke();
+    ctx.fillText(hMeter + ' m', 12, y + 4);
+  }
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  ctx.moveTo(rampCenterX - rampHalfWidth, rampBottomY + 35);
+  for (let i = -50; i <= 50; i++) {
+    const uVal = i / 50;
+    const pt = uToCanvas(uVal);
+    ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.lineTo(rampCenterX + rampHalfWidth, rampBottomY + 35);
+  ctx.closePath();
+  const rampGrad = ctx.createLinearGradient(0, rampTopY, 0, rampBottomY + 35);
+  rampGrad.addColorStop(0, '#94a3b8');
+  rampGrad.addColorStop(1, '#475569');
+  ctx.fillStyle = rampGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  for (let i = -50; i <= 50; i++) {
+    const uVal = i / 50;
+    const pt = uToCanvas(uVal);
+    if (i === -50) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.lineWidth = frictionOn ? 7 : 5;
+  ctx.strokeStyle = frictionOn ? '#f97316' : '#0284c7';
+  ctx.stroke();
+
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(0, rampBottomY + 35, canvas.width, canvas.height - (rampBottomY + 35));
+}
+
+function drawCloud(x, y, s) {
+  ctx.beginPath();
+  ctx.arc(x, y, 22 * s, 0, Math.PI * 2);
+  ctx.arc(x + 20 * s, y - 6 * s, 26 * s, 0, Math.PI * 2);
+  ctx.arc(x + 42 * s, y, 20 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSkater() {
+  const pos = uToCanvas(u);
+  const angle = getRampSlopeAngle(u);
+
+  const shirtColor = document.getElementById('shirtColor').value;
+  const pantsColor = document.getElementById('pantsColor').value;
+  const helmetColor = document.getElementById('helmetColor').value;
+  const boardColor = document.getElementById('boardColor').value;
+
+  ctx.save();
+  ctx.translate(pos.x, pos.y);
+  ctx.rotate(angle);
+
+  if (Math.abs(v) > 2.5) {
+    const dir = v > 0 ? -1 : 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 2.5;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.moveTo(dir * (34 + k * 8), -25 - k * 14);
+      ctx.lineTo(dir * (56 + k * 10), -25 - k * 14);
+      ctx.stroke();
+    }
+  }
+
+  const wheelY = -6;
+  [-18, 18].forEach(wx => {
+    ctx.save();
+    ctx.translate(wx, wheelY);
+    ctx.rotate(wheelAngle);
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-4, 0); ctx.lineTo(4, 0);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  ctx.strokeStyle = boardColor;
+  ctx.lineWidth = 5.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-28, -15);
+  ctx.lineTo(-22, -11);
+  ctx.lineTo(22, -11);
+  ctx.lineTo(28, -15);
+  ctx.stroke();
+
+  ctx.strokeStyle = pantsColor;
+  ctx.lineWidth = 7.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-5, -36);
+  ctx.lineTo(-12, -24);
+  ctx.lineTo(-10, -14);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(5, -36);
+  ctx.lineTo(12, -24);
+  ctx.lineTo(10, -14);
+  ctx.stroke();
+
+  ctx.fillStyle = '#334155';
+  ctx.beginPath(); ctx.arc(-12, -24, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(12, -24, 4, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(-16, -16, 11, 5, 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.roundRect(5, -16, 11, 5, 2); ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = shirtColor;
+  ctx.beginPath();
+  ctx.roundRect(-10, -62, 20, 28, 6);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  const armWave = Math.sin(Date.now() / 180) * (Math.abs(v) > 0.2 ? 4 : 1);
+  ctx.strokeStyle = '#fed7aa';
+  ctx.lineWidth = 5.5;
+  ctx.beginPath();
+  ctx.moveTo(-9, -56);
+  ctx.lineTo(-22, -48 + armWave);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(9, -56);
+  ctx.lineTo(22, -48 - armWave);
+  ctx.stroke();
+
+  ctx.strokeStyle = shirtColor;
+  ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(-9, -56); ctx.lineTo(-14, -52 + armWave * 0.4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(9, -56); ctx.lineTo(14, -52 - armWave * 0.4); ctx.stroke();
+
+  ctx.fillStyle = '#fed7aa';
+  ctx.beginPath();
+  ctx.arc(0, -73, 11, 0, Math.PI * 2);
+  ctx.fill();
+
+  const lookDir = v >= 0 ? 2 : -2;
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.arc(-3 + lookDir, -73, 1.6, 0, Math.PI * 2);
+  ctx.arc(4 + lookDir, -73, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  if (Math.abs(v) > 5) {
+    ctx.arc(lookDir, -68, 3.2, 0, Math.PI * 2);
+  } else {
+    ctx.arc(lookDir, -69, 4, 0.15 * Math.PI, 0.85 * Math.PI);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle = helmetColor;
+  ctx.beginPath();
+  ctx.arc(0, -75, 12.5, Math.PI, 0);
+  ctx.lineTo(13, -72);
+  ctx.lineTo(-13, -72);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.beginPath();
+  ctx.ellipse(-4, -81, 4, 2, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-9, -72);
+  ctx.lineTo(0, -62);
+  ctx.lineTo(9, -72);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawSkater();
+}
+
+function getPointerU(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const scaleX = canvas.width / rect.width;
+  const canvasX = (clientX - rect.left) * scaleX;
+  let newU = (canvasX - rampCenterX) / rampHalfWidth;
+  return Math.max(-1, Math.min(1, newU));
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  isRunning = false;
+  updatePlayButton();
+  u = getPointerU(e);
+  v = 0;
+  initH = +(maxH * u * u).toFixed(2);
+  initSide = u < 0 ? -1 : 1;
+  document.getElementById('initHeightSlider').value = Math.max(1, Math.round(initH * 2) / 2);
+  document.getElementById('initHeightVal').textContent = initH.toFixed(1) + ' m';
+  E_total = mass * g * initH;
+  E_pot = E_total;
+  E_kin = 0;
+  E_heat = 0;
+  updateUI();
+  draw();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  u = getPointerU(e);
+  v = 0;
+  initH = +(maxH * u * u).toFixed(2);
+  initSide = u < 0 ? -1 : 1;
+  document.getElementById('initHeightVal').textContent = initH.toFixed(1) + ' m';
+  E_total = mass * g * initH;
+  E_pot = E_total;
+  E_kin = 0;
+  E_heat = 0;
+  updateUI();
+  draw();
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+document.getElementById('playPauseBtn').addEventListener('click', () => {
+  isRunning = !isRunning;
+  updatePlayButton();
+});
+
+document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+
+document.getElementById('frictionToggle').addEventListener('change', (e) => {
+  frictionOn = e.target.checked;
+  const st = document.getElementById('frictionStateText');
+  st.textContent = frictionOn ? 'AÇIK' : 'KAPALI';
+  st.style.color = frictionOn ? '#f97316' : '#16a34a';
+  draw();
+});
+
+document.getElementById('initHeightSlider').addEventListener('input', (e) => {
+  initH = parseFloat(e.target.value);
+  document.getElementById('initHeightVal').textContent = initH.toFixed(1) + ' m';
+  resetSimulation();
+});
+
+document.getElementById('massSlider').addEventListener('input', (e) => {
+  mass = parseInt(e.target.value, 10);
+  document.getElementById('massVal').textContent = mass + ' kg';
+  resetSimulation();
+});
+
+document.getElementById('simSpeedSlider').addEventListener('input', (e) => {
+  simSpeed = parseFloat(e.target.value);
+  document.getElementById('simSpeedVal').textContent = simSpeed.toFixed(2) + 'x';
+});
+
+document.getElementById('frictionMagSlider').addEventListener('input', (e) => {
+  frictionCoeff = parseFloat(e.target.value);
+  const label = frictionCoeff <= 0.015 ? 'Az' : (frictionCoeff <= 0.03 ? 'Orta' : 'Çok');
+  document.getElementById('frictionMagVal').textContent = label;
+});
+
+['shirtColor', 'pantsColor', 'helmetColor', 'boardColor'].forEach(id => {
+  document.getElementById(id).addEventListener('input', draw);
+});
+
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+  stepPhysics(dt);
+  updateUI();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+resetSimulation();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
