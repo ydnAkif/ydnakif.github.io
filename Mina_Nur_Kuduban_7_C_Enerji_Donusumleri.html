@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7. Sınıf Fen Bilimleri - Hız Treni Enerji Dönüşümleri</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f0f4f8;
+            color: #1e293b;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        header h1 {
+            font-size: 1.6rem;
+            color: #0f172a;
+        }
+        header p {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-top: 4px;
+        }
+        .container {
+            max-width: 1050px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 850px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+        canvas {
+            width: 100%;
+            height: 380px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            display: block;
+        }
+        .status-box {
+            margin-top: 14px;
+            padding: 14px 16px;
+            background-color: #eff6ff;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            font-size: 0.98rem;
+            line-height: 1.45;
+            color: #1e3a8a;
+            min-height: 68px;
+            display: flex;
+            align-items: center;
+        }
+        .controls {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        #btnStartPause {
+            background-color: #16a34a;
+            color: white;
+            min-width: 130px;
+        }
+        #btnStartPause.paused {
+            background-color: #d97706;
+        }
+        #btnReset {
+            background-color: #475569;
+            color: white;
+        }
+        .friction-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #94a3b8;
+            transition: .3s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #dc2626;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .energy-panel h2 {
+            font-size: 1.15rem;
+            margin-bottom: 14px;
+            color: #0f172a;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+        .energy-item {
+            margin-bottom: 16px;
+        }
+        .energy-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .bar-bg {
+            width: 100%;
+            height: 20px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.05s linear;
+            border-radius: 10px;
+        }
+        .ke-color { background-color: #22c55e; }
+        .pe-color { background-color: #3b82f6; }
+        .me-color { background-color: #8b5cf6; }
+        .th-color { background-color: #ef4444; }
+        .tot-color { background-color: #f59e0b; }
+
+        .divider {
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 14px 0;
+        }
+        .info-note {
+            font-size: 0.84rem;
+            color: #475569;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎢 Hız Treni (Lunapark) Enerji Dönüşümleri Simülasyonu</h1>
+        <p>7. Sınıf Fen Bilimleri — Kuvvet ve Enerji (Enerjinin Korunumu)</p>
+    </header>
+
+    <div class="container">
+        <!-- Sol Panel: Simülasyon Ekranı -->
+        <div class="card">
+            <canvas id="simCanvas" width="660" height="380"></canvas>
+
+            <div class="status-box" id="explanationText">
+                <strong>Başlangıç:</strong> Vagon en yüksek tepede duruyor. Tüm enerjisi <strong>çekim potansiyel enerjisi (1000 J)</strong> halindedir. Başlat düğmesine basın.
+            </div>
+
+            <div class="controls">
+                <div class="btn-group">
+                    <button id="btnStartPause">▶ Başlat</button>
+                    <button id="btnReset">↺ Sıfırla</button>
+                </div>
+
+                <div class="friction-control">
+                    <span>Sürtünme:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="frictionToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="frictionLabel" style="color: #64748b;">Kapalı</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Panel: Enerji Göstergeleri -->
+        <div class="card energy-panel">
+            <h2>⚡ Enerji Göstergeleri (Joule)</h2>
+
+            <div class="energy-item">
+                <div class="energy-header">
+                    <span>Kinetik Enerji (Hareket)</span>
+                    <span id="valKE">0 J</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill ke-color" id="barKE"></div></div>
+            </div>
+
+            <div class="energy-item">
+                <div class="energy-header">
+                    <span>Çekim Potansiyel Enerjisi</span>
+                    <span id="valPE">1000 J</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill pe-color" id="barPE" style="width: 100%;"></div></div>
+            </div>
+
+            <div class="energy-item">
+                <div class="energy-header">
+                    <span>Mekanik Enerji (Kinetik + Potansiyel)</span>
+                    <span id="valME">1000 J</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill me-color" id="barME" style="width: 100%;"></div></div>
+            </div>
+
+            <div class="energy-item">
+                <div class="energy-header">
+                    <span>Isıya Dönüşen Enerji (Sürtünme)</span>
+                    <span id="valTH">0 J</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill th-color" id="barTH"></div></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="energy-item">
+                <div class="energy-header">
+                    <span>Toplam Enerji (Mekanik + Isı)</span>
+                    <span id="valTOT">1000 J</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill tot-color" id="barTOT" style="width: 100%;"></div></div>
+            </div>
+
+            <div class="info-note">
+                <strong>Bilgi:</strong> Motorsuz hız treninde dışarıdan enerji verilmez. Sürtünme kapalıyken mekanik enerji sabit kalır; sürtünme açıkken mekanik enerjinin bir kısmı ısıya dönüşür ama <strong>toplam enerji her zaman 1000 J olarak korunur.</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Sabit Fizik Değerleri
+        const TOTAL_ENERGY = 1000;
+        const MAX_HEIGHT = 240;
+        const GROUND_Y = 325;
+        const START_X = 60;
+        const END_X = 600;
+
+        // Durum Değişkenleri
+        let isRunning = false;
+        let frictionEnabled = false;
+        let posX = START_X;
+        let direction = 1;
+        let thermalEnergy = 0;
+        let mechanicalEnergy = TOTAL_ENERGY;
+        let lastTime = null;
+        let wheelAngle = 0;
+
+        // Arka Plan Bulutları ve Balonları
+        const clouds = [
+            { x: 90, y: 55, scale: 0.9, speed: 6 },
+            { x: 310, y: 40, scale: 1.1, speed: 4.5 },
+            { x: 520, y: 65, scale: 0.85, speed: 5.5 }
+        ];
+        const balloons = [
+            { x: 165, y: 120, color: '#ef4444', phase: 0 },
+            { x: 180, y: 105, color: '#f59e0b', phase: 1.5 },
+            { x: 465, y: 115, color: '#3b82f6', phase: 3.1 }
+        ];
+
+        // DOM Elemanları
+        const btnStartPause = document.getElementById('btnStartPause');
+        const btnReset = document.getElementById('btnReset');
+        const frictionToggle = document.getElementById('frictionToggle');
+        const frictionLabel = document.getElementById('frictionLabel');
+        const explanationText = document.getElementById('explanationText');
+
+        // Pist Yükseklik Fonksiyonu
+        function getTrackHeight(x) {
+            const t = (x - START_X) / (END_X - START_X);
+            if (t <= 0) return MAX_HEIGHT;
+            if (t >= 1) return MAX_HEIGHT;
+
+            if (t < 0.30) {
+                const u = t / 0.30;
+                return MAX_HEIGHT * 0.5 * (1 + Math.cos(Math.PI * u));
+            } else if (t < 0.52) {
+                const u = (t - 0.30) / 0.22;
+                return 155 * 0.5 * (1 - Math.cos(Math.PI * u));
+            } else if (t < 0.74) {
+                const u = (t - 0.52) / 0.22;
+                return 15 + 140 * 0.5 * (1 + Math.cos(Math.PI * u));
+            } else {
+                const u = (t - 0.74) / 0.26;
+                return 15 + (MAX_HEIGHT - 15) * 0.5 * (1 - Math.cos(Math.PI * u));
+            }
+        }
+
+        function getCanvasY(h) {
+            return GROUND_Y - h;
+        }
+
+        frictionToggle.addEventListener('change', (e) => {
+            frictionEnabled = e.target.checked;
+            frictionLabel.textContent = frictionEnabled ? 'Açık' : 'Kapalı';
+            frictionLabel.style.color = frictionEnabled ? '#dc2626' : '#64748b';
+        });
+
+        btnStartPause.addEventListener('click', () => {
+            isRunning = !isRunning;
+            if (isRunning) {
+                if (posX <= START_X + 0.5 && direction === 1) {
+                    posX = START_X + 2;
+                }
+                btnStartPause.textContent = '⏸ Durdur';
+                btnStartPause.classList.add('paused');
+                lastTime = performance.now();
+                requestAnimationFrame(loop);
+            } else {
+                btnStartPause.textContent = '▶ Devam Et';
+                btnStartPause.classList.remove('paused');
+            }
+        });
+
+        btnReset.addEventListener('click', () => {
+            isRunning = false;
+            posX = START_X;
+            direction = 1;
+            thermalEnergy = 0;
+            mechanicalEnergy = TOTAL_ENERGY;
+            btnStartPause.textContent = '▶ Başlat';
+            btnStartPause.classList.remove('paused');
+            updateUI(MAX_HEIGHT, 0);
+            explanationText.innerHTML = '<strong>Başlangıç:</strong> Vagon en yüksek tepede duruyor. Tüm enerjisi <strong>çekim potansiyel enerjisi (1000 J)</strong> halindedir. Başlat düğmesine basın.';
+            draw(0);
+        });
+
+        function updatePhysics(dt) {
+            if (!isRunning) return;
+
+            wheelAngle += dt * 0.45; // Dönme dolap dönüş hızı
+
+            clouds.forEach(c => {
+                c.x += c.speed * dt;
+                if (c.x > canvas.width + 60) c.x = -60;
+            });
+
+            if (frictionEnabled && mechanicalEnergy > 5) {
+                const loss = 45 * dt;
+                thermalEnergy = Math.min(TOTAL_ENERGY, thermalEnergy + loss);
+                mechanicalEnergy = Math.max(0, TOTAL_ENERGY - thermalEnergy);
+            }
+
+            const currentH = getTrackHeight(posX);
+            const currentPE = (currentH / MAX_HEIGHT) * TOTAL_ENERGY;
+            const ke = Math.max(0, mechanicalEnergy - currentPE);
+
+            const speed = Math.max(55, Math.sqrt(ke) * 12);
+            const nextX = posX + direction * speed * dt;
+            const nextH = getTrackHeight(nextX);
+            const nextPE = (nextH / MAX_HEIGHT) * TOTAL_ENERGY;
+
+            if (nextH > currentH && nextPE >= mechanicalEnergy) {
+                if (mechanicalEnergy <= 15 && currentH <= 8) {
+                    isRunning = false;
+                    btnStartPause.textContent = '▶ Başlat';
+                    btnStartPause.classList.remove('paused');
+                    updateUI(currentH, 0);
+                    explanationText.innerHTML = '<strong>Hareket Tamamlandı:</strong> Sürtünme nedeniyle mekanik enerjinin tamamı <strong>ısıya dönüştü</strong> ve vagon durdu. Toplam enerji hala <strong>1000 J</strong>!';
+                    return;
+                }
+                direction *= -1;
+            } else {
+                posX = nextX;
+            }
+
+            if (posX >= END_X) {
+                posX = END_X;
+                direction = -1;
+            } else if (posX <= START_X) {
+                posX = START_X;
+                direction = 1;
+            }
+
+            const finalH = getTrackHeight(posX);
+            const finalPE = Math.min(mechanicalEnergy, (finalH / MAX_HEIGHT) * TOTAL_ENERGY);
+            const finalKE = Math.max(0, mechanicalEnergy - finalPE);
+
+            updateUI(finalH, finalKE);
+            updateExplanation(finalH, finalKE);
+        }
+
+        function updateUI(h, ke) {
+            const pe = Math.max(0, mechanicalEnergy - ke);
+            const me = pe + ke;
+            const tot = me + thermalEnergy;
+
+            document.getElementById('valKE').textContent = Math.round(ke) + ' J';
+            document.getElementById('valPE').textContent = Math.round(pe) + ' J';
+            document.getElementById('valME').textContent = Math.round(me) + ' J';
+            document.getElementById('valTH').textContent = Math.round(thermalEnergy) + ' J';
+            document.getElementById('valTOT').textContent = Math.round(tot) + ' J';
+
+            document.getElementById('barKE').style.width = (ke / TOTAL_ENERGY * 100) + '%';
+            document.getElementById('barPE').style.width = (pe / TOTAL_ENERGY * 100) + '%';
+            document.getElementById('barME').style.width = (me / TOTAL_ENERGY * 100) + '%';
+            document.getElementById('barTH').style.width = (thermalEnergy / TOTAL_ENERGY * 100) + '%';
+            document.getElementById('barTOT').style.width = (tot / TOTAL_ENERGY * 100) + '%';
+        }
+
+        function updateExplanation(h, ke) {
+            const dh = getTrackHeight(posX + direction * 2) - h;
+            const frictionNote = frictionEnabled ? ' Sürtünme açık olduğu için mekanik enerjinin bir kısmı <strong>ısıya dönüşüyor</strong>.' : '';
+
+            if (ke < 45) {
+                explanationText.innerHTML = `<strong>Tepe Noktası:</strong> Vagon anlık olarak yavaşladı. <strong>Çekim potansiyel enerjisi</strong> en yüksek değerde, kinetik enerji en düşükte.${frictionNote}`;
+            } else if (dh < -0.3) {
+                explanationText.innerHTML = `<strong>İniş (Hızlanma):</strong> Vagon aşağı inerken yüksekliği azalıyor; <strong>çekim potansiyel enerjisi kinetik enerjiye dönüşüyor</strong>.${frictionNote}`;
+            } else if (dh > 0.3) {
+                explanationText.innerHTML = `<strong>Çıkış (Yavaşlama):</strong> Vagon yukarı çıkarken yükseliyor; <strong>kinetik enerji çekim potansiyel enerjisine dönüşüyor</strong>.${frictionNote}`;
+            } else {
+                explanationText.innerHTML = `<strong>En Alt Nokta (Çukur):</strong> Vagon en hızlı halinde! <strong>Kinetik enerji en fazla</strong>, çekim potansiyel enerjisi en az.${frictionNote}`;
+            }
+        }
+
+        // Lunapark Arka Plan Çizimleri
+        function drawBackground(timeSec) {
+            // Gökyüzü Gradyanı
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+            skyGrad.addColorStop(0, '#7dd3fc');
+            skyGrad.addColorStop(0.65, '#e0f2fe');
+            skyGrad.addColorStop(1, '#fef9c3');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, GROUND_Y);
+
+            // Güneş
+            ctx.fillStyle = 'rgba(253, 224, 71, 0.85)';
+            ctx.beginPath();
+            ctx.arc(585, 52, 28, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bulutlar
+            clouds.forEach(c => {
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.scale(c.scale, c.scale);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.arc(16, -5, 22, 0, Math.PI * 2);
+                ctx.arc(34, 0, 17, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Uzak Tepeler
+            ctx.fillStyle = '#bae6fd';
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y);
+            ctx.quadraticCurveTo(160, 210, 340, GROUND_Y);
+            ctx.quadraticCurveTo(510, 225, 660, GROUND_Y);
+            ctx.fill();
+
+            // Dev Dönme Dolap (Arka Plan Sağ Orta)
+            const wheelX = 485;
+            const wheelY = 175;
+            const wheelR = 88;
+
+            // Dönme Dolap Ayakları
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(wheelX, wheelY);
+            ctx.lineTo(wheelX - 52, GROUND_Y);
+            ctx.moveTo(wheelX, wheelY);
+            ctx.lineTo(wheelX + 52, GROUND_Y);
+            ctx.stroke();
+
+            // Dönme Dolap Çemberleri ve Telleri
+            ctx.save();
+            ctx.translate(wheelX, wheelY);
+            ctx.rotate(wheelAngle);
+
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, wheelR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#fb7185';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, wheelR * 0.65, 0, Math.PI * 2);
+            ctx.stroke();
+
+            const numCabins = 10;
+            const cabinColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+            for (let i = 0; i < numCabins; i++) {
+                const a = (i / numCabins) * Math.PI * 2;
+                const cx = Math.cos(a) * wheelR;
+                const cy = Math.sin(a) * wheelR;
+
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(cx, cy);
+                ctx.stroke();
+
+                // Kabin (Daima dik durur)
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(-wheelAngle);
+                ctx.fillStyle = cabinColors[i % cabinColors.length];
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(-7, 0, 14, 12, 3) : ctx.rect(-7, 0, 14, 12);
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.restore();
+
+            // Dönme Dolap Göbeği
+            ctx.fillStyle = '#e11d48';
+            ctx.beginPath();
+            ctx.arc(wheelX, wheelY, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lunapark Çadırı (Sol Arka Plan)
+            const tentX = 165;
+            const tentW = 95;
+            const tentH = 52;
+            const roofH = 38;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(tentX, GROUND_Y - tentH, tentW, tentH);
+            // Kırmızı şeritler
+            ctx.fillStyle = '#ef4444';
+            for (let sx = 0; sx < tentW; sx += 19) {
+                ctx.fillRect(tentX + sx, GROUND_Y - tentH, 9.5, tentH);
+            }
+            // Çadır Çatısı
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(tentX - 6, GROUND_Y - tentH);
+            ctx.lineTo(tentX + tentW / 2, GROUND_Y - tentH - roofH);
+            ctx.lineTo(tentX + tentW + 6, GROUND_Y - tentH);
+            ctx.closePath();
+            ctx.fill();
+            // Çatı Bayrağı
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(tentX + tentW / 2, GROUND_Y - tentH - roofH);
+            ctx.lineTo(tentX + tentW / 2 + 16, GROUND_Y - tentH - roofH + 5);
+            ctx.lineTo(tentX + tentW / 2, GROUND_Y - tentH - roofH + 10);
+            ctx.fill();
+
+            // Uçan Balonlar
+            balloons.forEach(b => {
+                const floatY = b.y + Math.sin(timeSec * 2 + b.phase) * 4;
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(b.x, floatY + 10);
+                ctx.lineTo(b.x, floatY + 26);
+                ctx.stroke();
+
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.ellipse(b.x, floatY, 7, 9, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Yeşil Çimen Zemin ve Çitler
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(0, GROUND_Y, canvas.width, 6);
+
+            // Ahşap Lunapark Çiti
+            ctx.fillStyle = '#f8fafc';
+            for (let fx = 10; fx < canvas.width; fx += 22) {
+                ctx.fillRect(fx, GROUND_Y - 14, 5, 14);
+            }
+            ctx.fillRect(0, GROUND_Y - 10, canvas.width, 3);
+        }
+
+        function draw(timeSec) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Gerçekçi Lunapark Arka Planı
+            drawBackground(timeSec || 0);
+
+            // 2. Yükseklik Referans Çizgileri
+            ctx.strokeStyle = 'rgba(71, 85, 105, 0.35)';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1;
+            [60, 120, 180, 240].forEach(h => {
+                const y = getCanvasY(h);
+                ctx.beginPath();
+                ctx.moveTo(40, y);
+                ctx.lineTo(620, y);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            // 3. Çelik Kafes Ray Destek Direkleri
+            for (let x = START_X; x <= END_X; x += 28) {
+                const y = getCanvasY(getTrackHeight(x));
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(x - 3, y);
+                ctx.lineTo(x - 3, GROUND_Y);
+                ctx.moveTo(x + 3, y);
+                ctx.lineTo(x + 3, GROUND_Y);
+                ctx.stroke();
+
+                // Çapraz kafes bağlantıları
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 1;
+                for (let cy = y + 10; cy < GROUND_Y - 10; cy += 16) {
+                    ctx.beginPath();
+                    ctx.moveTo(x - 3, cy);
+                    ctx.lineTo(x + 3, cy + 8);
+                    ctx.stroke();
+                }
+            }
+
+            // 4. Ana Ray Çizgisi
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            for (let x = START_X; x <= END_X; x += 2) {
+                const y = getCanvasY(getTrackHeight(x));
+                if (x === START_X) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Ray Üstü Kırmızı Parlak Şerit
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // 5. Hız Treni Vagonu
+            const x1 = Math.max(START_X, posX - 5);
+            const x2 = Math.min(END_X, posX + 5);
+            const y1 = getCanvasY(getTrackHeight(x1));
+            const y2 = getCanvasY(getTrackHeight(x2));
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            const carY = getCanvasY(getTrackHeight(posX));
+
+            ctx.save();
+            ctx.translate(posX, carY);
+            ctx.rotate(angle);
+
+            // Vagon Gövdesi
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(-22, -23, 44, 17, 7);
+            } else {
+                ctx.rect(-22, -23, 44, 17);
+            }
+            ctx.fill();
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Vagon Sarı Yan Şeridi
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(-18, -16, 36, 4);
+
+            // Yolcu Başları
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(-8, -26, 4.5, 0, Math.PI * 2);
+            ctx.arc(8, -26, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tekerlekler
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(-13, -4, 4.5, 0, Math.PI * 2);
+            ctx.arc(13, -4, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sürtünme Kıvılcımı Efekti
+            if (frictionEnabled && isRunning) {
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath();
+                ctx.arc(-16, -2, 3 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+
+            // Etiketler
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 12px Segoe UI';
+            ctx.fillText('Başlangıç (En Yüksek)', 22, getCanvasY(MAX_HEIGHT) - 14);
+            ctx.fillText('En Alt Nokta (En Hızlı)', 195, GROUND_Y + 22);
+        }
+
+        function loop(now) {
+            if (!lastTime) lastTime = now;
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            updatePhysics(dt);
+            draw(now / 1000);
+
+            if (isRunning) {
+                requestAnimationFrame(loop);
+            }
+        }
+
+        draw(0);
+    </script>
+</body>
+</html>
