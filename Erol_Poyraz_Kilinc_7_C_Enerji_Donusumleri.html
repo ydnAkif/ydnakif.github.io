@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enerji Dönüşümleri – Kaykay Rampası</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#edf6ff;color:#17324d;font-family:Arial,sans-serif}.wrap{max-width:980px;margin:auto;padding:14px}header{text-align:center;padding:10px}h1{margin:5px;font-size:clamp(24px,4vw,36px)}p{line-height:1.5}.panel{background:white;border:1px solid #d5e4f1;border-radius:16px;padding:14px;margin:12px 0;box-shadow:0 4px 14px #17324d10}canvas{width:100%;height:auto;display:block;border-radius:12px;background:#e4f5ff}.controls{display:flex;gap:9px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:12px}button{border:0;border-radius:11px;padding:12px 17px;font-size:15px;font-weight:bold;color:white;background:#2878c8;cursor:pointer}button:active{transform:scale(.97)}#pause{background:#62788d}#reset{background:#24966a}.toggle{padding:10px 13px;border:1px solid #d5e4f1;border-radius:11px;font-weight:bold;background:#f7fbff}.toggle input{width:18px;height:18px;vertical-align:middle;accent-color:#df7d24}.status{text-align:center;font-weight:bold;margin-top:10px;color:#2878c8}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.metric{padding:10px;border-radius:11px;background:#f5f9fd;border:1px solid #e0eaf3}.metric b{font-size:13px;display:block;min-height:32px}.metric strong{font-size:21px;display:block;margin:5px 0;font-variant-numeric:tabular-nums}.bar{height:9px;background:#e1eaf2;border-radius:20px;overflow:hidden}.fill{height:100%;width:0%;border-radius:20px}.explain{background:#f0f7ff;border-left:5px solid #2878c8;padding:12px;border-radius:8px;min-height:48px;line-height:1.5}.small{font-size:13px;color:#61768a}@media(max-width:650px){.grid{grid-template-columns:repeat(2,1fr)}.metric:last-child{grid-column:span 2}.wrap{padding:8px}}
+</style></head>
+<body><main class="wrap">
+<header><div style="font-size:32px">🛹 ⚡</div><h1>Enerji Dönüşümleri Oyunu</h1><p><b>Senaryo: U biçimli kaykay rampası</b><br>Kaykay yükselip alçalırken çekim potansiyel enerjisi ve kinetik enerji birbirine dönüşür.</p></header>
+<section class="panel">
+<canvas id="scene" width="900" height="350"></canvas>
+<div class="controls">
+<button id="start">▶ Başlat</button><button id="pause">Ⅱ Durdur</button><button id="reset">↺ Sıfırla</button>
+<label class="toggle"><input id="friction" type="checkbox"> 🔥 Sürtünme açık</label>
+</div><div class="status" id="status">Hazır! Oyunu başlatmak için Başlat'a bas.</div>
+</section>
+<section class="panel"><h2>📊 Enerji göstergeleri</h2><div class="grid" id="meters">
+<div class="metric"><b>🟦 Kinetik enerji</b><strong id="ke">0 J</strong><div class="bar"><div class="fill" id="keb" style="background:#2878c8"></div></div></div>
+<div class="metric"><b>🟩 Çekim potansiyel enerjisi</b><strong id="pe">80 J</strong><div class="bar"><div class="fill" id="peb" style="background:#24966a"></div></div></div>
+<div class="metric"><b>🟪 Mekanik enerji</b><strong id="me">80 J</strong><div class="bar"><div class="fill" id="meb" style="background:#7957bd"></div></div></div>
+<div class="metric"><b>🟧 Isıya dönüşen enerji</b><strong id="he">0 J</strong><div class="bar"><div class="fill" id="heb" style="background:#e58a27"></div></div></div>
+<div class="metric"><b>⬛ Toplam enerji</b><strong id="te">80 J</strong><div class="bar"><div class="fill" id="teb" style="background:#17324d"></div></div></div>
+</div><p class="small">Başlangıç koşulları: kütle 2 kg, yükseklik 4 m, başlangıç hızı 0 m/s, yer çekimi 10 N/kg. Başlangıç enerjisi: 80 J. Bu basit modelde hava direnci ve ses ihmal edilir.</p></section>
+<section class="panel"><h2>💬 Enerji dönüşümünü izle</h2><div class="explain" id="explain">Kaykay en yüksek noktada başlar. Çekim potansiyel enerjisi 80 J, kinetik enerjisi 0 J'dür.</div></section>
+<section class="panel"><h2>🎯 Deney görevi</h2><ol><li>Sürtünme kapalıyken Başlat'a bas ve enerji değerlerini izle.</li><li>Sıfırla'ya bas, sürtünmeyi aç ve tekrar Başlat.</li><li>İki denemede mekanik enerji ve ısı enerjisindeki değişimi karşılaştır.</li></ol><p class="small"><b>Sonuç:</b> Sürtünme kapalıyken mekanik enerji sabit kalır. Sürtünme açıkken mekanik enerji azalır ve ısı enerjisi artar. Isı enerjisi de hesaba katıldığında toplam enerji 80 J kalır.</p></section>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),c=$('scene'),g=c.getContext('2d');
+const W=c.width,H=c.height,E0=80;
+let t=0,running=false,last=0,raf=0,friction=false;
+function state(){
+ // Amplitude damping transfers mechanical energy into thermal energy.
+ const A=friction?4*Math.exp(-.105*t):4;
+ const theta=1.18*t;
+ const x=-A*Math.cos(theta);
+ const pe=E0*(x*x/16);
+ const me=E0*(A*A/16);
+ const ke=Math.max(0,me-pe);
+ const heat=E0-me;
+ return {x,pe,me,ke,heat,total:me+heat,A};
+}
+function update(){
+ const s=state();
+ [['ke',s.ke],['pe',s.pe],['me',s.me],['he',s.heat],['te',s.total]].forEach(([id,v])=>{$(id).textContent=v.toFixed(1)+' J';$(id+'b').style.width=Math.max(0,Math.min(100,v/E0*100))+'%'});
+ let msg;
+ if(Math.abs(s.x)<.7)msg='Kaykay rampanın en altına yakın: hızı ve kinetik enerjisi en büyük değerine yaklaşır.';
+ else if(s.x<0)msg='Kaykay sol taraftan aşağı iniyor: çekim potansiyel enerjisi azalırken kinetik enerji artıyor.';
+ else msg='Kaykay sağ tarafa tırmanıyor: kinetik enerji azalırken çekim potansiyel enerjisi artıyor.';
+ if(friction&&s.heat>0.2)msg+=' Sürtünme, mekanik enerjinin bir bölümünü ısı enerjisine dönüştürüyor.';
+ $('explain').textContent=msg;
+}
+function draw(){
+ const s=state();g.clearRect(0,0,W,H);
+ g.fillStyle='#e4f5ff';g.fillRect(0,0,W,H);g.fillStyle='#e9f4e8';g.fillRect(0,275,W,75);
+ g.fillStyle='#fff4b8';g.beginPath();g.arc(790,55,24,0,Math.PI*2);g.fill();
+ const X=x=>100+(x+4)/8*700,Y=x=>275-(x*x/4)*43;
+ g.beginPath();for(let i=0;i<=160;i++){let x=-4+i/20;if(i===0)g.moveTo(X(x),Y(x));else g.lineTo(X(x),Y(x))}
+ g.lineWidth=20;g.strokeStyle='#66839c';g.lineCap='round';g.stroke();
+ g.beginPath();for(let i=0;i<=160;i++){let x=-4+i/20;if(i===0)g.moveTo(X(x),Y(x));else g.lineTo(X(x),Y(x))}
+ g.lineWidth=4;g.strokeStyle='#c5d9e8';g.stroke();
+ g.fillStyle='#31516c';g.font='bold 16px Arial';g.fillText('U biçimli kaykay rampası',335,330);g.fillText('Başlangıç yüksekliği: 4 m',22,35);
+ let bx=X(s.x),by=Y(s.x)-15;
+ g.save();g.translate(bx,by);g.rotate(s.x*.08);
+ g.fillStyle='#f1a23b';g.strokeStyle='#8a551d';g.lineWidth=3;g.beginPath();g.roundRect(-24,-5,48,10,5);g.fill();g.stroke();
+ g.fillStyle='#26394c';g.beginPath();g.arc(-15,8,5,0,7);g.arc(15,8,5,0,7);g.fill();
+ g.fillStyle='#ffd2a6';g.beginPath();g.arc(0,-21,8,0,7);g.fill();g.strokeStyle='#245078';g.lineWidth=4;g.beginPath();g.moveTo(0,-13);g.lineTo(0,-2);g.moveTo(0,-10);g.lineTo(-10,-4);g.moveTo(0,-10);g.lineTo(10,-4);g.moveTo(0,-2);g.lineTo(-8,7);g.moveTo(0,-2);g.lineTo(9,7);g.stroke();g.restore();
+}
+function tick(now){if(!running)return;if(!last)last=now;let dt=Math.min((now-last)/1000,.04);last=now;t+=dt;
+ if(friction&&state().A<.09){running=false;$('status').textContent='Deneme tamamlandı: Sürtünme kaykayın hareketini durdurdu.';t=Math.max(t,35);}
+ update();draw();if(running)raf=requestAnimationFrame(tick);
+}
+$('start').onclick=()=>{if(running)return;friction=$('friction').checked;running=true;last=0;$('status').textContent='Oyun başladı! Kaykay rampada hareket ediyor.';raf=requestAnimationFrame(tick)};
+$('pause').onclick=()=>{running=false;cancelAnimationFrame(raf);$('status').textContent='Oyun durduruldu. Enerji değerlerini inceleyebilirsin.'};
+$('reset').onclick=()=>{running=false;cancelAnimationFrame(raf);t=0;last=0;friction=$('friction').checked;update();draw();$('status').textContent='Sıfırlandı! Başlangıç koşulları yeniden hazır.'};
+$('friction').onchange=()=>{if(!running){friction=$('friction').checked;update();draw();$('status').textContent='Sürtünme '+(friction?'açıldı':'kapatıldı')+'. Denemeyi başlatabilirsin.'}};
+update();draw();
+})();
+</script></body></html>
