@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7. Sınıf Fen Bilimleri - Enerji Dönüşümleri (Hız Treni)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        /* Özel Kaydırma Çubuğu */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 9999px;
+        }
+        /* Toggle Switch Geçişi */
+        .toggle-dot {
+            transition: transform 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Üst Başlık Çubuğu -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                    <!-- Hız Treni İkonu -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 19h20"/>
+                        <path d="M4 19c2-8 5-12 8-12s6 4 8 12"/>
+                        <rect x="9" y="3" width="6" height="4" rx="1.5"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">7. Sınıf Fen Bilimleri</span>
+                        <span class="hidden sm:inline-block text-xs text-slate-400 font-medium">Kuvvet ve Enerji Ünitesi</span>
+                    </div>
+                    <h1 class="text-base sm:text-lg font-extrabold text-slate-800 leading-tight mt-0.5">Hız Treninde Enerji Dönüşümleri</h1>
+                </div>
+            </div>
+
+            <!-- Sabit Fiziksel Büyüklükler Rozeti -->
+            <div class="flex items-center gap-2 sm:gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-600">
+                <div class="flex items-center gap-1" title="Vagonun Kütlesi">
+                    <span class="text-slate-400">Kütle (m):</span>
+                    <span class="font-bold text-slate-800">50 kg</span>
+                </div>
+                <span class="text-slate-300">|</span>
+                <div class="flex items-center gap-1" title="Yerçekimi İvmesi">
+                    <span class="text-slate-400">g:</span>
+                    <span class="font-bold text-slate-800">10 m/s²</span>
+                </div>
+                <span class="text-slate-300 hidden md:inline">|</span>
+                <div class="hidden md:flex items-center gap-1" title="Başlangıç Yüksekliği ve Hızı">
+                    <span class="text-slate-400">Başlangıç:</span>
+                    <span class="font-bold text-indigo-700">h₀ = 20 m, v₀ = 0 m/s</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4">
+
+        <!-- Üst Bölüm: Simülasyon Sahnesi + Canlı Enerji Grafiği -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+
+            <!-- Sol/Üst Panel: Hız Treni Canvas Sahnesi (7 Sütun) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                <!-- Sahne Üst Bilgi Şeridi -->
+                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span id="statusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-800">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            Hazır (Başlangıç Konumu)
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3 font-semibold text-slate-700">
+                        <div class="bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                            Yükseklik: <span id="readoutHeight" class="text-blue-600 font-bold">20,0 m</span>
+                        </div>
+                        <div class="bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                            Sürat: <span id="readoutSpeed" class="text-emerald-600 font-bold">0,0 m/s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Alanı -->
+                <div id="canvasContainer" class="relative w-full h-[270px] sm:h-[340px] lg:h-[370px] bg-gradient-to-b from-sky-100 via-sky-50 to-emerald-50/40 select-none">
+                    <canvas id="simCanvas"></canvas>
+                </div>
+
+                <!-- Kontrol Düğmeleri Paneli -->
+                <div class="p-3 sm:p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <!-- Oynat / Duraklat & Sıfırla -->
+                    <div class="flex items-center gap-2">
+                        <button id="btnPlayPause" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition shadow-sm cursor-pointer min-w-[122px]">
+                            <svg id="iconPlay" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="iconPause" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            <span id="textPlayPause">Başlat</span>
+                        </button>
+
+                        <button id="btnReset" type="button" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] border border-slate-300 transition cursor-pointer" title="Vagonu ilk konumuna (20 m) ve ilk hızına (0 m/s) döndürür">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            <span>Sıfırla</span>
+                        </button>
+                    </div>
+
+                    <!-- Sürtünme ve Hız Ayarları -->
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <!-- Sürtünme Anahtarı -->
+                        <label for="frictionToggle" class="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl cursor-pointer select-none transition">
+                            <span class="text-xs sm:text-sm font-bold text-slate-700">Sürtünme:</span>
+                            <div class="relative inline-flex items-center">
+                                <input type="checkbox" id="frictionToggle" class="sr-only">
+                                <div id="frictionTrack" class="w-11 h-6 bg-slate-300 rounded-full transition-colors duration-200"></div>
+                                <div id="frictionDot" class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-sm"></div>
+                            </div>
+                            <span id="frictionLabel" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 min-w-[54px] text-center">KAPALI</span>
+                        </label>
+
+                        <!-- Oynatma Hızı -->
+                        <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+                            <button id="btnSpeedNormal" type="button" class="px-2.5 py-1.5 rounded-lg bg-white text-indigo-700 shadow-2xs transition cursor-pointer">Normal</button>
+                            <button id="btnSpeedSlow" type="button" class="px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer">Yavaş</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ/Alt Panel: Canlı Enerji Çubukları (5 Sütun) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col justify-between gap-4">
+                <div>
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <div>
+                            <h2 class="text-base font-extrabold text-slate-800">Canlı Enerji Değerleri</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Tüm enerjiler <strong>Joule (J)</strong> cinsinden anlık hesaplanır.</p>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            Maks: 10.000 J
+                        </span>
+                    </div>
+
+                    <!-- Enerji Çubukları Listesi -->
+                    <div class="flex flex-col gap-3.5">
+
+                        <!-- 1. Çekim Potansiyel Enerjisi -->
+                        <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-2.5">
+                            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+                                <div class="flex items-center gap-2 font-bold text-blue-900">
+                                    <span class="w-3 h-3 rounded-sm bg-blue-600 inline-block shrink-0"></span>
+                                    <span>Çekim Potansiyel Enerjisi (E<sub>p</sub>)</span>
+                                </div>
+                                <span id="valEp" class="font-extrabold text-blue-700 tabular-nums">10.000 J</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-blue-100 rounded-full overflow-hidden p-0.5">
+                                <div id="barEp" class="h-full bg-blue-600 rounded-full transition-all duration-75" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Kinetik Enerji -->
+                        <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-2.5">
+                            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+                                <div class="flex items-center gap-2 font-bold text-emerald-900">
+                                    <span class="w-3 h-3 rounded-sm bg-emerald-500 inline-block shrink-0"></span>
+                                    <span>Kinetik Enerji (E<sub>k</sub>)</span>
+                                </div>
+                                <span id="valEk" class="font-extrabold text-emerald-700 tabular-nums">0 J</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-emerald-100 rounded-full overflow-hidden p-0.5">
+                                <div id="barEk" class="h-full bg-emerald-500 rounded-full transition-all duration-75" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Mekanik Enerji (Kinetik + Potansiyel) -->
+                        <div class="bg-purple-50/70 border border-purple-200 rounded-xl p-2.5">
+                            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+                                <div class="flex items-center gap-2 font-bold text-purple-950">
+                                    <span class="w-3 h-3 rounded-sm bg-purple-600 inline-block shrink-0"></span>
+                                    <span>Mekanik Enerji <span class="font-medium text-purple-700 text-xs">(E<sub>k</sub> + E<sub>p</sub>)</span></span>
+                                </div>
+                                <span id="valEm" class="font-extrabold text-purple-700 tabular-nums">10.000 J</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-purple-100 rounded-full overflow-hidden p-0.5">
+                                <div id="barEm" class="h-full bg-purple-600 rounded-full transition-all duration-75" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Isıya Dönüşen Enerji -->
+                        <div class="bg-orange-50/70 border border-orange-200 rounded-xl p-2.5">
+                            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+                                <div class="flex items-center gap-2 font-bold text-orange-950">
+                                    <span class="w-3 h-3 rounded-sm bg-orange-500 inline-block shrink-0"></span>
+                                    <span>Isıya Dönüşen Enerji (E<sub>ısı</sub>)</span>
+                                </div>
+                                <span id="valEheat" class="font-extrabold text-orange-600 tabular-nums">0 J</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-orange-100 rounded-full overflow-hidden p-0.5">
+                                <div id="barEheat" class="h-full bg-orange-500 rounded-full transition-all duration-75" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Toplam Enerji -->
+                        <div class="bg-slate-800 text-white rounded-xl p-3 shadow-xs">
+                            <div class="flex items-center justify-between text-xs sm:text-sm mb-1.5">
+                                <div class="flex items-center gap-2 font-bold">
+                                    <span class="w-3 h-3 rounded-sm bg-amber-400 inline-block shrink-0"></span>
+                                    <span>Toplam Enerji <span class="font-normal text-slate-300 text-xs">(E<sub>mekanik</sub> + E<sub>ısı</sub>)</span></span>
+                                </div>
+                                <span id="valEtotal" class="font-extrabold text-amber-300 tabular-nums">10.000 J</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-slate-700 rounded-full overflow-hidden p-0.5">
+                                <div id="barEtotal" class="h-full bg-amber-400 rounded-full" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alt Bölüm: Öğrenci Gözlem ve Kazanım Kartı -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:px-5 sm:py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Anlık Gözlem Notu</h3>
+                    <p id="observationText" class="text-xs sm:text-sm text-slate-700 font-medium mt-0.5 leading-relaxed">
+                        <strong>Sürtünme Kapalı:</strong> Vagon 20 m yükseklikteyken tüm enerji <strong>Çekim Potansiyel Enerjisi</strong> (10.000 J) halindedir. İnişte potansiyel enerji kinetik enerjiye, çıkışta kinetik enerji potansiyel enerjiye dönüşür; <strong>Mekanik Enerji</strong> sabit kalır.
+                    </p>
+                </div>
+            </div>
+            <div class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shrink-0 w-full md:w-auto">
+                <strong>Deney İpucu:</strong> Önce sürtünme <em>kapalı</em> gözlem yapın, ardından <strong>Sıfırla</strong>'ya basıp sürtünmeyi <em>açarak</em> karşılaştırın.
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * 7. Sınıf Fen Bilimleri - Enerji Dönüşümleri Simülasyonu
+         * Fizik ve Görselleştirme Motoru
+         */
+        (function () {
+            // Fizik Sabitleri (Tam Sayısal Tutarlılık İçin)
+            const MASS = 50;             // kg
+            const GRAVITY = 10;          // m/s²
+            const INITIAL_HEIGHT = 20;   // m
+            const TOTAL_ENERGY = MASS * GRAVITY * INITIAL_HEIGHT; // 10.000 J
+            const FRICTION_COEFF = 0.14; // Sürtünme katsayısı (gerçekçi ve gözlemlenebilir azalma için)
+
+            // Simülasyon Durum Değişkenleri
+            let isRunning = false;
+            let isFrictionOn = false;
+            let timeScale = 1.0;         // Normal = 1.0, Yavaş = 0.4
+            let trackParam = 0.0;        // Pist üzerindeki konum parametresi u ∈ [0, 1]
+            let direction = 1;           // 1: sağa hareket, -1: sola hareket
+            let heatEnergy = 0;          // Isıya dönüşen enerji (J)
+            let potentialEnergy = TOTAL_ENERGY;
+            let kineticEnergy = 0;
+            let mechanicalEnergy = TOTAL_ENERGY;
+            let currentHeight = INITIAL_HEIGHT;
+            let currentSpeed = 0;
+            let isSettled = false;       // Sürtünme ile vadide tamamen durma durumu
+
+            // Kıvılcım Parçacıkları (Sürtünme açıkken tekerleklerden çıkar)
+            let sparks = [];
+
+            // Pist Geometri Önbelleği (Yay uzunluğu tablosu)
+            const TRACK_SAMPLES = 600;
+            let trackTable = [];
+            let totalTrackLengthMeters = 80; // Pistin toplam gerçek uzunluğu yaklaşık 80 metre
+
+            // DOM Elemanları
+            const canvas = document.getElementById('simCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasContainer = document.getElementById('canvasContainer');
+
+            const btnPlayPause = document.getElementById('btnPlayPause');
+            const iconPlay = document.getElementById('iconPlay');
+            const iconPause = document.getElementById('iconPause');
+            const textPlayPause = document.getElementById('textPlayPause');
+            const btnReset = document.getElementById('btnReset');
+
+            const frictionToggle = document.getElementById('frictionToggle');
+            const frictionTrack = document.getElementById('frictionTrack');
+            const frictionDot = document.getElementById('frictionDot');
+            const frictionLabel = document.getElementById('frictionLabel');
+
+            const btnSpeedNormal = document.getElementById('btnSpeedNormal');
+            const btnSpeedSlow = document.getElementById('btnSpeedSlow');
+
+            const statusBadge = document.getElementById('statusBadge');
+            const readoutHeight = document.getElementById('readoutHeight');
+            const readoutSpeed = document.getElementById('readoutSpeed');
+            const observationText = document.getElementById('observationText');
+
+            // Enerji Çubukları ve Değerleri
+            const valEp = document.getElementById('valEp');
+            const barEp = document.getElementById('barEp');
+            const valEk = document.getElementById('valEk');
+            const barEk = document.getElementById('barEk');
+            const valEm = document.getElementById('valEm');
+            const barEm = document.getElementById('barEm');
+            const valEheat = document.getElementById('valEheat');
+            const barEheat = document.getElementById('barEheat');
+            const valEtotal = document.getElementById('valEtotal');
+            const barEtotal = document.getElementById('barEtotal');
+
+            /**
+             * Pist Yükseklik Fonksiyonu h(u)
+             * u ∈ [0, 1] arasında:
+             * u = 0.0 -> h = 20 m (Sol Başlangıç Tepesi)
+             * u = 0.5 -> h = 0 m  (Orta Vadi Tabanı)
+             * u = 1.0 -> h = 20 m (Sağ Karşı Tepe - sürtünmesiz tam tepeye çıkabilmesi için)
+             * Pürüzsüz kosinüs eğrisi: h(u) = 10 * (1 + cos(2 * PI * u))
+             */
+            function getHeightAt(u) {
+                const clampedU = Math.max(0, Math.min(1, u));
+                return 10 * (1 + Math.cos(2 * Math.PI * clampedU));
+            }
+
+            /**
+             * Pist eğim türevi dh/du
+             */
+            function getHeightDerivative(u) {
+                return -20 * Math.PI * Math.sin(2 * Math.PI * u);
+            }
+
+            /**
+             * Pist yay uzunluğu tablosunu oluşturur.
+             * Yatay genişlik X_SPAN = 64 m, dikey yükseklik 20 m olacak şekilde gerçekçi metrik ölçek kullanır.
+             */
+            function buildTrackTable() {
+                trackTable = [];
+                const X_SPAN = 64; // metre
+                let accumDist = 0;
+                let prevX = 0;
+                let prevH = getHeightAt(0);
+
+                for (let i = 0; i <= TRACK_SAMPLES; i++) {
+                    const u = i / TRACK_SAMPLES;
+                    const x = u * X_SPAN;
+                    const h = getHeightAt(u);
+                    if (i > 0) {
+                        const dx = x - prevX;
+                        const dh = h - prevH;
+                        accumDist += Math.hypot(dx, dh);
+                    }
+                    trackTable.push({ u, x, h, dist: accumDist });
+                    prevX = x;
+                    prevH = h;
+                }
+                totalTrackLengthMeters = accumDist;
+            }
+
+            /**
+             * Belirli bir u parametresindeki yay uzunluğunu (metre) döndürür.
+             */
+            function getDistanceAtU(u) {
+                const scaled = Math.max(0, Math.min(1, u)) * TRACK_SAMPLES;
+                const idx = Math.floor(scaled);
+                const frac = scaled - idx;
+                if (idx >= TRACK_SAMPLES) return trackTable[TRACK_SAMPLES].dist;
+                return trackTable[idx].dist + frac * (trackTable[idx + 1].dist - trackTable[idx].dist);
+            }
+
+            /**
+             * Belirli bir yay uzunluğuna (metre) karşılık gelen u parametresini ikili arama ile bulur.
+             */
+            function getUAtDistance(dist) {
+                if (dist <= 0) return 0;
+                if (dist >= totalTrackLengthMeters) return 1;
+                let low = 0;
+                let high = TRACK_SAMPLES;
+                while (low <= high) {
+                    const mid = (low + high) >> 1;
+                    if (trackTable[mid].dist < dist) {
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                const idx = Math.max(0, low - 1);
+                const d0 = trackTable[idx].dist;
+                const d1 = trackTable[idx + 1].dist;
+                const frac = (d1 - d0) > 0 ? (dist - d0) / (d1 - d0) : 0;
+                return (idx + frac) / TRACK_SAMPLES;
+            }
+
+            /**
+             * Verilen mekanik enerji (Em) değerine eşit potansiyel enerjinin bulunduğu yüksekliğe
+             * karşılık gelen u parametresini (geri dönüş noktasını) hesaplar.
+             */
+            function getTurningPointU(targetEm, sideDirection) {
+                const targetH = Math.max(0, Math.min(INITIAL_HEIGHT, targetEm / (MASS * GRAVITY)));
+                // h(u) = 10 * (1 + cos(2*pi*u)) = targetH
+                // cos(2*pi*u) = (targetH / 10) - 1
+                const cosVal = Math.max(-1, Math.min(1, (targetH / 10) - 1));
+                const angle = Math.acos(cosVal); // [0, PI]
+                if (sideDirection < 0) {
+                    // Sol yamaç: u ∈ [0, 0.5]
+                    return angle / (2 * Math.PI);
+                } else {
+                    // Sağ yamaç: u ∈ [0.5, 1.0]
+                    return 1 - (angle / (2 * Math.PI));
+                }
+            }
+
+            /**
+             * Sayıları Türkçe binlik ayraçla formatlar (örn: 10.000)
+             */
+            function formatJoule(val) {
+                return Math.round(val).toLocaleString('tr-TR') + ' J';
+            }
+
+            function formatDecimal(val, unit) {
+                return val.toFixed(1).replace('.', ',') + ' ' + unit;
+            }
+
+            /**
+             * Arayüzdeki enerji çubuklarını ve metinleri günceller
+             */
+            function updateUI() {
+                // Enerji değerleri (Kesin korunum kontrolü)
+                const dispHeat = Math.round(heatEnergy);
+                const dispEm = TOTAL_ENERGY - dispHeat;
+                const dispEp = Math.min(dispEm, Math.round(potentialEnergy));
+                const dispEk = Math.max(0, dispEm - dispEp);
+
+                valEp.textContent = formatJoule(dispEp);
+                barEp.style.width = ((dispEp / TOTAL_ENERGY) * 100).toFixed(2) + '%';
+
+                valEk.textContent = formatJoule(dispEk);
+                barEk.style.width = ((dispEk / TOTAL_ENERGY) * 100).toFixed(2) + '%';
+
+                valEm.textContent = formatJoule(dispEm);
+                barEm.style.width = ((dispEm / TOTAL_ENERGY) * 100).toFixed(2) + '%';
+
+                valEheat.textContent = formatJoule(dispHeat);
+                barEheat.style.width = ((dispHeat / TOTAL_ENERGY) * 100).toFixed(2) + '%';
+
+                valEtotal.textContent = formatJoule(TOTAL_ENERGY);
+                barEtotal.style.width = '100%';
+
+                // Anlık yükseklik ve hız göstergeleri
+                readoutHeight.textContent = formatDecimal(currentHeight, 'm');
+                readoutSpeed.textContent = formatDecimal(currentSpeed, 'm/s');
+
+                // Gözlem Notunu Dinamik Güncelle
+                updateObservationNote(dispEp, dispEk, dispHeat);
+            }
+
+            function updateObservationNote(ep, ek, eheat) {
+                if (isSettled) {
+                    observationText.innerHTML = `<strong>Hareket Tamamlandı (Sürtünme Açık):</strong> Vagonun başlangıçtaki 10.000 J'lük mekanik enerjisinin tamamı sürtünme nedeniyle <strong>Isı Enerjisine</strong> dönüştü ve vagon en çukur noktada (0 m) durdu. <strong>Toplam Enerji (10.000 J)</strong> yine korundu.`;
+                    return;
+                }
+
+                if (!isRunning && trackParam === 0 && eheat === 0) {
+                    if (!isFrictionOn) {
+                        observationText.innerHTML = `<strong>Sürtünme Kapalı:</strong> Vagon 20 m yükseklikteyken tüm enerji <strong>Çekim Potansiyel Enerjisi</strong> (10.000 J) halindedir. İnişte potansiyel enerji kinetik enerjiye, çıkışta kinetik enerji potansiyel enerjiye dönüşür; <strong>Mekanik Enerji</strong> sabit kalır.`;
+                    } else {
+                        observationText.innerHTML = `<strong>Sürtünme Açık:</strong> Hareket başladığında ray ile tekerlekler arasındaki sürtünme nedeniyle <strong>Mekanik Enerjinin</strong> bir kısmı <strong>Isıya</strong> dönüşecek ve vagon karşı tepede 20 m yüksekliğe ulaşamayacaktır.`;
+                    }
+                    return;
+                }
+
+                const movingDown = (trackParam < 0.5 && direction === 1) || (trackParam > 0.5 && direction === -1);
+                if (!isFrictionOn) {
+                    if (movingDown) {
+                        observationText.innerHTML = `<strong>İniş Hareketi (Sürtünmesiz):</strong> Yükseklik azaldığı için <strong>Çekim Potansiyel Enerjisi</strong> azalıyor, sürat arttığı için <strong>Kinetik Enerji</strong> artıyor. İkisinin toplamı olan <strong>Mekanik Enerji (10.000 J)</strong> değişmiyor.`;
+                    } else {
+                        observationText.innerHTML = `<strong>Çıkış Hareketi (Sürtünmesiz):</strong> Vagon yükseldikçe <strong>Kinetik Enerji</strong> azalarak <strong>Çekim Potansiyel Enerjisine</strong> dönüşüyor. Isı kaybı olmadığı için vagon karşı tepede yine 20 m yüksekliğe çıkabilir.`;
+                    }
+                } else {
+                    if (movingDown) {
+                        observationText.innerHTML = `<strong>İniş Hareketi (Sürtünmeli):</strong> Potansiyel enerji kinetik enerjiye dönüşürken enerjinin bir kısmı sürtünmeyle <strong>Isıya</strong> (${formatJoule(eheat)}) dönüşüyor. Mekanik enerji azalıyor ama <strong>Toplam Enerji (10.000 J)</strong> sabit kalıyor.`;
+                    } else {
+                        observationText.innerHTML = `<strong>Çıkış Hareketi (Sürtünmeli):</strong> Kinetik enerji potansiyel enerjiye dönüşüyor ancak sürtünme nedeniyle <strong>Isı Enerjisi</strong> (${formatJoule(eheat)}) artmaya devam ediyor. Bu yüzden vagon önceki yüksekliğine ulaşamadan geri dönecek.`;
+                    }
+                }
+            }
+
+            /**
+             * Oynat / Duraklat Düğmesi Durumunu Günceller
+             */
+            function updatePlayPauseButton() {
+                if (isRunning) {
+                    iconPlay.classList.add('hidden');
+                    iconPause.classList.remove('hidden');
+                    textPlayPause.textContent = 'Durdur';
+                    btnPlayPause.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    btnPlayPause.classList.add('bg-amber-600', 'hover:bg-amber-700');
+
+                    statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-800';
+                    statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>Simülasyon Çalışıyor';
+                } else {
+                    iconPlay.classList.remove('hidden');
+                    iconPause.classList.add('hidden');
+                    textPlayPause.textContent = 'Başlat';
+                    btnPlayPause.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+                    btnPlayPause.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+
+                    if (isSettled) {
+                        statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-slate-200 text-slate-700';
+                        statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-500"></span>Vadide Durdu';
+                    } else if (trackParam === 0 && heatEnergy === 0) {
+                        statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-800';
+                        statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span>Hazır (Başlangıç Konumu)';
+                    } else {
+                        statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-rose-100 text-rose-800';
+                        statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span>Duraklatıldı';
+                    }
+                }
+            }
+
+            /**
+             * Simülasyonu tam başlangıç koşullarına sıfırlar (Sürtünme ayarını korur)
+             */
+            function resetSimulation() {
+                isRunning = false;
+                isSettled = false;
+                trackParam = 0.0;
+                direction = 1;
+                heatEnergy = 0;
+                currentHeight = INITIAL_HEIGHT;
+                currentSpeed = 0;
+                potentialEnergy = TOTAL_ENERGY;
+                kineticEnergy = 0;
+                mechanicalEnergy = TOTAL_ENERGY;
+                sparks = [];
+
+                updatePlayPauseButton();
+                updateUI();
+                drawScene();
+            }
+
+            /**
+             * Fizik Adımı (Korunumlu Enerji Yöntemi)
+             * Alt adımlara (sub-steps) bölünerek yüksek hızlarda bile noktasal doğruluk sağlar.
+             */
+            function stepPhysics(dt) {
+                if (!isRunning || isSettled) return;
+
+                const subSteps = 8;
+                const subDt = (dt * timeScale) / subSteps;
+
+                for (let s = 0; s < subSteps; s++) {
+                    // Mevcut mekanik enerji
+                    mechanicalEnergy = Math.max(0, TOTAL_ENERGY - heatEnergy);
+
+                    // Eğer mekanik enerji neredeyse sıfırlandıysa ve vagon vadi tabanına çok yakınsa durdur
+                    if (isFrictionOn && mechanicalEnergy <= 8 && Math.abs(trackParam - 0.5) < 0.015) {
+                        trackParam = 0.5;
+                        currentHeight = 0;
+                        currentSpeed = 0;
+                        heatEnergy = TOTAL_ENERGY;
+                        mechanicalEnergy = 0;
+                        potentialEnergy = 0;
+                        kineticEnergy = 0;
+                        isSettled = true;
+                        isRunning = false;
+                        updatePlayPauseButton();
+                        break;
+                    }
+
+                    // Mevcut yükseklik ve potansiyel enerji
+                    currentHeight = getHeightAt(trackParam);
+                    potentialEnergy = MASS * GRAVITY * currentHeight;
+
+                    // Kinetik enerjiyi mekanik enerjiden türet (Sayısal sapmayı önler)
+                    let rawEk = mechanicalEnergy - potentialEnergy;
+
+                    // Tepe noktasından ilk kalkış ivmesi (v = 0 iken harekete başlama)
+                    if (rawEk <= 0.01) {
+                        // Vagon bir yamaçta durma noktasına ulaştıysa yön değiştirir
+                        if (trackParam < 0.5 && direction === -1) {
+                            trackParam = getTurningPointU(mechanicalEnergy, -1);
+                            direction = 1;
+                        } else if (trackParam > 0.5 && direction === 1) {
+                            trackParam = getTurningPointU(mechanicalEnergy, 1);
+                            direction = -1;
+                        }
+
+                        // Küçük bir yerçekimi itkisiyle harekete başlat
+                        const slope = getHeightDerivative(trackParam);
+                        const accelDir = slope < 0 ? 1 : (slope > 0 ? -1 : direction);
+                        direction = accelDir;
+                        currentSpeed = 0.35; // m/s başlangıç hareket adımı
+                    } else {
+                        kineticEnergy = rawEk;
+                        currentSpeed = Math.sqrt((2 * kineticEnergy) / MASS);
+                    }
+
+                    // Yol alma miktarı (ds = v * dt)
+                    const ds = currentSpeed * subDt;
+                    const currentDist = getDistanceAtU(trackParam);
+                    let nextDist = currentDist + direction * ds;
+
+                    // Sürtünme açıksa alınan yol boyunca mekanik enerjinin bir kısmı ısıya dönüşür
+                    if (isFrictionOn && ds > 0) {
+                        // Eğim açısına bağlı normal kuvvet bileşeni yaklaşık cos(theta)
+                        const X_SPAN = 64;
+                        const dh_dx = getHeightDerivative(trackParam) / X_SPAN;
+                        const cosTheta = 1 / Math.sqrt(1 + dh_dx * dh_dx);
+                        const frictionForce = FRICTION_COEFF * MASS * GRAVITY * cosTheta;
+                        const dHeat = frictionForce * ds;
+                        heatEnergy = Math.min(TOTAL_ENERGY, heatEnergy + dHeat);
+                        mechanicalEnergy = Math.max(0, TOTAL_ENERGY - heatEnergy);
+                    }
+
+                    // Yeni konuma geç ve geri dönüş noktası kontrolü yap
+                    let nextU = getUAtDistance(nextDist);
+                    const nextH = getHeightAt(nextU);
+                    const nextEp = MASS * GRAVITY * nextH;
+
+                    if (nextEp >= mechanicalEnergy) {
+                        // Vagon sahip olduğu mekanik enerjinin çıkabileceği maksimum yüksekliğe ulaştı!
+                        if (direction === 1) {
+                            nextU = getTurningPointU(mechanicalEnergy, 1);
+                            direction = -1;
+                        } else {
+                            nextU = getTurningPointU(mechanicalEnergy, -1);
+                            direction = 1;
+                        }
+                        currentSpeed = 0;
+                    }
+
+                    trackParam = Math.max(0, Math.min(1, nextU));
+                    currentHeight = getHeightAt(trackParam);
+                    potentialEnergy = Math.min(mechanicalEnergy, MASS * GRAVITY * currentHeight);
+                    kineticEnergy = Math.max(0, mechanicalEnergy - potentialEnergy);
+                    currentSpeed = Math.sqrt((2 * kineticEnergy) / MASS);
+                }
+
+                // Sürtünme açıkken ve vagon hızlıyken kıvılcım üret
+                if (isRunning && isFrictionOn && currentSpeed > 2.5) {
+                    spawnSparks();
+                }
+            }
+
+            /**
+             * Tekerleklerden çıkan ısı/kıvılcım efektlerini oluşturur
+             */
+            function spawnSparks() {
+                const count = currentSpeed > 12 ? 2 : 1;
+                for (let i = 0; i < count; i++) {
+                    sparks.push({
+                        u: trackParam,
+                        offsetX: (Math.random() - 0.5) * 8,
+                        offsetY: (Math.random() - 0.5) * 4,
+                        vx: -direction * (20 + Math.random() * 40),
+                        vy: -(15 + Math.random() * 35),
+                        life: 1.0,
+                        size: 2 + Math.random() * 2.5
+                    });
+                }
+            }
+
+            function updateSparks(dt) {
+                for (let i = sparks.length - 1; i >= 0; i--) {
+                    const p = sparks[i];
+                    p.offsetX += p.vx * dt;
+                    p.offsetY += p.vy * dt;
+                    p.vy += 90 * dt; // yerçekimi
+                    p.life -= dt * 2.6;
+                    if (p.life <= 0) {
+                        sparks.splice(i, 1);
+                    }
+                }
+            }
+
+            /**
+             * Canvas Boyutlandırma (Retina / Yüksek DPI Uyumlu)
+             */
+            function resizeCanvas() {
+                const rect = canvasContainer.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                drawScene();
+            }
+
+            /**
+             * Sahne Çizim Fonksiyonu
+             */
+            function drawScene() {
+                const width = canvasContainer.clientWidth;
+                const height = canvasContainer.clientHeight;
+                if (width === 0 || height === 0) return;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Sahne Kenar Boşlukları
+                const padLeft = width < 480 ? 44 : 58;
+                const padRight = width < 480 ? 24 : 38;
+                const padTop = 34;
+                const padBottom = 38;
+
+                const plotW = width - padLeft - padRight;
+                const plotH = height - padTop - padBottom;
+
+                // Dünya koordinatlarını (u, h) ekran piksellerine dönüştüren yardımcılar
+                const toScreenX = (u) => padLeft + u * plotW;
+                const toScreenY = (h) => padTop + plotH - (h / INITIAL_HEIGHT) * plotH;
+
+                // 1. Arka Plan Yükseklik Izgarası (0 m, 5 m, 10 m, 15 m, 20 m)
+                ctx.save();
+                ctx.lineWidth = 1;
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+
+                for (let hMeter = 0; hMeter <= 20; hMeter += 5) {
+                    const y = toScreenY(hMeter);
+
+                    // Yatay kesikli çizgi
+                    ctx.beginPath();
+                    ctx.setLineDash(hMeter === 0 ? [] : [4, 4]);
+                    ctx.strokeStyle = hMeter === 0 ? '#64748b' : 'rgba(148, 163, 184, 0.45)';
+                    ctx.moveTo(padLeft - 6, y);
+                    ctx.lineTo(width - padRight + 6, y);
+                    ctx.stroke();
+
+                    // Yükseklik etiketi
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText(hMeter + ' m', padLeft - 10, y);
+                }
+                ctx.restore();
+
+                // 2. Zemin Dolgusu (Pist Altı Yeşil/Toprak Alan)
+                ctx.save();
+                const groundY = toScreenY(0);
+                const hillGrad = ctx.createLinearGradient(0, padTop, 0, groundY);
+                hillGrad.addColorStop(0, 'rgba(16, 185, 129, 0.16)');
+                hillGrad.addColorStop(1, 'rgba(5, 150, 105, 0.28)');
+
+                ctx.beginPath();
+                ctx.moveTo(toScreenX(0), groundY);
+                for (let i = 0; i <= 160; i++) {
+                    const u = i / 160;
+                    ctx.lineTo(toScreenX(u), toScreenY(getHeightAt(u)));
+                }
+                ctx.lineTo(toScreenX(1), groundY);
+                ctx.closePath();
+                ctx.fillStyle = hillGrad;
+                ctx.fill();
+
+                // Zemin Taban Şeridi
+                ctx.fillStyle = '#10b981';
+                ctx.fillRect(padLeft - 6, groundY, plotW + 12, 5);
+                ctx.restore();
+
+                // 3. Hız Treni Destek Direkleri (İskele Kolonları)
+                ctx.save();
+                ctx.strokeStyle = 'rgba(100, 116, 139, 0.38)';
+                ctx.lineWidth = 2;
+                const pillarCount = 16;
+                for (let i = 0; i <= pillarCount; i++) {
+                    const u = i / pillarCount;
+                    const hVal = getHeightAt(u);
+                    if (hVal > 0.6) {
+                        const px = toScreenX(u);
+                        const py = toScreenY(hVal);
+                        ctx.beginPath();
+                        ctx.moveTo(px, py + 2);
+                        ctx.lineTo(px, groundY);
+                        ctx.stroke();
+                    }
+                }
+                ctx.restore();
+
+                // 4. Sürtünme Açıkken Ulaşılabilecek Maksimum Yükseklik Referans Çizgisi
+                if (isFrictionOn && mechanicalEnergy < TOTAL_ENERGY && !isSettled) {
+                    const maxReachableH = mechanicalEnergy / (MASS * GRAVITY);
+                    const maxReachY = toScreenY(maxReachableH);
+                    ctx.save();
+                    ctx.setLineDash([3, 3]);
+                    ctx.strokeStyle = 'rgba(249, 115, 22, 0.65)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(padLeft, maxReachY);
+                    ctx.lineTo(width - padRight, maxReachY);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 5. Ana Ray Çizgisi
+                ctx.save();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Alt gölge ray
+                ctx.beginPath();
+                for (let i = 0; i <= 200; i++) {
+                    const u = i / 200;
+                    const x = toScreenX(u);
+                    const y = toScreenY(getHeightAt(u));
+                    if (i === 0) ctx.moveTo(x, y + 2);
+                    else ctx.lineTo(x, y + 2);
+                }
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+
+                // Üst parlak ray (Sürtünme açıksa hafif turuncu tonlu ray vurgusu)
+                ctx.beginPath();
+                for (let i = 0; i <= 200; i++) {
+                    const u = i / 200;
+                    const x = toScreenX(u);
+                    const y = toScreenY(getHeightAt(u));
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = isFrictionOn ? '#ea580c' : '#4f46e5';
+                ctx.lineWidth = 3.5;
+                ctx.stroke();
+                ctx.restore();
+
+                // 6. Hız Treni Vagonunun Konumu ve Eğim Açısı
+                const cartX = toScreenX(trackParam);
+                const cartY = toScreenY(currentHeight);
+
+                // Ekran koordinatlarında teğet açısı
+                const deltaU = 0.002;
+                const u1 = Math.max(0, trackParam - deltaU);
+                const u2 = Math.min(1, trackParam + deltaU);
+                const dxScreen = toScreenX(u2) - toScreenX(u1);
+                const dyScreen = toScreenY(getHeightAt(u2)) - toScreenY(getHeightAt(u1));
+                const angle = Math.atan2(dyScreen, dxScreen);
+
+                // 7. Kıvılcım Parçacıkları (Sürtünme Varsa)
+                if (sparks.length > 0) {
+                    ctx.save();
+                    for (const p of sparks) {
+                        const sx = toScreenX(p.u) + p.offsetX;
+                        const sy = toScreenY(getHeightAt(p.u)) + p.offsetY;
+                        ctx.globalAlpha = Math.max(0, p.life);
+                        ctx.fillStyle = p.life > 0.5 ? '#f97316' : '#ef4444';
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                }
+
+                // 8. Hız Treni Vagonu Çizimi
+                ctx.save();
+                ctx.translate(cartX, cartY);
+                ctx.rotate(angle);
+
+                // Tekerlekler
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(-11, -4, 4.5, 0, Math.PI * 2);
+                ctx.arc(11, -4, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.arc(-11, -4, 1.8, 0, Math.PI * 2);
+                ctx.arc(11, -4, 1.8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Vagon Gövdesi
+                const bodyGrad = ctx.createLinearGradient(0, -22, 0, -6);
+                bodyGrad.addColorStop(0, '#ef4444');
+                bodyGrad.addColorStop(1, '#b91c1c');
+
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.roundRect(-18, -21, 36, 14, [6, 6, 3, 3]);
+                ctx.fill();
+
+                // Vagon Sarı Şerit Detayı
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(-16, -13, 32, 2.5);
+
+                // Yolcu Silüeti (Sevimli kasklı öğrenci figürü)
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.arc(0, -25, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#854d0e';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                ctx.restore();
+
+                // 9. Vagon Üzeri Yüzen Bilgi Etiketi (Yükseklik ve Hız)
+                ctx.save();
+                const labelText = `h: ${currentHeight.toFixed(1).replace('.', ',')} m | v: ${currentSpeed.toFixed(1).replace('.', ',')} m/s`;
+                ctx.font = '700 11px Inter, sans-serif';
+                const textMetrics = ctx.measureText(labelText);
+                const boxW = textMetrics.width + 14;
+                const boxH = 22;
+
+                // Etiketin sahne dışına taşmasını engelle
+                let labelX = cartX - boxW / 2;
+                labelX = Math.max(padLeft, Math.min(width - padRight - boxW, labelX));
+                let labelY = cartY - 52;
+                if (labelY < 6) labelY = cartY + 14;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                ctx.beginPath();
+                ctx.roundRect(labelX, labelY, boxW, boxH, 6);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(labelText, labelX + boxW / 2, labelY + boxH / 2 + 0.5);
+                ctx.restore();
+            }
+
+            /**
+             * Ana Animasyon Döngüsü
+             */
+            let lastTimestamp = null;
+            function animateLoop(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const rawDt = (timestamp - lastTimestamp) / 1000;
+                lastTimestamp = timestamp;
+
+                // Sekme değişimlerinde büyük zaman sıçramalarını sınırla
+                const dt = Math.min(rawDt, 0.05);
+
+                if (isRunning) {
+                    stepPhysics(dt);
+                    updateUI();
+                }
+                if (sparks.length > 0) {
+                    updateSparks(dt);
+                }
+
+                drawScene();
+                requestAnimationFrame(animateLoop);
+            }
+
+            // Olay Dinleyicileri (Event Listeners)
+            btnPlayPause.addEventListener('click', () => {
+                if (isSettled) {
+                    // Durmuşsa baştan başlat
+                    resetSimulation();
+                }
+                isRunning = !isRunning;
+                updatePlayPauseButton();
+                updateUI();
+            });
+
+            btnReset.addEventListener('click', () => {
+                resetSimulation();
+            });
+
+            frictionToggle.addEventListener('change', (e) => {
+                isFrictionOn = e.target.checked;
+                if (isFrictionOn) {
+                    frictionTrack.classList.remove('bg-slate-300');
+                    frictionTrack.classList.add('bg-orange-500');
+                    frictionDot.style.transform = 'translateX(20px)';
+                    frictionLabel.textContent = 'AÇIK';
+                    frictionLabel.className = 'text-xs font-extrabold px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 min-w-[54px] text-center';
+                } else {
+                    frictionTrack.classList.remove('bg-orange-500');
+                    frictionTrack.classList.add('bg-slate-300');
+                    frictionDot.style.transform = 'translateX(0px)';
+                    frictionLabel.textContent = 'KAPALI';
+                    frictionLabel.className = 'text-xs font-extrabold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 min-w-[54px] text-center';
+                }
+                updateUI();
+                drawScene();
+            });
+
+            btnSpeedNormal.addEventListener('click', () => {
+                timeScale = 1.0;
+                btnSpeedNormal.className = 'px-2.5 py-1.5 rounded-lg bg-white text-indigo-700 shadow-2xs transition cursor-pointer';
+                btnSpeedSlow.className = 'px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer';
+            });
+
+            btnSpeedSlow.addEventListener('click', () => {
+                timeScale = 0.38;
+                btnSpeedSlow.className = 'px-2.5 py-1.5 rounded-lg bg-white text-indigo-700 shadow-2xs transition cursor-pointer';
+                btnSpeedNormal.className = 'px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer';
+            });
+
+            window.addEventListener('resize', resizeCanvas);
+
+            // Başlatma
+            window.onload = function () {
+                buildTrackTable();
+                resizeCanvas();
+                updateUI();
+                requestAnimationFrame(animateLoop);
+            };
+        })();
+    </script>
+</body>
+</html>
