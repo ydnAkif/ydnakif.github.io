@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Korsan Gemisi · Enerji Dönüşümleri</title>
+<style>
+  :root {
+    --bg: #f3f6fb;
+    --card: #ffffff;
+    --text: #1d2433;
+    --muted: #5b6475;
+    --line: #dfe4ee;
+    --ke: #e4572e;
+    --pe: #2f6fdf;
+    --me: #7b4fd6;
+    --heat: #f29e1f;
+    --tot: #1f9d55;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(90deg, #2b1b4d, #5a2a6e);
+    color: #fff;
+    padding: 14px 20px;
+  }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; font-size: 14px; opacity: .85; }
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  canvas { width: 100%; display: block; border-radius: 10px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  button {
+    font: inherit; font-weight: 600; font-size: 15px;
+    padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer;
+  }
+  #btnStart { background: #1f9d55; color: #fff; min-width: 120px; }
+  #btnStart.running { background: #c0392b; }
+  #btnReset { background: #e9edf5; color: var(--text); }
+  .toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff4e0; border: 1px solid #f5cf8e; border-radius: 8px; padding: 7px 12px;
+    font-weight: 600; cursor: pointer; user-select: none;
+  }
+  .toggle input { width: 18px; height: 18px; }
+  .small { font-size: 13px; color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 10px; }
+  .row label { font-size: 14px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .stat { background: #f1f4fa; border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+  .stat b { font-variant-numeric: tabular-nums; }
+  .bar { margin-bottom: 10px; }
+  .bar .top { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
+  .bar .top b { font-variant-numeric: tabular-nums; }
+  .track { background: #eceff5; border-radius: 6px; height: 20px; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 6px; transition: width .05s linear; }
+  .sep { border-top: 1px dashed var(--line); margin: 10px 0; }
+  .equation {
+    background: #effaf3; border: 1px solid #bfe7cf; border-radius: 8px;
+    padding: 8px 10px; font-size: 14px; font-variant-numeric: tabular-nums;
+  }
+  #explain {
+    font-size: 16px; line-height: 1.5; min-height: 72px;
+    background: #f5f0ff; border-left: 5px solid var(--me); border-radius: 8px; padding: 10px 12px;
+  }
+  #explain .heatnote { display: block; margin-top: 6px; color: #a8620a; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: right; }
+  th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+  ul.notes { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.5; }
+  .peaks { font-size: 14px; margin-top: 8px; line-height: 1.6; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; margin-top: 6px; }
+  .legend span::before {
+    content: ""; display: inline-block; width: 12px; height: 4px; margin-right: 5px;
+    vertical-align: middle; background: currentColor; border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏴‍☠️ Lunaparkta Korsan Gemisi · Enerji Dönüşümleri</h1>
+  <p>7. Sınıf Fen Bilimleri · Kuvvet ve Enerjiyi Keşfedelim · Motorsuz sallanan gemide kinetik enerji, çekim potansiyel enerjisi ve ısı</p>
+  <p>Hazırlayan: <b>Serhat Said Taştaban</b> · 7-C · Ali Yalkın Ortaokulu</p>
+</header>
+
+<div class="wrap">
+  <!-- SOL SÜTUN -->
+  <div>
+    <div class="card">
+      <canvas id="scene" width="760" height="420"></canvas>
+      <div class="controls">
+        <button id="btnStart">▶ Başlat</button>
+        <button id="btnReset">↺ Sıfırla</button>
+        <label class="toggle"><input type="checkbox" id="friction"> 🔥 Sürtünme: <span id="frictionText">KAPALI</span></label>
+      </div>
+      <div class="row">
+        <label>Başlangıç açısı: <b id="angleText">60°</b>
+          <input type="range" id="angle" min="20" max="80" step="5" value="60">
+        </label>
+        <label><input type="checkbox" id="autoStop" checked> 10. saniyede otomatik dur</label>
+        <label><input type="checkbox" id="slow"> 🐢 Ağır çekim</label>
+      </div>
+      <p class="small">Kısayollar: <b>Boşluk</b> = Başlat/Durdur · <b>R</b> = Sıfırla · <b>F</b> = Sürtünme. Sıfırla düğmesi gemiyi aynı başlangıç açısına ve sıfır hıza geri getirir; böylece iki deneme aynı koşullarla başlar.</p>
+      <div class="stats">
+        <div class="stat">⏱ Süre: <b id="sT">0,0 s</b></div>
+        <div class="stat">🏎 Hız: <b id="sV">0,0 m/s</b></div>
+        <div class="stat">📏 Yükseklik: <b id="sH">0,00 m</b></div>
+        <div class="stat">📐 Açı: <b id="sA">0°</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💬 Şu anda ne oluyor?</h2>
+      <div id="explain">Gemi 60° açıda tutuluyor. Hızı sıfır, bu yüzden bütün enerjisi çekim potansiyel enerjisi. <b>Başlat</b>'a bas!</div>
+      <div class="peaks" id="peaks"></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Enerji – Zaman Grafiği</h2>
+      <canvas id="graph" width="760" height="200"></canvas>
+      <div class="legend">
+        <span style="color:var(--ke)">Kinetik</span>
+        <span style="color:var(--pe)">Çekim potansiyel</span>
+        <span style="color:var(--me)">Mekanik</span>
+        <span style="color:var(--heat)">Isı</span>
+        <span style="color:var(--tot)">Toplam</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAĞ SÜTUN -->
+  <div>
+    <div class="card">
+      <h2>📊 Enerji Göstergeleri (joule, J)</h2>
+      <div class="bar"><div class="top"><span>Kinetik enerji</span><b id="vKE">0 J</b></div><div class="track"><div class="fill" id="fKE" style="background:var(--ke)"></div></div></div>
+      <div class="bar"><div class="top"><span>Çekim potansiyel enerjisi</span><b id="vPE">0 J</b></div><div class="track"><div class="fill" id="fPE" style="background:var(--pe)"></div></div></div>
+      <div class="sep"></div>
+      <div class="bar"><div class="top"><span>Mekanik enerji (kinetik + potansiyel)</span><b id="vME">0 J</b></div><div class="track"><div class="fill" id="fME" style="background:var(--me)"></div></div></div>
+      <div class="bar"><div class="top"><span>🔥 Isıya dönüşen enerji</span><b id="vQ">0 J</b></div><div class="track"><div class="fill" id="fQ" style="background:var(--heat)"></div></div></div>
+      <div class="sep"></div>
+      <div class="bar"><div class="top"><span><b>Toplam enerji</b> (mekanik + ısı)</span><b id="vTOT">0 J</b></div><div class="track"><div class="fill" id="fTOT" style="background:var(--tot)"></div></div></div>
+      <div class="equation" id="equation"></div>
+      <p class="small">Bu senaryoda yay ya da lastik olmadığı için esneklik potansiyel enerjisi yoktur.</p>
+    </div>
+
+    <div class="card">
+      <h2>🧪 Deneme Sonuçları</h2>
+      <p class="small">"10. saniyede otomatik dur" açıkken her deneme 10. saniyede durur ve sonuç buraya eklenir. Önce sürtünme <b>kapalıyken</b>, sonra Sıfırla'ya basıp sürtünme <b>açıkken</b> dene.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>#</th><th>Sürtünme</th><th>Süre</th><th>Kinetik</th><th>Potansiyel</th><th>Mekanik</th><th>Isı</th><th>Toplam</th><th>Son çıkış</th></tr></thead>
+          <tbody id="results"><tr><td colspan="9" style="text-align:center" class="small">Henüz deneme yok.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row">
+        <button id="btnRecord" style="background:#e9edf5">📌 Şu anki değerleri ekle</button>
+        <button id="btnClear" style="background:#e9edf5">🗑 Tabloyu temizle</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📝 Model Notları</h2>
+      <ul class="notes">
+        <li>Gemi ve yolcuların toplam kütlesi <b>m = 1000 kg</b>, gemi kolunun uzunluğu <b>L = 8 m</b>.</li>
+        <li><b>g = 10 N/kg</b> alındı. Yükseklik, geminin en alt noktasından ölçülür (orada çekim potansiyel enerjisi 0 J).</li>
+        <li>Kinetik enerji = ½ · m · v², Çekim potansiyel enerjisi = m · g · h.</li>
+        <li>Motor kapalıdır: dışarıdan enerji verilmez.</li>
+        <li>Sürtünme açıkken gemi milindeki sürtünme ve hava sürtünmesi mekanik enerjinin bir kısmını <b>ısıya</b> dönüştürür.</li>
+        <li>Sürtünmeyi sonradan kapatmak, o ana kadar biriken ısıyı silmez; ısıya dönüşen enerji geri gelmez.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Sabitler ----------
+  const m = 1000;      // kg
+  const L = 8;         // m
+  const g = 10;        // N/kg
+  const DAMP = 0.12;   // sürtünme katsayısı (1/s)
+  const SUB = 1 / 1000; // fizik alt adımı (s)
+
+  // ---------- Durum ----------
+  let theta0 = 60 * Math.PI / 180;
+  let theta, omega, t, Q, E0, running = false;
+  let peaks = [], lastOmegaSign = 0, lastPhase = "", history = [], lastSample = -1;
+  let trialNo = 0;
+
+  const $ = id => document.getElementById(id);
+  const fmt = (x, d = 0) => x.toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const J = x => fmt(Math.max(0, Math.round(x))) + " J";
+
+  const height = th => L * (1 - Math.cos(th));
+  const PE = th => m * g * height(th);
+  const KE = w => 0.5 * m * (L * w) * (L * w);
+
+  function reset() {
+    running = false;
+    theta = -theta0; // gemi sol tarafta yukarıda
+    omega = 0;
+    t = 0;
+    Q = 0;
+    E0 = PE(theta);
+    peaks = [{ h: height(theta), side: "sol" }];
+    lastOmegaSign = 0;
+    lastPhase = "";
+    history = [];
+    lastSample = -1;
+    sample();
+    updateButton();
+    setExplainStart();
+    render();
+  }
+
+  // Küçük sayısal hataları düzelt: kinetik + potansiyel + ısı = E0
+  // (Dönüş noktalarına yakınken dokunulmaz, böylece gemi tepede takılmaz.)
+  function enforceEnergy() {
+    const keNeeded = E0 - Q - PE(theta);
+    if (keNeeded > 0.05 * E0 && omega !== 0) {
+      omega = Math.sign(omega) * Math.sqrt(2 * keNeeded / (m * L * L));
+    }
+  }
+
+  // RK4 ile bir alt adım
+  function rk4(h, c) {
+    const acc = (th, w) => -(g / L) * Math.sin(th) - c * w;
+    const k1t = omega, k1w = acc(theta, omega);
+    const k2t = omega + k1w * h / 2, k2w = acc(theta + k1t * h / 2, omega + k1w * h / 2);
+    const k3t = omega + k2w * h / 2, k3w = acc(theta + k2t * h / 2, omega + k2w * h / 2);
+    const k4t = omega + k3w * h, k4w = acc(theta + k3t * h, omega + k3w * h);
+    theta += h / 6 * (k1t + 2 * k2t + 2 * k3t + k4t);
+    omega += h / 6 * (k1w + 2 * k2w + 2 * k3w + k4w);
+  }
+
+  function step(dt) {
+    const friction = $("friction").checked;
+    let remaining = dt;
+    while (remaining > 1e-9) {
+      const h = Math.min(SUB, remaining);
+      remaining -= h;
+      rk4(h, friction ? DAMP : 0);
+      t += h;
+
+      const mech = KE(omega) + PE(theta);
+      if (friction && mech < E0 - Q) {
+        Q = E0 - mech; // kaybolan mekanik enerji ısıya dönüştü
+      } else {
+        enforceEnergy(); // sürtünme yokken mekanik enerji sabit kalır
+      }
+
+      // Tepe noktası (yön değişimi) yakala
+      const sgn = Math.sign(omega);
+      if (lastOmegaSign !== 0 && sgn !== 0 && sgn !== lastOmegaSign) {
+        peaks.push({ h: height(theta), side: theta < 0 ? "sol" : "sağ" });
+        if (peaks.length > 40) peaks.shift();
+      }
+      if (sgn !== 0) lastOmegaSign = sgn;
+
+      if ($("autoStop").checked && t >= 10 - 1e-9) {
+        t = 10;
+        running = false;
+        updateButton();
+        addResult();
+        $("explain").innerHTML = "⏸ 10. saniyede durdu. Sonuçlar <b>Deneme Sonuçları</b> tablosuna eklendi. Göstergeleri inceleyebilirsin.";
+        lastPhase = "stopped";
+        break;
+      }
+    }
+  }
+
+  // ---------- Açıklamalar ----------
+  function setExplainStart() {
+    const deg = Math.round(theta0 * 180 / Math.PI);
+    $("explain").innerHTML = `Gemi ${deg}° açıda, ${fmt(height(theta0), 2)} m yükseklikte tutuluyor. Hızı sıfır, bu yüzden bütün enerjisi <b>çekim potansiyel enerjisi</b> (${J(E0)}). <b>Başlat</b>'a bas!`;
+  }
+
+  function updateExplain() {
+    if (!running) return;
+    const friction = $("friction").checked;
+    const mech = KE(omega) + PE(theta);
+    const deg = Math.abs(theta * 180 / Math.PI);
+    let phase, text;
+    if (mech < E0 * 0.002) {
+      phase = "stop";
+      text = "⚓ Gemi neredeyse durdu. Başlangıçtaki mekanik enerjinin neredeyse tamamı sürtünme yüzünden <b>ısıya</b> dönüştü. Toplam enerji yine aynı!";
+    } else if (Math.abs(omega) < 0.03) {
+      phase = "top";
+      text = "⬆ Gemi <b>en yüksek noktada</b>. Bir an için duruyor: kinetik enerji sıfıra yakın, <b>çekim potansiyel enerjisi en büyük</b>.";
+    } else if (deg < 4) {
+      phase = "bottom";
+      text = "⬇ Gemi <b>en alt noktada</b>. Burada en hızlı: <b>kinetik enerji en büyük</b>, çekim potansiyel enerjisi en küçük.";
+    } else if (theta * omega < 0) {
+      phase = "down";
+      text = "↘ Gemi aşağı iniyor ve hızlanıyor: <b>çekim potansiyel enerjisi azalıyor, kinetik enerji artıyor</b>.";
+    } else {
+      phase = "up";
+      text = "↗ Gemi yükseliyor ve yavaşlıyor: <b>kinetik enerji azalıyor, çekim potansiyel enerjisi artıyor</b>.";
+    }
+    const key = phase + (friction ? "F" : "");
+    if (key === lastPhase) return;
+    lastPhase = key;
+    if (phase !== "stop") {
+      text += friction
+        ? `<span class="heatnote">🔥 Sürtünme açık: mekanik enerjinin bir kısmı ısıya dönüşüyor. Bu yüzden gemi her salınımda biraz daha az yükseliyor.</span>`
+        : `<span class="heatnote" style="color:#1f7a45">✅ Sürtünme kapalı: kinetik + potansiyel enerji toplamı hep ${J(E0 - Q)}.</span>`;
+    }
+    $("explain").innerHTML = text;
+  }
+
+  // ---------- Sonuç tablosu ----------
+  function addResult() {
+    trialNo++;
+    const tb = $("results");
+    if (tb.querySelector("td[colspan]")) tb.innerHTML = "";
+    const ke = KE(omega), pe = PE(theta), lastPeak = peaks[peaks.length - 1].h;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${trialNo}</td><td>${$("friction").checked ? "🔥 Açık" : "Kapalı"}</td><td>${fmt(t, 1)} s</td>` +
+      `<td>${J(ke)}</td><td>${J(pe)}</td><td>${J(ke + pe)}</td><td>${J(Q)}</td><td><b>${J(ke + pe + Q)}</b></td><td>${fmt(lastPeak, 2)} m</td>`;
+    tb.appendChild(tr);
+  }
+
+  // ---------- Çizim ----------
+  const sc = $("scene"), ctx = sc.getContext("2d");
+  const W = 760, H = 420;
+  const DPR = Math.min(2, window.devicePixelRatio || 1);
+  sc.width = W * DPR; sc.height = H * DPR;
+  const PIV = { x: W / 2, y: 62 };
+  const PPM = 30; // piksel / metre
+  const LP = L * PPM;
+  const groundY = PIV.y + LP + 75;
+
+  // ---- Sabit arka plan (bir kez çizilir) ----
+  const bg = document.createElement("canvas");
+  bg.width = W * DPR; bg.height = H * DPR;
+  (function drawBackground() {
+    const b = bg.getContext("2d");
+    b.scale(DPR, DPR);
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+    // gece gökyüzü
+    const sky = b.createLinearGradient(0, 0, 0, groundY);
+    sky.addColorStop(0, "#060a22");
+    sky.addColorStop(0.5, "#191849");
+    sky.addColorStop(0.82, "#43285c");
+    sky.addColorStop(1, "#a9536a");
+    b.fillStyle = sky; b.fillRect(0, 0, W, groundY);
+
+    // yıldızlar
+    for (let i = 0; i < 110; i++) {
+      b.fillStyle = `rgba(255,255,255,${0.25 + rnd() * 0.65})`;
+      b.beginPath(); b.arc(rnd() * W, rnd() * groundY * 0.65, rnd() * 1.1 + 0.3, 0, 7); b.fill();
+    }
+
+    // ay
+    const mx = 125, my = 72;
+    const halo = b.createRadialGradient(mx, my, 12, mx, my, 80);
+    halo.addColorStop(0, "rgba(255,240,205,.40)"); halo.addColorStop(1, "rgba(255,240,205,0)");
+    b.fillStyle = halo; b.fillRect(mx - 80, my - 80, 160, 160);
+    b.fillStyle = "#fff2d2"; b.beginPath(); b.arc(mx, my, 21, 0, 7); b.fill();
+    b.fillStyle = "rgba(190,175,140,.45)";
+    b.beginPath(); b.arc(mx - 7, my - 5, 4.5, 0, 7); b.fill();
+    b.beginPath(); b.arc(mx + 7, my + 7, 3, 0, 7); b.fill();
+    b.beginPath(); b.arc(mx + 5, my - 9, 2, 0, 7); b.fill();
+
+    // ufuktaki şehir ışıltısı ve ağaç / bina siluetleri
+    const glow = b.createLinearGradient(0, groundY - 60, 0, groundY);
+    glow.addColorStop(0, "rgba(255,150,120,0)"); glow.addColorStop(1, "rgba(255,150,120,.25)");
+    b.fillStyle = glow; b.fillRect(0, groundY - 60, W, 60);
+    b.fillStyle = "#140f2c";
+    let x = 0;
+    while (x < W) {
+      const w = 14 + rnd() * 30, h = 14 + rnd() * 34;
+      if (rnd() < 0.5) { b.beginPath(); b.ellipse(x + w / 2, groundY - h / 2, w / 2 + 4, h / 2 + 4, 0, 0, 7); b.fill(); }
+      else b.fillRect(x, groundY - h, w, h);
+      x += w * 0.8;
+    }
+    b.fillStyle = "rgba(255,214,120,.7)";
+    for (let i = 0; i < 40; i++) b.fillRect(rnd() * W, groundY - 6 - rnd() * 30, 1.5, 1.5);
+
+    // dönme dolap (arka planda)
+    const fx = 668, fy = 248, fr = 92;
+    b.strokeStyle = "#2d2160"; b.lineWidth = 4;
+    b.beginPath(); b.moveTo(fx, fy); b.lineTo(fx - 50, groundY); b.moveTo(fx, fy); b.lineTo(fx + 50, groundY); b.stroke();
+    b.lineWidth = 3; b.beginPath(); b.arc(fx, fy, fr, 0, 7); b.stroke();
+    b.lineWidth = 1.2; b.beginPath(); b.arc(fx, fy, fr - 10, 0, 7); b.stroke();
+    for (let i = 0; i < 16; i++) {
+      const a = i * Math.PI / 8;
+      b.beginPath(); b.moveTo(fx, fy); b.lineTo(fx + Math.cos(a) * fr, fy + Math.sin(a) * fr); b.stroke();
+    }
+    const bulbs = ["#ff5d8f", "#ffd166", "#4cc9f0", "#80ffdb"];
+    b.save(); b.shadowBlur = 6;
+    for (let i = 0; i < 32; i++) {
+      const a = i * Math.PI / 16, c = bulbs[i % 4];
+      b.shadowColor = c; b.fillStyle = c;
+      b.beginPath(); b.arc(fx + Math.cos(a) * fr, fy + Math.sin(a) * fr, 1.8, 0, 7); b.fill();
+    }
+    b.restore();
+    b.fillStyle = "#2d2160";
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4 + 0.2;
+      b.fillRect(fx + Math.cos(a) * fr - 6, fy + Math.sin(a) * fr + 2, 12, 10);
+    }
+    b.fillStyle = "#3a2b78"; b.beginPath(); b.arc(fx, fy, 7, 0, 7); b.fill();
+
+    // sirk çadırı (arka planda)
+    const tx = 205, tw = 100, th = 70, tb = groundY;
+    b.fillStyle = "#3b1e3f";
+    b.beginPath(); b.moveTo(tx - tw / 2, tb); b.lineTo(tx - tw / 2, tb - 30); b.lineTo(tx, tb - th); b.lineTo(tx + tw / 2, tb - 30); b.lineTo(tx + tw / 2, tb); b.closePath(); b.fill();
+    b.fillStyle = "#5a2a4e";
+    for (let i = 0; i < 5; i += 2) {
+      const x1 = tx - tw / 2 + i * tw / 5, x2 = x1 + tw / 5;
+      b.beginPath(); b.moveTo(tx, tb - th); b.lineTo(x1, tb - 30); b.lineTo(x1, tb); b.lineTo(x2, tb); b.lineTo(x2, tb - 30); b.closePath(); b.fill();
+    }
+    b.strokeStyle = "#3b1e3f"; b.lineWidth = 1.5;
+    b.beginPath(); b.moveTo(tx, tb - th); b.lineTo(tx, tb - th - 14); b.stroke();
+    b.fillStyle = "#a33b5a"; b.beginPath(); b.moveTo(tx, tb - th - 14); b.lineTo(tx + 12, tb - th - 10); b.lineTo(tx, tb - th - 6); b.fill();
+
+    // zemin (meydan)
+    const gr = b.createLinearGradient(0, groundY, 0, H);
+    gr.addColorStop(0, "#2a2735"); gr.addColorStop(1, "#15131d");
+    b.fillStyle = gr; b.fillRect(0, groundY, W, H - groundY);
+
+    // binek platformu ve sarı-siyah güvenlik şeridi
+    b.fillStyle = "#4b4d59";
+    b.fillRect(PIV.x - 205, groundY - 2, 410, 16);
+    b.save();
+    b.beginPath(); b.rect(PIV.x - 205, groundY - 2, 410, 5); b.clip();
+    b.fillStyle = "#f2c230"; b.fillRect(PIV.x - 205, groundY - 2, 410, 5);
+    b.fillStyle = "#1b1b1b";
+    for (let s = PIV.x - 215; s < PIV.x + 215; s += 12) {
+      b.beginPath(); b.moveTo(s, groundY + 3); b.lineTo(s + 6, groundY - 2); b.lineTo(s + 12, groundY - 2); b.lineTo(s + 6, groundY + 3); b.fill();
+    }
+    b.restore();
+
+    // yer ışıkları
+    b.save(); b.shadowBlur = 8;
+    for (let i = 0; i < 20; i++) {
+      const c = bulbs[i % 4];
+      b.shadowColor = c; b.fillStyle = c;
+      b.beginPath(); b.arc(12 + i * 39, groundY + 22, 2.4, 0, 7); b.fill();
+    }
+    b.restore();
+
+    // ön korkuluk
+    b.strokeStyle = "rgba(170,180,200,.55)"; b.lineWidth = 2;
+    b.beginPath(); b.moveTo(0, groundY + 30); b.lineTo(W, groundY + 30); b.moveTo(0, groundY + 38); b.lineTo(W, groundY + 38); b.stroke();
+    b.lineWidth = 1.5;
+    for (let p = 6; p < W; p += 26) { b.beginPath(); b.moveTo(p, groundY + 27); b.lineTo(p, H); b.stroke(); }
+
+    // yükseklik cetveli
+    b.fillStyle = "rgba(0,0,0,.35)";
+    b.fillRect(20, PIV.y + LP - 8 * PPM - 8, 44, 8 * PPM + 16);
+    b.strokeStyle = "rgba(255,255,255,.85)";
+    b.fillStyle = "rgba(255,255,255,.9)";
+    b.font = "11px Segoe UI, sans-serif";
+    b.lineWidth = 1;
+    b.beginPath(); b.moveTo(30, PIV.y + LP); b.lineTo(30, PIV.y + LP - 8 * PPM); b.stroke();
+    for (let i = 0; i <= 8; i++) {
+      const y = PIV.y + LP - i * PPM;
+      b.beginPath(); b.moveTo(26, y); b.lineTo(34, y); b.stroke();
+      b.fillText(i + " m", 38, y + 4);
+    }
+  })();
+
+  function drawScene() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.drawImage(bg, 0, 0, W, H);
+
+    // geminin yerdeki gölgesi
+    const shipX = PIV.x + LP * Math.sin(theta);
+    const hNow = height(theta);
+    ctx.fillStyle = `rgba(0,0,0,${Math.max(0.12, 0.5 - hNow * 0.06)})`;
+    ctx.beginPath(); ctx.ellipse(shipX, groundY + 7, Math.max(50, 115 - hNow * 8), 6, 0, 0, 7); ctx.fill();
+
+    // yükseklik çizgileri
+    const yStart = PIV.y + LP * Math.cos(theta0);
+    dashLine(yStart, "#ffd166", "Başlangıç yüksekliği " + fmt(height(theta0), 2) + " m");
+    if (peaks.length > 1) {
+      const p = peaks[peaks.length - 1].h;
+      const yP = PIV.y + LP - p * PPM;
+      if (Math.abs(yP - yStart) > 3) dashLine(yP, "#ff8c42", "Son çıkış " + fmt(p, 2) + " m");
+    }
+    // en alt seviye
+    dashLine(PIV.y + LP, "rgba(255,255,255,.5)", "h = 0 m (en alt nokta)");
+
+    // arka taşıyıcı kule (daha koyu, uzakta)
+    drawFrame(140, groundY - 2, "#7a2228", "#4d1419", true);
+
+    // gemi (mil etrafında döner)
+    ctx.save();
+    ctx.translate(PIV.x, PIV.y);
+    ctx.rotate(-theta);
+    ctx.translate(0, LP);
+    drawShip(Math.abs(omega * L));
+    ctx.restore();
+
+    // ön taşıyıcı kule
+    drawFrame(165, groundY + 10, "#d0412f", "#8e2a20", false);
+
+    // mil göbeği
+    const hub = ctx.createRadialGradient(PIV.x - 4, PIV.y - 4, 2, PIV.x, PIV.y, 16);
+    hub.addColorStop(0, "#f1f3f5"); hub.addColorStop(1, "#495057");
+    ctx.fillStyle = hub;
+    ctx.beginPath(); ctx.arc(PIV.x, PIV.y, 15, 0, 7); ctx.fill();
+    ctx.fillStyle = "#343a40";
+    for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3 - theta;
+      ctx.beginPath(); ctx.arc(PIV.x + Math.cos(a) * 10, PIV.y + Math.sin(a) * 10, 1.8, 0, 7); ctx.fill();
+    }
+    // kule tepesindeki uyarı ışığı
+    ctx.save();
+    ctx.shadowColor = "#ff4d4d"; ctx.shadowBlur = 12;
+    ctx.fillStyle = (Math.floor(performance.now() / 600) % 2) ? "#ff4d4d" : "#7a1f1f";
+    ctx.beginPath(); ctx.arc(PIV.x, PIV.y - 22, 4, 0, 7); ctx.fill();
+    ctx.restore();
+
+    // ısı kıvılcımları (sürtünme açıkken milde)
+    if ($("friction").checked && running && Math.abs(omega) > 0.05) {
+      for (let i = 0; i < 6; i++) {
+        const a = Math.random() * Math.PI * 2, r = 12 + Math.random() * 10 * Math.min(1, Math.abs(omega) * 2);
+        ctx.fillStyle = Math.random() < .5 ? "#ffb703" : "#fb8500";
+        ctx.beginPath(); ctx.arc(PIV.x + Math.cos(a) * r, PIV.y + Math.sin(a) * r, 2, 0, 7); ctx.fill();
+      }
+    }
+
+    // hız oku
+    if (Math.abs(omega) > 0.02) {
+      const cx = PIV.x + LP * Math.sin(theta), cy = PIV.y + LP * Math.cos(theta);
+      const dirx = Math.cos(theta) * Math.sign(omega), diry = -Math.sin(theta) * Math.sign(omega);
+      const len = Math.min(110, Math.abs(omega) * L * 9);
+      arrow(cx, cy + 62, cx + dirx * len, cy + 62 + diry * len, "#06d6a0");
+    }
+  }
+
+  // Kafes (truss) çelik kiriş
+  function drawTruss(x1, y1, x2, y2, w, col, dark) {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+    const nx = -dy / len * w / 2, ny = dx / len * w / 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = dark; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    const n = Math.max(2, Math.floor(len / 14));
+    for (let i = 0; i < n; i++) {
+      const a = i / n, c = (i + 1) / n, s = i % 2 ? 1 : -1;
+      ctx.moveTo(x1 + dx * a + nx * s, y1 + dy * a + ny * s);
+      ctx.lineTo(x1 + dx * c - nx * s, y1 + dy * c - ny * s);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = col; ctx.lineWidth = 3.4;
+    ctx.beginPath();
+    ctx.moveTo(x1 + nx, y1 + ny); ctx.lineTo(x2 + nx, y2 + ny);
+    ctx.moveTo(x1 - nx, y1 - ny); ctx.lineTo(x2 - nx, y2 - ny);
+    ctx.stroke();
+  }
+
+  // A biçimli taşıyıcı kule
+  function drawFrame(spread, footY, col, dark, back) {
+    ctx.save();
+    if (back) ctx.globalAlpha = 0.85;
+    drawTruss(PIV.x, PIV.y, PIV.x - spread, footY, back ? 12 : 15, col, dark);
+    drawTruss(PIV.x, PIV.y, PIV.x + spread, footY, back ? 12 : 15, col, dark);
+    if (back) {
+      const k = 0.6, my = PIV.y + (footY - PIV.y) * k;
+      drawTruss(PIV.x - spread * k, my, PIV.x + spread * k, my, 9, col, dark);
+    }
+    ctx.fillStyle = "#6c707c";
+    ctx.fillRect(PIV.x - spread - 16, footY - 4, 32, 9);
+    ctx.fillRect(PIV.x + spread - 16, footY - 4, 32, 9);
+    ctx.restore();
+  }
+
+  // Güverte çizgisi: ortası düz, uçları yukarı kalkık
+  function deckY(x) {
+    const a = Math.abs(x);
+    return a < 70 ? 0 : -Math.pow((a - 70) / 52, 2) * 52;
+  }
+  function hullPath() {
+    ctx.beginPath();
+    ctx.moveTo(-122, deckY(-122));
+    for (let x = -118; x <= 122; x += 4) ctx.lineTo(x, deckY(x));
+    ctx.quadraticCurveTo(118, 22, 72, 48);
+    ctx.lineTo(-72, 48);
+    ctx.quadraticCurveTo(-118, 22, -122, deckY(-122));
+    ctx.closePath();
+  }
+
+  function drawShip(speed) {
+    // direk, seren ve yelken
+    ctx.strokeStyle = "#4a2c12"; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -122); ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-44, -102); ctx.lineTo(44, -102); ctx.moveTo(-34, -52); ctx.lineTo(34, -52); ctx.stroke();
+    const sail = ctx.createLinearGradient(-42, 0, 42, 0);
+    sail.addColorStop(0, "#cfc4a4"); sail.addColorStop(0.5, "#f6f0de"); sail.addColorStop(1, "#c8bc9b");
+    ctx.fillStyle = sail;
+    ctx.beginPath();
+    ctx.moveTo(-41, -100); ctx.lineTo(41, -100);
+    ctx.quadraticCurveTo(50, -77, 32, -54); ctx.lineTo(-32, -54);
+    ctx.quadraticCurveTo(-50, -77, -41, -100);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90,60,30,.45)"; ctx.lineWidth = 1; ctx.stroke();
+    // yelkendeki kafatası
+    ctx.fillStyle = "#2b2b2b";
+    ctx.beginPath(); ctx.arc(0, -82, 7.5, 0, 7); ctx.fill();
+    ctx.fillRect(-4.5, -77, 9, 6);
+    ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.moveTo(-12, -69); ctx.lineTo(12, -60); ctx.moveTo(12, -69); ctx.lineTo(-12, -60); ctx.stroke();
+    ctx.fillStyle = "#f6f0de";
+    ctx.beginPath(); ctx.arc(-2.7, -83, 2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(2.7, -83, 2, 0, 7); ctx.fill();
+    // halatlar
+    ctx.strokeStyle = "rgba(60,40,20,.7)"; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, -122); ctx.lineTo(-110, deckY(-110));
+    ctx.moveTo(0, -122); ctx.lineTo(110, deckY(110));
+    ctx.stroke();
+    // gözcü yeri ve dalgalanan bayrak
+    ctx.fillStyle = "#5a3415"; ctx.fillRect(-10, -127, 20, 7);
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, -127); ctx.lineTo(0, -146); ctx.stroke();
+    const wv = Math.sin(performance.now() / 160) * 2.5;
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.moveTo(0, -146); ctx.quadraticCurveTo(11, -144 + wv, 24, -146);
+    ctx.lineTo(24, -134); ctx.quadraticCurveTo(11, -132 + wv, 0, -134); ctx.closePath(); ctx.fill();
+
+    // gemiyi mile bağlayan kafes kollar
+    drawTruss(0, -LP, -50, -4, 12, "#d0412f", "#8e2a20");
+    drawTruss(0, -LP, 50, -4, 12, "#d0412f", "#8e2a20");
+
+    // yolcular (hızlanınca kollarını kaldırırlar)
+    const skins = ["#f1c27d", "#e0ac69", "#c68642", "#ffdbac", "#8d5524"];
+    const shirts = ["#e63946", "#457b9d", "#2a9d8f", "#f4a261", "#9b5de5", "#00bbf9", "#ffbe0b"];
+    const hair = ["#2b1d14", "#6b3e1e", "#111", "#c9a227", "#3d2314"];
+    for (let i = 0; i < 11; i++) {
+      const x = -100 + i * 20, y = deckY(x);
+      ctx.fillStyle = shirts[i % shirts.length];
+      ctx.fillRect(x - 6, y - 15, 12, 17);
+      if (speed > 3.5 && i % 2 === 0) {
+        ctx.strokeStyle = skins[i % 5]; ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(x - 5, y - 13); ctx.lineTo(x - 10, y - 32);
+        ctx.moveTo(x + 5, y - 13); ctx.lineTo(x + 10, y - 32);
+        ctx.stroke();
+      }
+      ctx.fillStyle = skins[i % 5];
+      ctx.beginPath(); ctx.arc(x, y - 21, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = hair[i % 5];
+      ctx.beginPath(); ctx.arc(x, y - 23, 6.2, Math.PI, 0); ctx.fill();
+    }
+
+    // ahşap gövde
+    hullPath();
+    const wood = ctx.createLinearGradient(0, -52, 0, 48);
+    wood.addColorStop(0, "#a8693a"); wood.addColorStop(0.6, "#6e4020"); wood.addColorStop(1, "#45260f");
+    ctx.fillStyle = wood; ctx.fill();
+    ctx.save();
+    hullPath(); ctx.clip();
+    // tahta çizgileri
+    ctx.strokeStyle = "rgba(35,18,5,.45)"; ctx.lineWidth = 1;
+    for (let y = -46; y < 52; y += 8) {
+      ctx.beginPath(); ctx.moveTo(-135, y); ctx.quadraticCurveTo(0, y + 16, 135, y); ctx.stroke();
+    }
+    // kırmızı süs bandı
+    ctx.fillStyle = "#9d0208";
+    ctx.beginPath();
+    ctx.moveTo(-135, 6); ctx.quadraticCurveTo(0, 22, 135, 6);
+    ctx.lineTo(135, 18); ctx.quadraticCurveTo(0, 34, -135, 18); ctx.closePath(); ctx.fill();
+    // ışık / gölge
+    const shade = ctx.createLinearGradient(-122, 0, 122, 0);
+    shade.addColorStop(0, "rgba(0,0,0,.25)"); shade.addColorStop(0.5, "rgba(255,255,255,.06)"); shade.addColorStop(1, "rgba(0,0,0,.25)");
+    ctx.fillStyle = shade; ctx.fillRect(-130, -60, 260, 120);
+    ctx.restore();
+    // altın kenar
+    hullPath();
+    ctx.strokeStyle = "#e9c46a"; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = "#e9c46a"; ctx.lineWidth = 4;
+    ctx.beginPath();
+    for (let x = -122; x <= 122; x += 4) x === -122 ? ctx.moveTo(x, deckY(x)) : ctx.lineTo(x, deckY(x));
+    ctx.stroke();
+    // bant üzerindeki parlayan ışıklar
+    ctx.save();
+    ctx.shadowColor = "#ffd166"; ctx.shadowBlur = 9;
+    for (let x = -100; x <= 100; x += 20) {
+      const s = (x + 135) / 270, y = 12 + 32 * s * (1 - s);
+      ctx.fillStyle = "#fff3b0";
+      ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+    // pruva ve kıç süsleri, fenerler
+    [-1, 1].forEach(sd => {
+      const ex = sd * 122, ey = deckY(122);
+      ctx.fillStyle = "#e9c46a";
+      ctx.beginPath(); ctx.arc(ex, ey, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = "#9d0208";
+      ctx.beginPath(); ctx.arc(ex, ey, 3, 0, 7); ctx.fill();
+      ctx.save();
+      ctx.shadowColor = "#ffb703"; ctx.shadowBlur = 14;
+      ctx.fillStyle = "#ffd166";
+      ctx.fillRect(ex - sd * 14 - 3, ey - 18, 6, 9);
+      ctx.restore();
+      ctx.strokeStyle = "#222"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ex - sd * 14, ey - 18); ctx.lineTo(ex - sd * 14, ey - 4); ctx.stroke();
+    });
+  }
+
+  function dashLine(y, color, label) {
+    ctx.save();
+    ctx.setLineDash([7, 6]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(70, y); ctx.lineTo(W - 10, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = "bold 12px Segoe UI, sans-serif";
+    const tw = ctx.measureText(label).width;
+    ctx.fillStyle = "rgba(10,10,30,.7)";
+    ctx.fillRect(W - 18 - tw, y - 19, tw + 10, 16);
+    ctx.fillStyle = color;
+    ctx.textAlign = "right";
+    ctx.fillText(label, W - 13, y - 6);
+    ctx.restore();
+  }
+
+  function arrow(x1, y1, x2, y2, color) {
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 12 * Math.cos(a - .4), y2 - 12 * Math.sin(a - .4));
+    ctx.lineTo(x2 - 12 * Math.cos(a + .4), y2 - 12 * Math.sin(a + .4));
+    ctx.closePath(); ctx.fill();
+  }
+
+  // ---------- Grafik ----------
+  const gc = $("graph"), gx = gc.getContext("2d");
+  function sample() {
+    const k = Math.floor(t * 10);
+    if (k === lastSample) return;
+    lastSample = k;
+    history.push({ t, ke: KE(omega), pe: PE(theta), q: Q });
+    if (history.length > 600) history.shift();
+  }
+  function drawGraph() {
+    const w = gc.width, h = gc.height, pad = 30;
+    gx.clearRect(0, 0, w, h);
+    gx.fillStyle = "#fff"; gx.fillRect(0, 0, w, h);
+    const tMax = Math.max(20, t), tMin = tMax - 20;
+    gx.strokeStyle = "#e5e8ef"; gx.lineWidth = 1;
+    gx.fillStyle = "#6b7280"; gx.font = "11px Segoe UI, sans-serif";
+    for (let i = 0; i <= 4; i++) {
+      const y = h - pad - (h - 2 * pad + 10) * i / 4;
+      gx.beginPath(); gx.moveTo(pad + 20, y); gx.lineTo(w - 5, y); gx.stroke();
+      gx.fillText(fmt(E0 * i / 4 / 1000) + " kJ", 2, y + 4);
+    }
+    for (let s = Math.ceil(tMin / 5) * 5; s <= tMax; s += 5) {
+      const x = pad + 20 + (w - pad - 25) * (s - tMin) / 20;
+      gx.fillText(s + " s", x - 8, h - 8);
+    }
+    const X = tt => pad + 20 + (w - pad - 25) * (tt - tMin) / 20;
+    const Y = e => h - pad - (h - 2 * pad + 10) * e / E0;
+    const line = (fn, color, width) => {
+      gx.strokeStyle = color; gx.lineWidth = width; gx.beginPath();
+      let first = true;
+      history.forEach(p => {
+        if (p.t < tMin) return;
+        const x = X(p.t), y = Y(fn(p));
+        first ? gx.moveTo(x, y) : gx.lineTo(x, y); first = false;
+      });
+      gx.stroke();
+    };
+    const css = getComputedStyle(document.documentElement);
+    line(p => p.ke + p.pe + p.q, css.getPropertyValue("--tot"), 3);
+    line(p => p.ke + p.pe, css.getPropertyValue("--me"), 2);
+    line(p => p.ke, css.getPropertyValue("--ke"), 2);
+    line(p => p.pe, css.getPropertyValue("--pe"), 2);
+    line(p => p.q, css.getPropertyValue("--heat"), 2);
+  }
+
+  // ---------- Göstergeler ----------
+  function updateBars() {
+    const ke = KE(omega), pe = PE(theta), me = ke + pe, tot = me + Q;
+    const pct = x => Math.max(0, Math.min(100, x / E0 * 100)) + "%";
+    $("vKE").textContent = J(ke); $("fKE").style.width = pct(ke);
+    $("vPE").textContent = J(pe); $("fPE").style.width = pct(pe);
+    $("vME").textContent = J(me); $("fME").style.width = pct(me);
+    $("vQ").textContent = J(Q); $("fQ").style.width = pct(Q);
+    $("vTOT").textContent = J(tot); $("fTOT").style.width = pct(tot);
+    $("equation").innerHTML = `Kinetik + Potansiyel + Isı = Toplam<br><b>${J(ke)} + ${J(pe)} + ${J(Q)} = ${J(tot)}</b>`;
+
+    $("sT").textContent = fmt(t, 1) + " s";
+    $("sV").textContent = fmt(Math.abs(omega * L), 1) + " m/s";
+    $("sH").textContent = fmt(height(theta), 2) + " m";
+    $("sA").textContent = fmt(Math.abs(theta * 180 / Math.PI), 0) + "°";
+
+    const list = peaks.slice(-8).map(p => fmt(p.h, 2) + " m").join(" → ");
+    $("peaks").innerHTML = `<b>Çıkış yükseklikleri:</b> ${list}` +
+      ($("friction").checked ? " <span class='small'>(sürtünme açık: her çıkış bir öncekinden alçak)</span>" : " <span class='small'>(sürtünme kapalı: her çıkış aynı yükseklikte)</span>");
+  }
+
+  function render() {
+    drawScene();
+    drawGraph();
+    updateBars();
+  }
+
+  // ---------- Döngü ----------
+  let lastTime = null;
+  function loop(now) {
+    if (lastTime === null) lastTime = now;
+    let dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    if (running) {
+      if ($("slow").checked) dt *= 0.3;
+      step(dt);
+      sample();
+      updateExplain();
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  function updateButton() {
+    const b = $("btnStart");
+    b.textContent = running ? "⏸ Durdur" : "▶ Başlat";
+    b.classList.toggle("running", running);
+  }
+
+  function toggleRun() {
+    if (!running && $("autoStop").checked && t >= 10) {
+      $("explain").innerHTML = "Bu deneme 10 saniyeyi tamamladı. Yeni deneme için önce <b>Sıfırla</b>'ya bas.";
+      return;
+    }
+    running = !running;
+    lastPhase = "";
+    updateButton();
+    if (!running) $("explain").innerHTML = "⏸ Durduruldu. Göstergeleri inceleyebilirsin. Devam etmek için <b>Başlat</b>'a bas.";
+  }
+
+  // ---------- Olaylar ----------
+  $("btnStart").onclick = toggleRun;
+  $("btnReset").onclick = reset;
+  $("friction").onchange = () => {
+    $("frictionText").textContent = $("friction").checked ? "AÇIK" : "KAPALI";
+    lastPhase = "";
+  };
+  $("angle").oninput = () => {
+    theta0 = $("angle").value * Math.PI / 180;
+    $("angleText").textContent = $("angle").value + "°";
+    reset();
+  };
+  $("btnRecord").onclick = addResult;
+  $("btnClear").onclick = () => {
+    trialNo = 0;
+    $("results").innerHTML = '<tr><td colspan="9" style="text-align:center" class="small">Henüz deneme yok.</td></tr>';
+  };
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT" && e.target.type === "range") return;
+    if (e.code === "Space") { e.preventDefault(); toggleRun(); }
+    else if (e.key === "r" || e.key === "R") reset();
+    else if (e.key === "f" || e.key === "F") { $("friction").checked = !$("friction").checked; $("friction").onchange(); }
+  });
+  $("scene").onclick = toggleRun;
+
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
