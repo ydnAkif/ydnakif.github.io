@@ -1,0 +1,481 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enerji Parkı 2.0</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#10152f;color:white;
+ font-family:Arial,sans-serif;
+}
+header{
+ text-align:center;padding:22px 10px;
+ background:linear-gradient(120deg,#30145f,#8141a8,#e44e91);
+}
+header h1{margin:0;font-size:30px}
+header p{margin:8px 0}
+main{max-width:1000px;margin:auto;padding:12px}
+.panel{
+ background:#20294b;border:1px solid #46527d;
+ border-radius:18px;padding:16px;margin:13px 0;
+ box-shadow:0 5px 16px #0004;
+}
+h2{color:#ffdc79;margin-top:0}
+canvas{
+ width:100%;display:block;border-radius:14px;
+ background:#9cddff;
+}
+button{
+ border:0;border-radius:11px;padding:12px 16px;
+ margin:4px;font-weight:bold;font-size:14px;
+ color:white;cursor:pointer;
+}
+.start{background:#169d65}
+.pause{background:#d99525}
+.reset{background:#d94e61}
+.compare{background:#8158d8}
+.switch{display:inline-flex;align-items:center;gap:8px;margin:12px}
+.switch input{width:20px;height:20px;accent-color:#ff9c40}
+.status{color:#ffdf78;font-weight:bold;min-height:20px}
+.energy{margin:16px 0}
+.energy-title{display:flex;justify-content:space-between;gap:5px;font-size:14px;margin-bottom:6px}
+.bar-bg{height:19px;background:#10152f;border-radius:20px;overflow:hidden}
+.bar{height:100%;width:0%;border-radius:20px;transition:width .1s}
+.kinetic{background:#ffad32}
+.potential{background:#329cff}
+.mechanical{background:#b878ff}
+.heat{background:#ff604d}
+.total{background:#39d99a}
+#explanation{
+ background:#34365b;border-left:5px solid #ffcf55;
+ border-radius:12px;padding:14px;line-height:1.5;
+}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini{background:#303b65;border-radius:12px;padding:13px;text-align:center}
+.mini strong{display:block;color:#ffdc79;font-size:20px;margin-top:5px}
+.small{font-size:13px;color:#d6dcef;line-height:1.5}
+footer{text-align:center;padding:20px;color:#cbd1eb}
+@media(max-width:550px){
+ header h1{font-size:24px}
+ button{padding:11px;font-size:12px}
+ .panel{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+ <div style="font-size:35px">🎡 🎢 🎠</div>
+ <h1>ENERJİ PARKI 2.0</h1>
+ <p>✨ Enerjinin Peşinde! ✨</p>
+ <p>7. Sınıf Fen Bilimleri</p>
+</header>
+
+<main>
+
+<div class="panel">
+<h2>🎢 Büyük Hız Treni</h2>
+<canvas id="game" width="900" height="430"></canvas>
+
+<div style="text-align:center">
+<button class="start" onclick="startGame()">▶ BAŞLAT</button>
+<button class="pause" onclick="pauseGame()">⏸ DURDUR</button>
+<button class="reset" onclick="resetGame()">↻ SIFIRLA</button>
+</div>
+
+<div style="text-align:center">
+<label class="switch">
+<input type="checkbox" id="friction" onchange="resetGame()">
+🔥 Sürtünmeyi Aç
+</label>
+</div>
+<div class="status" id="status">🎟️ Biletini aldın! Başlat düğmesine bas.</div>
+</div>
+
+<div class="panel">
+<h2>⚡ Canlı Enerji Göstergeleri</h2>
+
+<div class="energy">
+<div class="energy-title"><b>🟠 Kinetik Enerji</b><span id="kv">0 J</span></div>
+<div class="bar-bg"><div class="bar kinetic" id="kb"></div></div>
+</div>
+
+<div class="energy">
+<div class="energy-title"><b>🔵 Çekim Potansiyel Enerjisi</b><span id="pv">0 J</span></div>
+<div class="bar-bg"><div class="bar potential" id="pb"></div></div>
+</div>
+
+<div class="energy">
+<div class="energy-title"><b>🟣 Mekanik Enerji</b><span id="mv">0 J</span></div>
+<div class="bar-bg"><div class="bar mechanical" id="mb"></div></div>
+</div>
+
+<div class="energy">
+<div class="energy-title"><b>🔥 Isıya Dönüşen Enerji</b><span id="hv">0 J</span></div>
+<div class="bar-bg"><div class="bar heat" id="hb"></div></div>
+</div>
+
+<div class="energy">
+<div class="energy-title"><b>🟢 Toplam Enerji</b><span id="tv">0 J</span></div>
+<div class="bar-bg"><div class="bar total" id="tb"></div></div>
+</div>
+
+<p class="small">Bütün enerji değerleri Joule (J) cinsindendir.</p>
+</div>
+
+<div class="panel">
+<h2>💡 Enerji Dönüşümü</h2>
+<div id="explanation">
+Hız trenini çalıştır ve enerji dönüşümlerini keşfet!
+</div>
+</div>
+
+<div class="panel">
+<h2>🏆 Deney Merkezi</h2>
+<div class="grid">
+<div class="mini">
+Sürtünmesiz Deney
+<strong id="result1">Bekliyor</strong>
+</div>
+<div class="mini">
+Sürtünmeli Deney
+<strong id="result2">Bekliyor</strong>
+</div>
+</div>
+<div style="text-align:center;margin-top:12px">
+<button class="compare" onclick="compare()">📊 Deneyleri Karşılaştır</button>
+</div>
+<div id="comparison" class="small" style="margin-top:12px"></div>
+</div>
+
+<div class="panel">
+<h2>📚 Öğrenelim!</h2>
+<p>🟠 Kinetik enerji: Hareket eden cisimlerin enerjisidir.</p>
+<p>🔵 Potansiyel enerji: Cisimlerin konumlarından dolayı sahip olduğu enerjidir.</p>
+<p>🟣 Mekanik enerji: Kinetik ve potansiyel enerjinin toplamıdır.</p>
+<p>🔥 Isı enerjisi: Sürtünme sonucunda oluşan enerji aktarımıdır.</p>
+<p>🟢 Toplam enerji: Bu modelde mekanik enerji ile ısıya dönüşen enerjinin toplamıdır.</p>
+<p class="small">Bu basit modelde ses enerjisi ve diğer enerji kayıpları ihmal edilmiştir. Dışarıdan enerji verilmez.</p>
+</div>
+
+</main>
+
+<footer>🎡 ENERJİ PARKI 2.0 | Fen Bilimleri Projesi 🎢</footer>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const M=100,g=10,L=30;
+const frictionLoss=0.045;
+const initialSpeed=2;
+
+function height(p){
+ return 3+14*(1-p)+
+  4*Math.sin(2*Math.PI*p)*Math.sin(Math.PI*p);
+}
+
+const E0=M*g*height(0)+0.5*M*initialSpeed**2;
+
+let p=0,v=initialSpeed,heat=0;
+let running=false,last=0,frame=null;
+let spark=[];
+let results={free:null,friction:null};
+let lastSaved=false;
+
+function energy(){
+ const pe=M*g*height(p);
+ const ke=Math.max(0,E0-pe-heat);
+ return {pe,ke,me:pe+ke,total:pe+ke+heat};
+}
+
+function bar(id,value){
+ document.getElementById(id+"b").style.width=
+ Math.max(0,Math.min(100,value/E0*100))+"%";
+ document.getElementById(id+"v").textContent=
+ value.toFixed(1)+" J";
+}
+
+function update(){
+ const e=energy();
+ bar("k",e.ke);
+ bar("p",e.pe);
+ bar("m",e.me);
+ bar("h",heat);
+ bar("t",e.total);
+}
+
+function message(){
+ const e=energy();
+ const box=document.getElementById("explanation");
+ const friction=document.getElementById("friction").checked;
+
+ if(p<0.22){
+  box.textContent="🚀 Hız treni yüksek noktadan aşağı inerken potansiyel enerji kinetik enerjiye dönüşüyor.";
+ }else if(p<0.48){
+  box.textContent="⚡ Hız treninin hızı artıyor. Kinetik enerji yükseliyor, potansiyel enerji azalıyor.";
+ }else if(p<0.72){
+  box.textContent="🎢 Hız treni yükselmeye başlıyor. Kinetik enerjinin bir kısmı potansiyel enerjiye dönüşüyor.";
+ }else{
+  box.textContent="🏁 Hız treni parkurun sonuna yaklaşıyor. Enerji dönüşümü devam ediyor.";
+ }
+
+ if(friction && heat>0){
+  box.textContent+=" 🔥 Sürtünme nedeniyle mekanik enerjinin bir kısmı ısı enerjisine dönüşüyor.";
+ }
+}
+
+function draw(){
+ const W=900,H=430;
+ ctx.clearRect(0,0,W,H);
+
+ // Gökyüzü
+ let grad=ctx.createLinearGradient(0,0,0,H);
+ grad.addColorStop(0,"#18275e");
+ grad.addColorStop(.7,"#5879ae");
+ grad.addColorStop(1,"#f3a66b");
+ ctx.fillStyle=grad;
+ ctx.fillRect(0,0,W,H);
+
+ // Yıldızlar
+ for(let i=0;i<35;i++){
+  let x=(i*137+30)%900;
+  let y=(i*53+15)%175;
+  ctx.fillStyle="#fff7bf";
+  ctx.beginPath();
+  ctx.arc(x,y,1.8,0,Math.PI*2);
+  ctx.fill();
+ }
+
+ // Lunapark dönme dolabı
+ ctx.save();
+ ctx.translate(730,245);
+ ctx.strokeStyle="#ffe1a0";
+ ctx.lineWidth=5;
+ ctx.beginPath();
+ ctx.arc(0,0,62,0,Math.PI*2);
+ ctx.stroke();
+ for(let i=0;i<8;i++){
+  let a=i*Math.PI/4;
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(Math.cos(a)*62,Math.sin(a)*62);
+  ctx.stroke();
+  ctx.fillStyle=["#ff5470","#ffe15b","#55e4c2","#a78bfa"][i%4];
+  ctx.fillRect(Math.cos(a)*62-8,Math.sin(a)*62-8,16,16);
+ }
+ ctx.beginPath();
+ ctx.arc(0,0,7,0,Math.PI*2);
+ ctx.fillStyle="#ffe1a0";
+ ctx.fill();
+ ctx.restore();
+
+ // Lunapark kulübesi
+ ctx.fillStyle="#ed5274";
+ ctx.fillRect(60,280,90,70);
+ ctx.fillStyle="#ffe07a";
+ ctx.beginPath();
+ ctx.moveTo(45,280);
+ ctx.lineTo(105,225);
+ ctx.lineTo(165,280);
+ ctx.fill();
+ ctx.fillStyle="#fff";
+ ctx.font="bold 15px Arial";
+ ctx.fillText("BİLET",78,310);
+
+ // Zemin
+ ctx.fillStyle="#275c48";
+ ctx.fillRect(0,355,900,75);
+ ctx.fillStyle="#3b9862";
+ ctx.fillRect(0,355,900,15);
+
+ // Ray
+ ctx.beginPath();
+ for(let i=0;i<=300;i++){
+  let q=i/300;
+  let x=50+q*800;
+  let y=350-(height(q)-2)*16;
+  if(i===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ }
+ ctx.strokeStyle="#22283b";
+ ctx.lineWidth=16;
+ ctx.stroke();
+ ctx.strokeStyle="#e8eaf1";
+ ctx.lineWidth=6;
+ ctx.stroke();
+
+ // Ray destekleri
+ for(let i=0;i<=25;i++){
+  let q=i/25;
+  let x=50+q*800;
+  let y=350-(height(q)-2)*16;
+  ctx.strokeStyle="#76563f";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.moveTo(x,y+4);
+  ctx.lineTo(x,355);
+  ctx.stroke();
+ }
+
+ // Vagon
+ let x=50+p*800;
+ let y=350-(height(p)-2)*16;
+
+ ctx.save();
+ ctx.translate(x,y-17);
+
+ ctx.fillStyle="#ff4f66";
+ ctx.fillRect(-25,-18,50,25);
+
+ ctx.fillStyle="#fff";
+ ctx.fillRect(-17,-14,13,10);
+ ctx.fillRect(4,-14,13,10);
+
+ ctx.fillStyle="#262b42";
+ ctx.beginPath();
+ ctx.arc(-15,10,7,0,Math.PI*2);
+ ctx.arc(15,10,7,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.restore();
+
+ // Enerji okları
+ if(running){
+  ctx.font="bold 22px Arial";
+  ctx.fillStyle="#ffb52c";
+  ctx.fillText("⚡",x-15,y-50);
+ }
+
+ // Isı parçacıkları
+ spark.forEach(s=>{
+  ctx.fillStyle="#ff9b32";
+  ctx.beginPath();
+  ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+  ctx.fill();
+ });
+ spark=spark.filter(s=>s.life>0);
+ spark.forEach(s=>{
+  s.x-=1;
+  s.y-=1;
+  s.life--;
+ });
+
+ ctx.fillStyle="#fff";
+ ctx.font="bold 17px Arial";
+ ctx.fillText("BAŞLANGIÇ",45,405);
+ ctx.fillText("BİTİŞ",790,405);
+}
+
+function finish(){
+ running=false;
+ document.getElementById("status").textContent="🏆 Tur tamamlandı! Deney sonucunu inceleyebilirsin.";
+ if(!lastSaved){
+  const e=energy();
+  if(document.getElementById("friction").checked){
+   results.friction={heat:heat,me:e.me,total:e.total};
+   document.getElementById("result2").textContent="Tamamlandı";
+  }else{
+   results.free={heat:heat,me:e.me,total:e.total};
+   document.getElementById("result1").textContent="Tamamlandı";
+  }
+  lastSaved=true;
+ }
+}
+
+function step(now){
+ if(!running)return;
+ let dt=Math.min((now-last)/1000,0.04);
+ last=now;
+
+ let friction=document.getElementById("friction").checked;
+ let e=energy();
+
+ let slope=(height(Math.min(1,p+.001))-height(Math.max(0,p-.001)))/(.002*L);
+
+ let acceleration=-g*slope;
+ if(friction)acceleration-=frictionLoss*g;
+
+ let oldV=v;
+ v=Math.max(0.5,Math.sqrt(Math.max(0.25,v*v+2*acceleration*L*0.001)));
+ p+=((oldV+v)/2)*dt/L*1.3;
+
+ if(friction){
+  let loss=Math.max(0,0.5*M*(oldV*oldV-v*v));
+  heat=Math.min(E0-energy().pe-0.5*M*v*v,heat+loss);
+  heat=Math.max(0,heat);
+  if(Math.random()<0.8){
+   let x=50+p*800;
+   let y=350-(height(p)-2)*16;
+   spark.push({x,y,r:2+Math.random()*3,life:18});
+  }
+ }else{
+  heat=0;
+ }
+
+ if(p>=1){
+  p=1;
+  finish();
+ }
+
+ update();
+ message();
+ draw();
+
+ if(running)frame=requestAnimationFrame(step);
+}
+
+function startGame(){
+ if(p>=1)return;
+ if(running)return;
+ running=true;
+ last=performance.now();
+ document.getElementById("status").textContent="🎢 Hız treni hareket ediyor!";
+ frame=requestAnimationFrame(step);
+}
+
+function pauseGame(){
+ running=false;
+ if(frame)cancelAnimationFrame(frame);
+ document.getElementById("status").textContent="⏸ Simülasyon durduruldu.";
+}
+
+function resetGame(){
+ pauseGame();
+ p=0;
+ v=initialSpeed;
+ heat=0;
+ spark=[];
+ lastSaved=false;
+ document.getElementById("status").textContent="🎟️ Yeni deney için hazır!";
+ update();
+ draw();
+ document.getElementById("explanation").textContent=
+ "Hız trenini başlatarak enerji dönüşümünü gözlemleyebilirsin!";
+}
+
+function compare(){
+ let a=results.free;
+ let b=results.friction;
+ let box=document.getElementById("comparison");
+
+ if(!a||!b){
+  box.textContent="Karşılaştırma yapmak için önce sürtünme kapalı ve sürtünme açık iki deneyi de tamamla. Her deneyden önce Sıfırla düğmesine bas.";
+  return;
+ }
+
+ box.innerHTML=
+ "🟢 Sürtünme kapalı mekanik enerji: "+a.me.toFixed(1)+" J<br>"+
+ "🔴 Sürtünme açık mekanik enerji: "+b.me.toFixed(1)+" J<br>"+
+ "🔥 Isıya dönüşen enerji: "+b.heat.toFixed(1)+" J<br>"+
+ "⚡ Sürtünmeli deney toplam enerjisi: "+b.total.toFixed(1)+" J<br><br>"+
+ "Sonuç: Sürtünme mekanik enerjiyi azaltır. Azalan enerji ısı enerjisine dönüşür. Toplam enerji korunur.";
+}
+
+resetGame();
+</script>
+</body>
+</html>
