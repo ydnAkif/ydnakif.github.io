@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7. Sınıf Fen Bilimleri - Sarkaçta Enerji Dönüşümleri</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        body.dark-mode {
+            background-color: #090d16;
+            color: #f8fafc;
+        }
+        /* Özel kaydırıcı (slider) stili */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #cbd5e1;
+        }
+        body.dark-mode input[type="range"]::-webkit-slider-runnable-track {
+            background: #334155;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-top: -6px;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        body.dark-mode input[type="range"]::-webkit-slider-thumb {
+            background: #38bdf8;
+            border: 3px solid #0f172a;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.12);
+            background: #1d4ed8;
+        }
+        body.dark-mode input[type="range"]::-webkit-slider-thumb:hover {
+            background: #7dd3fc;
+        }
+        input[type="range"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        /* Enerji çubuklarının akıcı değişimi için */
+        .energy-bar-fill {
+            transition: height 0.04s linear;
+        }
+        /* Kupa kazanma animasyonları */
+        @keyframes trophyPopIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-22px) scale(0.85);
+            }
+            65% {
+                opacity: 1;
+                transform: translateY(4px) scale(1.03);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes trophyFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(-3deg) scale(1);
+            }
+            50% {
+                transform: translateY(-7px) rotate(3deg) scale(1.08);
+            }
+        }
+        @keyframes platinumShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-16px) rotate(0deg) scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(115px) rotate(320deg) scale(1.1);
+                opacity: 0;
+            }
+        }
+        .trophy-toast-enter {
+            animation: trophyPopIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .trophy-icon-float {
+            animation: trophyFloat 1.5s ease-in-out infinite;
+        }
+        .platinum-celebration-bg {
+            background: linear-gradient(125deg, rgba(8, 145, 178, 0.35), rgba(168, 85, 247, 0.35), rgba(250, 204, 21, 0.35), rgba(56, 189, 248, 0.35));
+            background-size: 300% 300%;
+            animation: platinumShimmer 3.2s ease infinite;
+        }
+        .confetti-piece {
+            animation: confettiFall 1.8s ease-out infinite;
+        }
+        @keyframes bigTrophyBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0.45) translateY(24px);
+            }
+            65% {
+                opacity: 1;
+                transform: scale(1.06) translateY(-4px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        @keyframes giantCupPulse {
+            0%, 100% {
+                transform: scale(1) rotate(-2deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(2deg);
+            }
+        }
+        .big-trophy-modal-enter {
+            animation: bigTrophyBounce 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .giant-cup-anim {
+            animation: giantCupPulse 1.8s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Ekran Ortasında Kocaman Kupa Kutlama Ekranı -->
+    <div id="trophyCelebrationOverlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4">
+        <div id="trophyCelebrationCard" class="big-trophy-modal-enter relative overflow-hidden max-w-md w-full rounded-3xl border-2 border-amber-400 bg-slate-900 text-white px-7 py-8 shadow-2xl flex flex-col items-center text-center gap-4">
+            <div id="platinumConfettiLayer" class="absolute inset-0 pointer-events-none hidden overflow-hidden"></div>
+
+            <button id="dismissCelebrationBtn" type="button" class="absolute top-3.5 right-3.5 z-20 px-3 py-1 rounded-xl text-xs font-extrabold bg-white/15 hover:bg-white/25 text-white cursor-pointer">
+                ✕
+            </button>
+
+            <div id="celebrationBadgeText" class="relative z-10 text-xs font-extrabold uppercase tracking-widest px-3.5 py-1 rounded-full bg-white/10">
+                YENİ KUPA KAZANILDI!
+            </div>
+
+            <!-- Kazandığınız Kupaya Göre Renklenen Kocaman Kupa -->
+            <div id="celebrationTrophyIcon" class="giant-cup-anim relative z-10 w-32 h-32 rounded-3xl flex items-center justify-center text-7xl shadow-2xl border-2">
+                🥉
+            </div>
+
+            <div class="relative z-10 space-y-1.5">
+                <div id="celebrationMainTitle" class="text-2xl sm:text-3xl font-extrabold leading-tight">
+                    Tebrikler! Bronz Kupa kazandınız!
+                </div>
+                <div id="celebrationSubTitle" class="text-xs sm:text-sm opacity-85 leading-relaxed">
+                    Görev 1 tamamlandı. Sıradaki göreve geçildi!
+                </div>
+            </div>
+
+            <button id="continueAfterTrophyBtn" type="button" class="relative z-10 mt-1 px-6 py-2.5 rounded-xl text-sm font-extrabold bg-white text-slate-950 hover:bg-slate-100 shadow-lg cursor-pointer transition-transform active:scale-95">
+                Devam Et
+            </button>
+        </div>
+    </div>
+
+    <!-- Üst Başlık Çubuğu -->
+    <header id="appHeader" class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+                    <!-- Sarkaç İkonu -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Sabit Fizik Parametreleri, Kupalar ve Gece Modu Düğmesi -->
+            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-semibold">
+                <span class="param-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">Kütle (m) = <strong class="param-strong text-slate-900">2.0 kg</strong></span>
+                <span class="param-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">İp (L) = <strong class="param-strong text-slate-900">2.0 m</strong></span>
+                <span id="gravityPill" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">g = <strong>10 m/s²</strong></span>
+
+                <!-- Kupalar Butonu -->
+                <button id="trophiesBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm bg-amber-500 text-slate-950 hover:bg-amber-400 border border-amber-600/30 shadow-sm transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
+                    <span>Kupalar</span>
+                    <span id="trophySummaryBadge" class="px-1.5 py-0.5 rounded-md bg-slate-950/15 text-slate-950 font-extrabold text-xs tabular-nums">0/16</span>
+                </button>
+
+                <!-- Gece Modu Aç/Kapat Düğmesi -->
+                <button id="nightModeBtn" type="button" aria-pressed="false" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs sm:text-sm bg-slate-900 text-white hover:bg-slate-800 border border-slate-700 shadow-sm transition-all cursor-pointer">
+                    <!-- Ay İkonu (Gündüz modundayken görünür) -->
+                    <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                    </svg>
+                    <!-- Güneş İkonu (Gece modundayken görünür) -->
+                    <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-300 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path d="M12 2v2"></path>
+                        <path d="M12 20v2"></path>
+                        <path d="m4.93 4.93 1.41 1.41"></path>
+                        <path d="m17.66 17.66 1.41 1.41"></path>
+                        <path d="M2 12h2"></path>
+                        <path d="M20 12h2"></path>
+                        <path d="m6.34 17.66-1.41 1.41"></path>
+                        <path d="m19.07 4.93-1.41 1.41"></path>
+                    </svg>
+                    <span id="nightModeLabel">Gece Modu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+            <!-- SOL PANEL: Sarkaç Simülasyonu ve Kontroller (7 Sütun) -->
+            <section class="lg:col-span-7 flex flex-col gap-4">
+                <!-- Canvas Kartı -->
+                <div class="surface-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-colors duration-200">
+                    <div class="sub-bar px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 transition-colors duration-200">
+                        <div class="flex items-center gap-2">
+                            <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <span id="statusText" class="text-xs sm:text-sm font-semibold text-slate-700">Hazır (Başlatmak için düğmeye basın)</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-semibold">
+                            <span id="frictionBadge" class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 transition-colors">
+                                Sürtünme: KAPALI
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Duyarlı Canvas Konteyneri -->
+                    <div id="canvasContainer" class="relative w-full h-[360px] sm:h-[420px] bg-gradient-to-b from-sky-50/60 via-white to-slate-50 select-none transition-colors duration-200">
+                        <canvas id="pendulumCanvas" class="block w-full h-full"></canvas>
+                        
+                        <!-- Sol Üst Köşe Canlı Fizik Değerleri Kutusu -->
+                        <div id="liveMetricsBox" class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-sm pointer-events-none space-y-1 text-xs sm:text-sm transition-colors duration-200">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="muted-label text-slate-500 font-medium">Yükseklik (h):</span>
+                                <span id="liveHeight" class="font-bold text-emerald-600 tabular-nums">0.60 m</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="muted-label text-slate-500 font-medium">Sürat (v):</span>
+                                <span id="liveSpeed" class="font-bold text-sky-600 tabular-nums">0.00 m/s</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="muted-label text-slate-500 font-medium">Açı (θ):</span>
+                                <span id="liveAngle" class="angle-val font-bold text-slate-700 tabular-nums">45.6°</span>
+                            </div>
+                        </div>
+
+                        <!-- Sağ Üst Köşe Başlangıç Referansı Bilgisi -->
+                        <div id="initialRefBox" class="absolute top-3 right-3 bg-slate-800/85 backdrop-blur-sm text-white border border-slate-700/60 rounded-xl px-3 py-2 shadow-sm pointer-events-none text-right">
+                            <div class="text-[11px] uppercase tracking-wider text-slate-300 font-semibold">Başlangıç Koşulu</div>
+                            <div id="initialRefText" class="text-xs sm:text-sm font-bold text-amber-300">h₀ = 0.60 m | v₀ = 0 m/s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kontrol Paneli Kartı -->
+                <div class="surface-card bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4 transition-colors duration-200">
+                    <!-- Üst Satır: Ana Eylem Düğmeleri ve Sürtünme Anahtarı -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <!-- Başlat / Devam Et Düğmesi -->
+                            <button id="togglePlayBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-md shadow-blue-600/20 transition-all cursor-pointer">
+                                <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="6" y="4" width="4" height="16"></rect>
+                                    <rect x="14" y="4" width="4" height="16"></rect>
+                                </svg>
+                                <span id="playBtnLabel">Başlat</span>
+                            </button>
+
+                            <!-- Ayrı Durdur Düğmesi -->
+                            <button id="stopBtn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] shadow-md shadow-rose-600/20 transition-all cursor-pointer" title="Simülasyonu anında durdurur ve görev durdurma koşulunu kontrol eder">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                                </svg>
+                                <span>Durdur</span>
+                            </button>
+
+                            <!-- Sıfırla Düğmesi -->
+                            <button id="resetBtn" type="button" class="secondary-btn inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] border border-slate-300 transition-all cursor-pointer" title="Cismi ilk konumuna ve 0 m/s başlangıç hızına döndürür">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-current opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                </svg>
+                                <span>Sıfırla</span>
+                            </button>
+                        </div>
+
+                        <!-- Sürtünme (Hava Direnci) Toggle Anahtarı -->
+                        <div class="inner-box flex items-center gap-3 bg-slate-50 px-3.5 py-2.5 rounded-xl border border-slate-200 transition-colors duration-200">
+                            <div class="flex flex-col">
+                                <span class="strong-label text-xs sm:text-sm font-bold text-slate-800">Sürtünme (Hava Direnci)</span>
+                                <span id="frictionSubText" class="muted-label text-[11px] text-slate-500">Kapalı: Enerji kaybı yok</span>
+                            </div>
+                            <button id="frictionToggle" type="button" role="switch" aria-checked="false" class="relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" style="width: 52px;">
+                                <span id="frictionKnob" class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Alt Satır: Başlangıç Yüksekliği / Açısı Ayarı (Tekrarlanabilir Deney İçin) -->
+                    <div class="divider-top pt-3 border-t border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <label for="initialHeightSlider" class="strong-label text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                                <span>Başlangıç Yüksekliği (h₀) / Bırakılma Konumu:</span>
+                                <span id="sliderLockBadge" class="hidden text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Değiştirmek için Sıfırla'ya basın</span>
+                            </label>
+                            <span id="sliderValueDisplay" class="slider-pill text-xs sm:text-sm font-extrabold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 self-start sm:self-auto">
+                                h₀ = 0.60 m (Başlangıç Ep = 12.00 J)
+                            </span>
+                        </div>
+                        <input id="initialHeightSlider" type="range" min="0.20" max="1.40" step="0.10" value="0.60" class="w-full">
+                        <div class="muted-label flex justify-between text-[11px] text-slate-400 font-medium mt-1">
+                            <span>0.20 m (Alçak)</span>
+                            <span>0.60 m (Varsayılan - 12 J)</span>
+                            <span>1.00 m (20 J)</span>
+                            <span>1.40 m (Yüksek - 28 J)</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SAĞ PANEL: Canlı Enerji Çubukları ve Açıklamalar (5 Sütun) -->
+            <section class="lg:col-span-5 flex flex-col gap-4">
+                <!-- Enerji Grafiği Kartı -->
+                <div class="surface-card bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex-1 flex flex-col justify-between transition-colors duration-200">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <h2 id="energyChartTitle" class="text-base sm:text-lg font-extrabold text-slate-900">Canlı Enerji Dağılımı (Joule)</h2>
+                            <span class="param-pill text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">Birim: Joule (J)</span>
+                        </div>
+                        <p class="muted-label text-xs text-slate-500 mb-4">
+                            Sarkaç hareket ederken enerjinin türleri arasındaki dönüşümü anlık olarak gözlemleyin.
+                        </p>
+
+                        <!-- 5 Dikey Enerji Çubuğu Alanı -->
+                        <div id="barsContainer" class="grid grid-cols-5 gap-2 sm:gap-3 pt-2 pb-2 px-1 bg-slate-50/80 rounded-2xl border border-slate-200/80 transition-colors duration-200">
+                            
+                            <!-- 1. Kinetik Enerji (Ek) -->
+                            <div class="flex flex-col items-center">
+                                <div id="valEk" class="text-xs sm:text-sm font-extrabold text-sky-600 tabular-nums mb-1.5 h-5 flex items-center">0.00 J</div>
+                                <div class="bar-track w-full max-w-[44px] h-52 sm:h-60 bg-slate-200/80 rounded-xl p-1 flex flex-col justify-end relative overflow-hidden border border-slate-300/60">
+                                    <!-- Kılavuz çizgileri -->
+                                    <div class="bar-grid-line absolute inset-x-0 top-1/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-2/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-3/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div id="barEk" class="energy-bar-fill w-full bg-gradient-to-t from-sky-600 to-cyan-400 rounded-lg shadow-sm" style="height: 0%;"></div>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <div class="bar-title text-xs font-extrabold text-slate-800 leading-tight">Kinetik</div>
+                                    <div class="text-[10px] font-semibold text-sky-500">(E<sub>k</sub>)</div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Çekim Potansiyel Enerjisi (Ep) -->
+                            <div class="flex flex-col items-center">
+                                <div id="valEp" class="text-xs sm:text-sm font-extrabold text-emerald-600 tabular-nums mb-1.5 h-5 flex items-center">12.00 J</div>
+                                <div class="bar-track w-full max-w-[44px] h-52 sm:h-60 bg-slate-200/80 rounded-xl p-1 flex flex-col justify-end relative overflow-hidden border border-slate-300/60">
+                                    <div class="bar-grid-line absolute inset-x-0 top-1/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-2/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-3/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div id="barEp" class="energy-bar-fill w-full bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-lg shadow-sm" style="height: 100%;"></div>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <div class="bar-title text-xs font-extrabold text-slate-800 leading-tight">Potansiyel</div>
+                                    <div class="text-[10px] font-semibold text-emerald-500">(E<sub>p</sub>)</div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Mekanik Enerji (Em = Ek + Ep) -->
+                            <div class="flex flex-col items-center">
+                                <div id="valEm" class="text-xs sm:text-sm font-extrabold text-indigo-600 tabular-nums mb-1.5 h-5 flex items-center">12.00 J</div>
+                                <div class="bar-track w-full max-w-[44px] h-52 sm:h-60 bg-slate-200/80 rounded-xl p-1 flex flex-col justify-end relative overflow-hidden border border-slate-300/60">
+                                    <div class="bar-grid-line absolute inset-x-0 top-1/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-2/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-3/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div id="barEm" class="energy-bar-fill w-full bg-gradient-to-t from-indigo-600 to-violet-500 rounded-lg shadow-sm" style="height: 100%;"></div>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <div class="bar-title text-xs font-extrabold text-slate-800 leading-tight">Mekanik</div>
+                                    <div class="text-[10px] font-semibold text-indigo-500">(E<sub>k</sub> + E<sub>p</sub>)</div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Isıya Dönüşen Enerji (E_ısı) -->
+                            <div class="flex flex-col items-center">
+                                <div id="valEheat" class="text-xs sm:text-sm font-extrabold text-rose-500 tabular-nums mb-1.5 h-5 flex items-center">0.00 J</div>
+                                <div class="bar-track w-full max-w-[44px] h-52 sm:h-60 bg-slate-200/80 rounded-xl p-1 flex flex-col justify-end relative overflow-hidden border border-slate-300/60">
+                                    <div class="bar-grid-line absolute inset-x-0 top-1/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-2/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-3/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div id="barEheat" class="energy-bar-fill w-full bg-gradient-to-t from-rose-600 to-orange-400 rounded-lg shadow-sm" style="height: 0%;"></div>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <div class="bar-title text-xs font-extrabold text-slate-800 leading-tight">Isıya Dönüşen</div>
+                                    <div class="text-[10px] font-semibold text-rose-500">(E<sub>ısı</sub>)</div>
+                                </div>
+                            </div>
+
+                            <!-- 5. Toplam Enerji (E_toplam) -->
+                            <div class="flex flex-col items-center">
+                                <div id="valEtotal" class="text-xs sm:text-sm font-extrabold text-amber-500 tabular-nums mb-1.5 h-5 flex items-center">12.00 J</div>
+                                <div class="bar-track w-full max-w-[44px] h-52 sm:h-60 bg-slate-200/80 rounded-xl p-1 flex flex-col justify-end relative overflow-hidden border border-amber-400/80">
+                                    <div class="bar-grid-line absolute inset-x-0 top-1/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-2/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div class="bar-grid-line absolute inset-x-0 top-3/4 border-t border-dashed border-slate-300 pointer-events-none"></div>
+                                    <div id="barEtotal" class="energy-bar-fill w-full bg-gradient-to-t from-amber-500 to-yellow-400 rounded-lg shadow-sm" style="height: 100%;"></div>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <div class="bar-title text-xs font-extrabold text-slate-800 leading-tight">Toplam</div>
+                                    <div class="text-[10px] font-semibold text-amber-500">(Sabit)</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Formül ve Gözlem Özeti Kutusu -->
+                    <div class="mt-4 space-y-2.5">
+                        <div id="infoBox" class="p-3 rounded-xl bg-blue-50/80 border border-blue-200/80 text-xs text-slate-700 space-y-1 transition-colors duration-200">
+                            <div id="infoBoxTitle" class="font-bold text-blue-900 flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <span>Enerjinin Korunumu İlkesi:</span>
+                            </div>
+                            <p id="observationNote" class="leading-relaxed text-slate-700">
+                                <strong>Sürtünme Kapalı:</strong> Kinetik enerji (E<sub>k</sub>) ve çekim potansiyel enerjisi (E<sub>p</sub>) birbirine dönüşür; ancak <strong>Mekanik Enerji (E<sub>k</sub> + E<sub>p</sub>)</strong> ve <strong>Toplam Enerji</strong> her noktada sabit kalır.
+                            </p>
+                        </div>
+
+                        <!-- Küçük Formül Hatırlatıcı -->
+                        <div class="inner-box grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 transition-colors duration-200">
+                            <div>• <strong class="text-emerald-500">E<sub>p</sub></strong> = m · g · h</div>
+                            <div>• <strong class="text-sky-500">E<sub>k</sub></strong> = ½ · m · v²</div>
+                            <div>• <strong class="text-indigo-500">E<sub>mekanik</sub></strong> = E<sub>k</sub> + E<sub>p</sub></div>
+                            <div>• <strong class="text-amber-500">E<sub>toplam</sub></strong> = E<sub>mekanik</sub> + E<sub>ısı</sub></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ALT PANEL: 15 Görevlik Sıralı Görev Sistemi ve Görev Testi Paneli -->
+        <section id="missionSection" class="surface-card mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4 transition-colors duration-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 divider-top">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="missionTierBadge" class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800">
+                            Aşama 1/3: Bronz Kupa Görevleri (1–5)
+                        </span>
+                        <span id="missionProgressText" class="muted-label text-xs sm:text-sm font-bold text-slate-600 tabular-nums">
+                            Tamamlanan Görev: 0 / 15
+                        </span>
+                    </div>
+                    <h2 id="missionSectionTitle" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1">
+                        Sıralı Görevler ve Alt Görev Testi
+                    </h2>
+                </div>
+
+                <!-- Alt Görev Testi Düğmeleri -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="testCurrentMissionBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span>Aktif Görevi Test Et</span>
+                    </button>
+
+                    <button id="fullMissionTestBtn" type="button" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        <span>Görev Testi Full Yap</span>
+                    </button>
+
+                    <button id="resetMissionsBtn" type="button" class="secondary-btn inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-all cursor-pointer">
+                        <span>Görevleri Sıfırla</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Aktif Görev Kartı + Canlı Görev Test Geri Bildirimi -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                <div id="activeMissionCard" class="inner-box lg:col-span-7 bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-between gap-3 transition-colors duration-200">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <span id="activeMissionCode" class="text-xs font-extrabold px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-700">
+                                Soru Görevi 1 / 15 • Bronz Kupa
+                            </span>
+                            <span id="activeMissionReward" class="text-xs font-bold text-amber-600">
+                                Ödül: +1 Bronz Kupa
+                            </span>
+                        </div>
+                        <h3 id="activeMissionTitle" class="strong-label text-sm sm:text-base font-extrabold text-slate-900">
+                            7. Sınıf Fen Bilimleri Sorusu Yükleniyor...
+                        </h3>
+                        <p id="activeMissionDesc" class="muted-label text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                            Soruyu yanıtlamak için seçeneklere tıklayın veya "Aktif Görevi Test Et" / "Görev Testi Full Yap" düğmesini kullanın.
+                        </p>
+
+                        <!-- 7. Sınıf Fen Bilimleri Soru Seçenekleri Alanı -->
+                        <div id="missionQuizOptions" class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                    </div>
+
+                    <div id="missionFeedbackBanner" class="text-xs font-semibold px-3 py-2 rounded-xl bg-blue-50 text-blue-800 border border-blue-200">
+                        İpucu: Sarkaç simülasyonunu inceleyip soruyu doğru seçebilir veya alttaki <strong>Görev Testi Full Yap</strong> / <strong>Aktif Görevi Test Et</strong> düğmesini kullanabilirsiniz.
+                    </div>
+                </div>
+
+                <!-- 15 Görevlik Sıralı Liste (Önce 1-5 Bronz, Sonra 6-10 Gümüş, Sonra 11-15 Altın) -->
+                <div class="inner-box lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="strong-label text-xs font-extrabold text-slate-800">15 Görev Sıralaması (Bronz → Gümüş → Altın)</span>
+                        <span id="platinumStatusMini" class="text-[11px] font-extrabold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                            Platin: Bekleniyor
+                        </span>
+                    </div>
+                    <div id="missionListContainer" class="grid grid-cols-5 gap-1.5"></div>
+                    <div class="muted-label mt-2.5 pt-2 border-t border-slate-200/70 divider-top flex items-center justify-between text-[11px] font-semibold">
+                        <span class="text-amber-700">1–5: Bronz</span>
+                        <span class="text-slate-500">6–10: Gümüş</span>
+                        <span class="text-yellow-600">11–15: Altın</span>
+                        <span class="text-cyan-600">15/15: Platin</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- KUPALAR PENCERESİ (MODAL) -->
+    <div id="trophiesModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+        <div id="trophiesModalCard" class="bg-white text-slate-900 border border-slate-200 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden transition-colors duration-200">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center font-extrabold">🏆</span>
+                    <div>
+                        <h2 class="text-lg font-extrabold">Kupa Koleksiyonum</h2>
+                        <p id="modalTrophySubtitle" class="text-xs opacity-75">5 Bronz, 5 Gümüş, 5 Altın ve 1 Platin Kupa</p>
+                    </div>
+                </div>
+                <button id="closeTrophiesModalBtn" type="button" class="px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm bg-slate-200 hover:bg-slate-300 text-slate-800 cursor-pointer">
+                    Kapat ✕
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-5">
+                <!-- Kupa Özet Kartları -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 rounded-xl border border-amber-700/30 bg-amber-500/10 text-center">
+                        <div class="text-2xl">🥉</div>
+                        <div class="text-xs font-bold mt-1">Bronz Kupalar</div>
+                        <div id="countBronzeTrophies" class="text-base font-extrabold tabular-nums">0 / 5</div>
+                    </div>
+                    <div class="p-3 rounded-xl border border-slate-400/40 bg-slate-400/15 text-center">
+                        <div class="text-2xl">🥈</div>
+                        <div class="text-xs font-bold mt-1">Gümüş Kupalar</div>
+                        <div id="countSilverTrophies" class="text-base font-extrabold tabular-nums">0 / 5</div>
+                    </div>
+                    <div class="p-3 rounded-xl border border-yellow-500/40 bg-yellow-400/15 text-center">
+                        <div class="text-2xl">🥇</div>
+                        <div class="text-xs font-bold mt-1">Altın Kupalar</div>
+                        <div id="countGoldTrophies" class="text-base font-extrabold tabular-nums">0 / 5</div>
+                    </div>
+                    <div class="p-3 rounded-xl border border-cyan-400/40 bg-cyan-400/15 text-center">
+                        <div class="text-2xl">👑</div>
+                        <div class="text-xs font-bold mt-1">Platin Kupa</div>
+                        <div id="countPlatinumTrophy" class="text-base font-extrabold tabular-nums">0 / 1</div>
+                    </div>
+                </div>
+
+                <!-- Platin Kupa Durum Kutusu -->
+                <div id="platinumBannerBox" class="p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-extrabold">👑 Platin Kupa (Büyük Şampiyonluk Kupası)</div>
+                        <div id="platinumBannerDesc" class="text-xs opacity-80">15 görevin tamamı bitirildiğinde (5 Bronz + 5 Gümüş + 5 Altın) kazanılır.</div>
+                    </div>
+                    <span id="platinumEarnedTag" class="px-3 py-1 rounded-lg text-xs font-extrabold bg-slate-700 text-white shrink-0">Kilitli</span>
+                </div>
+
+                <!-- Tüm 15 Görev Kupa Listesi -->
+                <div>
+                    <h3 class="text-sm font-extrabold mb-2.5">Görev Kupaları Detayı (Sıralı: Bronz → Gümüş → Altın)</h3>
+                    <div id="modalMissionTrophyList" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alt Bilgi -->
+    <footer id="appFooter" class="bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-500 transition-colors duration-200">
+        İpucu: Önce <strong>Sürtünme Kapalı</strong> iken gözlem yapın, ardından <strong>Sıfırla</strong> düğmesine basıp <strong>Sürtünme Açık</strong> konuma getirerek aynı başlangıç yüksekliğinden iki deneyi karşılaştırın.
+    </footer>
+
+    <script>
+        /**
+         * 7. Sınıf Fen Bilimleri - Basit Sarkaç Enerji Dönüşümleri Simülasyonu
+         * Fizik Modeli:
+         * - Kapalı sistem (dış kuvvet/itme yok)
+         * - Yerçekimi ivmesi g = 10 m/s², Kütle m = 2.0 kg, İp uzunluğu L = 2.0 m
+         * - h = 0 referansı sarkacın en alt denge noktasıdır: h = L * (1 - cos(theta))
+         * - Enerji korunumu garantili numerik entegrasyon (RK4 + Enerji projeksiyonu / Sönümleme)
+         */
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elemanları ---
+            const canvas = document.getElementById('pendulumCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasContainer = document.getElementById('canvasContainer');
+
+            const nightModeBtn = document.getElementById('nightModeBtn');
+            const nightModeLabel = document.getElementById('nightModeLabel');
+            const moonIcon = document.getElementById('moonIcon');
+            const sunIcon = document.getElementById('sunIcon');
+
+            const togglePlayBtn = document.getElementById('togglePlayBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            const playBtnLabel = document.getElementById('playBtnLabel');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const trophiesBtn = document.getElementById('trophiesBtn');
+            const trophySummaryBadge = document.getElementById('trophySummaryBadge');
+            const trophiesModal = document.getElementById('trophiesModal');
+            const trophiesModalCard = document.getElementById('trophiesModalCard');
+            const closeTrophiesModalBtn = document.getElementById('closeTrophiesModalBtn');
+
+            const missionTierBadge = document.getElementById('missionTierBadge');
+            const missionProgressText = document.getElementById('missionProgressText');
+            const testCurrentMissionBtn = document.getElementById('testCurrentMissionBtn');
+            const fullMissionTestBtn = document.getElementById('fullMissionTestBtn');
+            const resetMissionsBtn = document.getElementById('resetMissionsBtn');
+            const activeMissionCode = document.getElementById('activeMissionCode');
+            const activeMissionReward = document.getElementById('activeMissionReward');
+            const activeMissionTitle = document.getElementById('activeMissionTitle');
+            const activeMissionDesc = document.getElementById('activeMissionDesc');
+            const missionQuizOptions = document.getElementById('missionQuizOptions');
+            const missionFeedbackBanner = document.getElementById('missionFeedbackBanner');
+            const missionListContainer = document.getElementById('missionListContainer');
+            const platinumStatusMini = document.getElementById('platinumStatusMini');
+
+            const trophyCelebrationOverlay = document.getElementById('trophyCelebrationOverlay');
+            const trophyCelebrationCard = document.getElementById('trophyCelebrationCard');
+            const platinumConfettiLayer = document.getElementById('platinumConfettiLayer');
+            const celebrationTrophyIcon = document.getElementById('celebrationTrophyIcon');
+            const celebrationBadgeText = document.getElementById('celebrationBadgeText');
+            const celebrationMainTitle = document.getElementById('celebrationMainTitle');
+            const celebrationSubTitle = document.getElementById('celebrationSubTitle');
+            const dismissCelebrationBtn = document.getElementById('dismissCelebrationBtn');
+            const continueAfterTrophyBtn = document.getElementById('continueAfterTrophyBtn');
+
+            const frictionToggle = document.getElementById('frictionToggle');
+            const frictionKnob = document.getElementById('frictionKnob');
+            const frictionBadge = document.getElementById('frictionBadge');
+            const frictionSubText = document.getElementById('frictionSubText');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            const initialHeightSlider = document.getElementById('initialHeightSlider');
+            const sliderValueDisplay = document.getElementById('sliderValueDisplay');
+            const sliderLockBadge = document.getElementById('sliderLockBadge');
+            const initialRefText = document.getElementById('initialRefText');
+
+            const liveHeightEl = document.getElementById('liveHeight');
+            const liveSpeedEl = document.getElementById('liveSpeed');
+            const liveAngleEl = document.getElementById('liveAngle');
+
+            const valEk = document.getElementById('valEk');
+            const valEp = document.getElementById('valEp');
+            const valEm = document.getElementById('valEm');
+            const valEheat = document.getElementById('valEheat');
+            const valEtotal = document.getElementById('valEtotal');
+
+            const barEk = document.getElementById('barEk');
+            const barEp = document.getElementById('barEp');
+            const barEm = document.getElementById('barEm');
+            const barEheat = document.getElementById('barEheat');
+            const barEtotal = document.getElementById('barEtotal');
+            const observationNote = document.getElementById('observationNote');
+
+            // --- Sabit Fizik Parametreleri ---
+            const MASS = 2.0; // kg
+            const LENGTH = 2.0; // m
+            const GRAVITY = 10.0; // m/s²
+            const DAMPING_COEFF = 0.22; // 1/s
+
+            // --- 15 Sıralı 7. Sınıf Fen Bilimleri Soru Görevi (1-5 Bronz, 6-10 Gümüş, 11-15 Altın) ---
+            // Doğru şık sırası: B, A, D, D, B, A, C, B, B, C, A, D, B, B, C
+            const MISSIONS = [
+                {
+                    id: 1, tier: 'bronze', tierName: 'Bronz Kupa', emoji: '🥉',
+                    title: 'Sarkaç en yüksek bırakılma noktasında (durgun halde) hangi enerjiye sahiptir?',
+                    desc: '7. Sınıf Enerji Dönüşümleri: Sarkaç bırakılmadan önce yerden h yüksekliğinde tutulmaktadır.',
+                    options: [
+                        'Yalnızca kinetik enerjiye',
+                        'Yalnızca çekim potansiyel enerjisine',
+                        'Hem maksimum kinetik hem maksimum potansiyel enerjiye',
+                        'Yalnızca ısı enerjisine'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Başlangıçta sürat sıfır (v = 0) olduğu için kinetik enerji yoktur; enerji tamamen çekim potansiyel enerjisi (Eₚ) şeklindedir.'
+                },
+                {
+                    id: 2, tier: 'bronze', tierName: 'Bronz Kupa', emoji: '🥉',
+                    title: 'Sürtünmesiz ortamda sarkaç en alt (denge) noktadan geçerken hangi durum gerçekleşir?',
+                    desc: '7. Sınıf Enerji Dönüşümleri: Denge noktasında yükseklik en düşük seviyededir.',
+                    options: [
+                        'Kinetik enerji en büyük, çekim potansiyel enerjisi en küçüktür',
+                        'Mekanik enerji sıfıra iner',
+                        'Kinetik enerji sıfır, potansiyel enerji en büyüktür',
+                        'Toplam enerji iki katına çıkar'
+                    ],
+                    correctIndex: 0, // A
+                    explanation: 'En alt noktada yükseklik (h = 0) en az olduğu için potansiyel enerji en küçük, sürat en fazla olduğu için kinetik enerji en büyüktür.'
+                },
+                {
+                    id: 3, tier: 'bronze', tierName: 'Bronz Kupa', emoji: '🥉',
+                    title: 'Sürtünme ihmal edildiğinde sarkaç hareketi boyunca mekanik enerji (Eₖ + Eₚ) nasıl değişir?',
+                    desc: '7. Sınıf Enerjinin Korunumu: Dışarıdan enerji girişi veya çıkışı yoktur.',
+                    options: [
+                        'Her salınımda azalır',
+                        'Sürekli artar',
+                        'Yalnızca aşağı inerken artar',
+                        'Sürekli sabit kalır'
+                    ],
+                    correctIndex: 3, // D
+                    explanation: 'Sürtünme yoksa potansiyel ve kinetik enerji birbirine dönüşür; ikisinin toplamı olan mekanik enerji sabit kalır.'
+                },
+                {
+                    id: 4, tier: 'bronze', tierName: 'Bronz Kupa', emoji: '🥉',
+                    title: 'Enerjinin uluslararası birim sistemindeki (SI) temel birimi nedir?',
+                    desc: '7. Sınıf İş ve Enerji: Enerji çubuklarında gösterilen birim.',
+                    options: [
+                        'Newton (N)',
+                        'Kilogram (kg)',
+                        'Santimetre (cm)',
+                        'Joule (J)'
+                    ],
+                    correctIndex: 3, // D
+                    explanation: 'İş ve enerjinin birimi Joule (J) ile ifade edilir.'
+                },
+                {
+                    id: 5, tier: 'bronze', tierName: 'Bronz Kupa', emoji: '🥉',
+                    title: 'Aynı kütleli sarkaç daha yüksek bir noktadan (daha büyük h₀) bırakılırsa başlangıç potansiyel enerjisi nasıl olur?',
+                    desc: '7. Sınıf Çekim Potansiyel Enerjisi: Kütle ve yerçekimi sabittir.',
+                    options: [
+                        'Daha küçük olur',
+                        'Daha büyük olur',
+                        'Hiç değişmez',
+                        'Sıfır olur'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Çekim potansiyel enerjisi yükseklikle doğru orantılıdır; yükseklik arttıkça potansiyel enerji artar.'
+                },
+
+                {
+                    id: 6, tier: 'silver', tierName: 'Gümüş Kupa', emoji: '🥈',
+                    title: 'Sürtünme (hava direnci) açıkken sarkaç hareket ettirilirse mekanik enerjideki azalma nereye dönüşür?',
+                    desc: '7. Sınıf Sürtünme ve Enerji Dönüşümü: Enerji yok olmaz, şekil değiştirir.',
+                    options: [
+                        'Isıya dönüşen enerjiye',
+                        'Yerçekimi ivmesine',
+                        'Yeni bir kütle enerjisine',
+                        'Hiçbir yere dönüşmez, kaybolur'
+                    ],
+                    correctIndex: 0, // A
+                    explanation: 'Sürtünme kuvveti nedeniyle mekanik enerjinin bir kısmı ısı enerjisine dönüşür.'
+                },
+                {
+                    id: 7, tier: 'silver', tierName: 'Gümüş Kupa', emoji: '🥈',
+                    title: 'Sürtünmeli bir ortamda 15 J başlangıç enerjisiyle başlayan sarkacın bir anında mekanik enerjisi 12 J ise ısıya dönüşen enerji kaç J’dür?',
+                    desc: '7. Sınıf Enerjinin Korunumu: Toplam enerji her durumda korunur.',
+                    options: [
+                        '15 J',
+                        '27 J',
+                        '3 J',
+                        '12 J'
+                    ],
+                    correctIndex: 2, // C
+                    explanation: 'Toplam enerji 15 J ve mekanik enerji 12 J ise ısıya dönüşen enerji 15 − 12 = 3 J olur.'
+                },
+                {
+                    id: 8, tier: 'silver', tierName: 'Gümüş Kupa', emoji: '🥈',
+                    title: 'Sarkaç en alt noktadan yukarı doğru çıkarken enerjilerde hangi değişim görülür?',
+                    desc: '7. Sınıf Enerji Dönüşümleri: Sarkaç yükselmekte ve yavaşlamaktadır.',
+                    options: [
+                        'Kinetik enerji artar, çekim potansiyel enerjisi azalır',
+                        'Kinetik enerji azalır, çekim potansiyel enerjisi artar',
+                        'Her iki enerji de aynı anda artar',
+                        'Her iki enerji de sıfırlanır'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Yukarı çıkarken yükseklik arttığı için potansiyel enerji artar, sürat azaldığı için kinetik enerji azalır.'
+                },
+                {
+                    id: 9, tier: 'silver', tierName: 'Gümüş Kupa', emoji: '🥈',
+                    title: 'İki deneyde başlangıç yüksekliği ve kütle birebir aynı tutulursa hangi koşul sağlanmış olur?',
+                    desc: '7. Sınıf Bilimsel Deney Kontrolü: Bağımsız ve sabit tutulan değişkenler.',
+                    options: [
+                        'Sürtünme kuvveti mutlaka sıfır olur',
+                        'Başlangıç potansiyel enerjileri eşit olur',
+                        'Sarkaç hiç durmaz',
+                        'Kinetik enerji her an potansiyelden büyük olur'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Kütle, yerçekimi ve başlangıç yüksekliği aynıysa başlangıç çekim potansiyel enerjileri eşittir.'
+                },
+                {
+                    id: 10, tier: 'silver', tierName: 'Gümüş Kupa', emoji: '🥈',
+                    title: 'Sürtünme açıkken sarkaç neden zamanla en yüksek noktaya eskisi kadar çıkamaz?',
+                    desc: '7. Sınıf Sarkaç Genliği: Çıkabileceği maksimum yükseklik mekanik enerjiyle ilişkilidir.',
+                    options: [
+                        'Kütlesi zamanla azaldığı için',
+                        'İpin boyu kısaldığı için',
+                        'Mekanik enerjisinin bir kısmı ısıya dönüştüğü için',
+                        'Yerçekimi yön değiştirdiği için'
+                    ],
+                    correctIndex: 2, // C
+                    explanation: 'Mekanik enerji azaldığından ulaşabileceği maksimum yükseklik (potansiyel enerji) her salınımda bir miktar azalır.'
+                },
+
+                {
+                    id: 11, tier: 'gold', tierName: 'Altın Kupa', emoji: '🥇',
+                    title: 'Sürtünme açıkken sarkaç durduğunda toplam enerji (E_mekanik + E_ısı) ilk duruma göre nasıldır?',
+                    desc: '7. Sınıf Enerjinin Korunumu Kanunu: Kapalı sistemde toplam enerji.',
+                    options: [
+                        'Başlangıçtaki toplam enerjiye eşittir (korunur)',
+                        'Yarısına inmiştir',
+                        'Sürekli artarak sonsuz olmuştur',
+                        'Tamamen sıfırlanmıştır'
+                    ],
+                    correctIndex: 0, // A
+                    explanation: 'Enerji yoktan var edilemez ve vardan yok edilemez; mekanik enerjinin tamamı ısıya dönüşse bile toplam enerji korunur.'
+                },
+                {
+                    id: 12, tier: 'gold', tierName: 'Altın Kupa', emoji: '🥇',
+                    title: 'Sürtünmesiz bir sarkaçta, toplam mekanik enerjinin 20 J olduğu bir noktada çekim potansiyel enerjisi 8 J ise kinetik enerji kaç J’dür?',
+                    desc: '7. Sınıf Mekanik Enerji Hesabı: E_mekanik = Eₖ + Eₚ.',
+                    options: [
+                        '28 J',
+                        '8 J',
+                        '20 J',
+                        '12 J'
+                    ],
+                    correctIndex: 3, // D
+                    explanation: 'Eₖ = E_mekanik − Eₚ = 20 − 8 = 12 J olarak bulunur.'
+                },
+                {
+                    id: 13, tier: 'gold', tierName: 'Altın Kupa', emoji: '🥇',
+                    title: 'Sarkaç hareketinde cismin sürati iki katına çıkarsa kinetik enerjisi nasıl değişir?',
+                    desc: '7. Sınıf Kinetik Enerji: Sürat kinetik enerjiyi etkileyen temel faktördür.',
+                    options: [
+                        'İki katına çıkar',
+                        'Dört katına çıkar',
+                        'Yarıya iner',
+                        'Değişmez'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Kinetik enerji süratin karesiyle orantılıdır; sürat 2 katına çıktığında kinetik enerji 2² = 4 katına çıkar.'
+                },
+                {
+                    id: 14, tier: 'gold', tierName: 'Altın Kupa', emoji: '🥇',
+                    title: 'Sürtünme açıkken ısıya dönüşen enerjinin sürekli artması aşağıdakilerden hangisinin göstergesidir?',
+                    desc: '7. Sınıf Enerji Dönüşümü Analizi: Isı birikimi ve mekanik azalma.',
+                    options: [
+                        'Sarkaç sistemine dışarıdan enerji eklendiğinin',
+                        'Mekanik enerjiden ısı enerjisine dönüşümün sürdüğünün',
+                        'Potansiyel enerjinin hiç değişmediğinin',
+                        'Sürtünmenin tamamen ortadan kalktığının'
+                    ],
+                    correctIndex: 1, // B
+                    explanation: 'Isıya dönüşen enerjinin artması, hareket sırasında mekanik enerjinin ısıya aktarılmaya devam ettiğini gösterir.'
+                },
+                {
+                    id: 15, tier: 'gold', tierName: 'Altın Kupa', emoji: '🥇',
+                    title: 'Enerjinin korunumu ilkesine göre aşağıdakilerden hangisi doğrudur?',
+                    desc: '7. Sınıf Genel Değerlendirme: Enerji türleri arası dönüşüm.',
+                    options: [
+                        'Kinetik enerji her zaman potansiyel enerjiden büyüktür',
+                        'Sürtünme kuvveti toplam enerjiyi yok eder',
+                        'Enerji bir türden başka bir türe dönüşebilir ama toplam miktarı korunur',
+                        'Hareket durduğunda enerji tamamen ortadan kalkar'
+                    ],
+                    correctIndex: 2, // C
+                    explanation: 'Enerjinin korunumu ilkesi gereği enerji dönüşürken toplam enerji korunur.'
+                }
+            ];
+
+            // --- Simülasyon Durum Değişkenleri ---
+            // Oyun ilk açıldığında Gece Modu aktif başlar
+            let isDarkMode = true;
+            let isRunning = false;
+            let hasStartedOnce = false;
+            let frictionEnabled = false;
+
+            let initialHeight = 0.60; // m
+            let initialTheta = Math.acos(1 - initialHeight / LENGTH);
+
+            let theta = initialTheta;
+            let omega = 0.0;
+
+            let totalEnergy = MASS * GRAVITY * initialHeight;
+            let mechanicalEnergy = totalEnergy;
+            let heatEnergy = 0.0;
+
+            let lastTimestamp = null;
+            let trailPoints = [];
+
+            let completedMissionIds = new Set();
+            let hasPlatinumTrophy = false;
+            let fullTestInterval = null;
+            let celebrationTimeout = null;
+
+            // --- Yardımcı Fizik & Enerji Hesaplamaları ---
+            function computeMetrics() {
+                const h = Math.max(0, LENGTH * (1 - Math.cos(theta)));
+                const v = Math.abs(LENGTH * omega);
+                const ep = MASS * GRAVITY * h;
+                const ek = 0.5 * MASS * v * v;
+                const em = ek + ep;
+                const angleDeg = Math.abs((theta * 180) / Math.PI);
+
+                return {
+                    h,
+                    v,
+                    ep,
+                    ek,
+                    em,
+                    eHeat: heatEnergy,
+                    eTotal: totalEnergy,
+                    angleDeg
+                };
+            }
+
+            // --- Başlangıç Koşullarını Uygulama ---
+            function applyInitialConditions() {
+                try {
+                    initialHeight = parseFloat(initialHeightSlider.value) || 0.60;
+                    const clampedRatio = Math.max(0.01, Math.min(0.95, initialHeight / LENGTH));
+                    initialTheta = Math.acos(1 - clampedRatio);
+
+                    theta = initialTheta;
+                    omega = 0.0;
+
+                    totalEnergy = MASS * GRAVITY * (LENGTH * (1 - Math.cos(initialTheta)));
+                    mechanicalEnergy = totalEnergy;
+                    heatEnergy = 0.0;
+                    trailPoints = [];
+
+                    const maxEp = MASS * GRAVITY * parseFloat(initialHeightSlider.max || 1.40);
+                    sliderValueDisplay.textContent = `h₀ = ${initialHeight.toFixed(2)} m (Başlangıç Ep = ${totalEnergy.toFixed(2)} J)`;
+                    initialRefText.textContent = `h₀ = ${initialHeight.toFixed(2)} m | v₀ = 0 m/s`;
+
+                    if (maxEp <= 0) {
+                        throw new Error('Geçersiz maksimum potansiyel enerji değeri.');
+                    }
+
+                    updateUI(false, false, true);
+                } catch (err) {
+                    console.error('Başlangıç koşulları uygulanırken hata:', err);
+                }
+            }
+
+            // --- Kupa Kutlama Animasyonu ---
+            function triggerTrophyCelebration(emoji, badgeText, mainTitle, subTitle, trophyTier = 'bronze') {
+                try {
+                    if (celebrationTimeout) {
+                        clearTimeout(celebrationTimeout);
+                    }
+
+                    trophyCelebrationOverlay.classList.remove('hidden');
+                    trophyCelebrationOverlay.classList.add('flex');
+                    celebrationTrophyIcon.textContent = emoji;
+                    celebrationBadgeText.textContent = badgeText;
+                    celebrationMainTitle.textContent = mainTitle;
+                    celebrationSubTitle.textContent = subTitle;
+
+                    const isPlatinum = trophyTier === 'platinum';
+                    const isGold = trophyTier === 'gold';
+                    const isSilver = trophyTier === 'silver';
+
+                    if (isPlatinum) {
+                        trophyCelebrationCard.className = 'big-trophy-modal-enter platinum-celebration-bg relative overflow-hidden max-w-md w-full rounded-3xl border-2 border-cyan-300 bg-slate-900/95 text-white px-7 py-8 shadow-2xl flex flex-col items-center text-center gap-4';
+                        celebrationTrophyIcon.className = 'giant-cup-anim relative z-10 w-32 h-32 rounded-3xl bg-gradient-to-br from-cyan-300 via-fuchsia-400 to-amber-200 border-2 border-cyan-200 flex items-center justify-center text-7xl shadow-2xl';
+                        platinumConfettiLayer.classList.remove('hidden');
+                        platinumConfettiLayer.innerHTML = '';
+
+                        const colors = ['#38bdf8', '#facc15', '#e879f9', '#34d399', '#fb7185', '#ffffff'];
+                        for (let i = 0; i < 28; i++) {
+                            const piece = document.createElement('span');
+                            piece.className = 'confetti-piece absolute top-0 w-2.5 h-2.5 rounded-sm';
+                            piece.style.left = `${(i * 3.7) % 100}%`;
+                            piece.style.backgroundColor = colors[i % colors.length];
+                            piece.style.animationDelay = `${(i % 7) * 0.16}s`;
+                            platinumConfettiLayer.appendChild(piece);
+                        }
+                    } else if (isGold) {
+                        trophyCelebrationCard.className = 'big-trophy-modal-enter relative overflow-hidden max-w-md w-full rounded-3xl border-2 border-yellow-400 bg-gradient-to-b from-yellow-950/95 via-slate-900 to-slate-950 text-white px-7 py-8 shadow-2xl flex flex-col items-center text-center gap-4';
+                        celebrationTrophyIcon.className = 'giant-cup-anim relative z-10 w-32 h-32 rounded-3xl bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border-2 border-yellow-200 flex items-center justify-center text-7xl shadow-2xl shadow-yellow-500/30';
+                        platinumConfettiLayer.classList.add('hidden');
+                        platinumConfettiLayer.innerHTML = '';
+                    } else if (isSilver) {
+                        trophyCelebrationCard.className = 'big-trophy-modal-enter relative overflow-hidden max-w-md w-full rounded-3xl border-2 border-slate-300 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 text-white px-7 py-8 shadow-2xl flex flex-col items-center text-center gap-4';
+                        celebrationTrophyIcon.className = 'giant-cup-anim relative z-10 w-32 h-32 rounded-3xl bg-gradient-to-br from-slate-100 via-slate-300 to-slate-500 border-2 border-white flex items-center justify-center text-7xl shadow-2xl shadow-slate-300/25';
+                        platinumConfettiLayer.classList.add('hidden');
+                        platinumConfettiLayer.innerHTML = '';
+                    } else {
+                        trophyCelebrationCard.className = 'big-trophy-modal-enter relative overflow-hidden max-w-md w-full rounded-3xl border-2 border-amber-600 bg-gradient-to-b from-amber-950/95 via-slate-900 to-slate-950 text-white px-7 py-8 shadow-2xl flex flex-col items-center text-center gap-4';
+                        celebrationTrophyIcon.className = 'giant-cup-anim relative z-10 w-32 h-32 rounded-3xl bg-gradient-to-br from-amber-500 via-orange-600 to-amber-800 border-2 border-amber-300 flex items-center justify-center text-7xl shadow-2xl shadow-amber-700/30';
+                        platinumConfettiLayer.classList.add('hidden');
+                        platinumConfettiLayer.innerHTML = '';
+                    }
+
+                    const duration = isPlatinum ? 6500 : 3600;
+                    celebrationTimeout = setTimeout(() => {
+                        closeTrophyCelebration();
+                    }, duration);
+                } catch (err) {
+                    console.error('Kupa animasyonu gösterilirken hata:', err);
+                }
+            }
+
+            function closeTrophyCelebration() {
+                trophyCelebrationOverlay.classList.add('hidden');
+                trophyCelebrationOverlay.classList.remove('flex');
+            }
+
+            // --- Görev ve Kupa Durumunu Güncelleme ---
+            function getActiveMission() {
+                return MISSIONS.find((m) => !completedMissionIds.has(m.id)) || null;
+            }
+
+            function checkAndAwardPlatinum() {
+                if (completedMissionIds.size === MISSIONS.length && !hasPlatinumTrophy) {
+                    hasPlatinumTrophy = true;
+                    triggerTrophyCelebration(
+                        '👑',
+                        'BÜYÜK ŞAMPİYONLUK KUPASI!',
+                        'Tebrikler! Platin Kupa kazandınız!',
+                        '15 görevin tamamı (5 Bronz + 5 Gümüş + 5 Altın) başarıyla tamamlandı!',
+                        'platinum'
+                    );
+                }
+            }
+
+            function completeMission(mission, customReason = '') {
+                if (!mission || completedMissionIds.has(mission.id)) return;
+
+                completedMissionIds.add(mission.id);
+                const isAllDone = completedMissionIds.size === MISSIONS.length;
+
+                missionFeedbackBanner.className = 'text-xs font-bold px-3 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+                missionFeedbackBanner.textContent = customReason || `Görev ${mission.id} tamamlandı! ${mission.emoji} ${mission.tierName} kazandınız.`;
+
+                if (!isAllDone) {
+                    triggerTrophyCelebration(
+                        mission.emoji,
+                        `GÖREV ${mission.id}/15 TAMAMLANDI`,
+                        `Tebrikler! ${mission.tierName} kazandınız!`,
+                        `"${mission.title}" görevi tamamlandı.`,
+                        mission.tier
+                    );
+                }
+
+                checkAndAwardPlatinum();
+                renderMissionUI();
+            }
+
+            function evaluateMissions(extraState = {}) {
+                // Sorulu görev sisteminde görevler soruların doğru yanıtlanması veya görev testi ile tamamlanır.
+                if (extraState.justStopped || extraState.justReset) {
+                    checkAndAwardPlatinum();
+                }
+            }
+
+            function handleAnswerOption(mission, optionIdx) {
+                if (!mission || completedMissionIds.has(mission.id)) return;
+                stopFullMissionTest();
+
+                if (optionIdx === mission.correctIndex) {
+                    completeMission(
+                        mission,
+                        `Doğru! Görev ${mission.id} tamamlandı (${mission.explanation}) — ${mission.emoji} ${mission.tierName} kazandınız!`
+                    );
+                } else {
+                    missionFeedbackBanner.className = 'text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/15 text-rose-300 border border-rose-500/40';
+                    missionFeedbackBanner.textContent = `Tam doğru değil! Tekrar dene veya ipucunu incele: ${mission.desc}`;
+                }
+            }
+
+            // --- Görev Arayüzünü Çizme ---
+            function renderMissionUI() {
+                const doneCount = completedMissionIds.size;
+                const totalCount = MISSIONS.length;
+                const totalTrophiesEarned = doneCount + (hasPlatinumTrophy ? 1 : 0);
+
+                missionProgressText.textContent = `Tamamlanan Soru Görevi: ${doneCount} / ${totalCount}`;
+                trophySummaryBadge.textContent = `${totalTrophiesEarned}/16`;
+
+                if (doneCount < 5) {
+                    missionTierBadge.textContent = 'Aşama 1/3: Bronz Kupa Soruları (1–5)';
+                } else if (doneCount < 10) {
+                    missionTierBadge.textContent = 'Aşama 2/3: Gümüş Kupa Soruları (6–10)';
+                } else {
+                    missionTierBadge.textContent = 'Aşama 3/3: Altın Kupa Soruları (11–15)';
+                }
+
+                missionQuizOptions.innerHTML = '';
+                const active = getActiveMission();
+                const optionLabels = ['A', 'B', 'C', 'D'];
+
+                if (active) {
+                    activeMissionCode.textContent = `Soru Görevi ${active.id} / ${totalCount} • ${active.tierName}`;
+                    activeMissionReward.textContent = `Ödül: +1 ${active.tierName}`;
+                    activeMissionTitle.textContent = active.title;
+                    activeMissionDesc.textContent = active.desc;
+
+                    active.options.forEach((optText, idx) => {
+                        const optBtn = document.createElement('button');
+                        optBtn.type = 'button';
+                        optBtn.className = isDarkMode
+                            ? 'text-left px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900/90 hover:bg-slate-800 hover:border-sky-400 text-xs sm:text-sm font-semibold text-white transition-all cursor-pointer flex items-start gap-2'
+                            : 'text-left px-3 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-blue-50 hover:border-blue-400 text-xs sm:text-sm font-semibold text-slate-800 transition-all cursor-pointer flex items-start gap-2';
+                        optBtn.innerHTML = `<span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-extrabold text-xs shrink-0">${optionLabels[idx]}</span><span>${optText}</span>`;
+                        optBtn.addEventListener('click', () => handleAnswerOption(active, idx));
+                        missionQuizOptions.appendChild(optBtn);
+                    });
+                } else {
+                    activeMissionCode.textContent = 'Tüm Soru Görevleri Tamamlandı (15 / 15)';
+                    activeMissionReward.textContent = 'Ödül: 👑 Platin Kupa';
+                    activeMissionTitle.textContent = 'Tebrikler! Tüm 7. Sınıf Fen Bilimleri Sorularını ve Platin Kupayı Kazandınız!';
+                    activeMissionDesc.textContent = '5 Bronz, 5 Gümüş, 5 Altın ve 1 Platin kupanın tamamı koleksiyonunuza eklendi. İsterseniz görevleri sıfırlayıp soruları tekrar çözebilirsiniz.';
+                }
+
+                if (hasPlatinumTrophy) {
+                    platinumStatusMini.textContent = '👑 Platin: Kazanıldı!';
+                    platinumStatusMini.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded bg-cyan-400/20 text-cyan-300 border border-cyan-400/40';
+                } else {
+                    platinumStatusMini.textContent = `Platin: ${doneCount}/15`;
+                    platinumStatusMini.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded bg-slate-700 text-slate-200';
+                }
+
+                missionListContainer.innerHTML = '';
+                MISSIONS.forEach((m) => {
+                    const isDone = completedMissionIds.has(m.id);
+                    const isCurrent = active && active.id === m.id;
+                    const btn = document.createElement('div');
+                    btn.className = [
+                        'rounded-lg px-1.5 py-1.5 text-center border text-[11px] font-extrabold transition-all select-none',
+                        isDone
+                            ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+                            : isCurrent
+                                ? 'bg-amber-500/25 border-amber-400 text-amber-200 ring-1 ring-amber-400'
+                                : 'bg-slate-800/70 border-slate-700 text-slate-400'
+                    ].join(' ');
+                    btn.title = `Görev ${m.id} (${m.tierName}): ${m.title}`;
+                    btn.innerHTML = `<div>${m.id}</div><div class="text-xs leading-none mt-0.5">${isDone ? '✓' : m.emoji}</div>`;
+                    missionListContainer.appendChild(btn);
+                });
+
+                renderTrophiesModalContent();
+            }
+
+            // --- Kupa Penceresi İçeriğini Güncelleme ---
+            function renderTrophiesModalContent() {
+                const bronzeCount = MISSIONS.filter((m) => m.tier === 'bronze' && completedMissionIds.has(m.id)).length;
+                const silverCount = MISSIONS.filter((m) => m.tier === 'silver' && completedMissionIds.has(m.id)).length;
+                const goldCount = MISSIONS.filter((m) => m.tier === 'gold' && completedMissionIds.has(m.id)).length;
+                const platinumCount = hasPlatinumTrophy ? 1 : 0;
+
+                document.getElementById('countBronzeTrophies').textContent = `${bronzeCount} / 5`;
+                document.getElementById('countSilverTrophies').textContent = `${silverCount} / 5`;
+                document.getElementById('countGoldTrophies').textContent = `${goldCount} / 5`;
+                document.getElementById('countPlatinumTrophy').textContent = `${platinumCount} / 1`;
+
+                const platinumBannerBox = document.getElementById('platinumBannerBox');
+                const platinumEarnedTag = document.getElementById('platinumEarnedTag');
+                if (hasPlatinumTrophy) {
+                    platinumBannerBox.className = 'platinum-celebration-bg p-3.5 rounded-xl border border-cyan-300 flex items-center justify-between gap-3 text-white';
+                    platinumEarnedTag.textContent = '👑 Kazanıldı';
+                    platinumEarnedTag.className = 'px-3 py-1 rounded-lg text-xs font-extrabold bg-cyan-400 text-slate-950 shrink-0';
+                } else {
+                    platinumBannerBox.className = isDarkMode
+                        ? 'p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 flex items-center justify-between gap-3 text-white'
+                        : 'p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-50 flex items-center justify-between gap-3 text-slate-900';
+                    platinumEarnedTag.textContent = 'Kilitli';
+                    platinumEarnedTag.className = 'px-3 py-1 rounded-lg text-xs font-extrabold bg-slate-700 text-white shrink-0';
+                }
+
+                const listEl = document.getElementById('modalMissionTrophyList');
+                listEl.innerHTML = '';
+                MISSIONS.forEach((m) => {
+                    const earned = completedMissionIds.has(m.id);
+                    const row = document.createElement('div');
+                    row.className = [
+                        'flex items-center justify-between gap-3 p-2.5 rounded-xl border text-xs transition-colors',
+                        earned
+                            ? 'border-emerald-500/40 bg-emerald-500/10'
+                            : isDarkMode
+                                ? 'border-slate-800 bg-slate-900/70 opacity-75'
+                                : 'border-slate-200 bg-slate-50 opacity-80'
+                    ].join(' ');
+                    row.innerHTML = `
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-xl shrink-0">${m.emoji}</span>
+                            <div class="min-w-0">
+                                <div class="font-extrabold truncate">Görev ${m.id}: ${m.title}</div>
+                                <div class="opacity-75 truncate">${m.desc}</div>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg font-extrabold shrink-0 ${earned ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-300'}">
+                            ${earned ? 'Kazanıldı' : m.tierName}
+                        </span>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+
+            // --- Gece / Gündüz Teması Uygulama ---
+            function applyThemeUI() {
+                document.body.classList.toggle('dark-mode', isDarkMode);
+                nightModeBtn.setAttribute('aria-pressed', String(isDarkMode));
+
+                if (isDarkMode) {
+                    nightModeLabel.textContent = 'Gündüz Modu';
+                    moonIcon.classList.add('hidden');
+                    sunIcon.classList.remove('hidden');
+                } else {
+                    nightModeLabel.textContent = 'Gece Modu';
+                    moonIcon.classList.remove('hidden');
+                    sunIcon.classList.add('hidden');
+                }
+
+                const header = document.getElementById('appHeader');
+                const footer = document.getElementById('appFooter');
+                const barsContainer = document.getElementById('barsContainer');
+                const infoBox = document.getElementById('infoBox');
+                const infoBoxTitle = document.getElementById('infoBoxTitle');
+                const energyChartTitle = document.getElementById('energyChartTitle');
+                const missionSectionTitle = document.getElementById('missionSectionTitle');
+                const gravityPill = document.getElementById('gravityPill');
+                const liveMetricsBox = document.getElementById('liveMetricsBox');
+
+                header.className = isDarkMode
+                    ? 'bg-slate-950/95 border-b border-slate-800 shadow-sm sticky top-0 z-10 transition-colors duration-200 text-white'
+                    : 'bg-white border-b border-slate-200 shadow-sm sticky top-0 z-10 transition-colors duration-200 text-slate-900';
+
+                footer.className = isDarkMode
+                    ? 'bg-slate-950 border-t border-slate-800 py-3 px-4 text-center text-xs text-slate-300 transition-colors duration-200'
+                    : 'bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-500 transition-colors duration-200';
+
+                energyChartTitle.className = isDarkMode
+                    ? 'text-base sm:text-lg font-extrabold text-white'
+                    : 'text-base sm:text-lg font-extrabold text-slate-900';
+
+                missionSectionTitle.className = isDarkMode
+                    ? 'text-base sm:text-lg font-extrabold text-white mt-1'
+                    : 'text-base sm:text-lg font-extrabold text-slate-900 mt-1';
+
+                gravityPill.className = isDarkMode
+                    ? 'px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-400/40'
+                    : 'px-3 py-1.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200';
+
+                liveMetricsBox.className = isDarkMode
+                    ? 'absolute top-3 left-3 bg-slate-950/90 text-white backdrop-blur-sm border border-slate-700 rounded-xl p-2.5 sm:p-3 shadow-sm pointer-events-none space-y-1 text-xs sm:text-sm transition-colors duration-200'
+                    : 'absolute top-3 left-3 bg-white/90 text-slate-900 backdrop-blur-sm border border-slate-200/90 rounded-xl p-2.5 sm:p-3 shadow-sm pointer-events-none space-y-1 text-xs sm:text-sm transition-colors duration-200';
+
+                barsContainer.className = isDarkMode
+                    ? 'grid grid-cols-5 gap-2 sm:gap-3 pt-2 pb-2 px-1 bg-slate-900/90 rounded-2xl border border-slate-800 transition-colors duration-200'
+                    : 'grid grid-cols-5 gap-2 sm:gap-3 pt-2 pb-2 px-1 bg-slate-50/80 rounded-2xl border border-slate-200/80 transition-colors duration-200';
+
+                infoBox.className = isDarkMode
+                    ? 'p-3 rounded-xl bg-sky-950/60 border border-sky-800/70 text-xs text-slate-100 space-y-1 transition-colors duration-200'
+                    : 'p-3 rounded-xl bg-blue-50/80 border border-blue-200/80 text-xs text-slate-700 space-y-1 transition-colors duration-200';
+
+                infoBoxTitle.className = isDarkMode
+                    ? 'font-bold text-sky-300 flex items-center gap-1.5'
+                    : 'font-bold text-blue-900 flex items-center gap-1.5';
+
+                observationNote.className = isDarkMode
+                    ? 'leading-relaxed text-slate-100'
+                    : 'leading-relaxed text-slate-700';
+
+                canvasContainer.className = isDarkMode
+                    ? 'relative w-full h-[360px] sm:h-[420px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 select-none transition-colors duration-200'
+                    : 'relative w-full h-[360px] sm:h-[420px] bg-gradient-to-b from-sky-50/60 via-white to-slate-50 select-none transition-colors duration-200';
+
+                trophiesModalCard.className = isDarkMode
+                    ? 'bg-slate-900 text-white border border-slate-700 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden transition-colors duration-200'
+                    : 'bg-white text-slate-900 border border-slate-200 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden transition-colors duration-200';
+
+                document.querySelectorAll('.surface-card').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bbg-white\b|\bbg-slate-900\b/g, isDarkMode ? 'bg-slate-900' : 'bg-white')
+                        .replace(/\bborder-slate-200\b|\bborder-slate-800\b/g, isDarkMode ? 'border-slate-800' : 'border-slate-200');
+                });
+
+                document.querySelectorAll('.sub-bar').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bbg-slate-50\/70\b|\bbg-slate-950\/70\b/g, isDarkMode ? 'bg-slate-950/70' : 'bg-slate-50/70')
+                        .replace(/\bborder-slate-100\b|\bborder-slate-800\b/g, isDarkMode ? 'border-slate-800' : 'border-slate-100');
+                });
+
+                document.querySelectorAll('.inner-box').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bbg-slate-50\b|\bbg-slate-950\/70\b/g, isDarkMode ? 'bg-slate-950/70' : 'bg-slate-50')
+                        .replace(/\bborder-slate-200\b|\bborder-slate-800\b/g, isDarkMode ? 'border-slate-800' : 'border-slate-200');
+                });
+
+                document.querySelectorAll('.param-pill').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bbg-slate-100\b|\bbg-slate-800\b/g, isDarkMode ? 'bg-slate-800' : 'bg-slate-100')
+                        .replace(/\btext-slate-700\b|\btext-slate-600\b|\btext-slate-100\b/g, isDarkMode ? 'text-slate-100' : 'text-slate-700')
+                        .replace(/\bborder-slate-200\b|\bborder-slate-700\b/g, isDarkMode ? 'border-slate-700' : 'border-slate-200');
+                });
+
+                document.querySelectorAll('.param-strong').forEach((el) => {
+                    el.className = isDarkMode ? 'text-white font-extrabold' : 'text-slate-900 font-extrabold';
+                });
+
+                document.querySelectorAll('.strong-label').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\btext-slate-800\b|\btext-slate-700\b|\btext-slate-900\b|\btext-white\b/g, isDarkMode ? 'text-white' : 'text-slate-800');
+                });
+
+                document.querySelectorAll('.muted-label').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\btext-slate-500\b|\btext-slate-600\b|\btext-slate-400\b|\btext-slate-300\b/g, isDarkMode ? 'text-slate-300' : 'text-slate-500');
+                });
+
+                document.querySelectorAll('.bar-title').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\btext-slate-800\b|\btext-white\b/g, isDarkMode ? 'text-white' : 'text-slate-800');
+                });
+
+                document.querySelectorAll('.bar-track').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bbg-slate-200\/80\b|\bbg-slate-800\/90\b/g, isDarkMode ? 'bg-slate-800/90' : 'bg-slate-200/80')
+                        .replace(/\bborder-slate-300\/60\b|\bborder-slate-700\b/g, isDarkMode ? 'border-slate-700' : 'border-slate-300/60');
+                });
+
+                document.querySelectorAll('.bar-grid-line').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bborder-slate-300\b|\bborder-slate-700\/80\b/g, isDarkMode ? 'border-slate-700/80' : 'border-slate-300');
+                });
+
+                document.querySelectorAll('.divider-top').forEach((el) => {
+                    el.className = el.className
+                        .replace(/\bborder-slate-100\b|\bborder-slate-200\/70\b|\bborder-slate-800\b/g, isDarkMode ? 'border-slate-800' : 'border-slate-100');
+                });
+
+                document.querySelectorAll('.secondary-btn').forEach((el) => {
+                    el.className = isDarkMode
+                        ? 'secondary-btn inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm sm:text-base text-white bg-slate-800 hover:bg-slate-700 active:scale-[0.98] border border-slate-600 transition-all cursor-pointer'
+                        : 'secondary-btn inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm sm:text-base text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] border border-slate-300 transition-all cursor-pointer';
+                });
+
+                liveAngleEl.className = isDarkMode
+                    ? 'font-bold text-white tabular-nums'
+                    : 'font-bold text-slate-700 tabular-nums';
+
+                sliderValueDisplay.className = isDarkMode
+                    ? 'text-xs sm:text-sm font-extrabold text-sky-300 bg-sky-950/80 px-2.5 py-1 rounded-lg border border-sky-700/70 self-start sm:self-auto'
+                    : 'text-xs sm:text-sm font-extrabold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 self-start sm:self-auto';
+
+                updateUI(false, false, true);
+                renderTrophiesModalContent();
+            }
+
+            // --- Arayüz ve Enerji Çubuklarını Güncelleme ---
+            function updateUI(justStopped = false, justReset = false, skipMissionEval = false) {
+                const metrics = computeMetrics();
+
+                liveHeightEl.textContent = `${metrics.h.toFixed(2)} m`;
+                liveSpeedEl.textContent = `${metrics.v.toFixed(2)} m/s`;
+                liveAngleEl.textContent = `${metrics.angleDeg.toFixed(1)}°`;
+
+                const maxDisplayEnergy = Math.max(MASS * GRAVITY * parseFloat(initialHeightSlider.max || 1.40), 1.0);
+
+                valEk.textContent = `${metrics.ek.toFixed(2)} J`;
+                valEp.textContent = `${metrics.ep.toFixed(2)} J`;
+                valEm.textContent = `${metrics.em.toFixed(2)} J`;
+                valEheat.textContent = `${metrics.eHeat.toFixed(2)} J`;
+                valEtotal.textContent = `${metrics.eTotal.toFixed(2)} J`;
+
+                barEk.style.height = `${Math.min(100, Math.max(0, (metrics.ek / maxDisplayEnergy) * 100))}%`;
+                barEp.style.height = `${Math.min(100, Math.max(0, (metrics.ep / maxDisplayEnergy) * 100))}%`;
+                barEm.style.height = `${Math.min(100, Math.max(0, (metrics.em / maxDisplayEnergy) * 100))}%`;
+                barEheat.style.height = `${Math.min(100, Math.max(0, (metrics.eHeat / maxDisplayEnergy) * 100))}%`;
+                barEtotal.style.height = `${Math.min(100, Math.max(0, (metrics.eTotal / maxDisplayEnergy) * 100))}%`;
+
+                if (isRunning) {
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                    playBtnLabel.textContent = 'Duraklat';
+                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+                    statusText.className = isDarkMode ? 'text-xs sm:text-sm font-semibold text-emerald-300' : 'text-xs sm:text-sm font-semibold text-emerald-700';
+                    statusText.textContent = 'Çalışıyor (Enerji dönüşümü canlı izleniyor)';
+                } else {
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                    playBtnLabel.textContent = hasStartedOnce ? 'Devam Et' : 'Başlat';
+                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+                    statusText.className = isDarkMode ? 'text-xs sm:text-sm font-semibold text-amber-200' : 'text-xs sm:text-sm font-semibold text-slate-700';
+                    statusText.textContent = hasStartedOnce
+                        ? 'Durduruldu (Sıfırla ile başlangıca dönebilir veya devam edebilirsiniz)'
+                        : 'Hazır (Başlatmak için düğmeye basın)';
+                }
+
+                initialHeightSlider.disabled = hasStartedOnce;
+                sliderLockBadge.classList.toggle('hidden', !hasStartedOnce);
+
+                if (frictionEnabled) {
+                    frictionToggle.setAttribute('aria-checked', 'true');
+                    frictionToggle.className = 'relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-rose-600 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2';
+                    frictionKnob.className = 'pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-6';
+                    frictionBadge.textContent = 'Sürtünme: AÇIK';
+                    frictionBadge.className = isDarkMode
+                        ? 'px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-200 border border-rose-400/40 transition-colors'
+                        : 'px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 transition-colors';
+                    frictionSubText.textContent = 'Açık: Mekanik enerji ısıya dönüşür';
+                    observationNote.innerHTML = '<strong>Sürtünme Açık:</strong> Hava direnci nedeniyle <strong>Mekanik Enerji (E<sub>k</sub> + E<sub>p</sub>)</strong> zamanla azalır ve azalan miktar <strong>Isıya Dönüşen Enerji (E<sub>ısı</sub>)</strong> çubuğuna aktarılır. Isı da dahil edildiğinde <strong>Toplam Enerji</strong> sabit kalır.';
+                } else {
+                    frictionToggle.setAttribute('aria-checked', 'false');
+                    frictionToggle.className = 'relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-500 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
+                    frictionKnob.className = 'pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0';
+                    frictionBadge.textContent = 'Sürtünme: KAPALI';
+                    frictionBadge.className = isDarkMode
+                        ? 'px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 transition-colors'
+                        : 'px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 transition-colors';
+                    frictionSubText.textContent = 'Kapalı: Enerji kaybı yok';
+                    observationNote.innerHTML = '<strong>Sürtünme Kapalı:</strong> Kinetik enerji (E<sub>k</sub>) ve çekim potansiyel enerjisi (E<sub>p</sub>) birbirine dönüşür; ancak <strong>Mekanik Enerji (E<sub>k</sub> + E<sub>p</sub>)</strong> ve <strong>Toplam Enerji</strong> her noktada sabit kalır.';
+                }
+
+                drawPendulum();
+
+                if (!skipMissionEval) {
+                    evaluateMissions({ justStopped, justReset });
+                }
+            }
+
+            // --- Fizik Adımı (RK4 + Enerji Korunumu) ---
+            function stepPhysics(dt) {
+                const clampedDt = Math.min(dt, 0.033);
+                const subSteps = 4;
+                const hStep = clampedDt / subSteps;
+
+                for (let i = 0; i < subSteps; i++) {
+                    const accel = (ang, vel) => -(GRAVITY / LENGTH) * Math.sin(ang) - (frictionEnabled ? DAMPING_COEFF * vel : 0);
+
+                    const k1Theta = omega;
+                    const k1Omega = accel(theta, omega);
+
+                    const k2Theta = omega + 0.5 * hStep * k1Omega;
+                    const k2Omega = accel(theta + 0.5 * hStep * k1Theta, omega + 0.5 * hStep * k1Omega);
+
+                    const k3Theta = omega + 0.5 * hStep * k2Omega;
+                    const k3Omega = accel(theta + 0.5 * hStep * k2Theta, omega + 0.5 * hStep * k2Omega);
+
+                    const k4Theta = omega + hStep * k3Omega;
+                    const k4Omega = accel(theta + hStep * k3Theta, omega + hStep * k3Omega);
+
+                    theta += (hStep / 6) * (k1Theta + 2 * k2Theta + 2 * k3Theta + k4Theta);
+                    omega += (hStep / 6) * (k1Omega + 2 * k2Omega + 2 * k3Omega + k4Omega);
+
+                    const currentH = Math.max(0, LENGTH * (1 - Math.cos(theta)));
+                    const currentEp = MASS * GRAVITY * currentH;
+                    const maxAllowedEk = Math.max(0, totalEnergy - currentEp - (frictionEnabled ? heatEnergy : 0));
+                    const currentEk = 0.5 * MASS * Math.pow(LENGTH * omega, 2);
+
+                    if (!frictionEnabled) {
+                        heatEnergy = 0.0;
+                        if (currentEk > maxAllowedEk) {
+                            const correctedV = Math.sqrt((2 * maxAllowedEk) / MASS) / LENGTH;
+                            omega = Math.sign(omega || 1) * correctedV;
+                        }
+                        mechanicalEnergy = totalEnergy;
+                    } else {
+                        const rawMech = currentEk + currentEp;
+                        if (rawMech > totalEnergy - heatEnergy) {
+                            const excess = rawMech - (totalEnergy - heatEnergy);
+                            const reducedEk = Math.max(0, currentEk - excess);
+                            const correctedV = Math.sqrt((2 * reducedEk) / MASS) / LENGTH;
+                            omega = Math.sign(omega || 1) * correctedV;
+                        }
+                        const updatedEk = 0.5 * MASS * Math.pow(LENGTH * omega, 2);
+                        mechanicalEnergy = Math.max(0, Math.min(totalEnergy, updatedEk + currentEp));
+                        heatEnergy = Math.max(0, totalEnergy - mechanicalEnergy);
+                    }
+                }
+            }
+
+            // --- Sarkaç Sahnesini Çizme ---
+            function resizeCanvas() {
+                const rect = canvasContainer.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+                canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                drawPendulum();
+            }
+
+            function drawPendulum() {
+                const rect = canvasContainer.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                if (width <= 0 || height <= 0) return;
+
+                ctx.clearRect(0, 0, width, height);
+
+                const pivotX = width * 0.5;
+                const pivotY = 48;
+                const visualRopeLen = Math.min(height - 125, width * 0.44, 235);
+                const lowestY = pivotY + visualRopeLen;
+
+                // Düşey denge çizgisi (tam orta)
+                ctx.save();
+                ctx.setLineDash([5, 5]);
+                ctx.strokeStyle = isDarkMode ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.35)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(pivotX, pivotY);
+                ctx.lineTo(pivotX, lowestY + 26);
+                ctx.stroke();
+                ctx.restore();
+
+                // En alt (h = 0) referans çizgisi
+                ctx.save();
+                ctx.setLineDash([3, 4]);
+                ctx.strokeStyle = isDarkMode ? 'rgba(52, 211, 153, 0.35)' : 'rgba(5, 150, 105, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(pivotX - visualRopeLen - 25, lowestY);
+                ctx.lineTo(pivotX + visualRopeLen + 25, lowestY);
+                ctx.stroke();
+                ctx.restore();
+
+                // Topun anlık koordinatları
+                const bobX = pivotX + visualRopeLen * Math.sin(theta);
+                const bobY = pivotY + visualRopeLen * Math.cos(theta);
+
+                if (isRunning) {
+                    trailPoints.push({ x: bobX, y: bobY });
+                    if (trailPoints.length > 22) trailPoints.shift();
+                }
+
+                // Hareket izi
+                if (trailPoints.length > 1) {
+                    for (let i = 1; i < trailPoints.length; i++) {
+                        const alpha = (i / trailPoints.length) * 0.35;
+                        ctx.strokeStyle = isDarkMode
+                            ? `rgba(56, 189, 248, ${alpha})`
+                            : `rgba(37, 99, 235, ${alpha})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(trailPoints[i - 1].x, trailPoints[i - 1].y);
+                        ctx.lineTo(trailPoints[i].x, trailPoints[i].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Destek tavan çubuğu
+                ctx.fillStyle = isDarkMode ? '#334155' : '#475569';
+                ctx.beginPath();
+                ctx.roundRect(pivotX - 64, pivotY - 12, 128, 12, 6);
+                ctx.fill();
+
+                // İp
+                ctx.strokeStyle = isDarkMode ? '#e2e8f0' : '#334155';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(pivotX, pivotY);
+                ctx.lineTo(bobX, bobY);
+                ctx.stroke();
+
+                // Pivot noktası
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(pivotX, pivotY, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Sarkaç topu (2.0 kg kütle)
+                const bobRadius = 22;
+                const grad = ctx.createRadialGradient(bobX - 6, bobY - 6, 3, bobX, bobY, bobRadius);
+                grad.addColorStop(0, '#7dd3fc');
+                grad.addColorStop(0.55, '#0284c7');
+                grad.addColorStop(1, '#1e3a8a');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(bobX, bobY, bobRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = isDarkMode ? '#f8fafc' : '#0f172a';
+                ctx.stroke();
+
+                // Top üzerindeki kütle etiketi
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('2 kg', bobX, bobY);
+            }
+
+            // --- Ana Animasyon Döngüsü ---
+            function animationLoop(timestamp) {
+                if (lastTimestamp === null) {
+                    lastTimestamp = timestamp;
+                }
+                const dt = (timestamp - lastTimestamp) / 1000;
+                lastTimestamp = timestamp;
+
+                if (isRunning) {
+                    stepPhysics(dt);
+                    updateUI(false, false, false);
+                }
+
+                requestAnimationFrame(animationLoop);
+            }
+
+            // --- Görev Testi Yardımcıları ---
+            function stopFullMissionTest() {
+                if (fullTestInterval) {
+                    clearInterval(fullTestInterval);
+                    fullTestInterval = null;
+                }
+            }
+
+            function runSingleMissionTest() {
+                const active = getActiveMission();
+                if (!active) {
+                    missionFeedbackBanner.className = 'text-xs font-bold px-3 py-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-400/40';
+                    missionFeedbackBanner.textContent = 'Tüm 15 fen bilimleri soru görevi tamamlandı ve Platin Kupa kazanıldı!';
+                    return;
+                }
+
+                const correctAnswerText = active.options[active.correctIndex];
+                if (!completedMissionIds.has(active.id)) {
+                    completeMission(
+                        active,
+                        `Soru ${active.id} yanıtlandı ("${correctAnswerText}")! ${active.emoji} ${active.tierName} kazandınız.`
+                    );
+                }
+            }
+
+            // --- Olay Dinleyicileri ---
+            nightModeBtn.addEventListener('click', () => {
+                isDarkMode = !isDarkMode;
+                applyThemeUI();
+            });
+
+            togglePlayBtn.addEventListener('click', () => {
+                if (!isRunning) {
+                    hasStartedOnce = true;
+                    isRunning = true;
+                    lastTimestamp = performance.now();
+                    updateUI(false, false, false);
+                } else {
+                    isRunning = false;
+                    updateUI(false, false, false);
+                }
+            });
+
+            stopBtn.addEventListener('click', () => {
+                isRunning = false;
+                hasStartedOnce = true;
+                updateUI(true, false, false);
+            });
+
+            resetBtn.addEventListener('click', () => {
+                stopFullMissionTest();
+                isRunning = false;
+                hasStartedOnce = false;
+                applyInitialConditions();
+                updateUI(false, true, false);
+            });
+
+            frictionToggle.addEventListener('click', () => {
+                frictionEnabled = !frictionEnabled;
+                if (!frictionEnabled) {
+                    heatEnergy = 0.0;
+                    mechanicalEnergy = totalEnergy;
+                }
+                updateUI(false, false, false);
+            });
+
+            initialHeightSlider.addEventListener('input', () => {
+                if (!hasStartedOnce) {
+                    applyInitialConditions();
+                }
+            });
+
+            trophiesBtn.addEventListener('click', () => {
+                renderTrophiesModalContent();
+                trophiesModal.classList.remove('hidden');
+                trophiesModal.classList.add('flex');
+            });
+
+            closeTrophiesModalBtn.addEventListener('click', () => {
+                trophiesModal.classList.add('hidden');
+                trophiesModal.classList.remove('flex');
+            });
+
+            trophiesModal.addEventListener('click', (e) => {
+                if (e.target === trophiesModal) {
+                    trophiesModal.classList.add('hidden');
+                    trophiesModal.classList.remove('flex');
+                }
+            });
+
+            dismissCelebrationBtn.addEventListener('click', () => {
+                closeTrophyCelebration();
+            });
+
+            continueAfterTrophyBtn.addEventListener('click', () => {
+                closeTrophyCelebration();
+            });
+
+            trophyCelebrationOverlay.addEventListener('click', (e) => {
+                if (e.target === trophyCelebrationOverlay) {
+                    closeTrophyCelebration();
+                }
+            });
+
+            testCurrentMissionBtn.addEventListener('click', () => {
+                runSingleMissionTest();
+            });
+
+            fullMissionTestBtn.addEventListener('click', () => {
+                stopFullMissionTest();
+                missionFeedbackBanner.className = 'text-xs font-bold px-3 py-2 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/40';
+                missionFeedbackBanner.textContent = 'Görev testi tam otomatik başlatıldı: 7. sınıf fen soruları çözülüp Bronz → Gümüş → Altın → Platin kupalar sırayla kazandırılıyor...';
+
+                fullTestInterval = setInterval(() => {
+                    const nextMission = getActiveMission();
+                    if (!nextMission) {
+                        stopFullMissionTest();
+                        checkAndAwardPlatinum();
+                        return;
+                    }
+                    runSingleMissionTest();
+                }, 450);
+            });
+
+            resetMissionsBtn.addEventListener('click', () => {
+                stopFullMissionTest();
+                completedMissionIds.clear();
+                hasPlatinumTrophy = false;
+                closeTrophyCelebration();
+                missionFeedbackBanner.className = 'text-xs font-semibold px-3 py-2 rounded-xl bg-blue-500/15 text-blue-300 border border-blue-400/30';
+                missionFeedbackBanner.innerHTML = 'Soru görevleri sıfırlandı. Sırasıyla 1–5 Bronz, 6–10 Gümüş, 11–15 Altın ve bitişte Platin Kupa kazanabilirsiniz.';
+                renderMissionUI();
+            });
+
+            window.addEventListener('resize', resizeCanvas);
+
+            // --- İlk Yükleme ---
+            applyInitialConditions();
+            applyThemeUI();
+            renderMissionUI();
+            resizeCanvas();
+            requestAnimationFrame(animationLoop);
+        });
+    </script>
+</body>
+</html>
