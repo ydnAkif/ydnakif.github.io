@@ -1,0 +1,624 @@
+<!DOCTYPE html><html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7. Sınıf Fen Bilimleri - Lunapark Gondolu Enerji Dönüşümleri</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-size: 1.8rem;
+            color: #38bdf8;
+            margin-bottom: 5px;
+        }
+        header p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            max-width: 1150px;
+            width: 100%;
+        }
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        canvas {
+            width: 100%;
+            height: 380px;
+            /* Gün batımı manzarası gökyüzü ve zemin geçişi */
+            background: linear-gradient(to bottom, #0f172a 0%, #3b82f6 40%, #fb923c 75%, #16a34a 75%, #15803d 100%);
+            border-radius: 12px;
+            display: block;
+            border: 2px solid #475569;
+        }
+        .info-box {
+            margin-top: 15px;
+            background: #0f172a;
+            border-left: 5px solid #f59e0b;
+            padding: 14px 16px;
+            border-radius: 8px;
+        }
+        .info-box h3 {
+            color: #fbbf24;
+            font-size: 1rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-box p {
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .control-group {
+            background: #0f172a;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+        }
+        .control-group-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        .btn-play { background: #10b981; }
+        .btn-play:hover { background: #059669; }
+        .btn-pause { background: #f59e0b; }
+        .btn-pause:hover { background: #d97706; }
+        .btn-reset { background: #ef4444; }
+        .btn-reset:hover { background: #dc2626; }
+
+
+        .btn-speed {
+            background: #334155;
+            color: #cbd5e1;
+        }
+        .btn-speed.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+
+        .btn-friction {
+            background: #475569;
+            width: 100%;
+        }
+        .btn-friction.on {
+            background: #e11d48;
+            box-shadow: 0 0 12px rgba(225, 29, 72, 0.4);
+        }
+
+
+        .energy-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .bar-bg {
+            width: 100%;
+            height: 18px;
+            background: #334155;
+            border-radius: 9px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.05s linear;
+            border-radius: 9px;
+        }
+        .c-kinetik { background: #22c55e; }
+        .c-potansiyel { background: #3b82f6; }
+        .c-mekanik { background: #a855f7; }
+        .c-isi { background: #f97316; }
+        .c-toplam { background: #eab308; }
+    </style>
+</head>
+<body>
+
+
+    <header>
+        <h1>🎢 Lunapark Gondolu — Enerji Dönüşümleri Simülasyonu</h1>
+        <p>7. Sınıf Fen Bilimleri • Çekim Potansiyel, Kinetik ve Isı Enerjisi Gözlemi</p>
+    </header>
+
+
+    <div class="main-container">
+        <!-- Sol Panel: Animasyon ve Bilgi Kutusu -->
+        <div class="card">
+            <canvas id="gondolCanvas" width="600" height="380"></canvas>
+            
+            <div class="info-box">
+                <h3>📢 Şu Anda Ne Oluyor?</h3>
+                <p id="statusText">Gondol en yüksek noktada hareketsiz bekliyor. Tüm enerji çekim potansiyel enerjisi olarak depolanmış durumda. Başlat düğmesine basarak hareketi gözlemleyin!</p>
+            </div>
+        </div>
+
+
+        <!-- Sağ Panel: Kontroller ve Enerji Göstergeleri -->
+        <div class="card controls-section">
+            
+            <!-- Kontrol Butonları -->
+            <div class="control-group">
+                <div class="control-group-title">Simülasyon Kontrolü</div>
+                <div class="btn-row">
+                    <button class="btn-play" id="btnStart">▶ Başlat</button>
+                    <button class="btn-pause" id="btnPause">⏸ Durdur</button>
+                    <button class="btn-reset" id="btnReset">🔄 Sıfırla</button>
+                </div>
+            </div>
+
+
+            <!-- Hız Seçimi -->
+            <div class="control-group">
+                <div class="control-group-title">Simülasyon Hızı</div>
+                <div class="btn-row">
+                    <button class="btn-speed" data-speed="0.4">🐢 Yavaş</button>
+                    <button class="btn-speed active" data-speed="1.0">🚶 Orta</button>
+                    <button class="btn-speed" data-speed="1.8">🚀 Hızlı</button>
+                </div>
+            </div>
+
+
+            <!-- Sürtünme Seçimi -->
+            <div class="control-group">
+                <div class="control-group-title">Ortam Koşulu (Hava Direnci ve Mekanik Sürtünme)</div>
+                <button class="btn-friction" id="btnFriction">❄️ Sürtünme: KAPALI (Sürtünmesiz Ortam)</button>
+            </div>
+
+
+            <!-- Enerji Çubukları -->
+            <div class="control-group">
+                <div class="control-group-title">Anlık Enerji Göstergeleri (Joule - J)</div>
+                <div class="energy-bars">
+                    <div class="bar-item">
+                        <div class="bar-header">
+                            <span style="color:#4ade80;">⚡ Kinetik Enerji</span>
+                            <span id="valKinetik">0 J</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill c-kinetik" id="barKinetik"></div></div>
+                    </div>
+
+
+                    <div class="bar-item">
+                        <div class="bar-header">
+                            <span style="color:#60a5fa;">🏔️ Çekim Potansiyel Enerjisi</span>
+                            <span id="valPotansiyel">1000 J</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill c-potansiyel" id="barPotansiyel" style="width:100%;"></div></div>
+                    </div>
+
+
+                    <div class="bar-item">
+                        <div class="bar-header">
+                            <span style="color:#c084fc;">⚙️ Mekanik Enerji (Kinetik + Potansiyel)</span>
+                            <span id="valMekanik">1000 J</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill c-mekanik" id="barMekanik" style="width:100%;"></div></div>
+                    </div>
+
+
+                    <div class="bar-item">
+                        <div class="bar-header">
+                            <span style="color:#fb923c;">🔥 Isıya Dönüşen Enerji</span>
+                            <span id="valIsi">0 J</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill c-isi" id="barIsi"></div></div>
+                    </div>
+
+
+                    <div class="bar-item">
+                        <div class="bar-header">
+                            <span style="color:#facc15;">🌟 Toplam Enerji</span>
+                            <span id="valToplam">1000 J</span>
+                        </div>
+                        <div class="bar-bg"><div class="bar-fill c-toplam" id="barToplam" style="width:100%;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+
+    <script>
+        const canvas = document.getElementById('gondolCanvas');
+        const ctx = canvas.getContext('2d');
+
+
+        // Fizik ve Simülasyon Sabitleri
+        const TOTAL_ENERGY = 1000; // 1000 Joule sabit toplam enerji
+        const MAX_ANGLE = Math.PI / 2.3; // Başlangıç açısı (~78 derece)
+        const GRAVITY_FACTOR = 0.045;
+        const ARM_LENGTH = 165;
+        const PIVOT_X = 300;
+        const PIVOT_Y = 75;
+
+
+        // Durum Değişkenleri
+        let angle = MAX_ANGLE;          // Radyan cinsinden açı (0 = en alt nokta)
+        let angularVelocity = 0;        // Açısal hız
+        let isRunning = false;
+        let speedMultiplier = 1.0;
+        let frictionEnabled = false;
+        let heatEnergy = 0;
+        let handsUp = false;            // Yolcuların elleri havada mı?
+
+
+        // Arayüz Elemanları
+        const statusText = document.getElementById('statusText');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnFriction = document.getElementById('btnFriction');
+        const speedButtons = document.querySelectorAll('.btn-speed');
+
+
+        // Buton Olayları
+        btnStart.addEventListener('click', () => {
+            isRunning = true;
+        });
+
+
+        btnPause.addEventListener('click', () => {
+            isRunning = false;
+        });
+
+
+        btnReset.addEventListener('click', () => {
+            isRunning = false;
+            angle = MAX_ANGLE;
+            angularVelocity = 0;
+            heatEnergy = 0;
+            handsUp = false;
+            updateEnergiesAndUI();
+            drawScene();
+            statusText.textContent = "Simülasyon sıfırlandı. Gondol en yüksek noktada hareketsiz bekliyor; tüm enerji çekim potansiyel enerjisi hâlinde.";
+        });
+
+
+        speedButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                speedButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                speedMultiplier = parseFloat(btn.getAttribute('data-speed'));
+            });
+        });
+
+
+        btnFriction.addEventListener('click', () => {
+            frictionEnabled = !frictionEnabled;
+            if (frictionEnabled) {
+                btnFriction.classList.add('on');
+                btnFriction.textContent = "🔥 Sürtünme: AÇIK (Mekanik Enerji Isıya Dönüşüyor)";
+            } else {
+                btnFriction.classList.remove('on');
+                btnFriction.textContent = "❄️ Sürtünme: KAPALI (Sürtünmesiz Ortam)";
+            }
+        });
+
+
+        // Fizik Güncellemesi (Enerji Korunumu Tabanlı Tam Hassas Model)
+        function updatePhysics() {
+            if (!isRunning) return;
+
+
+            const dt = 0.25 * speedMultiplier;
+            const maxHeight = 1 - Math.cos(MAX_ANGLE);
+
+
+            // Mevcut mekanik enerji
+            let mechanicalEnergy = TOTAL_ENERGY - heatEnergy;
+
+
+            // Sürtünme açıksa hareket halindeyken mekanik enerjinin bir kısmı ısıya dönüşür
+            if (frictionEnabled && mechanicalEnergy > 0.5) {
+                const energyLoss = Math.abs(angularVelocity) * 1.6 * dt;
+                heatEnergy = Math.min(TOTAL_ENERGY, heatEnergy + energyLoss);
+                mechanicalEnergy = TOTAL_ENERGY - heatEnergy;
+            }
+
+
+            // Eğer mekanik enerji tükendiyse gondol en altta durur
+            if (mechanicalEnergy <= 0.5 && frictionEnabled) {
+                mechanicalEnergy = 0;
+                heatEnergy = TOTAL_ENERGY;
+                angle = 0;
+                angularVelocity = 0;
+                handsUp = false;
+                isRunning = false;
+                updateEnergiesAndUI();
+                return;
+            }
+
+
+            // Sarkaç açısal ivmesi
+            const angularAcc = -GRAVITY_FACTOR * Math.sin(angle);
+            angularVelocity += angularAcc * dt;
+            angle += angularVelocity * dt;
+
+
+            // Mevcut mekanik enerjinin izin verdiği maksimum açıyı aşmayı engelle
+            const allowedHeightRatio = (mechanicalEnergy / TOTAL_ENERGY) * maxHeight;
+            const maxAllowedCos = Math.max(-1, Math.min(1, 1 - allowedHeightRatio));
+            const currentMaxAngle = Math.acos(maxAllowedCos);
+
+
+            if (Math.abs(angle) >= currentMaxAngle) {
+                angle = Math.sign(angle) * currentMaxAngle;
+                angularVelocity = 0;
+            }
+
+
+            // Gondol en yüksek noktadan aşağı doğru inerken eller havaya kalkar
+            const isGoingDown = (angle > 0.08 && angularVelocity < -0.005) || (angle < -0.08 && angularVelocity > 0.005);
+            handsUp = isGoingDown;
+
+
+            updateEnergiesAndUI();
+        }
+
+
+        // Enerji Hesaplama ve Bilgi Metni Güncelleme
+        function updateEnergiesAndUI() {
+            const maxHeight = 1 - Math.cos(MAX_ANGLE);
+            const currentHeight = 1 - Math.cos(angle);
+            const heightRatio = Math.min(1, Math.max(0, currentHeight / maxHeight));
+
+
+            let mechanicalEnergy = Math.max(0, TOTAL_ENERGY - heatEnergy);
+            let potentialEnergy = Math.min(mechanicalEnergy, TOTAL_ENERGY * heightRatio);
+            
+            if (Math.abs(angle) < 0.015) {
+                potentialEnergy = 0;
+            }
+
+
+            let kineticEnergy = Math.max(0, mechanicalEnergy - potentialEnergy);
+
+
+            // Değerleri ekrana yazdır
+            document.getElementById('valKinetik').textContent = Math.round(kineticEnergy) + " J";
+            document.getElementById('valPotansiyel').textContent = Math.round(potentialEnergy) + " J";
+            document.getElementById('valMekanik').textContent = Math.round(mechanicalEnergy) + " J";
+            document.getElementById('valIsi').textContent = Math.round(heatEnergy) + " J";
+            document.getElementById('valToplam').textContent = TOTAL_ENERGY + " J";
+
+
+            // Çubuk genişliklerini güncelle
+            document.getElementById('barKinetik').style.width = (kineticEnergy / TOTAL_ENERGY * 100) + "%";
+            document.getElementById('barPotansiyel').style.width = (potentialEnergy / TOTAL_ENERGY * 100) + "%";
+            document.getElementById('barMekanik').style.width = (mechanicalEnergy / TOTAL_ENERGY * 100) + "%";
+            document.getElementById('barIsi').style.width = (heatEnergy / TOTAL_ENERGY * 100) + "%";
+            document.getElementById('barToplam').style.width = "100%";
+
+
+            // "Şu Anda Ne Oluyor?" Dinamik Açıklaması
+            if (!isRunning && heatEnergy >= TOTAL_ENERGY - 1) {
+                statusText.textContent = "🛑 Sürtünme nedeniyle mekanik enerjinin tamamı ısı enerjisine dönüştü ve gondol en alt noktada durdu. Toplam enerji hâlâ 1000 J!";
+            } else if (!isRunning && Math.abs(angle - MAX_ANGLE) < 0.01 && heatEnergy === 0) {
+                statusText.textContent = "⏸ Gondol başlangıç yüksekliğinde duruyor. Çekim potansiyel enerjisi en yüksek değerde (1000 J), kinetik enerji 0 J.";
+            } else if (Math.abs(angle) < 0.08) {
+                statusText.textContent = "⚡ Gondol en alt noktadan geçiyor! Yüksekliği sıfır olduğu için çekim potansiyel enerjisi en az, hızı maksimum olduğu için kinetik enerjisi en fazla!" + (frictionEnabled ? " Sürtünme nedeniyle enerjinin bir kısmı ısıya dönüşüyor." : "");
+            } else if (handsUp) {
+                statusText.textContent = "🙌 Gondol en yüksek noktadan AŞAĞI İNİYOR! Yolcular heyecanla kollarını havaya kaldırdı! Yükseklik azaldığı için çekim potansiyel enerjisi azalıyor, gondol hızlandığı için kinetik enerji artıyor.";
+            } else if (Math.abs(angularVelocity) < 0.015) {
+                statusText.textContent = "🏔️ Gondol en tepe noktaya ulaştı ve anlık olarak durdu! Kinetik enerji 0 J olurken çekim potansiyel enerjisi maksimum seviyeye çıktı.";
+            } else {
+                statusText.textContent = "⬆️ Gondol YUKARI ÇIKIYOR! Yavaşladığı için kinetik enerjisi azalıyor, yerden yüksekliği arttığı için çekim potansiyel enerjisine dönüşüyor." + (frictionEnabled ? " Sürtünme açık olduğu için ısı enerjisi sürekli artıyor." : "");
+            }
+        }
+
+
+        // Çizim Fonksiyonları
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+            // Gün batımı güneşi
+            ctx.fillStyle = "rgba(253, 224, 71, 0.85)";
+            ctx.beginPath();
+            ctx.arc(490, 195, 36, 0, Math.PI * 2);
+            ctx.fill();
+
+
+            // Bulutlar
+            ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+            drawCloud(110, 60, 0.8);
+            drawCloud(440, 55, 0.9);
+
+
+            // Arka planda uzaktaki dağ/tepe silüetleri
+            ctx.fillStyle = "#334155";
+            ctx.beginPath();
+            ctx.moveTo(0, 285);
+            ctx.lineTo(0, 220);
+            ctx.lineTo(120, 180);
+            ctx.lineTo(250, 240);
+            ctx.lineTo(400, 170);
+            ctx.lineTo(600, 230);
+            ctx.lineTo(600, 285);
+            ctx.closePath();
+            ctx.fill();
+
+
+            // Zemin çizgisi ve lunapark platformu
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(140, 290, 320, 14);
+
+
+            // Gondol Taşıyıcı A-İskele Ayakları
+            ctx.strokeStyle = "#cbd5e1";
+            ctx.lineWidth = 10;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(PIVOT_X, PIVOT_Y);
+            ctx.lineTo(175, 290);
+            ctx.moveTo(PIVOT_X, PIVOT_Y);
+            ctx.lineTo(425, 290);
+            ctx.stroke();
+
+
+            // Gondolun Konumunu Hesapla
+            const gondolX = PIVOT_X + ARM_LENGTH * Math.sin(angle);
+            const gondolY = PIVOT_Y + ARM_LENGTH * Math.cos(angle);
+
+
+            // Taşıyıcı Kol (Sarkaç Kolu)
+            ctx.strokeStyle = "#f8fafc";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(PIVOT_X, PIVOT_Y);
+            ctx.lineTo(gondolX, gondolY);
+            ctx.stroke();
+
+
+            // Tepe Pivot Noktası
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.arc(PIVOT_X, PIVOT_Y, 11, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+
+            // Gondol Teknesi ve Yolcular
+            ctx.save();
+            ctx.translate(gondolX, gondolY);
+            ctx.rotate(-angle);
+
+            // Gondol teknesi
+            ctx.fillStyle = "#2563eb";
+            ctx.strokeStyle = "#dbeafe";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(-70, -15, 140, 35, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            // Koltuklar ve yolcular
+            const passengerX = [-45, -15, 15, 45];
+            passengerX.forEach((px, i) => {
+                ctx.fillStyle = ["#f97316", "#22c55e", "#eab308", "#a855f7"][i];
+                ctx.beginPath();
+                ctx.arc(px, -27, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = "#f8fafc";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(px, -19);
+                ctx.lineTo(px, 3);
+                if (handsUp) {
+                    ctx.moveTo(px, -14);
+                    ctx.lineTo(px - 9, -30);
+                    ctx.moveTo(px, -14);
+                    ctx.lineTo(px + 9, -30);
+                } else {
+                    ctx.moveTo(px, -12);
+                    ctx.lineTo(px - 9, -2);
+                    ctx.moveTo(px, -12);
+                    ctx.lineTo(px + 9, -2);
+                }
+                ctx.stroke();
+            });
+
+            ctx.restore();
+        }
+
+        function drawCloud(x, y, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.beginPath();
+            ctx.arc(0, 8, 20, 0, Math.PI * 2);
+            ctx.arc(24, 0, 26, 0, Math.PI * 2);
+            ctx.arc(52, 10, 20, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function animationLoop() {
+            updatePhysics();
+            drawScene();
+            requestAnimationFrame(animationLoop);
+        }
+
+        updateEnergiesAndUI();
+        drawScene();
+        requestAnimationFrame(animationLoop);
+    </script>
+</body>
+</html>
+
