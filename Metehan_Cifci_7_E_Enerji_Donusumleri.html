@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enerji Macerası</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;background:#101d30;color:white;max-width:780px;margin:24px auto;padding:16px}h1,h2{text-align:center}.panel{background:#20334e;padding:16px;border-radius:12px;margin:12px 0}.total{text-align:center;font-size:34px;color:#86efac}canvas{width:100%;background:#172e48;border-radius:12px}input{width:100%}button{background:#2563eb;color:white;border:0;border-radius:8px;padding:12px;margin:5px;cursor:pointer;font-size:16px}button:disabled{opacity:.6;cursor:default}.bar{display:flex;height:20px;overflow:hidden;border-radius:8px;margin:12px 0}.bar div{height:100%}.choice{display:block;width:100%;text-align:left;background:#334b68;margin:8px 0}.green{background:#166534}.red{background:#991b1b}[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<h1>⚡ Enerji Macerası</h1>
+<p id="score">Puan: 0 / 160</p>
+<section id="game">
+<div class="panel total">Toplam enerji: <b id="total">100 J</b></div>
+<canvas id="track" width="640" height="320"></canvas>
+<div class="panel">
+<p style="color:#93c5fd">Çekim potansiyel enerjisi: <b id="potential"></b></p>
+<p style="color:#fbbf24">Kinetik enerji: <b id="kinetic"></b></p>
+<p style="color:#fb7185">Isı enerjisi: <b id="thermal"></b></p>
+<div class="bar"><div id="pb" style="background:#60a5fa"></div><div id="kb" style="background:#fbbf24"></div><div id="tb" style="background:#fb7185"></div></div>
+<p>Toplam mekanik enerji: <b id="mechanical"></b></p>
+<p>Yükseklik: <b id="heightNow"></b> | Hız: <b id="speed"></b></p>
+</div>
+<div class="panel">
+<label for="friction">Sürtünme: <b id="fv"></b></label>
+<input id="friction" type="range" min="0" max="100" value="0">
+<label for="hill">Hedef yüksekliği: <b id="hv"></b></label>
+<input id="hill" type="range" min="1" max="10" value="5">
+</div>
+<button id="start">▶ Topu bırak</button><button id="pause">Duraklat</button><button id="reset">Tekrar dene</button>
+<p id="message"></p><button id="quizgo" class="green">Bilgi yarışmasına geç →</button>
+</section>
+<section id="quiz" class="panel" hidden>
+<p id="progress"></p><h2 id="question"></h2><div id="choices"></div><p id="explanation"></p><button id="next" hidden>Sonraki soru</button>
+</section>
+<section id="end" class="panel" hidden><h2>🏆 Oyun tamamlandı!</h2><p id="result"></p><button id="again">Baştan oyna</button></section>
+<script>
+const $=id=>document.getElementById(id);
+const canvas=$('track'),ctx=canvas.getContext('2d');
+const E=100,m=1,g=10;
+let s=0,heat=0,f=0,h=5,running=false,finished=false,frame=0,last=0,gameScore=0,testScore=0,q=0;
+// s: parkur boyunca 0 ile 1 arasındaki konum.
+function height(s){return s<=0.5?10*(1-2*s)**2:h*(2*s-1)**2;}
+function xy(s){return [42+556*s,278-22*height(s)];}
+function energy(){const p=m*g*height(s);return [p,Math.max(0,E-p-heat),heat];}
+function score(){ $('score').textContent=`Puan: ${gameScore+testScore} / 160`; }
+function draw(){
+ ctx.fillStyle='#172e48';ctx.fillRect(0,0,640,320);ctx.font='12px Arial';
+ for(let i=0;i<=10;i+=2){let y=278-i*22;ctx.strokeStyle='#ffffff25';ctx.beginPath();ctx.moveTo(35,y);ctx.lineTo(610,y);ctx.stroke();ctx.fillStyle='white';ctx.fillText(i+' m',3,y+4);}
+ ctx.beginPath();for(let i=0;i<=200;i++){let [x,y]=xy(i/200);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle='#6ee7b7';ctx.lineWidth=5;ctx.stroke();
+ let [ex,ey]=xy(1);ctx.strokeStyle='white';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex,ey-45);ctx.stroke();ctx.fillStyle='#86efac';ctx.beginPath();ctx.moveTo(ex,ey-45);ctx.lineTo(ex-30,ey-35);ctx.lineTo(ex,ey-25);ctx.fill();
+ let [x,y]=xy(s);ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(x,y-13,12,0,Math.PI*2);ctx.fill();
+ let [p,k,t]=energy();p=Math.round(p*10)/10;t=Math.min(E-p,Math.round(t*10)/10);k=E-p-t;
+ $('potential').textContent=p.toFixed(1)+' J';$('kinetic').textContent=k.toFixed(1)+' J';$('thermal').textContent=t.toFixed(1)+' J';$('total').textContent=(p+k+t).toFixed(1)+' J';$('mechanical').textContent=(p+k).toFixed(1)+' J';
+ $('pb').style.width=p+'%';$('kb').style.width=k+'%';$('tb').style.width=t+'%';$('heightNow').textContent=height(s).toFixed(1)+' m';$('speed').textContent=Math.sqrt(2*k/m).toFixed(1)+' m/s';
+}
+// Basitleştirilmiş sürtünme modeli: parkur boyunca ısıl enerji artar.
+function tick(now){
+ if(!running)return;let dt=last?Math.min(.04,(now-last)/1000):.016;last=now;
+ let step=Math.min(1-s,dt*Math.max(.009,Math.sqrt(2*energy()[1]/m)*.025));let ns=s+step,nh=heat+f*step;
+ if(m*g*height(ns)+nh>E){let lo=s,hi=ns;for(let i=0;i<40;i++){let mid=(lo+hi)/2;if(m*g*height(mid)+heat+f*(mid-s)<=E)lo=mid;else hi=mid;}heat+=f*(lo-s);s=lo;running=false;finished=true;draw();$('message').textContent='Top hedefe ulaşamadı. Sürtünmeyi veya yüksekliği azalt.';return;}
+ s=ns;heat=nh;draw();if(s>=1){running=false;finished=true;gameScore=100;score();$('message').textContent='Hedefe ulaştın! Parkur puanı: 100.';return;}frame=requestAnimationFrame(tick);
+}
+function pause(){running=false;cancelAnimationFrame(frame);}
+function reset(){pause();s=0;heat=0;last=0;finished=false;f=+$('friction').value;h=+$('hill').value;$('fv').textContent=f+'%';$('hv').textContent=h+' m';$('message').textContent='Görev: Topu karşı tepeye ulaştır!';draw();}
+$('friction').oninput=reset;$('hill').oninput=reset;$('reset').onclick=reset;$('pause').onclick=pause;
+$('start').onclick=()=>{if(running)return;if(finished)reset();running=true;last=0;frame=requestAnimationFrame(tick);};
+const questions=[
+ ['Top başlangıçta duruyorsa hangi enerjisi 100 J olur?',['Kinetik','Çekim potansiyel','Isı'],1,'Top yüksekte ve hareketsizdir.'],
+ ['Sürtünmesiz ortamda top aşağı inerken hangi enerji artar?',['Kinetik','Çekim potansiyel','Toplam'],0,'Çekim potansiyel enerjisi kinetik enerjiye dönüşür.'],
+ ['Sürtünme yokken toplam mekanik enerji nasıl değişir?',['Artar','Azalır','Sabit kalır'],2,'Mekanik enerji korunur.'],
+ ['Sürtünme yokken çekim potansiyel enerjisi 30 J ise kinetik enerji kaç J olur?',['30 J','70 J','100 J'],1,'100 − 30 = 70 J.'],
+ ['Sürtünme mekanik enerjinin bir kısmını neye dönüştürür?',['Işık enerjisine','Çekim potansiyel enerjisine','Isı enerjisine'],2,'Sürtünme ısıl enerjiyi artırır.'],
+ ['Çekim potansiyel 40 J, kinetik 35 J, ısı 25 J ise toplam kaç J olur?',['75 J','100 J','125 J'],1,'40 + 35 + 25 = 100 J.']
+];
+function showQuestion(){let item=questions[q];$('progress').textContent=`Soru ${q+1} / ${questions.length}`;$('question').textContent=item[0];$('choices').replaceChildren();$('explanation').textContent='';$('next').hidden=true;
+ item[1].forEach((option,i)=>{let b=document.createElement('button');b.className='choice';b.textContent=option;b.onclick=()=>{if(i===item[2])testScore+=10;score();Array.from($('choices').children).forEach((btn,j)=>{btn.disabled=true;if(j===item[2])btn.classList.add('green');else if(j===i)btn.classList.add('red');});$('explanation').textContent=(i===item[2]?'Doğru! ':'Yanlış. ')+item[3];$('next').hidden=false;$('next').textContent=q===questions.length-1?'Sonuçları göster':'Sonraki soru';};$('choices').appendChild(b);});
+}
+$('quizgo').onclick=()=>{pause();$('game').hidden=true;$('quiz').hidden=false;q=0;testScore=0;score();showQuestion();};
+$('next').onclick=()=>{q++;if(q<questions.length){showQuestion();return;}$('quiz').hidden=true;$('end').hidden=false;$('result').textContent=`Toplam: ${gameScore+testScore}/160 puan. Parkur: ${gameScore}/100, Test: ${testScore}/60.`;};
+$('again').onclick=()=>{gameScore=0;testScore=0;score();$('end').hidden=true;$('game').hidden=false;$('friction').value=0;$('hill').value=5;reset();};
+reset();
+</script>
+</body>
+</html>
