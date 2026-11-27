@@ -1,0 +1,2585 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YER ÇEKİMİ MACERASI - Fen Bilimleri 3D Enerji Oyunu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(180deg, #56ccf2 0%, #2f80ed 100%);
+    }
+    h1, h2, h3, .game-font {
+      font-family: 'Fredoka', sans-serif;
+    }
+    #game-container, #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      background: linear-gradient(180deg, #56ccf2 0%, #2f80ed 100%);
+    }
+    #game-container canvas, #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* Cartoon 3D Button Style */
+    .btn-cartoon {
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease, filter 0.15s ease;
+      box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28);
+    }
+    .btn-cartoon:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+    }
+    .btn-cartoon:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+    }
+    .btn-cartoon:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fbbf24;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* Glass Panel */
+    .hud-glass {
+      background: rgba(15, 23, 42, 0.76);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28);
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.08); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body class="text-white">
+
+  <!-- Main 3D / 2.5D Fallback Game Canvas Container -->
+  <div id="game-container"></div>
+
+  <!-- Confetti Canvas Overlay -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+  <!-- TOP HUD: Active Mission Banner & Score -->
+  <header class="fixed top-0 left-0 right-0 z-20 p-2 sm:p-3 flex flex-col lg:flex-row items-center justify-between gap-2 pointer-events-none">
+    
+    <!-- Brand & Score Pill -->
+    <div class="flex items-center gap-2 sm:gap-3 pointer-events-auto">
+      <div class="hud-glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl flex items-center gap-2">
+        <span class="text-2xl">🚀</span>
+        <div>
+          <h1 class="text-sm sm:text-lg font-bold tracking-wide text-amber-300 leading-none">YER ÇEKİMİ MACERASI</h1>
+          <span id="render-mode-subtitle" class="text-[11px] text-sky-200 font-semibold">Fen Bilimleri • 3D Enerji Laboratuvarı</span>
+        </div>
+      </div>
+
+      <!-- Total Score & High Score -->
+      <div class="hud-glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl flex items-center gap-3">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xl">⭐</span>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-300 font-bold">Puan</div>
+            <div id="hud-score" class="text-base sm:text-lg font-black text-yellow-400 leading-none">0</div>
+          </div>
+        </div>
+        <div class="h-7 w-px bg-white/20"></div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-lg">🏆</span>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-300 font-bold">Rekor</div>
+            <div id="hud-highscore" class="text-sm sm:text-base font-extrabold text-emerald-300 leading-none">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Mission Banner (Always Open & Visible) -->
+    <div class="hud-glass px-3 py-2 sm:px-4 sm:py-2 rounded-2xl flex-1 max-w-2xl w-full flex flex-col gap-1.5 pointer-events-auto border-amber-400/50">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div id="mission-badge-diff" class="shrink-0 px-2.5 py-1 rounded-xl text-xs font-black uppercase bg-emerald-500 text-slate-950">
+            KOLAY • 10 P
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span id="mission-title" class="text-xs sm:text-sm font-extrabold text-white truncate">Görev 1: Hassas Potansiyel</span>
+              <span id="mission-status-icon" class="text-sm">🎯</span>
+            </div>
+            <p id="mission-desc" class="text-[11px] sm:text-xs text-sky-200 truncate">Tepe noktasındaki potansiyel enerjiyi 240 J ± 10 J yap ve 1.5 sn koru!</p>
+          </div>
+        </div>
+
+        <!-- Mission Live Progress Pill & All Missions Button -->
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="hidden sm:flex flex-col items-end">
+            <span class="text-[10px] text-slate-300 font-bold">Anlık Ölçüm</span>
+            <span id="mission-live-val" class="text-xs font-black text-amber-300">Ep(tepe): 0 / 240 J</span>
+          </div>
+          <button id="btn-missions-modal" class="btn-cartoon bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-3 py-2 rounded-xl flex items-center gap-1">
+            <span>📋</span>
+            <span>Görevler</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mission Hold Progress Bar -->
+      <div class="flex items-center gap-2">
+        <div class="flex-1 h-2 bg-slate-900/90 rounded-full overflow-hidden border border-white/10">
+          <div id="mission-hold-bar" class="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-emerald-400 rounded-full transition-all duration-75" style="width: 0%"></div>
+        </div>
+        <span id="mission-hold-label" class="text-[10px] font-black text-amber-300 min-w-[125px] text-right">Hedefi 1.5 sn Koru</span>
+      </div>
+    </div>
+
+  </header>
+
+  <!-- RIGHT HUD: Real-Time Energy Gauges & Telemetry -->
+  <aside class="fixed top-24 sm:top-20 right-2 sm:right-3 z-20 w-64 sm:w-72 flex flex-col gap-2 pointer-events-none max-h-[calc(100vh-155px)] overflow-y-auto pr-0.5">
+    
+    <!-- Energy Bars Card -->
+    <div class="hud-glass p-3 rounded-2xl pointer-events-auto">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1.5">
+          <span>⚡</span> ENERJİ GÖSTERGELERİ
+        </h2>
+        <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-slate-200 font-bold">Canlı (Joule)</span>
+      </div>
+
+      <!-- Kinetic Energy -->
+      <div class="mb-2.5">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-rose-300 flex items-center gap-1">🔥 Kinetik Enerji (E<sub>k</sub>)</span>
+          <span id="val-ek" class="text-rose-200 font-black">0.0 J</span>
+        </div>
+        <div class="w-full h-3.5 bg-slate-900/90 rounded-full overflow-hidden p-0.5 border border-rose-400/30">
+          <div id="bar-ek" class="h-full bg-gradient-to-r from-rose-500 to-orange-400 rounded-full transition-all duration-75" style="width: 0%"></div>
+        </div>
+        <div class="text-[10px] text-slate-400 mt-0.5 text-right">Formül: ½ · m · v²</div>
+      </div>
+
+      <!-- Potential Energy -->
+      <div class="mb-2.5">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-sky-300 flex items-center gap-1">🎈 Potansiyel Enerji (E<sub>p</sub>)</span>
+          <span id="val-ep" class="text-sky-200 font-black">0.0 J</span>
+        </div>
+        <div class="w-full h-3.5 bg-slate-900/90 rounded-full overflow-hidden p-0.5 border border-sky-400/30">
+          <div id="bar-ep" class="h-full bg-gradient-to-r from-sky-500 to-cyan-300 rounded-full transition-all duration-75" style="width: 0%"></div>
+        </div>
+        <div class="text-[10px] text-slate-400 mt-0.5 text-right">Formül: m · g · h</div>
+      </div>
+
+      <!-- Total Mechanical Energy -->
+      <div>
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-emerald-300 flex items-center gap-1">🔋 Toplam Enerji (E<sub>T</sub>)</span>
+          <span id="val-et" class="text-emerald-200 font-black">0.0 J</span>
+        </div>
+        <div class="w-full h-3.5 bg-slate-900/90 rounded-full overflow-hidden p-0.5 border border-emerald-400/30">
+          <div id="bar-et" class="h-full bg-gradient-to-r from-emerald-500 to-lime-300 rounded-full transition-all duration-75" style="width: 0%"></div>
+        </div>
+        <div class="text-[10px] text-emerald-300/90 font-bold mt-0.5 text-right">E<sub>T</sub> = E<sub>k</sub> + E<sub>p</sub> (Tam Korunumlu)</div>
+      </div>
+    </div>
+
+    <!-- Live Physical Quantities Card -->
+    <div class="hud-glass p-3 rounded-2xl pointer-events-auto">
+      <h2 class="text-xs sm:text-sm font-bold text-sky-300 mb-2 flex items-center gap-1.5">
+        <span>📏</span> ANLIK ÖLÇÜMLER
+      </h2>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+          <div class="text-[10px] text-slate-400 font-bold">Yükseklik (h)</div>
+          <div id="val-height" class="text-sm sm:text-base font-black text-cyan-300">0.00 m</div>
+        </div>
+        <div class="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+          <div class="text-[10px] text-slate-400 font-bold">Hız (v)</div>
+          <div id="val-velocity" class="text-sm sm:text-base font-black text-rose-300">0.00 m/s</div>
+        </div>
+        <div class="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+          <div class="text-[10px] text-slate-400 font-bold">Kütle (m)</div>
+          <div id="val-mass" class="text-sm sm:text-base font-black text-amber-300">40 kg</div>
+        </div>
+        <div class="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+          <div class="text-[10px] text-slate-400 font-bold">Yer Çekimi (g)</div>
+          <div id="val-gravity" class="text-sm sm:text-base font-black text-purple-300">9.8 m/s²</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- LEFT HUD: Physics Sliders (Mass, Gravity, Jump Power) -->
+  <aside class="fixed top-24 sm:top-20 left-2 sm:left-3 z-20 w-60 sm:w-68 flex flex-col gap-2 pointer-events-none max-h-[calc(100vh-155px)] overflow-y-auto">
+    <div class="hud-glass p-3 rounded-2xl pointer-events-auto">
+      <h2 class="text-xs sm:text-sm font-bold text-amber-300 mb-2.5 flex items-center gap-1.5">
+        <span>🎛️</span> FİZİK AYARLARI
+      </h2>
+
+      <!-- Mass Slider -->
+      <div class="mb-3">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-slate-200">⚖️ Çocuk Kütlesi (m)</span>
+          <span id="slider-mass-label" class="text-amber-300 font-black">40 kg</span>
+        </div>
+        <input id="slider-mass" type="range" min="20" max="80" step="5" value="40" class="w-full" />
+        <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+          <span>20 kg</span>
+          <span>50 kg</span>
+          <span>80 kg</span>
+        </div>
+      </div>
+
+      <!-- Gravity Slider + Planet Presets -->
+      <div class="mb-3">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-slate-200">🌍 Yer Çekimi (g)</span>
+          <span id="slider-gravity-label" class="text-purple-300 font-black">9.8 m/s²</span>
+        </div>
+        <input id="slider-gravity" type="range" min="1.6" max="25.0" step="0.2" value="9.8" class="w-full" />
+        <div class="grid grid-cols-4 gap-1 mt-1.5">
+          <button data-g="1.6" class="preset-g bg-slate-800 hover:bg-purple-600 text-[10px] font-bold py-1 rounded-lg border border-white/10 transition">🌙 Ay</button>
+          <button data-g="3.8" class="preset-g bg-slate-800 hover:bg-purple-600 text-[10px] font-bold py-1 rounded-lg border border-white/10 transition">🔴 Mars</button>
+          <button data-g="9.8" class="preset-g bg-purple-600 text-[10px] font-bold py-1 rounded-lg border border-white/20 transition">🌍 Dünya</button>
+          <button data-g="24.8" class="preset-g bg-slate-800 hover:bg-purple-600 text-[10px] font-bold py-1 rounded-lg border border-white/10 transition">🪐 Jüpiter</button>
+        </div>
+      </div>
+
+      <!-- Jump Power / Bounce Energy Slider -->
+      <div class="mb-2.5">
+        <div class="flex justify-between text-xs font-bold mb-1">
+          <span class="text-slate-200">🦘 Zıplama Hızı (v<sub>0</sub>)</span>
+          <span id="slider-v0-label" class="text-emerald-300 font-black">5.0 m/s</span>
+        </div>
+        <input id="slider-v0" type="range" min="2.0" max="12.0" step="0.2" value="5.0" class="w-full" />
+      </div>
+
+      <!-- Instant Boost Jump Button -->
+      <button id="btn-boost" class="btn-cartoon w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-xs sm:text-sm py-2 rounded-xl flex items-center justify-center gap-1.5">
+        <span>⬆️</span>
+        <span>GÜÇLÜ ZIPLA! (Boşluk)</span>
+      </button>
+    </div>
+
+    <!-- Camera Hint Pill -->
+    <div class="hidden sm:flex hud-glass px-3 py-1.5 rounded-xl text-[11px] text-slate-300 items-center gap-2 pointer-events-auto">
+      <span>🖱️</span>
+      <span>Kamerayı döndürmek için sürükle</span>
+    </div>
+  </aside>
+
+  <!-- BOTTOM CONTROL BAR -->
+  <footer class="fixed bottom-2 sm:bottom-3 left-2 right-2 z-20 flex justify-center pointer-events-none">
+    <div class="hud-glass px-3 py-2 rounded-2xl flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 pointer-events-auto">
+      <button id="btn-start" class="btn-cartoon bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5">
+        <span>▶️</span><span>Başlat</span>
+      </button>
+      <button id="btn-pause" class="btn-cartoon bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5">
+        <span>⏸️</span><span>Duraklat</span>
+      </button>
+      <button id="btn-resume" class="btn-cartoon bg-sky-400 hover:bg-sky-300 text-slate-950 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5" disabled>
+        <span>⏯️</span><span>Devam Et</span>
+      </button>
+      <button id="btn-restart" class="btn-cartoon bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5">
+        <span>🔄</span><span>Yeniden Başlat</span>
+      </button>
+      <div class="h-6 w-px bg-white/20 hidden sm:block"></div>
+      <button id="btn-shop" class="btn-cartoon bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-extrabold text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1.5">
+        <span>🛍️</span><span>MAĞAZA</span>
+      </button>
+      <button id="btn-settings" class="btn-cartoon bg-slate-700 hover:bg-slate-600 text-white font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5">
+        <span>⚙️</span><span>Ayarlar</span>
+      </button>
+      <button id="btn-tutorial" class="btn-cartoon bg-indigo-500 hover:bg-indigo-400 text-white font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl flex items-center gap-1.5">
+        <span>🎓</span><span>Eğitim</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- PAUSED OVERLAY BADGE -->
+  <div id="paused-banner" class="hidden fixed inset-0 z-10 pointer-events-none flex items-center justify-center">
+    <div class="hud-glass px-8 py-4 rounded-3xl border-2 border-amber-400 text-center animate-pop">
+      <div class="text-4xl mb-1">⏸️</div>
+      <div class="text-2xl font-black text-amber-300 game-font">OYUN DURAKLATILDI</div>
+      <p class="text-xs text-slate-200 mt-1">Tüm hareketler ve enerji hesaplamaları durduruldu.</p>
+    </div>
+  </div>
+
+  <!-- MISSION COMPLETED CELEBRATION POPUP -->
+  <div id="mission-toast" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+    <div class="bg-gradient-to-r from-amber-400 via-yellow-300 to-emerald-400 text-slate-950 px-6 py-3.5 rounded-3xl shadow-2xl border-4 border-white text-center animate-pop">
+      <div class="text-3xl">🎉🏆🎉</div>
+      <div class="text-lg sm:text-xl font-black game-font">GÖREV TAMAMLANDI!</div>
+      <div id="toast-mission-name" class="text-xs font-extrabold opacity-90">Görev Adı</div>
+      <div id="toast-points" class="mt-1 inline-block bg-slate-950 text-yellow-300 font-black text-sm px-3 py-0.5 rounded-full">+10 PUAN KAZANDIN!</div>
+    </div>
+  </div>
+
+  <!-- MODAL: ALL MISSIONS (GÖREVLER) -->
+  <div id="modal-missions" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-amber-400/50 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl animate-pop">
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-amber-500/20 to-purple-500/20 border-b border-white/10 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-amber-300 flex items-center gap-2">
+            <span>📋</span> GÖREV LİSTESİ
+          </h2>
+          <p class="text-xs text-slate-300">Kolaydan zora görevleri tamamla, puanları topla ve mağazadan yeni kostümler al!</p>
+        </div>
+        <button class="close-modal btn-cartoon bg-slate-800 hover:bg-rose-500 text-white w-9 h-9 rounded-xl font-black">✕</button>
+      </div>
+      <div id="missions-list-container" class="p-4 overflow-y-auto space-y-2.5 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: SHOP (MAĞAZA) -->
+  <div id="modal-shop" class="hidden fixed inset-0 z-50 bg-slate-950/60 flex items-end sm:items-center justify-center sm:justify-end p-3 sm:p-6 pointer-events-auto">
+    <div class="bg-slate-900/95 backdrop-blur-md border-2 border-fuchsia-400/60 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl animate-pop">
+      <div class="p-4 bg-gradient-to-r from-fuchsia-600/30 to-indigo-600/30 border-b border-white/10 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-black text-fuchsia-300 flex items-center gap-2">
+            <span>🛍️</span> ENERJİ MAĞAZASI
+          </h2>
+          <div class="text-xs text-slate-200 flex items-center gap-2 mt-0.5">
+            <span>Mevcut Puanın:</span>
+            <span id="shop-score-display" class="bg-yellow-400 text-slate-950 font-black px-2 py-0.5 rounded-lg">0 Puan</span>
+          </div>
+        </div>
+        <button id="close-shop-btn" class="btn-cartoon bg-slate-800 hover:bg-rose-500 text-white w-9 h-9 rounded-xl font-black">✕</button>
+      </div>
+
+      <div class="bg-indigo-950/80 px-4 py-2 text-[11px] text-indigo-200 border-b border-white/10 flex items-center gap-2">
+        <span>👀</span>
+        <span>Bir ürüne tıklayarak karakterin üzerinde <strong>canlı ön izleme</strong> yapabilirsin!</span>
+      </div>
+
+      <div class="grid grid-cols-2 p-2 gap-2 bg-slate-950/50">
+        <button id="tab-outfits" class="py-2 rounded-xl font-black text-xs sm:text-sm bg-fuchsia-500 text-white transition">👕 Kıyafetler</button>
+        <button id="tab-backgrounds" class="py-2 rounded-xl font-black text-xs sm:text-sm bg-slate-800 text-slate-300 hover:text-white transition">🏞️ Arka Planlar</button>
+      </div>
+
+      <div id="shop-items-container" class="p-3 overflow-y-auto grid grid-cols-2 gap-2.5 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS (AYARLAR) -->
+  <div id="modal-settings" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-sky-400/50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl animate-pop">
+      <div class="p-4 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 border-b border-white/10 flex items-center justify-between">
+        <h2 class="text-xl font-black text-sky-300 flex items-center gap-2">
+          <span>⚙️</span> OYUN AYARLARI
+        </h2>
+        <button class="close-modal btn-cartoon bg-slate-800 hover:bg-rose-500 text-white w-9 h-9 rounded-xl font-black">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="flex items-center justify-between bg-slate-800/80 p-3.5 rounded-2xl">
+          <div>
+            <div class="font-bold text-sm text-white">🔊 Ses Efektleri</div>
+            <div class="text-xs text-slate-400">Zıplama, görev ve mağaza sesleri</div>
+          </div>
+          <button id="toggle-sound" class="btn-cartoon bg-emerald-500 text-slate-950 font-black text-xs px-4 py-2 rounded-xl">
+            AÇIK
+          </button>
+        </div>
+
+        <div class="bg-slate-800/80 p-3.5 rounded-2xl">
+          <div class="flex justify-between text-sm font-bold mb-1">
+            <span>⏱️ Simülasyon Hızı</span>
+            <span id="timescale-label" class="text-amber-300 font-black">1.0x (Normal)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-2">Enerji dönüşümünü daha dikkatli izlemek için ağır çekimi kullanabilirsin.</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button data-ts="0.4" class="ts-btn bg-slate-700 hover:bg-sky-600 text-xs font-bold py-1.5 rounded-xl">🐢 0.4x Yavaş</button>
+            <button data-ts="1.0" class="ts-btn bg-sky-500 text-slate-950 text-xs font-black py-1.5 rounded-xl">🐇 1.0x Normal</button>
+            <button data-ts="1.5" class="ts-btn bg-slate-700 hover:bg-sky-600 text-xs font-bold py-1.5 rounded-xl">⚡ 1.5x Hızlı</button>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-white/10">
+          <button id="btn-reset-all" class="btn-cartoon w-full bg-rose-600/80 hover:bg-rose-500 text-white font-bold text-xs py-2.5 rounded-xl">
+            🗑️ Tüm İlerlemeyi ve Puanları Sıfırla
+          </button>
+          <p id="reset-confirm-msg" class="hidden text-center text-xs text-amber-300 font-bold mt-2">
+            Emin misin? Onaylamak için tekrar tıkla!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: INTERACTIVE TUTORIAL (SEMI-TRANSPARENT SO CHARACTER IS VISIBLE BEHIND) -->
+  <div id="modal-tutorial" class="hidden fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-3 sm:p-5">
+    <div class="bg-slate-900/95 border-2 border-indigo-400/70 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col animate-pop">
+      <div class="p-3.5 sm:p-4 bg-gradient-to-r from-indigo-600/40 via-purple-600/30 to-pink-600/30 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🎓</span>
+          <div>
+            <h2 class="text-base sm:text-xl font-black text-white">ENERJİ VE YER ÇEKİMİ REHBERİ</h2>
+            <p class="text-xs text-indigo-200">Adım <span id="tut-step-num">1</span> / 6 • Arka planda canlı zıplama aktif!</p>
+          </div>
+        </div>
+        <button id="btn-skip-tutorial" class="btn-cartoon bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl">
+          Hemen Oyna 🚀
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 flex flex-col md:flex-row items-center gap-4">
+        <div class="w-full md:w-60 h-44 bg-slate-950 rounded-2xl border-2 border-indigo-500/40 relative overflow-hidden shrink-0 flex items-center justify-center">
+          <canvas id="tutorial-canvas" width="240" height="176" class="w-full h-full"></canvas>
+          <div class="absolute bottom-1.5 left-2 right-2 bg-slate-900/80 text-[10px] text-center py-0.5 px-2 rounded-lg text-amber-300 font-bold">
+            Canlı Simülasyon Örneği
+          </div>
+        </div>
+
+        <div class="flex-1 space-y-2">
+          <div id="tut-badge" class="inline-block bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 text-xs font-extrabold px-3 py-0.5 rounded-full">
+            Konu 1
+          </div>
+          <h3 id="tut-title" class="text-lg sm:text-xl font-black text-amber-300">Kinetik Enerji Nedir?</h3>
+          <p id="tut-text" class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+            Hareket halindeki her cismin sahip olduğu enerjiye Kinetik Enerji denir.
+          </p>
+          <div id="tut-formula" class="bg-slate-800/90 border border-white/10 p-2 rounded-xl text-xs font-bold text-emerald-300">
+            💡 Formül: Kinetik Enerji = ½ × Kütle × Hız²
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3.5 bg-slate-950/70 border-t border-white/10 flex items-center justify-between">
+        <button id="tut-prev" class="btn-cartoon bg-slate-700 hover:bg-slate-600 text-white font-extrabold text-xs sm:text-sm px-4 py-2 rounded-xl" disabled>
+          ⬅️ Önceki
+        </button>
+
+        <div id="tut-dots" class="flex items-center gap-1.5"></div>
+
+        <button id="tut-next" class="btn-cartoon bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-xs sm:text-sm px-5 py-2 rounded-xl">
+          Sonraki ➡️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * YER ÇEKİMİ MACERASI
+     * Siyah ekran korumalı (Three.js 3D + Otomatik 2.5D HTML5 Canvas Yedek Motoru)
+     * Tam korunumlu analitik fizik ve zorlu görev sistemi.
+     */
+
+    // ==========================================
+    // 1. WEB AUDIO API SOUND SYNTHESIZER
+    // ==========================================
+    class SoundEngine {
+      constructor() {
+        this.enabled = true;
+        this.ctx = null;
+      }
+
+      init() {
+        try {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        } catch (e) {}
+      }
+
+      playBoing(intensity = 1.0) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        const baseFreq = 140 + Math.min(120, intensity * 18);
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.3, now + 0.16);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.4, now + 0.28);
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.31);
+      }
+
+      playWin() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.09;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        });
+      }
+
+      playPurchase() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [587.33, 880];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.08;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.26);
+        });
+      }
+
+      playClick() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, now);
+        osc.frequency.exponentialRampToValueAtTime(640, now + 0.05);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.07);
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // ==========================================
+    // 2. GAME DATA: MISSIONS & SHOP CATALOG
+    // ==========================================
+    const MISSIONS = [
+      {
+        id: 'm1',
+        difficulty: 'Kolay',
+        points: 10,
+        holdRequired: 1.5,
+        title: 'Hassas Potansiyel',
+        desc: 'Tepe noktasındaki potansiyel enerjiyi tam 240 J ± 10 J aralığına getir ve 1.5 sn koru!',
+        getProgressText: (s) => `Ep(tepe): ${s.peakEp.toFixed(0)} / 240 J`,
+        check: (s) => Math.abs(s.peakEp - 240) <= 10
+      },
+      {
+        id: 'm2',
+        difficulty: 'Kolay',
+        points: 10,
+        holdRequired: 1.5,
+        title: 'Kontrollü Zıplama Hızı',
+        desc: 'Zıplama hızını (v₀) ayarlayarak fırlama hızını 4.0 m/s ± 0.2 m/s aralığında 1.5 sn sürdür!',
+        getProgressText: (s) => `v₀: ${s.v0.toFixed(1)} / 4.0 m/s`,
+        check: (s) => Math.abs(s.v0 - 4.0) <= 0.2
+      },
+      {
+        id: 'm3',
+        difficulty: 'Kolay',
+        points: 10,
+        holdRequired: 1.5,
+        title: 'Kinetik Enerji Hedefi',
+        desc: 'Maksimum kinetik enerjiyi (trambolinden çıkış anı) 180 J ± 10 J seviyesine getir ve 1.5 sn koru!',
+        getProgressText: (s) => `Ek(maks): ${s.peakEk.toFixed(0)} / 180 J`,
+        check: (s) => Math.abs(s.peakEk - 180) <= 10
+      },
+      {
+        id: 'm4',
+        difficulty: 'Orta',
+        points: 25,
+        holdRequired: 2.0,
+        title: 'İnce Yükseklik Ayarı',
+        desc: 'Kütleyi 40 kg yapıp çocuğu tam 3.20 m ± 0.15 m tepe yüksekliğine çıkar (2 sn koru)!',
+        getProgressText: (s) => `m:${s.m}kg • h(tepe): ${s.peakH.toFixed(2)} / 3.20 m`,
+        check: (s) => s.m === 40 && Math.abs(s.peakH - 3.2) <= 0.15
+      },
+      {
+        id: 'm5',
+        difficulty: 'Orta',
+        points: 25,
+        holdRequired: 2.0,
+        title: 'Ay Yer Çekimi Deneyi',
+        desc: 'Yer çekimini Ay seviyesine (1.6 ± 0.2 m/s²) indir ve maksimum yüksekliği 5.0 m üzerine çıkar (2 sn koru)!',
+        getProgressText: (s) => `g:${s.g.toFixed(1)} • h(tepe): ${s.peakH.toFixed(2)} m`,
+        check: (s) => Math.abs(s.g - 1.6) <= 0.2 && s.peakH > 5.0
+      },
+      {
+        id: 'm6',
+        difficulty: 'Orta',
+        points: 25,
+        holdRequired: 2.0,
+        title: 'Tam Enerji Dengesi',
+        desc: 'Toplam mekanik enerjiyi tam 450 J ± 10 J değerine sabitle ve 2 sn koru!',
+        getProgressText: (s) => `E_Toplam: ${s.peakEk.toFixed(0)} / 450 J`,
+        check: (s) => Math.abs(s.peakEk - 450) <= 10
+      },
+      {
+        id: 'm7',
+        difficulty: 'Zor',
+        points: 50,
+        holdRequired: 0,
+        title: 'Anlık Enerji Eşitliği (Ek = Ep)',
+        desc: 'Zıplama sırasında anlık Kinetik ve Potansiyel enerjiyi aynı anda 200 J ± 15 J (fark < 20 J) yakala!',
+        getProgressText: (s) => `Ek: ${s.ek.toFixed(0)} J | Ep: ${s.ep.toFixed(0)} J`,
+        check: (s) => Math.abs(s.ek - 200) <= 15 && Math.abs(s.ep - 200) <= 15 && Math.abs(s.ek - s.ep) < 20
+      },
+      {
+        id: 'm8',
+        difficulty: 'Zor',
+        points: 50,
+        holdRequired: 2.5,
+        title: 'Jüpiter Yer Çekimi Meydan Okuması',
+        desc: 'Yer çekimini 20.0 m/s² yap, kütleyi 45 kg seç ve toplam enerjiyi tam 720 J ± 15 J yap (2.5 sn koru)!',
+        getProgressText: (s) => `g:${s.g.toFixed(1)} | m:${s.m}kg | E_T:${s.peakEk.toFixed(0)}/720 J`,
+        check: (s) => Math.abs(s.g - 20.0) <= 0.1 && s.m === 45 && Math.abs(s.peakEk - 720) <= 15
+      },
+      {
+        id: 'm9',
+        difficulty: 'Zor',
+        points: 50,
+        holdRequired: 2.5,
+        title: 'Mükemmel Fizik Ustası',
+        desc: '35 kg kütle ve 12.0 m/s² yer çekimi ile tepe yüksekliğini 2.50 m ± 0.10 m ve toplam enerjiyi 1050 J ± 20 J yap (2.5 sn koru)!',
+        getProgressText: (s) => `h(tepe):${s.peakH.toFixed(2)}m | E_T:${s.peakEk.toFixed(0)}/1050 J`,
+        check: (s) => s.m === 35 && Math.abs(s.g - 12.0) <= 0.1 && Math.abs(s.peakH - 2.5) <= 0.1 && Math.abs(s.peakEk - 1050) <= 20
+      }
+    ];
+
+    const OUTFITS = [
+      { id: 'default', name: 'Günlük Kıyafet', price: 0, icon: '👕', color: '#38bdf8', pants: '#1e3a8a', desc: 'Rahat trambolin kıyafeti' },
+      { id: 'red_tshirt', name: 'Kırmızı Tişört', price: 20, icon: '🟥', color: '#ef4444', pants: '#1f2937', desc: 'Canlı kırmızı spor tişört' },
+      { id: 'blue_jersey', name: 'Mavi Forma', price: 30, icon: '🎽', color: '#2563eb', pants: '#f8fafc', desc: 'Şampiyonların 10 numara forması' },
+      { id: 'superhero', name: 'Süper Kahraman', price: 75, icon: '🦸', color: '#dc2626', pants: '#1d4ed8', cape: '#facc15', desc: 'Uçuş pelerinli kahraman kostümü!' },
+      { id: 'astronaut', name: 'Uzay Kıyafeti', price: 100, icon: '🧑‍🚀', color: '#f8fafc', pants: '#e2e8f0', helmet: true, desc: 'Vizörlü astronot tulumu ve sırt roketi' },
+      { id: 'gold_suit', name: 'Altın Kostüm', price: 150, icon: '👑', color: '#fbbf24', pants: '#d97706', crown: true, desc: 'Parlayan efsanevi altın zırh ve taç!' }
+    ];
+
+    const BACKGROUNDS = [
+      { id: 'garden', name: 'Güneşli Bahçe', price: 0, icon: '🏡', desc: 'Yemyeşil çimler ve bulutlar' },
+      { id: 'park', name: 'Şehir Parkı', price: 20, icon: '🌳', desc: 'Ağaçlar, park lambaları ve yürüyüş yolu' },
+      { id: 'space', name: 'Derin Uzay', price: 50, icon: '🌌', desc: 'Yıldızlar, halkalı gezegenler ve ay kraterleri' },
+      { id: 'beach', name: 'Tropik Plaj', price: 75, icon: '🏖️', desc: 'Altın kumlar, palmiyeler ve mavi deniz' },
+      { id: 'city', name: 'Renkli Şehir', price: 100, icon: '🏙️', desc: 'Çizgi film gökdelenleri ve neşeli binalar' },
+      { id: 'candy', name: 'Şeker Dünyası', price: 125, icon: '🍭', desc: 'Dev lolipoplar, şeker kamışları ve pembe gökyüzü!' }
+    ];
+
+    // ==========================================
+    // 3. STATE MANAGEMENT & PERSISTENCE
+    // ==========================================
+    const DEFAULT_STATE = {
+      score: 0,
+      highScore: 0,
+      completedMissions: [],
+      unlockedMissionIndex: 0,
+      activeMissionIndex: 0,
+      ownedOutfits: ['default'],
+      equippedOutfit: 'default',
+      ownedBackgrounds: ['garden'],
+      equippedBackground: 'garden',
+      tutorialSeen: false
+    };
+
+    let savedData = { ...DEFAULT_STATE };
+    try {
+      const raw = localStorage.getItem('yercekimi_macerasi_v2');
+      if (raw) {
+        savedData = { ...DEFAULT_STATE, ...JSON.parse(raw) };
+      }
+    } catch (e) {}
+
+    function persistState() {
+      try {
+        localStorage.setItem('yercekimi_macerasi_v2', JSON.stringify(savedData));
+      } catch (e) {}
+    }
+
+    // Live Physics & Simulation State
+    const sim = {
+      running: true,
+      paused: false,
+      timeScale: 1.0,
+      m: 40,          // Mass (kg)
+      g: 9.8,         // Gravity (m/s^2)
+      v0: 5.0,        // Launch velocity from trampoline (m/s)
+      flightTime: 0,  // Elapsed time t since launch (s)
+      h: 0.0,         // Current height above trampoline mat (m)
+      v: 5.0,         // Current vertical velocity (m/s)
+      ek: 0,          // Kinetic Energy (J)
+      ep: 0,          // Potential Energy (J)
+      et: 0,          // Total Mechanical Energy (J)
+      peakH: 0,       // Theoretical peak height v0^2 / (2g)
+      peakEp: 0,      // Peak potential energy m * g * peakH
+      peakEk: 0,      // Peak kinetic energy 0.5 * m * v0^2
+      matSquash: 0,   // Trampoline mat compression animation (0..1)
+      inContact: false,
+      contactTimer: 0,
+      missionHoldTimer: 0,
+      missionCooldown: 0,
+      currentOutfitId: savedData.equippedOutfit,
+      currentBgId: savedData.equippedBackground
+    };
+
+    function resetJumpCycle(keepParams = true) {
+      if (!keepParams) {
+        sim.m = 40;
+        sim.g = 9.8;
+        sim.v0 = 5.0;
+        document.getElementById('slider-mass').value = 40;
+        document.getElementById('slider-gravity').value = 9.8;
+        document.getElementById('slider-v0').value = 5.0;
+        updateSliderLabels();
+      }
+      sim.flightTime = 0;
+      sim.h = 0;
+      sim.v = sim.v0;
+      sim.inContact = false;
+      sim.contactTimer = 0;
+      sim.matSquash = 0;
+      sim.missionHoldTimer = 0;
+      computeEnergies();
+    }
+
+    function computeEnergies() {
+      sim.peakH = (sim.v0 * sim.v0) / (2 * sim.g);
+      sim.peakEk = 0.5 * sim.m * sim.v0 * sim.v0;
+      sim.peakEp = sim.m * sim.g * sim.peakH;
+
+      if (sim.inContact) {
+        sim.h = 0;
+        sim.v = 0;
+        sim.ep = 0;
+        sim.ek = 0;
+        sim.et = 0;
+      } else {
+        // Strict analytical conservation during flight:
+        // Ep = m * g * h
+        // Ek = 0.5 * m * v^2 = 0.5 * m * v0^2 - m * g * h
+        // Et = Ek + Ep = 0.5 * m * v0^2 (invariant throughout flight)
+        sim.ep = Math.max(0, sim.m * sim.g * sim.h);
+        sim.ek = Math.max(0, 0.5 * sim.m * sim.v * sim.v);
+        sim.et = sim.ek + sim.ep;
+      }
+    }
+
+    // ==========================================
+    // 4. DUAL RENDER ENGINE: THREE.JS 3D + 2.5D FALLBACK CANVAS
+    // ==========================================
+    let renderMode = 'none'; // 'three' or 'fallback2d'
+    let scene, camera, renderer;
+    let characterGroup, headGroup, torsoMesh, leftArm, rightArm, leftLeg, rightLeg, capeMesh, helmetMesh, crownMesh;
+    let trampolineGroup, trampolineMat, worldPropsGroup;
+    let particles = [];
+
+    // Camera orbit parameters (positioned to show trampoline & jumping kid clearly)
+    let camYaw = 0.12;
+    let camPitch = 0.14;
+    let camDist = 8.5;
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+
+    // 2.5D Fallback Canvas variables
+    let fallbackCanvas = null;
+    let fallbackCtx = null;
+    let fallbackParticles = [];
+
+    function initVisualEngine() {
+      const container = document.getElementById('game-container');
+      container.innerHTML = '';
+
+      // Try initializing Three.js WebGL first
+      if (typeof THREE !== 'undefined') {
+        try {
+          const testCanvas = document.createElement('canvas');
+          const gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+          if (gl) {
+            initThreeScene(container);
+            renderMode = 'three';
+            document.getElementById('render-mode-subtitle').textContent = 'Fen Bilimleri • 3D Enerji Laboratuvarı';
+            return;
+          }
+        } catch (err) {
+          console.warn('Three.js WebGL başlatılamadı, 2.5D yedek motora geçiliyor:', err);
+        }
+      }
+
+      // Automatic High-Quality 2.5D Cartoon Canvas Fallback Renderer
+      initFallback2DEngine(container);
+      renderMode = 'fallback2d';
+      document.getElementById('render-mode-subtitle').textContent = 'Fen Bilimleri • Çizgi Film Enerji Sahnesi';
+    }
+
+    function initThreeScene(container) {
+      const w = Math.max(300, container.clientWidth || window.innerWidth);
+      const h = Math.max(300, container.clientHeight || window.innerHeight);
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x56ccf2);
+
+      camera = new THREE.PerspectiveCamera(48, w / h, 0.1, 200);
+      camera.position.set(0, 3.2, 8.5);
+      camera.lookAt(0, 2.0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'default' });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setClearColor(0x56ccf2, 1);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      // Guaranteed Bright Multi-Light Setup (Ambient + Hemisphere + Directional)
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambientLight);
+
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x4ade80, 0.65);
+      hemiLight.position.set(0, 20, 0);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+      dirLight.position.set(7, 15, 9);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      worldPropsGroup = new THREE.Group();
+      scene.add(worldPropsGroup);
+
+      buildTrampoline3D();
+      buildCartoonCharacter3D();
+      applyOutfitVisuals(sim.currentOutfitId);
+      applyBackgroundVisuals(sim.currentBgId);
+
+      // Camera Drag Interaction
+      const domEl = renderer.domElement;
+      domEl.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - prevMouse.x;
+        const dy = e.clientY - prevMouse.y;
+        prevMouse = { x: e.clientX, y: e.clientY };
+        camYaw -= dx * 0.007;
+        camPitch = Math.max(-0.05, Math.min(0.75, camPitch + dy * 0.006));
+      });
+
+      domEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isDragging = false; });
+      window.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - prevMouse.x;
+        const dy = e.touches[0].clientY - prevMouse.y;
+        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        camYaw -= dx * 0.007;
+        camPitch = Math.max(-0.05, Math.min(0.75, camPitch + dy * 0.006));
+      }, { passive: true });
+    }
+
+    function updateCameraPosition(focusY) {
+      if (!camera) return;
+      const x = camDist * Math.sin(camYaw) * Math.cos(camPitch);
+      const y = focusY + camDist * Math.sin(camPitch);
+      const z = camDist * Math.cos(camYaw) * Math.cos(camPitch);
+      camera.position.set(x, Math.max(1.2, y), z);
+      camera.lookAt(0, focusY, 0);
+    }
+
+    function buildTrampoline3D() {
+      trampolineGroup = new THREE.Group();
+
+      // Ground contact shadow disc
+      const shadowDisc = new THREE.Mesh(
+        new THREE.CircleGeometry(2.5, 32),
+        new THREE.MeshBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.25 })
+      );
+      shadowDisc.rotation.x = -Math.PI / 2;
+      shadowDisc.position.y = 0.02;
+      trampolineGroup.add(shadowDisc);
+
+      // Outer Safety Rim (Bright Orange/Yellow)
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(2.05, 0.22, 16, 40),
+        new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.4 })
+      );
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.72;
+      rim.castShadow = true;
+      rim.receiveShadow = true;
+      trampolineGroup.add(rim);
+
+      // Elastic Trampoline Jumping Mat
+      trampolineMat = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.9, 1.9, 0.1, 36),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 })
+      );
+      trampolineMat.position.y = 0.72;
+      trampolineMat.receiveShadow = true;
+      trampolineGroup.add(trampolineMat);
+
+      // Center Bullseye Target Ring on Mat
+      const centerRing = new THREE.Mesh(
+        new THREE.RingGeometry(0.45, 0.68, 32),
+        new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+      );
+      centerRing.rotation.x = -Math.PI / 2;
+      centerRing.position.y = 0.06;
+      trampolineMat.add(centerRing);
+
+      // 6 Metal Legs
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5, roughness: 0.3 });
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.72, 12), legMat);
+        leg.position.set(Math.cos(angle) * 1.9, 0.36, Math.sin(angle) * 1.9);
+        leg.castShadow = true;
+        trampolineGroup.add(leg);
+      }
+
+      // Height Ruler Post beside trampoline
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 8.5, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffffff })
+      );
+      pole.position.set(-2.65, 4.25, -0.4);
+      trampolineGroup.add(pole);
+
+      for (let m = 0; m <= 6; m++) {
+        const tick = new THREE.Mesh(
+          new THREE.BoxGeometry(0.42, 0.08, 0.08),
+          new THREE.MeshBasicMaterial({ color: m % 2 === 0 ? 0xfacc15 : 0x38bdf8 })
+        );
+        tick.position.set(-2.45, 0.76 + m * 1.15, -0.4);
+        trampolineGroup.add(tick);
+      }
+
+      scene.add(trampolineGroup);
+    }
+
+    function buildCartoonCharacter3D() {
+      characterGroup = new THREE.Group();
+      characterGroup.scale.setScalar(1.35); // Large, crystal-clear character proportions
+
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffcba4, roughness: 0.5 });
+      const shirtMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.45 });
+      const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.6 });
+      const shoeMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.7 });
+
+      // Torso (T-shirt)
+      torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.76, 18), shirtMat);
+      torsoMesh.position.y = 0.86;
+      torsoMesh.castShadow = true;
+      characterGroup.add(torsoMesh);
+
+      // Shorts / Pelvis
+      const shorts = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.35, 0.28, 18), pantsMat);
+      shorts.position.y = 0.42;
+      shorts.castShadow = true;
+      characterGroup.add(shorts);
+
+      // Cape (Visible for superhero outfit)
+      capeMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.66, 0.92, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+      );
+      capeMesh.position.set(0, 0.82, -0.35);
+      capeMesh.rotation.x = 0.25;
+      capeMesh.visible = false;
+      characterGroup.add(capeMesh);
+
+      // Head Group
+      headGroup = new THREE.Group();
+      headGroup.position.y = 1.62;
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), skinMat);
+      head.castShadow = true;
+      headGroup.add(head);
+
+      // Cartoon Hair Cap & Tuft
+      const hairCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.44, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.54),
+        hairMat
+      );
+      hairCap.position.y = 0.04;
+      hairCap.rotation.x = -0.18;
+      headGroup.add(hairCap);
+
+      const hairTuft = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.32, 12), hairMat);
+      hairTuft.position.set(0, 0.5, 0.06);
+      hairTuft.rotation.x = 0.32;
+      headGroup.add(hairTuft);
+
+      // Expressive Eyes
+      const eyeWhiteGeo = new THREE.SphereGeometry(0.088, 14, 14);
+      const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const pupilGeo = new THREE.SphereGeometry(0.048, 12, 12);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+
+      [-0.145, 0.145].forEach(ex => {
+        const ew = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat);
+        ew.position.set(ex, 0.05, 0.36);
+        const ep = new THREE.Mesh(pupilGeo, pupilMat);
+        ep.position.set(ex, 0.05, 0.43);
+        headGroup.add(ew, ep);
+      });
+
+      // Rosy Cheeks
+      const cheekMat = new THREE.MeshBasicMaterial({ color: 0xfb7185 });
+      [-0.22, 0.22].forEach(cx => {
+        const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), cheekMat);
+        cheek.scale.set(1.2, 0.7, 0.5);
+        cheek.position.set(cx, -0.06, 0.36);
+        headGroup.add(cheek);
+      });
+
+      // Happy Smile
+      const smile = new THREE.Mesh(
+        new THREE.TorusGeometry(0.11, 0.025, 10, 20, Math.PI),
+        new THREE.MeshBasicMaterial({ color: 0x991b1b })
+      );
+      smile.rotation.x = Math.PI;
+      smile.position.set(0, -0.09, 0.39);
+      headGroup.add(smile);
+
+      // Astronaut Helmet (Hidden by default)
+      helmetMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.56, 24, 24),
+        new THREE.MeshStandardMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.42, roughness: 0.1 })
+      );
+      helmetMesh.visible = false;
+      headGroup.add(helmetMesh);
+
+      // Golden Crown (Hidden by default)
+      crownMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.2, 0.18, 8),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.7, roughness: 0.2 })
+      );
+      crownMesh.position.y = 0.48;
+      crownMesh.visible = false;
+      headGroup.add(crownMesh);
+
+      characterGroup.add(headGroup);
+
+      // Arms
+      function createArm(side) {
+        const armPivot = new THREE.Group();
+        armPivot.position.set(side * 0.42, 1.15, 0);
+        const armMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.54, 12), skinMat);
+        armMesh.position.y = -0.24;
+        armMesh.castShadow = true;
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 12), skinMat);
+        hand.position.y = -0.52;
+        armPivot.add(armMesh, hand);
+        return armPivot;
+      }
+      leftArm = createArm(-1);
+      rightArm = createArm(1);
+      characterGroup.add(leftArm, rightArm);
+
+      // Legs + Sneakers (Bottom of sneakers rests cleanly at local y = 0!)
+      function createLeg(side) {
+        const legPivot = new THREE.Group();
+        legPivot.position.set(side * 0.18, 0.34, 0);
+        const legMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.095, 0.26, 12), skinMat);
+        legMesh.position.y = -0.13;
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.12, 0.32), shoeMat);
+        shoe.position.set(0, -0.28, 0.05);
+        shoe.castShadow = true;
+        legPivot.add(legMesh, shoe);
+        return legPivot;
+      }
+      leftLeg = createLeg(-1);
+      rightLeg = createLeg(1);
+      characterGroup.add(leftLeg, rightLeg);
+
+      // Align character feet right on trampoline mat surface (y = 0.76)
+      characterGroup.position.set(0, 0.76, 0);
+      scene.add(characterGroup);
+    }
+
+    function applyOutfitVisuals(outfitId) {
+      sim.currentOutfitId = outfitId;
+      if (renderMode !== 'three' || !torsoMesh) return;
+      const outfit = OUTFITS.find(o => o.id === outfitId) || OUTFITS[0];
+      torsoMesh.material.color.set(outfit.color);
+      capeMesh.visible = Boolean(outfit.cape);
+      if (outfit.cape) capeMesh.material.color.set(outfit.cape);
+      helmetMesh.visible = Boolean(outfit.helmet);
+      crownMesh.visible = Boolean(outfit.crown);
+    }
+
+    function clearWorldProps() {
+      if (!worldPropsGroup) return;
+      while (worldPropsGroup.children.length > 0) {
+        worldPropsGroup.remove(worldPropsGroup.children[0]);
+      }
+    }
+
+    function addCartoonCloud(x, y, z, scale = 1, color = 0xffffff) {
+      const cloud = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9 });
+      const p1 = new THREE.Mesh(new THREE.SphereGeometry(0.85, 14, 14), mat);
+      const p2 = new THREE.Mesh(new THREE.SphereGeometry(0.65, 14, 14), mat);
+      p2.position.set(0.75, -0.1, 0);
+      const p3 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 14, 14), mat);
+      p3.position.set(-0.75, -0.1, 0);
+      cloud.add(p1, p2, p3);
+      cloud.position.set(x, y, z);
+      cloud.scale.setScalar(scale);
+      worldPropsGroup.add(cloud);
+    }
+
+    function addCartoonTree(x, z, scale = 1) {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.22, 0.3, 1.5, 10),
+        new THREE.MeshStandardMaterial({ color: 0x78350f })
+      );
+      trunk.position.y = 0.75;
+      trunk.castShadow = true;
+
+      const foliageMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.8 });
+      const f1 = new THREE.Mesh(new THREE.SphereGeometry(1.1, 14, 14), foliageMat);
+      f1.position.y = 2.0;
+      f1.castShadow = true;
+      const f2 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 14, 14), foliageMat);
+      f2.position.set(0.5, 2.5, 0.2);
+
+      tree.add(trunk, f1, f2);
+      tree.position.set(x, 0, z);
+      tree.scale.setScalar(scale);
+      worldPropsGroup.add(tree);
+    }
+
+    function applyBackgroundVisuals(bgId) {
+      sim.currentBgId = bgId;
+      if (renderMode !== 'three' || !scene) return;
+
+      clearWorldProps();
+      const groundGeo = new THREE.CircleGeometry(45, 48);
+      let groundColor = 0x4ade80;
+      let skyColor = 0x56ccf2;
+
+      if (bgId === 'garden') {
+        skyColor = 0x56ccf2;
+        groundColor = 0x4ade80;
+        addCartoonCloud(-7, 9, -12, 1.3);
+        addCartoonCloud(8, 11, -15, 1.6);
+        addCartoonCloud(0, 12, -18, 1.2);
+        addCartoonTree(-6.5, -5.5, 1.1);
+        addCartoonTree(7.2, -4.8, 1.25);
+        addCartoonTree(-8, 4, 0.9);
+      } else if (bgId === 'park') {
+        skyColor = 0x7dd3fc;
+        groundColor = 0x22c55e;
+        addCartoonCloud(-6, 10, -14, 1.4);
+        addCartoonCloud(7, 9, -12, 1.2);
+        for (let i = 0; i < 7; i++) {
+          const a = (i / 7) * Math.PI * 2;
+          addCartoonTree(Math.cos(a) * 9.5, Math.sin(a) * 9.5, 1.0 + (i % 2) * 0.3);
+        }
+      } else if (bgId === 'space') {
+        skyColor = 0x0f172a;
+        groundColor = 0x475569;
+        const starGeo = new THREE.SphereGeometry(0.14, 8, 8);
+        const starMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        for (let i = 0; i < 65; i++) {
+          const star = new THREE.Mesh(starGeo, starMat);
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI * 0.48;
+          const r = 24 + Math.random() * 14;
+          star.position.set(
+            r * Math.sin(phi) * Math.cos(theta),
+            4 + r * Math.cos(phi),
+            r * Math.sin(phi) * Math.sin(theta)
+          );
+          worldPropsGroup.add(star);
+        }
+        const planet = new THREE.Mesh(
+          new THREE.SphereGeometry(2.4, 24, 24),
+          new THREE.MeshStandardMaterial({ color: 0xf97316 })
+        );
+        planet.position.set(-11, 11, -18);
+        const pRing = new THREE.Mesh(
+          new THREE.RingGeometry(3.0, 4.3, 32),
+          new THREE.MeshBasicMaterial({ color: 0xfde047, side: THREE.DoubleSide })
+        );
+        pRing.rotation.x = 1.2;
+        planet.add(pRing);
+        worldPropsGroup.add(planet);
+      } else if (bgId === 'beach') {
+        skyColor = 0x38bdf8;
+        groundColor = 0xfde047;
+        const ocean = new THREE.Mesh(
+          new THREE.RingGeometry(11, 45, 48),
+          new THREE.MeshStandardMaterial({ color: 0x0284c7 })
+        );
+        ocean.rotation.x = -Math.PI / 2;
+        ocean.position.y = 0.02;
+        worldPropsGroup.add(ocean);
+        addCartoonCloud(0, 11, -16, 1.5);
+      } else if (bgId === 'city') {
+        skyColor = 0x60a5fa;
+        groundColor = 0x64748b;
+        const bColors = [0xf43f5e, 0x8b5cf6, 0x0ea5e9, 0xf59e0b, 0x10b981];
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const dist = 13 + (i % 3) * 2.5;
+          const h = 4 + (i % 4) * 2.2;
+          const bldg = new THREE.Mesh(
+            new THREE.BoxGeometry(2.6, h, 2.6),
+            new THREE.MeshStandardMaterial({ color: bColors[i % bColors.length] })
+          );
+          bldg.position.set(Math.cos(a) * dist, h / 2, Math.sin(a) * dist);
+          worldPropsGroup.add(bldg);
+        }
+        addCartoonCloud(-6, 12, -14, 1.3);
+      } else if (bgId === 'candy') {
+        skyColor = 0xf9a8d4;
+        groundColor = 0xfce7f3;
+        addCartoonCloud(-6, 10, -14, 1.4, 0xfff1f2);
+        const lolliColors = [0xec4899, 0x06b6d4, 0xa855f7, 0xfacc15];
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const stick = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.08, 0.08, 2.4, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffffff })
+          );
+          stick.position.y = 1.2;
+          const candy = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.85, 0.85, 0.25, 20),
+            new THREE.MeshStandardMaterial({ color: lolliColors[i % lolliColors.length] })
+          );
+          candy.rotation.x = Math.PI / 2;
+          candy.position.y = 2.5;
+          const grp = new THREE.Group();
+          grp.add(stick, candy);
+          grp.position.set(Math.cos(a) * 8.2, 0, Math.sin(a) * 8.2);
+          grp.lookAt(0, 1.5, 0);
+          worldPropsGroup.add(grp);
+        }
+      }
+
+      scene.background = new THREE.Color(skyColor);
+      renderer.setClearColor(skyColor, 1);
+      const ground = new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ color: groundColor, roughness: 0.85 }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      worldPropsGroup.add(ground);
+    }
+
+    // ==========================================
+    // 2.5D CARTOON CANVAS FALLBACK RENDERER
+    // ==========================================
+    function initFallback2DEngine(container) {
+      fallbackCanvas = document.createElement('canvas');
+      fallbackCanvas.width = Math.max(300, container.clientWidth || window.innerWidth);
+      fallbackCanvas.height = Math.max(300, container.clientHeight || window.innerHeight);
+      container.appendChild(fallbackCanvas);
+      fallbackCtx = fallbackCanvas.getContext('2d');
+    }
+
+    function renderFallback2DScene(dt) {
+      if (!fallbackCtx || !fallbackCanvas) return;
+      const w = fallbackCanvas.width;
+      const h = fallbackCanvas.height;
+      const ctx = fallbackCtx;
+
+      // Sky & Ground Theme Colors
+      const themes = {
+        garden: { skyTop: '#38bdf8', skyBot: '#bae6fd', ground: '#4ade80', hill: '#22c55e' },
+        park:   { skyTop: '#60a5fa', skyBot: '#dbeafe', ground: '#22c55e', hill: '#16a34a' },
+        space:  { skyTop: '#090d16', skyBot: '#1e1b4b', ground: '#475569', hill: '#334155' },
+        beach:  { skyTop: '#0284c7', skyBot: '#7dd3fc', ground: '#fde047', hill: '#0ea5e9' },
+        city:   { skyTop: '#3b82f6', skyBot: '#93c5fd', ground: '#64748b', hill: '#475569' },
+        candy:  { skyTop: '#f472b6', skyBot: '#fbcfe8', ground: '#fce7f3', hill: '#f9a8d4' }
+      };
+      const theme = themes[sim.currentBgId] || themes.garden;
+
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, theme.skyTop);
+      grad.addColorStop(1, theme.skyBot);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Sun or Planet
+      ctx.beginPath();
+      ctx.arc(w * 0.82, h * 0.18, 42, 0, Math.PI * 2);
+      ctx.fillStyle = sim.currentBgId === 'space' ? '#f97316' : '#fde047';
+      ctx.fill();
+
+      // Ground
+      const groundY = h * 0.78;
+      ctx.fillStyle = theme.ground;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      // Height Ruler on Left of Trampoline
+      const cx = w * 0.5;
+      const trampY = groundY - 24;
+      const pxPerMeter = Math.min(72, (h * 0.52) / 6);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 145, trampY);
+      ctx.lineTo(cx - 145, trampY - 6 * pxPerMeter);
+      ctx.stroke();
+
+      ctx.font = 'bold 12px Nunito';
+      ctx.fillStyle = '#ffffff';
+      for (let m = 0; m <= 6; m++) {
+        const ty = trampY - m * pxPerMeter;
+        ctx.fillRect(cx - 152, ty - 1, 14, 3);
+        ctx.fillText(`${m}m`, cx - 180, ty + 4);
+      }
+
+      // 2.5D Trampoline
+      const depress = sim.matSquash * 18;
+      // Legs
+      ctx.fillStyle = '#64748b';
+      [-95, -35, 35, 95].forEach(lx => {
+        ctx.fillRect(cx + lx - 5, trampY, 10, groundY - trampY + 6);
+      });
+      // Elastic Mat
+      ctx.beginPath();
+      ctx.moveTo(cx - 110, trampY);
+      ctx.quadraticCurveTo(cx, trampY + depress * 2.2, cx + 110, trampY);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      // Orange Rim
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.ellipse(cx, trampY, 118, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cute 2.5D Cartoon Character
+      const outfit = OUTFITS.find(o => o.id === sim.currentOutfitId) || OUTFITS[0];
+      const charBottomY = trampY + depress - sim.h * pxPerMeter;
+      const sqX = sim.inContact ? 1 + sim.matSquash * 0.2 : 1 - Math.min(0.12, Math.abs(sim.v) * 0.012);
+      const sqY = sim.inContact ? 1 - sim.matSquash * 0.22 : 1 + Math.min(0.15, Math.abs(sim.v) * 0.015);
+
+      ctx.save();
+      ctx.translate(cx, charBottomY);
+      ctx.scale(sqX, sqY);
+
+      // Superhero Cape
+      if (outfit.cape) {
+        ctx.fillStyle = outfit.cape;
+        ctx.beginPath();
+        ctx.moveTo(-18, -68);
+        ctx.lineTo(-42, -16);
+        ctx.lineTo(42, -16);
+        ctx.lineTo(18, -68);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Legs & Shoes
+      ctx.fillStyle = '#ffcba4';
+      ctx.fillRect(-16, -24, 11, 18);
+      ctx.fillRect(5, -24, 11, 18);
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.roundRect(-20, -10, 18, 10, 5);
+      ctx.roundRect(2, -10, 18, 10, 5);
+      ctx.fill();
+
+      // Shorts
+      ctx.fillStyle = outfit.pants;
+      ctx.beginPath();
+      ctx.roundRect(-21, -38, 42, 16, 6);
+      ctx.fill();
+
+      // T-shirt Torso
+      ctx.fillStyle = outfit.color;
+      ctx.beginPath();
+      ctx.roundRect(-23, -76, 46, 42, 10);
+      ctx.fill();
+
+      // Arms (Animated based on velocity)
+      const armAngle = sim.v > 0 ? -0.95 : 0.45;
+      [-1, 1].forEach(side => {
+        ctx.save();
+        ctx.translate(side * 24, -68);
+        ctx.rotate(side * armAngle);
+        ctx.fillStyle = '#ffcba4';
+        ctx.beginPath();
+        ctx.roundRect(-5, 0, 10, 32, 5);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(0, -102, 26, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffcba4';
+      ctx.fill();
+
+      // Hair
+      ctx.beginPath();
+      ctx.arc(0, -106, 27, Math.PI, Math.PI * 2);
+      ctx.fillStyle = '#451a03';
+      ctx.fill();
+
+      // Eyes & Smile
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-9, -102, 5.5, 0, Math.PI * 2);
+      ctx.arc(9, -102, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-9, -102, 2.8, 0, Math.PI * 2);
+      ctx.arc(9, -102, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#991b1b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, -95, 8, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+
+      // Astronaut Helmet or Crown
+      if (outfit.helmet) {
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, -102, 33, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (outfit.crown) {
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.moveTo(-14, -126);
+        ctx.lineTo(-10, -140);
+        ctx.lineTo(0, -130);
+        ctx.lineTo(10, -140);
+        ctx.lineTo(14, -126);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      // Sparkle Particles
+      for (let i = fallbackParticles.length - 1; i >= 0; i--) {
+        const p = fallbackParticles[i];
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4 * Math.max(0, p.life), 0, Math.PI * 2);
+        ctx.fill();
+        if (p.life <= 0) fallbackParticles.splice(i, 1);
+      }
+    }
+
+    function spawnJumpSparkles(colorHex = 0xfacc15) {
+      if (renderMode === 'three' && scene) {
+        const geo = new THREE.SphereGeometry(0.09, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+        for (let i = 0; i < 12; i++) {
+          const mesh = new THREE.Mesh(geo, mat);
+          const angle = (i / 12) * Math.PI * 2;
+          mesh.position.set(Math.cos(angle) * 0.5, 0.85, Math.sin(angle) * 0.5);
+          scene.add(mesh);
+          particles.push({
+            mesh,
+            vx: Math.cos(angle) * (1.8 + Math.random() * 1.5),
+            vy: 1.5 + Math.random() * 2.0,
+            vz: Math.sin(angle) * (1.8 + Math.random() * 1.5),
+            life: 0.65
+          });
+        }
+      } else if (fallbackCanvas) {
+        const cx = fallbackCanvas.width * 0.5;
+        const cy = fallbackCanvas.height * 0.78 - 24;
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          fallbackParticles.push({
+            x: cx + Math.cos(angle) * 35,
+            y: cy,
+            vx: Math.cos(angle) * 110,
+            vy: -Math.abs(Math.sin(angle)) * 120 - 30,
+            color: '#facc15',
+            life: 0.65
+          });
+        }
+      }
+    }
+
+    function handleContainerResize() {
+      const container = document.getElementById('game-container');
+      const w = Math.max(300, container.clientWidth || window.innerWidth);
+      const h = Math.max(300, container.clientHeight || window.innerHeight);
+
+      if (renderMode === 'three' && camera && renderer) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      } else if (renderMode === 'fallback2d' && fallbackCanvas) {
+        fallbackCanvas.width = w;
+        fallbackCanvas.height = h;
+      }
+    }
+
+    // ==========================================
+    // 5. PHYSICS LOOP & CHARACTER ANIMATION
+    // ==========================================
+    const VISUAL_HEIGHT_SCALE = 1.15;
+
+    function stepPhysics(dt) {
+      if (!sim.running || sim.paused) return;
+
+      const scaledDt = Math.min(dt, 0.05) * sim.timeScale;
+
+      if (sim.inContact) {
+        sim.contactTimer += scaledDt;
+        const duration = 0.14;
+        const progress = Math.min(1, sim.contactTimer / duration);
+        sim.matSquash = Math.sin(progress * Math.PI);
+        sim.h = 0;
+        sim.v = 0;
+
+        if (progress >= 1) {
+          sim.inContact = false;
+          sim.matSquash = 0;
+          sim.flightTime = 0;
+          sim.h = 0;
+          sim.v = sim.v0;
+          sound.playBoing(sim.v0 / 5.0);
+          spawnJumpSparkles(0x38bdf8);
+        }
+      } else {
+        // Exact analytical kinematics for flight (h >= 0):
+        const totalFlightDuration = (2 * sim.v0) / sim.g;
+        sim.flightTime += scaledDt;
+
+        if (sim.flightTime >= totalFlightDuration) {
+          sim.flightTime = 0;
+          sim.h = 0;
+          sim.v = 0;
+          sim.inContact = true;
+          sim.contactTimer = 0;
+        } else {
+          const t = sim.flightTime;
+          const exactH = Math.max(0, sim.v0 * t - 0.5 * sim.g * t * t);
+          sim.h = exactH;
+
+          const vSquared = Math.max(0, sim.v0 * sim.v0 - 2 * sim.g * exactH);
+          const isAscending = t <= totalFlightDuration * 0.5;
+          sim.v = (isAscending ? 1 : -1) * Math.sqrt(vSquared);
+        }
+      }
+
+      computeEnergies();
+      checkActiveMission(scaledDt);
+    }
+
+    function update3DVisuals(dt) {
+      if (renderMode === 'fallback2d') {
+        renderFallback2DScene(dt);
+        return;
+      }
+
+      if (!characterGroup || !trampolineMat) return;
+
+      const depress = sim.matSquash * 0.26;
+      trampolineMat.position.y = 0.72 - depress;
+      trampolineMat.scale.set(1 + sim.matSquash * 0.04, 1, 1 + sim.matSquash * 0.04);
+
+      const baseY = 0.76 - depress;
+      characterGroup.position.y = baseY + sim.h * VISUAL_HEIGHT_SCALE;
+
+      const baseScale = 1.35;
+      if (sim.inContact) {
+        const sq = 1 - sim.matSquash * 0.22;
+        const st = 1 + sim.matSquash * 0.15;
+        characterGroup.scale.set(baseScale * st, baseScale * sq, baseScale * st);
+        leftArm.rotation.z = 0.3;
+        rightArm.rotation.z = -0.3;
+        leftLeg.rotation.x = -0.3;
+        rightLeg.rotation.x = -0.3;
+      } else {
+        const speedFactor = Math.min(0.15, Math.abs(sim.v) * 0.013);
+        characterGroup.scale.set(
+          baseScale * (1 - speedFactor * 0.5),
+          baseScale * (1 + speedFactor),
+          baseScale * (1 - speedFactor * 0.5)
+        );
+
+        if (sim.v > 0) {
+          const upFactor = Math.min(1, sim.v / 6);
+          leftArm.rotation.z = 0.4 + upFactor * 2.1;
+          rightArm.rotation.z = -(0.4 + upFactor * 2.1);
+          leftLeg.rotation.x = 0.12;
+          rightLeg.rotation.x = -0.12;
+          capeMesh.rotation.x = 0.15;
+        } else {
+          const downFactor = Math.min(1, Math.abs(sim.v) / 6);
+          leftArm.rotation.z = 1.3 - downFactor * 0.3;
+          rightArm.rotation.z = -(1.3 - downFactor * 0.3);
+          leftLeg.rotation.x = -0.25 * downFactor;
+          rightLeg.rotation.x = -0.15 * downFactor;
+          capeMesh.rotation.x = 0.55 + downFactor * 0.35;
+        }
+      }
+
+      const targetCamY = 2.0 + Math.min(3.0, sim.h * 0.42);
+      updateCameraPosition(targetCamY);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        p.mesh.position.x += p.vx * dt;
+        p.mesh.position.y += p.vy * dt;
+        p.mesh.position.z += p.vz * dt;
+        p.vy -= 5 * dt;
+        p.mesh.scale.setScalar(Math.max(0.01, p.life * 1.4));
+        if (p.life <= 0) {
+          scene.remove(p.mesh);
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    // ==========================================
+    // 6. HUD & MISSION CHECKING LOGIC
+    // ==========================================
+    const elEk = document.getElementById('val-ek');
+    const elEp = document.getElementById('val-ep');
+    const elEt = document.getElementById('val-et');
+    const barEk = document.getElementById('bar-ek');
+    const barEp = document.getElementById('bar-ep');
+    const barEt = document.getElementById('bar-et');
+    const elH = document.getElementById('val-height');
+    const elV = document.getElementById('val-velocity');
+    const elM = document.getElementById('val-mass');
+    const elG = document.getElementById('val-gravity');
+    const elMissionLive = document.getElementById('mission-live-val');
+    const elMissionHoldBar = document.getElementById('mission-hold-bar');
+    const elMissionHoldLabel = document.getElementById('mission-hold-label');
+
+    function updateHUD() {
+      const referenceEnergy = sim.inContact ? sim.peakEk : sim.et;
+      const maxScale = Math.max(250, referenceEnergy * 1.15);
+
+      elEk.textContent = `${sim.ek.toFixed(1)} J`;
+      elEp.textContent = `${sim.ep.toFixed(1)} J`;
+      elEt.textContent = `${sim.et.toFixed(1)} J`;
+
+      barEk.style.width = `${Math.min(100, (sim.ek / maxScale) * 100)}%`;
+      barEp.style.width = `${Math.min(100, (sim.ep / maxScale) * 100)}%`;
+      barEt.style.width = `${Math.min(100, (sim.et / maxScale) * 100)}%`;
+
+      elH.textContent = `${sim.h.toFixed(2)} m`;
+      elV.textContent = `${Math.abs(sim.v).toFixed(2)} m/s`;
+      elM.textContent = `${sim.m} kg`;
+      elG.textContent = `${sim.g.toFixed(1)} m/s²`;
+
+      const activeMission = MISSIONS[savedData.activeMissionIndex];
+      if (activeMission && elMissionLive) {
+        elMissionLive.textContent = activeMission.getProgressText(sim);
+        const req = activeMission.holdRequired || 0;
+        if (req > 0) {
+          const pct = Math.min(100, Math.round((sim.missionHoldTimer / req) * 100));
+          elMissionHoldBar.style.width = `${pct}%`;
+          elMissionHoldLabel.textContent = pct > 0
+            ? `Hedef Tutuluyor: %${pct}`
+            : `Hedefi ${req.toFixed(1)} sn Koru`;
+        } else {
+          const matched = activeMission.check(sim);
+          elMissionHoldBar.style.width = matched ? '100%' : '0%';
+          elMissionHoldLabel.textContent = matched ? 'Anlık Yakalandı!' : 'Anlık Değer Yakala';
+        }
+      }
+    }
+
+    function updateScoreUI() {
+      document.getElementById('hud-score').textContent = savedData.score;
+      document.getElementById('hud-highscore').textContent = savedData.highScore;
+      document.getElementById('shop-score-display').textContent = `${savedData.score} Puan`;
+    }
+
+    function renderActiveMissionBanner() {
+      const m = MISSIONS[savedData.activeMissionIndex] || MISSIONS[0];
+      const badge = document.getElementById('mission-badge-diff');
+      badge.textContent = `${m.difficulty.toUpperCase()} • ${m.points} P`;
+
+      if (m.difficulty === 'Kolay') {
+        badge.className = 'shrink-0 px-2.5 py-1 rounded-xl text-xs font-black uppercase bg-emerald-400 text-slate-950';
+      } else if (m.difficulty === 'Orta') {
+        badge.className = 'shrink-0 px-2.5 py-1 rounded-xl text-xs font-black uppercase bg-amber-400 text-slate-950';
+      } else {
+        badge.className = 'shrink-0 px-2.5 py-1 rounded-xl text-xs font-black uppercase bg-rose-500 text-white';
+      }
+
+      const isDone = savedData.completedMissions.includes(m.id);
+      document.getElementById('mission-title').textContent = `Görev ${savedData.activeMissionIndex + 1}: ${m.title}`;
+      document.getElementById('mission-status-icon').textContent = isDone ? '✅' : '🎯';
+      document.getElementById('mission-desc').textContent = m.desc;
+    }
+
+    function checkActiveMission(dt = 0.016) {
+      if (sim.missionCooldown > 0) return;
+      const m = MISSIONS[savedData.activeMissionIndex];
+      if (!m) return;
+
+      const isConditionMet = m.check(sim);
+      const holdNeeded = m.holdRequired || 0;
+
+      if (isConditionMet) {
+        if (holdNeeded > 0) {
+          sim.missionHoldTimer += dt;
+          if (sim.missionHoldTimer < holdNeeded) return;
+        }
+      } else {
+        sim.missionHoldTimer = Math.max(0, sim.missionHoldTimer - dt * 1.5);
+        return;
+      }
+
+      sim.missionHoldTimer = 0;
+      sim.missionCooldown = 2.8;
+
+      const firstTime = !savedData.completedMissions.includes(m.id);
+      if (firstTime) {
+        savedData.completedMissions.push(m.id);
+      }
+
+      const earned = firstTime ? m.points : Math.max(5, Math.floor(m.points / 2));
+      savedData.score += earned;
+      if (savedData.score > savedData.highScore) {
+        savedData.highScore = savedData.score;
+      }
+
+      if (savedData.activeMissionIndex + 1 > savedData.unlockedMissionIndex && savedData.activeMissionIndex + 1 < MISSIONS.length) {
+        savedData.unlockedMissionIndex = savedData.activeMissionIndex + 1;
+      }
+
+      const nextIdx = savedData.activeMissionIndex + 1 < MISSIONS.length
+        ? savedData.activeMissionIndex + 1
+        : savedData.activeMissionIndex;
+
+      persistState();
+      updateScoreUI();
+      renderActiveMissionBanner();
+      triggerCelebration(m.title, earned, firstTime);
+
+      setTimeout(() => {
+        savedData.activeMissionIndex = nextIdx;
+        sim.missionHoldTimer = 0;
+        persistState();
+        renderActiveMissionBanner();
+      }, 2300);
+    }
+
+    // ==========================================
+    // 7. CELEBRATION CONFETTI & TOAST
+    // ==========================================
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    let confettiPieces = [];
+
+    function triggerCelebration(missionTitle, pointsEarned, firstTime) {
+      sound.playWin();
+      spawnJumpSparkles(0xfacc15);
+
+      const toast = document.getElementById('mission-toast');
+      document.getElementById('toast-mission-name').textContent = missionTitle;
+      document.getElementById('toast-points').textContent = firstTime
+        ? `+${pointsEarned} PUAN KAZANDIN!`
+        : `+${pointsEarned} TEKRAR PUANI KAZANDIN!`;
+
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2500);
+
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      const colors = ['#facc15', '#38bdf8', '#f43f5e', '#4ade80', '#c084fc'];
+      for (let i = 0; i < 85; i++) {
+        confettiPieces.push({
+          x: window.innerWidth * 0.5 + (Math.random() - 0.5) * 240,
+          y: window.innerHeight * 0.35,
+          vx: (Math.random() - 0.5) * 14,
+          vy: -Math.random() * 12 - 3,
+          size: 6 + Math.random() * 6,
+          color: colors[i % colors.length],
+          rot: Math.random() * Math.PI * 2,
+          vrot: (Math.random() - 0.5) * 0.25,
+          life: 2.2
+        });
+      }
+    }
+
+    function updateConfetti(dt) {
+      if (confettiPieces.length === 0) return;
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      for (let i = confettiPieces.length - 1; i >= 0; i--) {
+        const c = confettiPieces[i];
+        c.life -= dt;
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vy += 0.38;
+        c.rot += c.vrot;
+
+        confettiCtx.save();
+        confettiCtx.translate(c.x, c.y);
+        confettiCtx.rotate(c.rot);
+        confettiCtx.fillStyle = c.color;
+        confettiCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.6);
+        confettiCtx.restore();
+
+        if (c.life <= 0) confettiPieces.splice(i, 1);
+      }
+    }
+
+    // ==========================================
+    // 8. MODALS: MISSIONS, SHOP, SETTINGS
+    // ==========================================
+    function renderMissionsModal() {
+      const container = document.getElementById('missions-list-container');
+      container.innerHTML = '';
+
+      MISSIONS.forEach((m, idx) => {
+        const isUnlocked = idx <= savedData.unlockedMissionIndex;
+        const isCompleted = savedData.completedMissions.includes(m.id);
+        const isActive = idx === savedData.activeMissionIndex;
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+          isActive
+            ? 'bg-amber-500/15 border-amber-400'
+            : isUnlocked
+              ? 'bg-slate-800/80 border-white/10 hover:border-white/30'
+              : 'bg-slate-900/60 border-white/5 opacity-60'
+        }`;
+
+        const diffColor =
+          m.difficulty === 'Kolay' ? 'bg-emerald-400 text-slate-950' :
+          m.difficulty === 'Orta' ? 'bg-amber-400 text-slate-950' :
+          'bg-rose-500 text-white';
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3">
+            <div class="text-2xl mt-0.5">${isCompleted ? '✅' : isUnlocked ? '🎯' : '🔒'}</div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-black text-sm text-white">Görev ${idx + 1}: ${m.title}</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg ${diffColor}">${m.difficulty} • ${m.points} P</span>
+                ${isCompleted ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-lg font-bold">Tamamlandı</span>' : ''}
+              </div>
+              <p class="text-xs text-slate-300 mt-1">${m.desc}</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            ${
+              isUnlocked
+                ? `<button data-idx="${idx}" class="select-mission-btn btn-cartoon ${isActive ? 'bg-amber-400 text-slate-950' : 'bg-indigo-500 text-white'} text-xs font-black px-3 py-2 rounded-xl">
+                    ${isActive ? 'Aktif Görev' : isCompleted ? 'Tekrar Oyna' : 'Seç'}
+                   </button>`
+                : `<span class="text-xs font-bold text-slate-400">Kilitli</span>`
+            }
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('.select-mission-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sound.playClick();
+          savedData.activeMissionIndex = parseInt(btn.dataset.idx, 10);
+          sim.missionHoldTimer = 0;
+          persistState();
+          renderActiveMissionBanner();
+          document.getElementById('modal-missions').classList.add('hidden');
+        });
+      });
+    }
+
+    let activeShopTab = 'outfits';
+    let previewOutfitId = null;
+    let previewBgId = null;
+
+    function openShop() {
+      sound.playClick();
+      previewOutfitId = savedData.equippedOutfit;
+      previewBgId = savedData.equippedBackground;
+      updateScoreUI();
+      renderShopItems();
+      document.getElementById('modal-shop').classList.remove('hidden');
+    }
+
+    function closeShop() {
+      sound.playClick();
+      applyOutfitVisuals(savedData.equippedOutfit);
+      applyBackgroundVisuals(savedData.equippedBackground);
+      document.getElementById('modal-shop').classList.add('hidden');
+    }
+
+    function renderShopItems() {
+      const container = document.getElementById('shop-items-container');
+      container.innerHTML = '';
+
+      const isOutfits = activeShopTab === 'outfits';
+      const list = isOutfits ? OUTFITS : BACKGROUNDS;
+      const ownedList = isOutfits ? savedData.ownedOutfits : savedData.ownedBackgrounds;
+      const equippedId = isOutfits ? savedData.equippedOutfit : savedData.equippedBackground;
+      const currentPreview = isOutfits ? previewOutfitId : previewBgId;
+
+      list.forEach(item => {
+        const owned = ownedList.includes(item.id);
+        const equipped = equippedId === item.id;
+        const isPreviewing = currentPreview === item.id;
+        const canAfford = savedData.score >= item.price;
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between ${
+          isPreviewing
+            ? 'bg-fuchsia-500/20 border-fuchsia-400'
+            : 'bg-slate-800/80 border-white/10 hover:border-white/30'
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-2xl">${item.icon}</span>
+              ${
+                equipped
+                  ? '<span class="text-[10px] bg-emerald-500 text-slate-950 font-black px-2 py-0.5 rounded-full">Kullanımda</span>'
+                  : owned
+                    ? '<span class="text-[10px] bg-sky-500/30 text-sky-200 font-bold px-2 py-0.5 rounded-full">Açık</span>'
+                    : `<span class="text-[11px] bg-yellow-400/20 text-yellow-300 font-black px-2 py-0.5 rounded-full">⭐ ${item.price} P</span>`
+              }
+            </div>
+            <div class="font-black text-xs sm:text-sm text-white">${item.name}</div>
+            <p class="text-[10px] text-slate-300 mt-0.5 leading-snug">${item.desc}</p>
+          </div>
+          <div class="mt-2.5">
+            ${
+              equipped
+                ? `<button class="w-full py-1.5 rounded-xl bg-slate-700 text-slate-300 text-xs font-extrabold" disabled>Seçili</button>`
+                : owned
+                  ? `<button data-id="${item.id}" class="shop-action-btn btn-cartoon w-full py-1.5 rounded-xl bg-sky-400 text-slate-950 text-xs font-black">Giy / Uygula</button>`
+                  : `<button data-id="${item.id}" class="shop-action-btn btn-cartoon w-full py-1.5 rounded-xl ${canAfford ? 'bg-amber-400 text-slate-950' : 'bg-slate-700 text-slate-400'} text-xs font-black" ${canAfford ? '' : 'disabled'}>
+                      ${canAfford ? `Satın Al (${item.price} P)` : `Yetersiz Puan (${item.price} P)`}
+                     </button>`
+            }
+          </div>
+        `;
+
+        card.addEventListener('click', (e) => {
+          if (e.target.classList.contains('shop-action-btn')) return;
+          sound.playClick();
+          if (isOutfits) {
+            previewOutfitId = item.id;
+            applyOutfitVisuals(item.id);
+          } else {
+            previewBgId = item.id;
+            applyBackgroundVisuals(item.id);
+          }
+          renderShopItems();
+        });
+
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('.shop-action-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const item = list.find(x => x.id === id);
+          if (!item) return;
+
+          if (ownedList.includes(id)) {
+            sound.playClick();
+            if (isOutfits) {
+              savedData.equippedOutfit = id;
+              previewOutfitId = id;
+              applyOutfitVisuals(id);
+            } else {
+              savedData.equippedBackground = id;
+              previewBgId = id;
+              applyBackgroundVisuals(id);
+            }
+          } else if (savedData.score >= item.price) {
+            sound.playPurchase();
+            savedData.score -= item.price;
+            ownedList.push(id);
+            if (isOutfits) {
+              savedData.equippedOutfit = id;
+              previewOutfitId = id;
+              applyOutfitVisuals(id);
+            } else {
+              savedData.equippedBackground = id;
+              previewBgId = id;
+              applyBackgroundVisuals(id);
+            }
+            spawnJumpSparkles(0xf472b6);
+          }
+
+          persistState();
+          updateScoreUI();
+          renderShopItems();
+        });
+      });
+    }
+
+    // ==========================================
+    // 9. INTERACTIVE ANIMATED TUTORIAL SYSTEM
+    // ==========================================
+    const TUTORIAL_STEPS = [
+      {
+        badge: '1. Konu • Hareket Enerjisi',
+        title: 'Kinetik Enerji Nedir?',
+        text: 'Hareket eden her varlığın sahip olduğu enerjiye Kinetik Enerji denir. Çocuk trambolinden yukarı fırlarken ya da yere inerken hızlandıkça kinetik enerjisi artar!',
+        formula: '🔥 Kinetik Enerji (Ek) = ½ × Kütle (m) × Hız² (v²)',
+        mode: 'kinetic'
+      },
+      {
+        badge: '2. Konu • Konum Enerjisi',
+        title: 'Potansiyel Enerji Nedir?',
+        text: 'Cisimlerin yerden yüksekte bulunmalarından dolayı sahip oldukları enerjiye Çekim Potansiyel Enerjisi denir. Çocuk en tepeye çıktığında potansiyel enerjisi maksimum olur!',
+        formula: '🎈 Potansiyel Enerji (Ep) = Kütle (m) × Yer Çekimi (g) × Yükseklik (h)',
+        mode: 'potential'
+      },
+      {
+        badge: '3. Konu • Enerjinin Korunumu',
+        title: 'Toplam Mekanik Enerji Nedir?',
+        text: 'Kinetik ve potansiyel enerjinin toplamına Mekanik Enerji denir. Çocuk yükselirken kinetik enerji potansiyel enerjiye dönüşür; toplam enerji hep sabit kalır!',
+        formula: '🔋 Toplam Enerji = Kinetik Enerji + Potansiyel Enerji',
+        mode: 'total'
+      },
+      {
+        badge: '4. Konu • Kütlenin Etkisi',
+        title: 'Kütle Artarsa Ne Olur?',
+        text: 'Kütlesi daha büyük olan bir çocuk aynı yükseklikte ve aynı hızda daha fazla potansiyel ve kinetik enerjiye sahip olur. Sol panelden kütleyi değiştirip test edebilirsin!',
+        formula: '⚖️ Kütle (m) 2 katına çıkarsa enerji de 2 katına çıkar!',
+        mode: 'mass'
+      },
+      {
+        badge: '5. Konu • Yer Çekimi Etkisi',
+        title: 'Yer Çekimi Artarsa Ne Olur?',
+        text: 'Ay’da yer çekimi az olduğu için çocuk çok yükseğe zıplar! Jüpiter’de ise yer çekimi çok güçlüdür ve çocuğu hemen aşağı çeker.',
+        formula: '🌍 Yer çekimi (g) arttıkça aynı yükseklikteki potansiyel enerji artar.',
+        mode: 'gravity'
+      },
+      {
+        badge: '6. Konu • Hızın Karesi Kuralı',
+        title: 'Hız Artarsa Kinetik Enerji Nasıl Değişir?',
+        text: 'Kinetik enerji hızın karesiyle (v²) doğru orantılıdır! Yani çocuğun zıplama hızı 2 katına çıkarsa, kinetik enerjisi tam 4 katına fırlar!',
+        formula: '🚀 Hız 2x olursa ➔ Kinetik Enerji 4x olur!',
+        mode: 'speed'
+      }
+    ];
+
+    let tutStep = 0;
+    let tutAnimId = null;
+
+    function openTutorial() {
+      tutStep = 0;
+      renderTutorialStep();
+      document.getElementById('modal-tutorial').classList.remove('hidden');
+      startTutorialCanvasAnim();
+    }
+
+    function closeTutorial() {
+      sound.playClick();
+      savedData.tutorialSeen = true;
+      persistState();
+      document.getElementById('modal-tutorial').classList.add('hidden');
+      if (tutAnimId) cancelAnimationFrame(tutAnimId);
+    }
+
+    function renderTutorialStep() {
+      const step = TUTORIAL_STEPS[tutStep];
+      document.getElementById('tut-step-num').textContent = tutStep + 1;
+      document.getElementById('tut-badge').textContent = step.badge;
+      document.getElementById('tut-title').textContent = step.title;
+      document.getElementById('tut-text').textContent = step.text;
+      document.getElementById('tut-formula').textContent = step.formula;
+
+      document.getElementById('tut-prev').disabled = tutStep === 0;
+      const nextBtn = document.getElementById('tut-next');
+      nextBtn.textContent = tutStep === TUTORIAL_STEPS.length - 1 ? 'Oyuna Başla! 🚀' : 'Sonraki ➡️';
+
+      const dots = document.getElementById('tut-dots');
+      dots.innerHTML = '';
+      TUTORIAL_STEPS.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = `h-2.5 rounded-full transition-all ${i === tutStep ? 'w-6 bg-amber-400' : 'w-2.5 bg-slate-600'}`;
+        dots.appendChild(dot);
+      });
+    }
+
+    function startTutorialCanvasAnim() {
+      const canvas = document.getElementById('tutorial-canvas');
+      const ctx = canvas.getContext('2d');
+      let t = 0;
+
+      function loop() {
+        t += 0.035;
+        const mode = TUTORIAL_STEPS[tutStep].mode;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(70, 148, 100, 9);
+
+        const bounce = Math.abs(Math.sin(t));
+        const speed = Math.abs(Math.cos(t));
+
+        if (mode === 'kinetic' || mode === 'potential' || mode === 'total') {
+          const y = 132 - bounce * 88;
+          ctx.beginPath();
+          ctx.arc(120, y, 15, 0, Math.PI * 2);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.fillStyle = '#f43f5e';
+          ctx.fillRect(14, 24, speed * 60, 9);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 10px Nunito';
+          ctx.fillText('Ek (Hız)', 14, 20);
+
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(14, 52, bounce * 60, 9);
+          ctx.fillText('Ep (Yükseklik)', 14, 48);
+
+          if (mode === 'total') {
+            ctx.fillStyle = '#4ade80';
+            ctx.fillRect(14, 80, 60, 9);
+            ctx.fillText('Toplam (Sabit)', 14, 76);
+          }
+        } else if (mode === 'mass') {
+          const y1 = 132 - bounce * 80;
+          ctx.beginPath();
+          ctx.arc(78, y1, 11, 0, Math.PI * 2);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 10px Nunito';
+          ctx.fillText('20 kg (Az)', 52, 22);
+
+          ctx.beginPath();
+          ctx.arc(165, y1, 20, 0, Math.PI * 2);
+          ctx.fillStyle = '#facc15';
+          ctx.fill();
+          ctx.fillText('60 kg (3x)', 138, 22);
+        } else if (mode === 'gravity') {
+          const moonBounce = Math.abs(Math.sin(t * 0.65));
+          const jupBounce = Math.abs(Math.sin(t * 1.8));
+          ctx.beginPath();
+          ctx.arc(78, 132 - moonBounce * 95, 13, 0, Math.PI * 2);
+          ctx.fillStyle = '#c084fc';
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 10px Nunito';
+          ctx.fillText('🌙 Ay (g=1.6)', 46, 22);
+
+          ctx.beginPath();
+          ctx.arc(165, 132 - jupBounce * 32, 13, 0, Math.PI * 2);
+          ctx.fillStyle = '#fb923c';
+          ctx.fill();
+          ctx.fillText('🪐 Jüpiter', 138, 22);
+        } else if (mode === 'speed') {
+          const fastBounce = Math.abs(Math.sin(t * 1.4));
+          ctx.beginPath();
+          ctx.arc(120, 132 - fastBounce * 88, 14, 0, Math.PI * 2);
+          ctx.fillStyle = '#f43f5e';
+          ctx.fill();
+          ctx.fillStyle = '#fde047';
+          ctx.font = 'bold 11px Nunito';
+          ctx.fillText('Hız 2x ➔ Kinetik Enerji 4x!', 44, 24);
+        }
+
+        tutAnimId = requestAnimationFrame(loop);
+      }
+      if (tutAnimId) cancelAnimationFrame(tutAnimId);
+      tutAnimId = requestAnimationFrame(loop);
+    }
+
+    // ==========================================
+    // 10. UI EVENT BINDINGS
+    // ==========================================
+    function updateSliderLabels() {
+      document.getElementById('slider-mass-label').textContent = `${sim.m} kg`;
+      document.getElementById('slider-gravity-label').textContent = `${sim.g.toFixed(1)} m/s²`;
+      document.getElementById('slider-v0-label').textContent = `${sim.v0.toFixed(1)} m/s`;
+
+      document.querySelectorAll('.preset-g').forEach(btn => {
+        const gVal = parseFloat(btn.dataset.g);
+        if (Math.abs(gVal - sim.g) < 0.25) {
+          btn.classList.remove('bg-slate-800');
+          btn.classList.add('bg-purple-600');
+        } else {
+          btn.classList.add('bg-slate-800');
+          btn.classList.remove('bg-purple-600');
+        }
+      });
+    }
+
+    function bindUIEvents() {
+      document.getElementById('slider-mass').addEventListener('input', (e) => {
+        sim.m = parseFloat(e.target.value);
+        updateSliderLabels();
+        computeEnergies();
+      });
+
+      document.getElementById('slider-gravity').addEventListener('input', (e) => {
+        sim.g = parseFloat(e.target.value);
+        sim.flightTime = 0;
+        sim.h = 0;
+        sim.v = sim.v0;
+        sim.inContact = false;
+        updateSliderLabels();
+        computeEnergies();
+      });
+
+      document.querySelectorAll('.preset-g').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sound.playClick();
+          sim.g = parseFloat(btn.dataset.g);
+          document.getElementById('slider-gravity').value = sim.g;
+          sim.flightTime = 0;
+          sim.h = 0;
+          sim.v = sim.v0;
+          sim.inContact = false;
+          updateSliderLabels();
+          computeEnergies();
+        });
+      });
+
+      document.getElementById('slider-v0').addEventListener('input', (e) => {
+        sim.v0 = parseFloat(e.target.value);
+        sim.flightTime = 0;
+        sim.h = 0;
+        sim.v = sim.v0;
+        sim.inContact = false;
+        updateSliderLabels();
+        computeEnergies();
+      });
+
+      function boostJump() {
+        sound.init();
+        sim.v0 = Math.min(12.0, sim.v0 + 1.4);
+        document.getElementById('slider-v0').value = sim.v0.toFixed(1);
+        sim.flightTime = 0;
+        sim.h = 0;
+        sim.v = sim.v0;
+        sim.inContact = false;
+        updateSliderLabels();
+        computeEnergies();
+        sound.playBoing(1.5);
+        spawnJumpSparkles(0x4ade80);
+      }
+
+      document.getElementById('btn-boost').addEventListener('click', boostJump);
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          boostJump();
+        }
+      });
+
+      const btnStart = document.getElementById('btn-start');
+      const btnPause = document.getElementById('btn-pause');
+      const btnResume = document.getElementById('btn-resume');
+      const pausedBanner = document.getElementById('paused-banner');
+
+      btnStart.addEventListener('click', () => {
+        sound.playClick();
+        sim.running = true;
+        sim.paused = false;
+        pausedBanner.classList.add('hidden');
+        btnPause.disabled = false;
+        btnResume.disabled = true;
+      });
+
+      btnPause.addEventListener('click', () => {
+        sound.playClick();
+        sim.paused = true;
+        pausedBanner.classList.remove('hidden');
+        btnPause.disabled = true;
+        btnResume.disabled = false;
+      });
+
+      btnResume.addEventListener('click', () => {
+        sound.playClick();
+        sim.paused = false;
+        pausedBanner.classList.add('hidden');
+        btnPause.disabled = false;
+        btnResume.disabled = true;
+      });
+
+      document.getElementById('btn-restart').addEventListener('click', () => {
+        sound.playClick();
+        sim.running = true;
+        sim.paused = false;
+        pausedBanner.classList.add('hidden');
+        btnPause.disabled = false;
+        btnResume.disabled = true;
+        resetJumpCycle(false);
+      });
+
+      document.getElementById('btn-missions-modal').addEventListener('click', () => {
+        sound.playClick();
+        renderMissionsModal();
+        document.getElementById('modal-missions').classList.remove('hidden');
+      });
+
+      document.getElementById('btn-shop').addEventListener('click', openShop);
+      document.getElementById('close-shop-btn').addEventListener('click', closeShop);
+
+      document.getElementById('tab-outfits').addEventListener('click', () => {
+        sound.playClick();
+        activeShopTab = 'outfits';
+        document.getElementById('tab-outfits').className = 'py-2 rounded-xl font-black text-xs sm:text-sm bg-fuchsia-500 text-white transition';
+        document.getElementById('tab-backgrounds').className = 'py-2 rounded-xl font-black text-xs sm:text-sm bg-slate-800 text-slate-300 hover:text-white transition';
+        renderShopItems();
+      });
+
+      document.getElementById('tab-backgrounds').addEventListener('click', () => {
+        sound.playClick();
+        activeShopTab = 'backgrounds';
+        document.getElementById('tab-backgrounds').className = 'py-2 rounded-xl font-black text-xs sm:text-sm bg-fuchsia-500 text-white transition';
+        document.getElementById('tab-outfits').className = 'py-2 rounded-xl font-black text-xs sm:text-sm bg-slate-800 text-slate-300 hover:text-white transition';
+        renderShopItems();
+      });
+
+      document.getElementById('btn-settings').addEventListener('click', () => {
+        sound.playClick();
+        document.getElementById('reset-confirm-msg').classList.add('hidden');
+        document.getElementById('modal-settings').classList.remove('hidden');
+      });
+
+      const toggleSoundBtn = document.getElementById('toggle-sound');
+      toggleSoundBtn.addEventListener('click', () => {
+        sound.enabled = !sound.enabled;
+        toggleSoundBtn.textContent = sound.enabled ? 'AÇIK' : 'KAPALI';
+        toggleSoundBtn.className = sound.enabled
+          ? 'btn-cartoon bg-emerald-500 text-slate-950 font-black text-xs px-4 py-2 rounded-xl'
+          : 'btn-cartoon bg-slate-600 text-white font-black text-xs px-4 py-2 rounded-xl';
+        if (sound.enabled) sound.playClick();
+      });
+
+      document.querySelectorAll('.ts-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sound.playClick();
+          sim.timeScale = parseFloat(btn.dataset.ts);
+          document.getElementById('timescale-label').textContent =
+            sim.timeScale === 1.0 ? '1.0x (Normal)' :
+            sim.timeScale < 1.0 ? `${sim.timeScale}x (Yavaş)` : `${sim.timeScale}x (Hızlı)`;
+
+          document.querySelectorAll('.ts-btn').forEach(b => {
+            b.className = parseFloat(b.dataset.ts) === sim.timeScale
+              ? 'ts-btn bg-sky-500 text-slate-950 text-xs font-black py-1.5 rounded-xl'
+              : 'ts-btn bg-slate-700 hover:bg-sky-600 text-xs font-bold py-1.5 rounded-xl';
+          });
+        });
+      });
+
+      let resetArmed = false;
+      document.getElementById('btn-reset-all').addEventListener('click', () => {
+        const msg = document.getElementById('reset-confirm-msg');
+        if (!resetArmed) {
+          resetArmed = true;
+          msg.classList.remove('hidden');
+          setTimeout(() => { resetArmed = false; }, 4000);
+          return;
+        }
+        resetArmed = false;
+        savedData = { ...DEFAULT_STATE };
+        persistState();
+        applyOutfitVisuals('default');
+        applyBackgroundVisuals('garden');
+        updateScoreUI();
+        renderActiveMissionBanner();
+        resetJumpCycle(false);
+        msg.classList.add('hidden');
+        document.getElementById('modal-settings').classList.add('hidden');
+      });
+
+      document.getElementById('btn-tutorial').addEventListener('click', () => {
+        sound.playClick();
+        openTutorial();
+      });
+      document.getElementById('btn-skip-tutorial').addEventListener('click', closeTutorial);
+      document.getElementById('tut-prev').addEventListener('click', () => {
+        if (tutStep > 0) {
+          sound.playClick();
+          tutStep--;
+          renderTutorialStep();
+        }
+      });
+      document.getElementById('tut-next').addEventListener('click', () => {
+        if (tutStep < TUTORIAL_STEPS.length - 1) {
+          sound.playClick();
+          tutStep++;
+          renderTutorialStep();
+        } else {
+          closeTutorial();
+        }
+      });
+
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sound.playClick();
+          btn.closest('.fixed').classList.add('hidden');
+        });
+      });
+    }
+
+    // ==========================================
+    // 11. MAIN ANIMATION LOOP & WINDOW ONLOAD
+    // ==========================================
+    let lastTimestamp = performance.now();
+
+    function mainLoop(now) {
+      requestAnimationFrame(mainLoop);
+      const dt = (now - lastTimestamp) / 1000;
+      lastTimestamp = now;
+
+      if (sim.missionCooldown > 0) {
+        sim.missionCooldown = Math.max(0, sim.missionCooldown - dt);
+      }
+
+      stepPhysics(dt);
+      update3DVisuals(dt);
+      updateHUD();
+      updateConfetti(dt);
+
+      if (renderMode === 'three' && renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    }
+
+    window.onload = function () {
+      initVisualEngine();
+      bindUIEvents();
+      updateSliderLabels();
+      updateScoreUI();
+      renderActiveMissionBanner();
+      resetJumpCycle(true);
+
+      // ResizeObserver & window resize protection against 0x0 canvas
+      window.addEventListener('resize', handleContainerResize);
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => handleContainerResize());
+        ro.observe(document.getElementById('game-container'));
+      }
+      handleContainerResize();
+
+      // Always keep character visibly jumping behind semi-transparent tutorial on first visit
+      if (!savedData.tutorialSeen) {
+        openTutorial();
+      }
+
+      lastTimestamp = performance.now();
+      requestAnimationFrame(mainLoop);
+    };
+  </script>
+</body>
+</html>
