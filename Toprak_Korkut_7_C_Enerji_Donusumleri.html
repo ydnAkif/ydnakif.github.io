@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaykay Rampası — Enerji Dönüşümleri</title>
+<style>
+:root{--ink:#17233b;--muted:#60708b;--paper:#f4f7fb;--card:#fff;--blue:#2878e5;--orange:#f59e0b;--green:#16a36a;--red:#e35b5b;--line:#dce4ef}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:24px 18px 40px}
+header{margin-bottom:18px}h1{font-size:clamp(25px,4vw,36px);line-height:1.15;margin:0 0 7px}header p{margin:0;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 5px 18px #23395b0a}
+.card h2{font-size:18px;margin:0 0 12px}
+canvas{width:100%;height:auto;display:block;border-radius:13px;background:linear-gradient(#eaf5ff,#f8fbff 70%,#eef4f8)}
+.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+button{border:0;border-radius:11px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #8bbcff;outline-offset:2px}
+.primary{background:var(--blue);color:white}.secondary{background:#eaf0f8;color:var(--ink)}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 2px}
+.switchrow label{font-weight:700}.switch{position:relative;width:50px;height:28px;display:inline-block;flex:none}
+.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#b8c4d5;border-radius:30px;cursor:pointer;transition:.2s}
+.slider:before{content:"";position:absolute;width:20px;height:20px;left:4px;top:4px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.slider{background:var(--orange)}.switch input:checked+.slider:before{transform:translateX(22px)}
+.energy{display:grid;gap:13px}.energy-row{display:grid;grid-template-columns:116px 1fr 66px;gap:9px;align-items:center;font-size:13px}
+.energy-row strong{font-size:13px}.track{height:12px;border-radius:20px;background:#edf1f6;overflow:hidden}
+.fill{height:100%;width:0;border-radius:20px;transition:width .08s linear}
+.value{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:13px 0 0;color:var(--muted);font-size:12px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.readout{margin-top:15px;padding:12px 13px;border-radius:12px;background:#f2f7ff;color:#24466e;min-height:68px}
+.readout strong{display:block;margin-bottom:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
+.stat{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat span{display:block;color:var(--muted);font-size:11px}.stat b{font-size:17px;font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:12px;margin:12px 0 0}
+.explain{margin-top:16px}.explain p{margin:7px 0;color:#43536d}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.wrap{padding:18px 12px 30px}}
+@media(max-width:420px){.energy-row{grid-template-columns:102px 1fr 58px;gap:6px}.card{padding:13px}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🛹 Kaykay Rampası: Enerji Dönüşümleri</h1>
+  <p>7. sınıf Fen Bilimleri • Kuvvet ve Enerjiyi Keşfedelim</p>
+</header>
+<div class="layout">
+  <section class="card">
+    <h2>Rampada hareket</h2>
+    <canvas id="scene" width="760" height="410" aria-label="U biçimli rampada hareket eden kaykaylı sporcu simülasyonu"></canvas>
+    <div class="controls">
+      <button id="start" class="primary">▶ Başlat</button>
+      <button id="reset" class="secondary">↺ Sıfırla</button>
+    </div>
+    <div class="switchrow">
+      <label for="friction">🔥 Sürtünme</label>
+      <label class="switch" aria-label="Sürtünmeyi aç veya kapat">
+        <input id="friction" type="checkbox">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Yükseklik</span><b id="height">4,00 m</b></div>
+      <div class="stat"><span>Hız</span><b id="speed">0,00 m/s</b></div>
+      <div class="stat"><span>Zaman</span><b id="time">0,00 s</b></div>
+    </div>
+    <p class="note">Model: 2 kg kaykaylı sporcu, başlangıç yüksekliği 4 m. Sürtünme açıkken enerji kaybı ısı enerjisi olarak gösterilir.</p>
+  </section>
+  <aside class="card">
+    <h2>📊 Enerji göstergeleri</h2>
+    <div class="energy" id="energy">
+      <div class="energy-row"><strong>Kinetik</strong><div class="track"><div class="fill" id="kinetic" style="background:#2878e5"></div></div><div class="value" id="kineticV">0 J</div></div>
+      <div class="energy-row"><strong>Çekim potansiyel</strong><div class="track"><div class="fill" id="potential" style="background:#16a36a"></div></div><div class="value" id="potentialV">0 J</div></div>
+      <div class="energy-row"><strong>Mekanik</strong><div class="track"><div class="fill" id="mechanical" style="background:#7956c9"></div></div><div class="value" id="mechanicalV">0 J</div></div>
+      <div class="energy-row"><strong>Isıya dönüşen</strong><div class="track"><div class="fill" id="heat" style="background:#f59e0b"></div></div><div class="value" id="heatV">0 J</div></div>
+      <div class="energy-row"><strong>Toplam</strong><div class="track"><div class="fill" id="total" style="background:#e35b5b"></div></div><div class="value" id="totalV">0 J</div></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#2878e5"></i>Kinetik</span>
+      <span><i class="dot" style="background:#16a36a"></i>Potansiyel</span>
+      <span><i class="dot" style="background:#f59e0b"></i>Isı</span>
+    </div>
+    <div class="readout" aria-live="polite">
+      <strong id="phase">Hazır!</strong>
+      <span id="explanation">Kaykay en üst noktada duruyor. Başlat'a basarak aşağı doğru hareketini izleyin.</span>
+    </div>
+    <div class="explain">
+      <h2>🔎 Neleri gözlemlemelisin?</h2>
+      <p>• Kaykay aşağı inerken çekim potansiyel enerjisi azalır, kinetik enerji artar.</p>
+      <p>• En alçak noktada hız ve kinetik enerji en büyük değerine yaklaşır.</p>
+      <p>• Sürtünme açıkken mekanik enerjinin bir bölümü ısıya dönüşür; karşı tarafta daha az yükselir.</p>
+      <p>• Mekanik enerji + ısı enerjisi toplamı sabit kalır.</p>
+    </div>
+  </aside>
+</div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('scene');
+  const ctx = canvas.getContext('2d');
+  const friction = document.getElementById('friction');
+  const startBtn = document.getElementById('start');
+  const resetBtn = document.getElementById('reset');
+  const $ = id => document.getElementById(id);
+  const mass = 2, g = 9.81, depth = 4, mu = 0.12;
+  const initialX = -1;
+  let x = initialX, vx = 0, heat = 0, elapsed = 0, running = false;
+  let last = 0, raf = 0;
+  const total0 = mass * g * depth;
+
+  const heightAt = q => depth * q * q;
+  const slope = q => 2 * depth * q;
+  const speed = () => Math.abs(vx) * Math.sqrt(1 + slope(x) ** 2);
+  const energies = () => {
+    const h = heightAt(x);
+    const pe = mass * g * h;
+    const ke = .5 * mass * speed() ** 2;
+    return {h, pe, ke, me: pe + ke, heat, total: pe + ke + heat};
+  };
+  const fmt = n => `${Math.max(0,n).toFixed(1).replace('.', ',')} J`;
+  function updateUI() {
+    const e = energies();
+    [['kinetic',e.ke],['potential',e.pe],['mechanical',e.me],['heat',e.heat],['total',e.total]].forEach(([id,v]) => {
+      $(id).style.width = `${Math.min(100,Math.max(0,v/total0*100))}%`;
+      $(id+'V').textContent = fmt(v);
+    });
+    $('height').textContent = `${e.h.toFixed(2).replace('.',',')} m`;
+    $('speed').textContent = `${speed().toFixed(2).replace('.',',')} m/s`;
+    $('time').textContent = `${elapsed.toFixed(2).replace('.',',')} s`;
+    let title, msg;
+    if (Math.abs(vx)<.12 && Math.abs(x)>.75) {
+      title = 'Dönüş noktası';
+      msg = friction.checked ? 'Sürtünme nedeniyle kaykay başlangıç yüksekliğine ulaşamıyor. Mekanik enerjinin bir bölümü ısıya dönüştü.' : 'Kaykay üst noktada anlık olarak yavaşlar; sonra ters yönde hareket eder.';
+    } else if (Math.abs(x)<.25) {
+      title = 'Rampanın en altı';
+      msg = 'Çekim potansiyel enerjisi azaldı. Hız ve kinetik enerji en büyük değerine yaklaşıyor.';
+    } else if ((x < 0 && vx > 0) || (x > 0 && vx < 0)) {
+      title = 'Aşağı doğru hareket';
+      msg = 'Kaykay alçalırken çekim potansiyel enerjisi kinetik enerjiye dönüşüyor.';
+    } else {
+      title = 'Yukarı doğru hareket';
+      msg = 'Kaykay yükselirken kinetik enerji azalır, çekim potansiyel enerjisi artar.';
+    }
+    $('phase').textContent = title;
+    $('explanation').textContent = msg;
+  }
+  function draw() {
+    const w=canvas.width, h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+    // background
+    ctx.fillStyle='#eaf5ff'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#d9ecfb'; ctx.beginPath(); ctx.arc(620,65,29,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='15px system-ui'; ctx.fillText('U biçimli kaykay rampası',24,30);
+    const left=70, right=w-70, base=330, scaleX=(right-left)/2;
+    const px=q=>left+(q+1)*scaleX;
+    const py=q=>base-heightAt(q)*57;
+    // ramp body
+    ctx.beginPath();
+    for(let i=0;i<=180;i++){let q=-1+i/90;let X=px(q),Y=py(q);if(i===0)ctx.moveTo(X,Y);else ctx.lineTo(X,Y);}
+    ctx.lineWidth=24;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#8b9bb0';ctx.stroke();
+    ctx.beginPath();
+    for(let i=0;i<=180;i++){let q=-1+i/90;let X=px(q),Y=py(q);if(i===0)ctx.moveTo(X,Y);else ctx.lineTo(X,Y);}
+    ctx.lineWidth=14;ctx.strokeStyle='#344b6b';ctx.stroke();
+    // baseline
+    ctx.strokeStyle='#c6d4e3';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(30,base+20);ctx.lineTo(w-30,base+20);ctx.stroke();
+    // start marker
+    ctx.fillStyle='#16a36a';ctx.font='bold 13px system-ui';ctx.fillText('Başlangıç',px(-.98)-28,py(-.98)-35);
+    // skateboard + rider
+    const X=px(x), Y=py(x)-15;
+    ctx.save();ctx.translate(X,Y);ctx.rotate(Math.atan(slope(x))*.12);
+    ctx.strokeStyle='#17233b';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-18,8);ctx.lineTo(18,8);ctx.stroke();
+    ctx.fillStyle='#2878e5';ctx.beginPath();ctx.arc(-10,14,5,0,Math.PI*2);ctx.arc(12,14,5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#17233b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(3,-25);ctx.lineTo(13,-34);ctx.stroke();
+    ctx.fillStyle='#f3b58b';ctx.beginPath();ctx.arc(16,-40,8,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#e35b5b';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(2,-24);ctx.lineTo(-9,-13);ctx.stroke();
+    ctx.restore();
+    // energy hint
+    const e=energies();
+    ctx.fillStyle='#17233b';ctx.font='bold 13px system-ui';
+    ctx.fillText(`E toplam = ${e.total.toFixed(1).replace('.',',')} J`,w-205,30);
+  }
+  function step(dt) {
+    // Dördüncü dereceden Runge-Kutta: sürtünmesiz durumda mekanik enerji
+    // korunumu için basit Euler yönteminden çok daha kararlı bir integrasyon.
+    const n = Math.max(1, Math.ceil(dt / .001));
+    const d = dt / n;
+
+    function deriv(state) {
+      const [q, v, accumulatedHeat] = state;
+      const qSlope = slope(q);
+      const denom = 1 + qSlope * qSlope;
+      const curvature = qSlope * (2 * depth) * v * v;
+      let acceleration = (-g * qSlope - curvature) / denom;
+
+      if (friction.checked && Math.abs(v) > 0.0000001) {
+        // Sürtünme kuvvetinin pist boyunca yaptığı iş.
+        acceleration -= mu * g * Math.sign(v) / Math.sqrt(denom);
+      }
+      const heatRate = friction.checked
+        ? mu * mass * g * Math.abs(v) * Math.sqrt(denom)
+        : 0;
+      return [v, acceleration, heatRate];
+    }
+
+    for (let i = 0; i < n; i++) {
+      const y = [x, vx, heat];
+      const k1 = deriv(y);
+      const y2 = y.map((v,j) => v + d*k1[j]/2);
+      const k2 = deriv(y2);
+      const y3 = y.map((v,j) => v + d*k2[j]/2);
+      const k3 = deriv(y3);
+      const y4 = y.map((v,j) => v + d*k3[j]);
+      const k4 = deriv(y4);
+
+      x += d*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0])/6;
+      vx += d*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1])/6;
+      heat += d*(k1[2] + 2*k2[2] + 2*k3[2] + k4[2])/6;
+
+      // Pist sınırında küçük sayısal taşmaları önle.
+      if (x < -1) { x = -1; if (vx < 0) vx = 0; }
+      if (x > 1)  { x = 1;  if (vx > 0) vx = 0; }
+    }
+    elapsed += dt;
+  }
+  function frame(t) {
+    if(!running)return;
+    if(!last)last=t;
+    const dt=Math.min((t-last)/1000,.04); last=t;
+    step(dt); updateUI(); draw();
+    // Stop only when the motion has genuinely settled due to friction.
+    if(friction.checked && speed()<.035 && Math.abs(x)<.12) {
+      running=false; startBtn.textContent='▶ Başlat'; return;
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  function start() {
+    if(running){running=false;cancelAnimationFrame(raf);startBtn.textContent='▶ Devam';return;}
+    running=true;last=0;startBtn.textContent='Ⅱ Duraklat';raf=requestAnimationFrame(frame);
+  }
+  function reset() {
+    running=false;cancelAnimationFrame(raf);x=initialX;vx=0;heat=0;elapsed=0;last=0;
+    startBtn.textContent='▶ Başlat';updateUI();draw();
+  }
+  friction.addEventListener('change',()=>{reset();});
+  startBtn.addEventListener('click',start);
+  resetBtn.addEventListener('click',reset);
+  updateUI();draw();
+})();
+</script>
+</body>
+</html>
